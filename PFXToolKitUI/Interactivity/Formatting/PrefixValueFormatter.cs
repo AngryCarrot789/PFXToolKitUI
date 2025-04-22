@@ -1,5 +1,5 @@
 // 
-// Copyright (c) 2023-2024 REghZy
+// Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of FramePFX.
 // 
