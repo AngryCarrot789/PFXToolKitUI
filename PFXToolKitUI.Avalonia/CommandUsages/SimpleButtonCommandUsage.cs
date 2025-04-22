@@ -26,11 +26,10 @@ public class SimpleButtonCommandUsage : CommandUsage {
     private ClickableControlHelper? button;
 
     public SimpleButtonCommandUsage(string commandId) : base(commandId) { }
-
-    protected override void OnConnected() {
+    
+    protected override void OnConnecting() {
+        base.OnConnecting();
         this.button = ClickableControlHelper.Create(this.Control, this.OnButtonClicked);
-        
-        base.OnConnected();
     }
 
     protected override void OnDisconnected() {

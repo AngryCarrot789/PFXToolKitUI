@@ -90,6 +90,14 @@ public abstract class CommandUsage : ICommandUsage {
     /// <exception cref="ArgumentNullException">Control is null</exception>
     public void Connect(AvaloniaObject control) {
         this.Control = control ?? throw new ArgumentNullException(nameof(control));
+        try {
+            this.OnConnecting();
+        }
+        catch (Exception e) {
+            this.Control = null;
+            throw new InvalidOperationException("Attempt to connect with invalid control", e);
+        }
+
         this.IsConnected = true;
         DataManager.AddInheritedContextChangedHandler(control, this.OnInheritedContextChangedImmediately);
         this.OnConnected();
@@ -113,6 +121,10 @@ public abstract class CommandUsage : ICommandUsage {
         this.OnContextChanged();
     }
 
+    protected virtual void OnConnecting() {
+        // check shit before actually connecting
+    }
+    
     protected virtual void OnConnected() => this.OnContextChanged();
 
     protected virtual void OnDisconnected() => this.OnContextChanged();
