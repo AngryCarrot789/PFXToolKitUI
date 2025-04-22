@@ -40,7 +40,7 @@ namespace PFXToolKitUI.Avalonia.CommandUsages;
 public abstract class CommandUsage : ICommandUsage {
     // Since its invoke method is only called from the main thread,
     // there's no need for the extended version
-    private RapidDispatchAction? delayedContextUpdate;
+    private RapidDispatchActionEx? delayedContextUpdate;
     private Icon? icon;
 
     public string CommandId { get; }
@@ -128,7 +128,7 @@ public abstract class CommandUsage : ICommandUsage {
     /// Schedules the <see cref="UpdateCanExecute"/> method to be invoked later. This is called by <see cref="OnContextChanged"/>
     /// </summary>
     public void UpdateCanExecuteLater() {
-        RapidDispatchAction guard = this.delayedContextUpdate ??= new RapidDispatchAction(this.UpdateCanExecute, DispatchPriority.Loaded, "UpdateCanExecute");
+        RapidDispatchActionEx guard = this.delayedContextUpdate ??= RapidDispatchActionEx.ForSync(this.UpdateCanExecute, DispatchPriority.Loaded, "UpdateCanExecute");
         guard.InvokeAsync();
     }
 

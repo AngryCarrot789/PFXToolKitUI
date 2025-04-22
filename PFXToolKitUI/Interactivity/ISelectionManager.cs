@@ -167,3 +167,7 @@ public interface ISelectAllManager {
     /// </summary>
     void SelectAll();
 }
+
+public interface IListBasedSelectionManager<T> {
+    IList<T> SelectedItemList { get; }
+}
