@@ -78,8 +78,9 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
         }
 
         this.EnumToText = fullEnumToTextMap.AsReadOnly();
-        this.EnumList = this.AllowedEnumList.Select(x => x.Item1).ToList().AsReadOnly();
         this.TextToEnum = new Dictionary<string, TEnum>(this.EnumToText.Select(x => new KeyValuePair<string, TEnum>(x.Value, x.Key)));
+        this.EnumList = this.AllowedEnumList.Select(x => x.Item1).ToList().AsReadOnly();
+        this.TextList = this.AllowedEnumList.Select(x => x.Item2).ToList().AsReadOnly();
     }
 
     /// <summary>
