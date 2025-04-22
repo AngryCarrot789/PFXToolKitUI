@@ -17,8 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
@@ -40,7 +40,7 @@ public delegate void CommandEventHandler(Command command, CommandEventArgs e);
 /// </para>
 /// </summary>
 public abstract class Command {
-    private volatile bool isExecuting;
+    private volatile int isExecuting;
 
     /// <summary>
     /// An event fired when this command's executing state changes. This is fired on the main thread
@@ -50,14 +50,9 @@ public abstract class Command {
     public bool AllowMultipleExecutions { get; }
 
     /// <summary>
-    /// Gets the task that is executing. Only set when <see cref="AllowMultipleExecutions"/> is false
-    /// </summary>
-    public Task? CurrentTask { get; private set; }
-
-    /// <summary>
     /// Gets whether the command is currently executing. Only changes on the main thread
     /// </summary>
-    public bool IsExecuting => this.isExecuting;
+    public bool IsExecuting => this.isExecuting != 0;
 
     protected Command(bool allowMultipleExecutions = false) {
         this.AllowMultipleExecutions = allowMultipleExecutions;
@@ -104,79 +99,54 @@ public abstract class Command {
     private async Task ExecuteImpl(string? cmdId, CommandEventArgs args) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (!this.AllowMultipleExecutions && this.IsExecuting) {
-            try {
-                await this.OnAlreadyExecuting(args);
-            }
-            catch {
-                AppLogger.Instance.WriteLine($"Exception invoking {nameof(this.OnAlreadyExecuting)} for command '{CmdToString(cmdId, this)}'");
-            }
-
+        int executing;
+        if (this.AllowMultipleExecutions) {
+            executing = Interlocked.Increment(ref this.isExecuting) - 0;
+        }
+        else if ((executing = Interlocked.CompareExchange(ref this.isExecuting, 1, 0)) != 0) {
+            await this.OnAlreadyExecuting(args);
             return;
         }
 
-        this.isExecuting = true;
-
-        try {
+        if (executing < 0)
+            Debugger.Break();
+        if (executing == 0)
             this.ExecutingChanged?.Invoke(this, args);
-        }
-        catch {
-            AppLogger.Instance.WriteLine($"Exception raising {nameof(this.ExecutingChanged)} for command '{CmdToString(cmdId, this)}'");
-        }
 
         Task task;
         try {
             task = this.ExecuteCommandAsync(args) ?? Task.CompletedTask;
         }
         catch (Exception e) { // when (!Debugger.IsAttached) {
-            try {
-                await this.OnExecutionException(args, e);
-            }
-            catch {
-                AppLogger.Instance.WriteLine($"Exception invoking {nameof(this.OnExecutionException)} for command '{CmdToString(cmdId, this)}'");
-            }
-
+            await this.OnExecutionException(args, e);
             task = Task.CompletedTask;
         }
 
         if (!task.IsCompleted) {
-            if (!this.AllowMultipleExecutions) {
-                this.CurrentTask = task;
-            }
-
             try {
                 await task;
+            }
+            catch (TaskCanceledException) { 
+                // ignored
+            }
+            catch (OperationCanceledException) { 
+                // ignored
             }
             catch (Exception e) { // when (!Debugger.IsAttached) {
                 try {
                     await this.OnExecutionException(args, e);
                 }
                 catch {
-                    AppLogger.Instance.WriteLine($"Exception invoking {nameof(this.OnExecutionException)} for command '{CmdToString(cmdId, this)}'");
+                    // ignored -- oopsie
                 }
             }
         }
 
-        this.isExecuting = false;
-        if (!this.AllowMultipleExecutions) {
-            this.CurrentTask = null;
-        }
-
-        try {
+        int value = Interlocked.Decrement(ref this.isExecuting);
+        if (value < 0)
+            Debugger.Break();
+        if (value == 0)
             this.ExecutingChanged?.Invoke(this, args);
-        }
-        catch {
-            AppLogger.Instance.WriteLine($"Exception raising {nameof(this.ExecutingChanged)} for command '{CmdToString(cmdId, this)}'");
-        }
-    }
-
-    private static string CmdToString(string? cmdId, Command cmd) {
-        if (cmdId != null && !string.IsNullOrWhiteSpace(cmdId)) {
-            return $"{cmdId} ({cmd.GetType()})";
-        }
-        else {
-            return cmd.GetType().ToString();
-        }
     }
 
     /// <summary>
@@ -186,7 +156,7 @@ public abstract class Command {
     /// <param name="args">Command event args</param>
     protected virtual Task OnAlreadyExecuting(CommandEventArgs args) {
         if (args.IsUserInitiated)
-            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running");
+            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete");
 
         return Task.CompletedTask;
     }
