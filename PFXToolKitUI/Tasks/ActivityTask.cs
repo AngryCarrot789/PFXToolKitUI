@@ -130,9 +130,17 @@ public class ActivityTask {
     public void CheckCancelled() => this.CancellationToken.ThrowIfCancellationRequested();
 
     public bool TryCancel() {
-        if (this.cancellationTokenSource == null)
+        if (this.cancellationTokenSource == null) {
             return false;
-        this.cancellationTokenSource.Cancel();
+        }
+
+        try {
+            this.cancellationTokenSource.Cancel();
+        }
+        catch (ObjectDisposedException) {
+            // ignored -- means task is probably completed
+        }
+
         return true;
     }
 

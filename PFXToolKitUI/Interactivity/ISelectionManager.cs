@@ -43,7 +43,8 @@ public static class BaseSelectionManagerExtensions {
 }
 
 /// <summary>
-/// A base interface for general selection managers providing get/set/add/remove/clear/is support
+/// A base interface for general selection managers providing get/set/add/remove/clear/is support.
+/// Does not necessarily support listing all selected items (see <see cref="IBaseSelectionManagerEx{T}"/>)
 /// </summary>
 /// <typeparam name="T">The type of selected items supported</typeparam>
 public interface IBaseSelectionManager<in T> {
@@ -61,7 +62,7 @@ public interface IBaseSelectionManager<in T> {
     void SetSelection(T item);
 
     /// <summary>
-    /// Effectively makes all of the given items the only selected items
+    /// Effectively makes all the given items the only selected items
     /// </summary>
     /// <param name="items">The items to be the only selected items</param>
     void SetSelection(IEnumerable<T> items);
@@ -102,11 +103,7 @@ public interface IBaseSelectionManager<in T> {
     void Clear();
 }
 
-/// <summary>
-/// An interface for an object that manages the selection state of items
-/// </summary>
-/// <typeparam name="T">The type of selected items supported</typeparam>
-public interface ISelectionManager<T> : IBaseSelectionManager<T> {
+public interface IBaseSelectionManagerEx<T> : IBaseSelectionManager<T> {
     /// <summary>
     /// Gets an enumerable of the selected items. Ideally, create a list from
     /// this as soon as possible because the enumerable may be cached and become
@@ -119,7 +116,18 @@ public interface ISelectionManager<T> : IBaseSelectionManager<T> {
     /// enumerating <see cref="SelectedItems"/> unless implemented correctly
     /// </summary>
     int Count { get; }
+    
+    /// <summary>
+    /// Selects all the items in this selection manager
+    /// </summary>
+    void SelectAll();
+}
 
+/// <summary>
+/// An interface for an object that manages the selection state of items
+/// </summary>
+/// <typeparam name="T">The type of selected items supported</typeparam>
+public interface ISelectionManager<T> : IBaseSelectionManagerEx<T> {
     /// <summary>
     /// An event fired when the selection changes (item added or removed)
     /// </summary>
@@ -129,45 +137,26 @@ public interface ISelectionManager<T> : IBaseSelectionManager<T> {
     /// An event fired when the selection is cleared
     /// </summary>
     public event SelectionClearedEventHandler<T>? SelectionCleared;
-
-    /// <summary>
-    /// Selects all items in this selection manager
-    /// </summary>
-    void SelectAll();
 }
 
 /// <summary>
 /// An interface for a simple selection manager that has basic selection methods and a basic selection changed event
 /// </summary>
 /// <typeparam name="T">The type of selected items supported</typeparam>
-public interface ILightSelectionManager<T> : IBaseSelectionManager<T> {
-    /// <summary>
-    /// Gets an enumerable of the selected items. Ideally, create a list from
-    /// this as soon as possible because the enumerable may be cached and become
-    /// invalid at some point
-    /// </summary>
-    IEnumerable<T> SelectedItems { get; }
-
-    /// <summary>
-    /// Gets the number of selected items. Worst case scenario this involves fully
-    /// enumerating <see cref="SelectedItems"/> unless implemented correctly
-    /// </summary>
-    int Count { get; }
-
+public interface ILightSelectionManager<T> : IBaseSelectionManagerEx<T> {
     /// <summary>
     /// An event fired when the selection changes. This does not contain what changes, it just marks a change
     /// happening (it could be selection cleared, item added, maybe multiple items being added or removed, etc.)
     /// </summary>
-    event LightSelectionChangedEventHandler<T> SelectionChanged;
+    event LightSelectionChangedEventHandler<T> LightSelectionChanged;
 }
 
-public interface ISelectAllManager {
-    /// <summary>
-    /// Selects all the items in this selection manager
-    /// </summary>
-    void SelectAll();
-}
-
-public interface IListBasedSelectionManager<T> {
+public interface IBaseListSelectionManager<T> : IBaseSelectionManagerEx<T> {
     IList<T> SelectedItemList { get; }
+}
+
+public interface IListSelectionManager<TModel> : ISelectionManager<TModel>, ILightSelectionManager<TModel>, IBaseListSelectionManager<TModel> {
+    IList<TModel> IBaseListSelectionManager<TModel>.SelectedItemList => this.SelectedItemList;
+
+    int IBaseSelectionManagerEx<TModel>.Count => this.SelectedItemList.Count;
 }
