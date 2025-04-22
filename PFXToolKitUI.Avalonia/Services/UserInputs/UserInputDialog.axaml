@@ -5,7 +5,7 @@
                    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls"
                    mc:Ignorable="d"
-                   Width="350" Height="175"
+                   Width="136" Height="32"
                    CanResize="False"
                    Title="Caption Here"
                    TitleBarBrush="{DynamicResource ABrush.Tone4.Background.Static}"
@@ -49,6 +49,8 @@
                 </Button>
             </StackPanel>
         </Border>
-        <ContentControl x:Name="PART_InputFieldContent" Margin="10,5,10,10" Focusable="False"/>
+        <ContentControl x:Name="PART_InputFieldContent" Margin="10,5,10,10" Focusable="False"
+                        VerticalContentAlignment="Stretch"
+                        HorizontalContentAlignment="Stretch"/>
     </DockPanel>
 </controls:WindowEx>

@@ -113,32 +113,21 @@ public abstract class Command {
         if (executing == 0)
             this.ExecutingChanged?.Invoke(this, args);
 
-        Task task;
         try {
-            task = this.ExecuteCommandAsync(args) ?? Task.CompletedTask;
+            await (this.ExecuteCommandAsync(args) ?? Task.CompletedTask);
+        }
+        catch (TaskCanceledException) {
+            // ignored
+        }
+        catch (OperationCanceledException) {
+            // ignored
         }
         catch (Exception e) { // when (!Debugger.IsAttached) {
-            await this.OnExecutionException(args, e);
-            task = Task.CompletedTask;
-        }
-
-        if (!task.IsCompleted) {
             try {
-                await task;
+                await this.OnExecutionException(args, e);
             }
-            catch (TaskCanceledException) { 
-                // ignored
-            }
-            catch (OperationCanceledException) { 
-                // ignored
-            }
-            catch (Exception e) { // when (!Debugger.IsAttached) {
-                try {
-                    await this.OnExecutionException(args, e);
-                }
-                catch {
-                    // ignored -- oopsie
-                }
+            catch {
+                // ignored -- oopsie
             }
         }
 

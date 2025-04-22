@@ -21,6 +21,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.Colours;
@@ -85,8 +86,15 @@ public partial class UserInputDialog : WindowEx {
         Registry.RegisterType<MouseStrokeUserInputInfo>(() => new MouseStrokeUserInputControl());
 
         UserInputInfoProperty.Changed.AddClassHandler<UserInputDialog, UserInputInfo?>((o, e) => o.OnUserInputDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+        WindowOpenedEvent.AddClassHandler<UserInputDialog>((window, e) => {
+            window.PART_DockPanelRoot.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+            Size size = window.PART_DockPanelRoot.DesiredSize;
+            size = new Size(size.Width + 2, Math.Max(size.Height, 43));
+            window.Width = size.Width > 250 ? size.Width : 250;
+            window.Height = size.Height;
+        });
     }
-
+    
     protected override void OnKeyDown(KeyEventArgs e) {
         base.OnKeyDown(e);
         if (!e.Handled && e.Key == Key.Escape) {
@@ -102,15 +110,14 @@ public partial class UserInputDialog : WindowEx {
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
+
         this.PART_DockPanelRoot.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         Size size = this.PART_DockPanelRoot.DesiredSize;
-        size = new Size(size.Width + 2, size.Height);
-        if (size.Width > 300.0) {
-            this.Width = size.Width;
-        }
-
-        const double TitleBarHeight = 32;
-        this.Height = size.Height + TitleBarHeight;
+        size = new Size(size.Width + 2, size.Height + 32);
+        this.Width = size.Width > 250 ? size.Width : 250;
+        this.Height = size.Height;
+        
+        this.InvalidateVisual();
     }
 
     private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) => this.TryCloseDialog(true);
@@ -208,7 +215,8 @@ public partial class UserInputDialog : WindowEx {
 
         if (IDesktopService.TryGetInstance(out IDesktopService? service) && service.TryGetActiveWindow(out Window? window)) {
             UserInputDialog dialog = new UserInputDialog {
-                UserInputInfo = info
+                UserInputInfo = info, 
+                WindowStartupLocation = WindowStartupLocation.CenterOwner
             };
 
             bool? result = await dialog.ShowDialog<bool?>(window);
