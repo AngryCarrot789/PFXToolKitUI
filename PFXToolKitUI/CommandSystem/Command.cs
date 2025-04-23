@@ -41,6 +41,7 @@ public delegate void CommandEventHandler(Command command, CommandEventArgs e);
 /// </summary>
 public abstract class Command {
     private volatile int isExecuting;
+    internal string? registeredCommandId;
 
     /// <summary>
     /// An event fired when this command's executing state changes. This is fired on the main thread
@@ -54,6 +55,8 @@ public abstract class Command {
     /// </summary>
     public bool IsExecuting => this.isExecuting != 0;
 
+    public string RegisteredCommandId => this.registeredCommandId ?? throw new Exception("Command is not registered");
+    
     protected Command(bool allowMultipleExecutions = false) {
         this.AllowMultipleExecutions = allowMultipleExecutions;
     }
@@ -151,6 +154,6 @@ public abstract class Command {
     }
 
     protected virtual Task OnExecutionException(CommandEventArgs args, Exception e) {
-        return IMessageDialogService.Instance.ShowMessage("Command Error", "An exception occurred while executing command", e.GetToString());
+        return IMessageDialogService.Instance.ShowMessage("Command Error", "An exception occurred while executing command", e.ToString());
     }
 }

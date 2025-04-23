@@ -94,6 +94,7 @@ public sealed class CommandManager {
         }
 
         this.commands[id] = new CommandEntry(command);
+        command.registeredCommandId = id;
     }
 
     /// <summary>

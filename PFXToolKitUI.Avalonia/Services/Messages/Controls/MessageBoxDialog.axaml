@@ -6,7 +6,9 @@
                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls"
                    mc:Ignorable="d"
                    Width="350" Height="150"
+                   MaxWidth="800" MaxHeight="800"
                    Title="Caption Here"
+                   CanResize="False"
                    TitleBarBrush="{DynamicResource ABrush.Tone4.Background.Static}"
                    WindowStartupLocation="CenterOwner">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
