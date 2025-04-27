@@ -24,23 +24,57 @@ using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
-using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils.Destroying;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Icons;
 
 public class GeometryIconImpl : AbstractAvaloniaIcon {
-    public readonly string[] Elements;
-    public readonly IColourBrush? TheFillBrush;
-    public readonly IColourBrush? TheStrokeBrush;
-    public readonly double StrokeThickness;
+    private readonly GeometryEntryRef[] Elements;
     public readonly StretchMode Stretch;
-
-    private IBrush? myFillBrush, myPenBrush;
-    private IPen? myPen;
-
     private Geometry?[]? geometries;
-    private readonly IDisposable? disposeFillBrush, disposeStrokeBrush;
+
+    private class GeometryEntryRef : IDisposable {
+        private readonly GeometryIconImpl iconImpl;
+        public readonly GeometryEntry entry;
+        public IDisposable? disposeFillBrush, disposeStrokeBrush;
+        public IBrush? myFillBrush, myPenBrush;
+        public IPen? myPen;
+        
+        public GeometryEntryRef(GeometryIconImpl iconImpl, GeometryEntry entry) {
+            this.iconImpl = iconImpl;
+            this.entry = entry;
+            if (entry.Fill is DynamicAvaloniaColourBrush b) {
+                this.disposeFillBrush = b.Subscribe(this.OnFillBrushInvalidated);
+            }
+            else if (entry.Fill != null) {
+                this.myFillBrush = ((AvaloniaColourBrush) entry.Fill).Brush;
+            }
+
+            if (entry.Stroke is DynamicAvaloniaColourBrush s) {
+                this.disposeStrokeBrush = s.Subscribe(this.OnStrokeBrushInvalidated);
+            }
+            else if (entry.Stroke != null) {
+                this.myPenBrush = ((AvaloniaColourBrush) entry.Stroke).Brush;
+            }
+        }
+
+        private void OnFillBrushInvalidated(IBrush? brush) {
+            this.myFillBrush = brush;
+            this.iconImpl.OnRenderInvalidated();
+        }
+
+        private void OnStrokeBrushInvalidated(IBrush? brush) {
+            this.myPenBrush = brush;
+            this.myPen = null;
+            this.iconImpl.OnRenderInvalidated();
+        }
+
+        public void Dispose() {
+            DisposableUtils.Dispose(ref this.disposeFillBrush);
+            DisposableUtils.Dispose(ref this.disposeStrokeBrush);
+        }
+    }
 
     public Geometry?[] Geometries {
         get {
@@ -48,7 +82,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon {
                 this.geometries = new Geometry[this.Elements.Length];
                 for (int i = 0; i < this.Elements.Length; i++) {
                     try {
-                        this.geometries[i] = Geometry.Parse(this.Elements[i]);
+                        this.geometries[i] = Geometry.Parse(this.Elements[i].entry.Geometry);
                     }
                     catch (Exception e) {
                         AppLogger.Instance.WriteLine("Error parsing SVG for svg icon: \n" + e);
@@ -60,58 +94,23 @@ public class GeometryIconImpl : AbstractAvaloniaIcon {
         }
     }
 
-    public GeometryIconImpl(string name, IColourBrush? brush, IColourBrush? stroke, double strokeThickness, string[] svgElements, StretchMode stretch) : base(name) {
-        this.Elements = svgElements;
-        this.TheFillBrush = brush;
-        this.TheStrokeBrush = stroke;
-        this.StrokeThickness = strokeThickness;
+    public GeometryIconImpl(string name, GeometryEntry[] geometry, StretchMode stretch) : base(name) {
+        this.Elements = geometry.Select(e => new GeometryEntryRef(this, e)).ToArray();
         this.Stretch = stretch;
-
-        if (brush is DynamicAvaloniaColourBrush b) {
-            this.disposeFillBrush = b.Subscribe(this.OnFillBrushInvalidated);
-        }
-        else if (brush != null) {
-            this.myFillBrush = ((AvaloniaColourBrush) brush).Brush;
-        }
-
-        if (stroke is DynamicAvaloniaColourBrush s) {
-            this.disposeStrokeBrush = s.Subscribe(this.OnStrokeBrushInvalidated);
-        }
-        else if (stroke != null) {
-            this.myPenBrush = ((AvaloniaColourBrush) stroke).Brush;
-        }
-    }
-
-    private void OnFillBrushInvalidated(IBrush? brush) {
-        this.myFillBrush = brush;
-        this.OnRenderInvalidated();
-    }
-
-    private void OnStrokeBrushInvalidated(IBrush? brush) {
-        this.myPenBrush = brush;
-        this.myPen = null;
-        this.OnRenderInvalidated();
     }
 
     public override void Render(DrawingContext context, Rect size, SKMatrix transform) {
         using DrawingContext.PushedState? state = transform != SKMatrix.Identity ? context.PushTransform(transform.ToAvMatrix()) : null;
 
-        foreach (Geometry? geometry in this.Geometries) {
-            if (geometry != null) {
-                if (this.myPen == null && this.myPenBrush != null) {
-                    this.myPen = new Pen(this.myPenBrush, this.StrokeThickness);
+        Geometry?[] geoArray = this.Geometries;
+        for (int i = 0; i < geoArray.Length; i++) {
+            if (geoArray[i] != null) {
+                GeometryEntryRef geo = this.Elements[i];
+                if (geo.myPen == null && geo.myPenBrush != null) {
+                    geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
                 }
 
-                // Geometry theGeo;
-                // if (theMat == Matrix.Identity) {
-                //     theGeo = geometry;
-                // }
-                // else {
-                //     theGeo = geometry.Clone();
-                //     theGeo.Transform = theGeo.Transform == null || theGeo.Transform.Value == Matrix.Identity ? new MatrixTransform(theMat) : (Transform) new MatrixTransform(theGeo.Transform.Value * theMat);
-                // }
-
-                context.DrawGeometry(this.myFillBrush, this.myPen, geometry);
+                context.DrawGeometry(geo.myFillBrush, geo.myPen, geoArray[i]!);
             }
         }
     }

@@ -82,7 +82,7 @@ public abstract class IconManager {
 
     public abstract Icon RegisterIconUsingBitmap(string name, SKBitmap bitmap);
 
-    public abstract Icon RegisterGeometryIcon(string name, IColourBrush? brush, IColourBrush? stroke, string[] geometry, double strokeThickness = 0.0, StretchMode stretch = StretchMode.None);
+    public abstract Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry, StretchMode stretch = StretchMode.None);
 
     public abstract Icon RegisterEllipseIcon(string name, IColourBrush? fill, IColourBrush? stroke, double radiusX, double radiusY, double strokeThickness = 0.0);
 

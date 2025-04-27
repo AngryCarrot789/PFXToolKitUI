@@ -23,7 +23,6 @@ using Avalonia.Media.Imaging;
 using Avalonia.Media.Immutable;
 using Avalonia.Platform;
 using Avalonia.Skia;
-using PFXToolKitUI.Configurations.Shortcuts.Commands;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
@@ -91,8 +90,8 @@ public class IconManagerImpl : IconManager {
         }
     }
 
-    public override Icon RegisterGeometryIcon(string name, IColourBrush? brush, IColourBrush? stroke, string[] geometry, double strokeThickness = 0.0, StretchMode stretch = StretchMode.None) {
-        return this.RegisterCore(new GeometryIconImpl(name, brush, stroke, strokeThickness, geometry, stretch));
+    public override Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry, StretchMode stretch = StretchMode.None) {
+        return this.RegisterCore(new GeometryIconImpl(name, geometry, stretch));
     }
 
     public override Icon RegisterEllipseIcon(string name, IColourBrush? fill, IColourBrush? stroke, double radiusX, double radiusY, double strokeThickness = 0) {
