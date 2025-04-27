@@ -58,20 +58,20 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
         return this.dispatcher.Invoke(function, ToAvaloniaPriority(priority));
     }
 
-    public Task InvokeAsync(Action action, DispatchPriority priority, CancellationToken token = default) {
-        return this.dispatcher.InvokeAsync(action, ToAvaloniaPriority(priority), token).GetTask();
+    public async Task InvokeAsync(Action action, DispatchPriority priority, CancellationToken token = default) {
+        await this.dispatcher.InvokeAsync(action, ToAvaloniaPriority(priority), token);
     }
 
-    public Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority, CancellationToken token = default) {
-        return this.dispatcher.InvokeAsync(function, ToAvaloniaPriority(priority), token).GetTask();
+    public async Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority, CancellationToken token = default) {
+        return await this.dispatcher.InvokeAsync(function, ToAvaloniaPriority(priority), token);
     }
 
     public void Post(Action action, DispatchPriority priority = DispatchPriority.Default) {
         this.dispatcher.Post(action, ToAvaloniaPriority(priority));
     }
 
-    public Task Process(DispatchPriority priority) {
-        return this.InvokeAsync(EmptyAction, priority);
+    public async Task Process(DispatchPriority priority) {
+        await this.InvokeAsync(EmptyAction, priority);
     }
 
     public void InvokeShutdown() {

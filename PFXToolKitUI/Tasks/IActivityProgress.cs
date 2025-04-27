@@ -26,7 +26,7 @@ public delegate void ActivityProgressEventHandler(IActivityProgress tracker);
 /// </summary>
 public interface IActivityProgress {
     /// <summary>
-    /// Gets or sets if this tracker's completions state is indeterminate
+    /// Gets or sets if this tracker's completions state is indeterminate. True by default
     /// </summary>
     bool IsIndeterminate { get; set; }
 

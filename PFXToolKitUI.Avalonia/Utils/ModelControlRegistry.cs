@@ -51,7 +51,7 @@ public class ModelControlRegistry<TModel, TControl> where TControl : Control whe
 
     public TControl NewInstance(TModel model, bool logBaseTypeScan = true) {
         TControl? control = this.NewInstanceInternal(model, logBaseTypeScan);
-        return control ?? throw new Exception("No such content control for resource type: " + model.GetType().Name);
+        return control ?? throw new Exception("No registered control for model type: " + model.GetType().Name);
     }
 
     private TControl? NewInstanceInternal(TModel model, bool logBaseTypeScan) {
@@ -69,7 +69,7 @@ public class ModelControlRegistry<TModel, TControl> where TControl : Control whe
             if (logBaseTypeScan && !hasLogged) {
                 hasLogged = true;
                 Debugger.Break();
-                Debug.WriteLine("Could not find control for resource type on first try. Scanning base types");
+                Debug.WriteLine("Could not find control for model type on first try. Scanning base types");
             }
         }
 

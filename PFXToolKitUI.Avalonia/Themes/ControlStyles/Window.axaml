@@ -111,7 +111,7 @@
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             IsHitTestVisible="False"/>
-                    <VisualLayerManager Margin="1">
+                    <VisualLayerManager x:Name="PART_VisualLayerManager" Margin="1">
                         <VisualLayerManager.ChromeOverlayLayer>
                             <!--
                             <c:WindowTitleBar x:Name="PART_TitleBar" Height="30"
@@ -123,9 +123,9 @@
                             -->
                         </VisualLayerManager.ChromeOverlayLayer>
                         <DockPanel>
-                            <Panel Height="30" IsHitTestVisible="True" DockPanel.Dock="Top" VerticalAlignment="Top" HorizontalAlignment="Stretch">
+                            <Panel x:Name="PART_TitleBarPanel" Height="30" IsHitTestVisible="True" DockPanel.Dock="Top" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                 <Border IsHitTestVisible="False" Background="{TemplateBinding TitleBarBrush}"/>
-                                <DockPanel x:Name="PART_TitleBar">
+                                <DockPanel x:Name="PART_TitleBar" Focusable="True">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
                                         <Button x:Name="PART_ButtonMinimize" Focusable="False" IsHitTestVisible="True" Width="45" VerticalContentAlignment="Center"
                                                 Background="Transparent" BorderThickness="0" ZIndex="2147483548">
@@ -181,25 +181,5 @@
                 </Panel>
             </ControlTemplate>
         </Setter>
-        <Style Selector="^[WindowState=Normal]">
-            <Style Selector="^/template/ Button#PART_ButtonMaximize">
-                <Setter Property="IsVisible" Value="True"/>
-            </Style>
-            <Style Selector="^/template/ Button#PART_ButtonRestore">
-                <Setter Property="IsVisible" Value="False"/>
-            </Style>
-        </Style>
-        <Style Selector="^[WindowState=Maximized]">
-            <Style Selector="^/template/ Button#PART_ButtonMaximize">
-                <Setter Property="IsVisible" Value="False"/>
-            </Style>
-            <Style Selector="^/template/ Button#PART_ButtonRestore">
-                <Setter Property="IsVisible" Value="True"/>
-            </Style>
-        </Style>
-        <Style Selector="^[WindowState=Minimized]">
-        </Style>
-        <Style Selector="^[WindowState=FullScreen]">
-        </Style>
     </ControlTheme>
 </ResourceDictionary>

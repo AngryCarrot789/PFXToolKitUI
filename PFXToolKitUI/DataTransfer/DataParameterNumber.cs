@@ -22,23 +22,23 @@ using PFXToolKitUI.Utils.Accessing;
 
 namespace PFXToolKitUI.DataTransfer;
 
-public class DataParameterNumber<T> : DataParameter<T>, IRangedParameter<T> where T : INumberBase<T>, IMinMaxValue<T>, IComparable<T> {
+public class DataParameterNumber<T> : DataParameter<T>, IRangedParameter<T> where T : unmanaged, INumberBase<T>, IMinMaxValue<T>, IComparable<T> {
     public T Minimum { get; }
     
     public T Maximum { get; }
     
     public bool HasExplicitRangeLimit { get; }
     
-    public DataParameterNumber(Type ownerType, string name, ValueAccessor<T> accessor) : this(ownerType, name, default(T), accessor) {
+    public DataParameterNumber(Type ownerType, string name, ValueAccessor<T> accessor) : this(ownerType, name, default, accessor) {
     }
 
-    public DataParameterNumber(Type ownerType, string name, T? defValue, ValueAccessor<T> accessor) : this(ownerType, name, defValue, T.MinValue, T.MaxValue, accessor) {
+    public DataParameterNumber(Type ownerType, string name, T defValue, ValueAccessor<T> accessor) : this(ownerType, name, defValue, T.MinValue, T.MaxValue, accessor) {
     }
 
-    public DataParameterNumber(Type ownerType, string name, T? defValue, T minValue, T maxValue, ValueAccessor<T> accessor) : base(ownerType, name, defValue, accessor) {
+    public DataParameterNumber(Type ownerType, string name, T defValue, T minValue, T maxValue, ValueAccessor<T> accessor) : base(ownerType, name, defValue, accessor) {
         if (minValue.CompareTo(maxValue) > 0)
             throw new ArgumentException($"Minimum value exceeds the maximum value: {minValue} > {maxValue}", nameof(minValue));
-        if (defValue != null && (defValue.CompareTo(minValue) < 0 || defValue.CompareTo(maxValue) > 0))
+        if (defValue.CompareTo(minValue) < 0 || defValue.CompareTo(maxValue) > 0)
             throw new ArgumentOutOfRangeException(nameof(defValue), $"Default value ({defValue}) falls out of range of the min/max values ({minValue}/{maxValue})");
         this.Minimum = minValue;
         this.Maximum = maxValue;

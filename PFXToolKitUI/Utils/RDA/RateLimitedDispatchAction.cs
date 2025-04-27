@@ -174,14 +174,14 @@ public abstract class RateLimitedDispatchActionBase {
     }
 
     /// <summary>
-    /// Clears the critical continuation state.
+    /// Clears the critical continuation state. The critical state is used to re-schedule the callback
+    /// when the invoke method is invoked during execution of the callback.
     /// <para>
-    /// This state is used to re-schedule the callback when <see cref="InvokeAsync"/> is invoked during
-    /// execution of the callback.
+    /// By clearing the state, it means the callback won't be rescheduled if the invoke method was invoked during
+    /// the callback execution. This is useful if you have code to handle similar 're-scheduling' behaviour manually.
     /// </para>
     /// <para>
-    /// By clearing the state, it means the callback won't be rescheduled if <see cref="InvokeAsync"/> was invoked during
-    /// the callback execution. This is useful if you have code to handle similar 're-scheduling' behaviour manually
+    /// Beware that there may still a window between this method returning and the invoke method being invoked on another thread
     /// </para>
     /// </summary>
     public void ClearCriticalState() {

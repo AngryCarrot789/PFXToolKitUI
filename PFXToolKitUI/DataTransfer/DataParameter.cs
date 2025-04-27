@@ -348,7 +348,7 @@ public class DataParameter<T> : DataParameter {
     /// <summary>
     /// Gets the default value for this data parameter. For type-specific default values, see <see cref="GetDefaultValue"/>
     /// </summary>
-    public T? DefaultValue { get; }
+    public T DefaultValue { get; }
 
     private class DataParameterValueAccessor : ValueAccessor<T> {
         private readonly DataParameter<T> parameter;
@@ -374,13 +374,10 @@ public class DataParameter<T> : DataParameter {
         }
     }
     
-    public DataParameter(Type ownerType, string name, ValueAccessor<T>? accessor) : base(ownerType, name) {
+    public DataParameter(Type ownerType, string name, T defaultValue, ValueAccessor<T>? accessor) : base(ownerType, name)  {
+        this.DefaultValue = defaultValue;
         this.accessor = accessor ?? new DataParameterValueAccessor(this);
         this.isObjectAccessPreferred = accessor == null || accessor.IsObjectPreferred;
-    }
-
-    public DataParameter(Type ownerType, string name, T? defaultValue, ValueAccessor<T> accessor) : this(ownerType, name, accessor) {
-        this.DefaultValue = defaultValue;
     }
 
     public void OverrideDefaultValue(Type ownerType, T newDefaultValue) {
@@ -389,11 +386,11 @@ public class DataParameter<T> : DataParameter {
         // this.lastResult = default;
     }
 
-    public T? GetDefaultValue(ITransferableData instance) {
+    public T GetDefaultValue(ITransferableData instance) {
         return this.overrideDefaultValue == null ? this.DefaultValue : this.GetDefaultValue(instance.GetType());
     }
 
-    public T? GetDefaultValue(Type type) {
+    public T GetDefaultValue(Type type) {
         if (this.overrideDefaultValue != null) {
             // (Type src, T val)? lastPath = this.lastDef;
             // if (lastPath != null && lastPath.Value.src == type) {

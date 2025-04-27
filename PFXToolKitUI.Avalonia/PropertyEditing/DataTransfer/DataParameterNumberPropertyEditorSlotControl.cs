@@ -27,7 +27,7 @@ namespace PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer;
 /// The base control class for numeric data parameter slots
 /// </summary>
 /// <typeparam name="T">Value type</typeparam>
-public abstract class DataParameterNumberPropertyEditorSlotControl<T> : BaseNumberDraggerDataParamPropEditorSlotControl where T : INumberBase<T>, IMinMaxValue<T>, IComparable<T>, IConvertible {
+public abstract class DataParameterNumberPropertyEditorSlotControl<T> : BaseNumberDraggerDataParamPropEditorSlotControl where T : unmanaged, INumberBase<T>, IMinMaxValue<T>, IComparable<T>, IConvertible {
     public new DataParameterNumberPropertyEditorSlot<T>? SlotModel => (DataParameterNumberPropertyEditorSlot<T>?) base.SlotControl?.Model;
     
     public override double SlotValue {

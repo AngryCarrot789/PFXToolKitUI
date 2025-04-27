@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of FramePFX.
 // 
@@ -17,22 +17,10 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Services.UserInputs;
-
-namespace PFXToolKitUI.Avalonia.Services.UserInputs;
+namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
 /// <summary>
-/// An interface for user input content controls
+/// An event handler for when a window closes.
+/// <param name="window">The sender window</param>
 /// </summary>
-public interface IUserInputContent {
-    void Connect(UserInputDialogView dialog, UserInputInfo info);
-
-    void Disconnect();
-
-    /// <summary>
-    /// Try to focus the primary input field. If nothing exists to focus, this
-    /// returns false which usually results in the confirm or cancel button being focused
-    /// </summary>
-    /// <returns></returns>
-    bool FocusPrimaryInput();
-}
+public delegate void WindowClosedEventHandler(IWindow window);

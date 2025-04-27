@@ -75,8 +75,8 @@ public sealed class ActivityManager : IDisposable {
     /// <summary>
     /// Gets the activity running on this thread
     /// </summary>
-    /// <exception cref="InvalidOperationException">Not called from the activity's startup thread</exception>
-    public ActivityTask CurrentTask => this.threadToTask.Value ?? throw new InvalidOperationException("No task running on this thread");
+    /// <exception cref="InvalidOperationException">No task running on this thread</exception>
+    public ActivityTask CurrentTask => this.threadToTask.Value ?? throw new Exception("No task running on this thread");
 
     /// <summary>
     /// Gets either the current task's activity progress tracker, or the <see cref="EmptyActivityProgress"/> instance (for convenience over null-checks)

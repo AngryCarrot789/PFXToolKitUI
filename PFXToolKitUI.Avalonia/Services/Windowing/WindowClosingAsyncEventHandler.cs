@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of FramePFX.
 // 
@@ -17,22 +17,18 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Services.UserInputs;
+using Avalonia.Controls;
 
-namespace PFXToolKitUI.Avalonia.Services.UserInputs;
+namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
 /// <summary>
-/// An interface for user input content controls
+/// An event handler for when a window is trying to close
+/// <param name="window">The sender window</param>
+/// <param name="reason">The reason for window close</param>
+/// <param name="isCancelled">True when another handler has cancelled the close</param>
 /// </summary>
-public interface IUserInputContent {
-    void Connect(UserInputDialogView dialog, UserInputInfo info);
-
-    void Disconnect();
-
-    /// <summary>
-    /// Try to focus the primary input field. If nothing exists to focus, this
-    /// returns false which usually results in the confirm or cancel button being focused
-    /// </summary>
-    /// <returns></returns>
-    bool FocusPrimaryInput();
-}
+/// <returns>
+/// A task which contains the cancellation boolean. True means do not close,
+/// False means we don't want to stop it from closing (another handler may cancel though)
+/// </returns>
+public delegate Task<bool> WindowClosingAsyncEventHandler(IWindow sender, WindowCloseReason reason, bool isCancelled);

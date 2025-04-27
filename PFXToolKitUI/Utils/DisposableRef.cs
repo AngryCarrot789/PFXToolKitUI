@@ -144,9 +144,9 @@ public class DisposableRef<T> where T : IDisposable {
         this.Value!.Dispose();
     }
 
-    public Task WaitForNoUsages() {
+    public async Task WaitForNoUsages() {
         if (this.usageCount < 1)
-            return Task.CompletedTask;
+            return;
 
         TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
         EventHandler handler = null;
@@ -156,6 +156,6 @@ public class DisposableRef<T> where T : IDisposable {
         };
 
         this.UsageEmpty += handler;
-        return tcs.Task;
+        await tcs.Task;
     }
 }

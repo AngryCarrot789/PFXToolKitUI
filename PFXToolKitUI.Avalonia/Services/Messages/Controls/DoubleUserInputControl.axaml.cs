@@ -32,7 +32,7 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBox.TextProperty, DoubleUserInputInfo.TextAParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBox.TextProperty, DoubleUserInputInfo.TextBParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> footerBinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBlock.TextProperty, BaseTextUserInputInfo.FooterParameter);
-    private UserInputDialog? myDialog;
+    private UserInputDialogView? myDialog;
     private DoubleUserInputInfo? myData;
 
     public DoubleUserInputControl() {
@@ -53,7 +53,7 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         }
     }
 
-    public void Connect(UserInputDialog dialog, UserInputInfo info) {
+    public void Connect(UserInputDialogView dialog, UserInputInfo info) {
         this.myDialog = dialog;
         this.myData = (DoubleUserInputInfo) info;
         this.labelABinder.AttachModel(this.myData);

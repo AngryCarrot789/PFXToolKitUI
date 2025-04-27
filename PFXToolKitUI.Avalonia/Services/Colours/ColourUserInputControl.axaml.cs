@@ -29,7 +29,7 @@ namespace PFXToolKitUI.Avalonia.Services.Colours;
 
 public partial class ColourUserInputControl : UserControl, IUserInputContent {
     private readonly AvaloniaPropertyToDataParameterBinder<ColourUserInputInfo> colourBinder;
-    private UserInputDialog? myDialog;
+    private UserInputDialogView? myDialog;
     private ColourUserInputInfo? myData;
 
     public ColourUserInputControl() {
@@ -45,7 +45,7 @@ public partial class ColourUserInputControl : UserControl, IUserInputContent {
         this.colourBinder.AttachControl(this.PART_ColorView);
     }
 
-    public void Connect(UserInputDialog dialog, UserInputInfo info) {
+    public void Connect(UserInputDialogView dialog, UserInputInfo info) {
         this.myDialog = dialog;
         this.myData = (ColourUserInputInfo) info;
         this.colourBinder.AttachModel(this.myData);

@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of FramePFX.
 // 
@@ -25,8 +25,8 @@ using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.Colours;
 using PFXToolKitUI.Avalonia.Services.Messages.Controls;
+using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
-using PFXToolKitUI.Avalonia.Themes.Controls;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.InputStrokes;
@@ -36,13 +36,13 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services.UserInputs;
 
-public partial class UserInputDialog : WindowEx {
+public partial class UserInputDialogView : WindowingContentControl {
     public static readonly SingleUserInputInfo DummySingleInput = new SingleUserInputInfo("Text Input Here") { Message = "A primary message here", ConfirmText = "Confirm", CancelText = "Cancel", Caption = "The caption here", Label = "The label here" };
     public static readonly DoubleUserInputInfo DummyDoubleInput = new DoubleUserInputInfo("Text A Here", "Text B Here") { Message = "A primary message here", ConfirmText = "Confirm", CancelText = "Cancel", Caption = "The caption here", LabelA = "Label A Here:", LabelB = "Label B Here:" };
 
     public static readonly ModelControlRegistry<UserInputInfo, Control> Registry;
 
-    public static readonly StyledProperty<UserInputInfo?> UserInputInfoProperty = AvaloniaProperty.Register<UserInputDialog, UserInputInfo?>("UserInputInfo");
+    public static readonly StyledProperty<UserInputInfo?> UserInputInfoProperty = AvaloniaProperty.Register<UserInputDialogView, UserInputInfo?>("UserInputInfo");
 
     public UserInputInfo? UserInputInfo {
         get => this.GetValue(UserInputInfoProperty);
@@ -59,12 +59,12 @@ public partial class UserInputDialog : WindowEx {
     /// </summary>
     public bool? DialogResult { get; private set; }
 
-    private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> captionBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(TitleProperty, UserInputInfo.CaptionParameter);
+    private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> captionBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(WindowTitleProperty, UserInputInfo.CaptionParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> messageBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(TextBlock.TextProperty, UserInputInfo.MessageParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> confirmTextBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(ContentProperty, UserInputInfo.ConfirmTextParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> cancelTextBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(ContentProperty, UserInputInfo.CancelTextParameter);
 
-    public UserInputDialog() {
+    public UserInputDialogView() {
         this.InitializeComponent();
         this.captionBinder.AttachControl(this);
         this.messageBinder.AttachControl(this.PART_Message);
@@ -75,30 +75,31 @@ public partial class UserInputDialog : WindowEx {
         this.PART_ConfirmButton.Click += this.OnConfirmButtonClicked;
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
     }
-
-    static UserInputDialog() {
+    
+    static UserInputDialogView() {
         Registry = new ModelControlRegistry<UserInputInfo, Control>();
         Registry.RegisterType<SingleUserInputInfo>(() => new SingleUserInputControl());
         Registry.RegisterType<DoubleUserInputInfo>(() => new DoubleUserInputControl());
         Registry.RegisterType<ColourUserInputInfo>(() => new ColourUserInputControl());
         Registry.RegisterType<KeyStrokeUserInputInfo>(() => new KeyStrokeUserInputControl());
         Registry.RegisterType<MouseStrokeUserInputInfo>(() => new MouseStrokeUserInputControl());
+        UserInputInfoProperty.Changed.AddClassHandler<UserInputDialogView, UserInputInfo?>((o, e) => o.OnUserInputDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    }
 
-        UserInputInfoProperty.Changed.AddClassHandler<UserInputDialog, UserInputInfo?>((o, e) => o.OnUserInputDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
-        WindowOpenedEvent.AddClassHandler<UserInputDialog>((window, e) => {
-            window.PART_DockPanelRoot.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-            Size size = window.PART_DockPanelRoot.DesiredSize;
-            size = new Size(size.Width + 2, Math.Max(size.Height, 43));
-            window.Width = size.Width > 250 ? size.Width : 250;
-            window.Height = size.Height;
-        });
+    protected override void OnWindowOpened() {
+        base.OnWindowOpened();
+        this.Window!.Control.AddHandler(KeyDownEvent, this.OnKeyDown, RoutingStrategies.Tunnel);
+        this.Window.IsResizable = false;
+    }
+
+    protected override void OnWindowClosed() {
+        base.OnWindowClosed();
     }
     
-    protected override void OnKeyDown(KeyEventArgs e) {
-        base.OnKeyDown(e);
-        if (!e.Handled && e.Key == Key.Escape) {
-            this.TryCloseDialog(false);
-        }
+    protected override Size MeasureOverride(Size availableSize) {
+        Size size = base.MeasureOverride(availableSize);
+        size = new Size(size.Width + 2, Math.Max(size.Height, 43));
+        return new Size(Math.Max(size.Width, 250), size.Height);
     }
 
     private void OnMessageTextBlockPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
@@ -106,19 +107,13 @@ public partial class UserInputDialog : WindowEx {
             this.PART_MessageContainer.IsVisible = !string.IsNullOrWhiteSpace(e.GetNewValue<string?>());
         }
     }
-
-    protected override void OnLoaded(RoutedEventArgs e) {
-        base.OnLoaded(e);
-
-        this.PART_DockPanelRoot.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        Size size = this.PART_DockPanelRoot.DesiredSize;
-        size = new Size(size.Width + 2, size.Height + 32);
-        this.Width = size.Width > 250 ? size.Width : 250;
-        this.Height = size.Height;
-        
-        this.InvalidateVisual();
+    
+    private void OnKeyDown(object? sender, KeyEventArgs e) {
+        if (!e.Handled && e.Key == Key.Escape) {
+            this.TryCloseDialog(false);
+        }
     }
-
+    
     private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) => this.TryCloseDialog(true);
 
     private void OnCancelButtonClicked(object? sender, RoutedEventArgs e) => this.TryCloseDialog(false);
@@ -189,45 +184,52 @@ public partial class UserInputDialog : WindowEx {
     /// false if it could not be closed due to a validation error or other error
     /// </returns>
     public bool TryCloseDialog(bool result) {
+        if (this.Window == null) {
+            return false;
+        }
+
         if (result) {
             UserInputInfo? data = this.UserInputInfo;
             if (data == null || data.HasErrors()) {
                 return false;
             }
 
-            this.Close(this.DialogResult = true);
+            this.Window.Close(this.DialogResult = true);
         }
         else {
-            this.Close(this.DialogResult = false);
+            this.Window.Close(this.DialogResult = false);
         }
 
         return true;
     }
-
+    
     /// <summary>
-    /// Shows a new instance of <see cref="UserInputDialog"/> as a dialog, using the given user information to create the content
+    /// Shows a new user input dialog using the given user information to create the content
     /// </summary>
     /// <param name="info">The input info</param>
     /// <returns>A task to await the dialog close result</returns>
     public static async Task<bool?> ShowDialogAsync(UserInputInfo info) {
         Validate.NotNull(info);
-
-        if (IDesktopService.TryGetInstance(out IDesktopService? service) && service.TryGetActiveWindow(out Window? window)) {
-            UserInputDialog dialog = new UserInputDialog {
-                UserInputInfo = info, 
-                WindowStartupLocation = WindowStartupLocation.CenterOwner
+        
+        if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
+            if (!system.TryGetActiveWindow(out IWindow? activeWindow)) {
+                return false;
+            }
+            
+            UserInputDialogView content = new UserInputDialogView() {
+                UserInputInfo = info
             };
-
-            bool? result = await dialog.ShowDialog<bool?>(window);
-            dialog.UserInputInfo = null; // unhook models' event handlers
-            if (result == true && dialog.DialogResult == true) {
+            
+            IWindow dialog = system.CreateWindow(content);
+            bool? result = await dialog.ShowDialog<bool?>(activeWindow);
+            content.UserInputInfo = null; // unhook models' event handlers
+            if (result == true && content.DialogResult == true) {
                 return true;
             }
-
             return result;
         }
         else {
-            await IMessageDialogService.Instance.ShowMessage("Desktop", "Platform is not desktop. This feature cannot be used");
+            await IMessageDialogService.Instance.ShowMessage("Desktop", "No windowing library available");
         }
 
         return null;

@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Shortcuts;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -41,6 +42,11 @@ public class CommandEventArgs {
     public IContextData ContextData { get; }
 
     /// <summary>
+    /// Gets the input stroke that caused a command to execute
+    /// </summary>
+    public IShortcut? Shortcut { get; }
+
+    /// <summary>
     /// Whether this command event was originally caused by a user or not, e.g. via a button/menu click or clicking a check box.
     /// Supply false if this was invoked by, for example, a task or scheduler. A non-user initiated execution usually won't
     /// create error dialogs and may instead log to the console or just throw an exception
@@ -50,12 +56,13 @@ public class CommandEventArgs {
     /// </summary>
     public bool IsUserInitiated { get; }
 
-    public CommandEventArgs(CommandManager manager, IContextData contextData, bool isUserInitiated) {
+    public CommandEventArgs(CommandManager manager, IContextData contextData, IShortcut? shortcut, bool isUserInitiated) {
         if (contextData == null)
             throw new ArgumentNullException(nameof(contextData), "Data context cannot be null");
 
         this.Manager = manager ?? throw new ArgumentNullException(nameof(manager), "Command manager cannot be null");
         this.ContextData = contextData;
+        this.Shortcut = shortcut;
         this.IsUserInitiated = isUserInitiated;
     }
 }

@@ -33,6 +33,6 @@ public class ColourPickerDialogServiceImpl : IColourPickerDialogService {
     }
 
     private static Task<bool?> ShowAsync(ColourUserInputInfo info) {
-        return UserInputDialog.ShowDialogAsync(info);
+        return UserInputDialogView.ShowDialogAsync(info);
     }
 }

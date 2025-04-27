@@ -32,7 +32,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
     private readonly AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo> labelBinder = new AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo>(TextBlock.TextProperty, SingleUserInputInfo.LabelParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo> textBinder = new AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo>(TextBox.TextProperty, SingleUserInputInfo.TextParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo> footerBinder = new AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo>(TextBlock.TextProperty, BaseTextUserInputInfo.FooterParameter);
-    private UserInputDialog? myDialog;
+    private UserInputDialogView? myDialog;
     private SingleUserInputInfo? myData;
 
     public SingleUserInputControl() {
@@ -50,7 +50,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         }
     }
 
-    public void Connect(UserInputDialog dialog, UserInputInfo info) {
+    public void Connect(UserInputDialogView dialog, UserInputInfo info) {
         this.myDialog = dialog;
         this.myData = (SingleUserInputInfo) info;
         this.labelBinder.AttachModel(this.myData);

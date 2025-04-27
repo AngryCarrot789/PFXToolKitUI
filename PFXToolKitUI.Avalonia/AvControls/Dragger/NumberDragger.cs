@@ -554,7 +554,9 @@ public class NumberDragger : RangeBase {
 
         if (this.LockCursorOnDrag && IDesktopService.TryGetInstance(out IDesktopService? service)) {
             PixelPoint sp = this.PointToScreen(this.lastClickPos);
-            service.SetCursorPosition(sp.X, sp.Y);
+            if (!service.SetCursorPosition(sp.X, sp.Y) && !DoubleUtils.AreClose(newValue, oldValue)) {
+                this.lastMouseMove = point;
+            }
         }
         else if (!DoubleUtils.AreClose(newValue, oldValue)) {
             this.lastMouseMove = point;

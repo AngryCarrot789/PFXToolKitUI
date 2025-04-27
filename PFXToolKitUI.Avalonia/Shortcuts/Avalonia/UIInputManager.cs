@@ -23,6 +23,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using PFXToolKitUI.Avalonia.Utils;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
@@ -31,7 +32,7 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 /// A class which manages the WPF inputs and global focus scopes. This class also dispatches input events to the shortcut system
 /// </summary>
 public class UIInputManager {
-    public delegate void FocusedPathChangedEventHandler(string? oldPath, string? newPath);
+    public delegate void FocusedPathChangedEventHandler(string? oldPath, string? newPath, bool isCausedByFocusPathPropertyChanging);
 
     private static readonly AttachedProperty<AvaloniaShortcutInputProcessor?> ShortcutProcessorProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, AvaloniaShortcutInputProcessor?>("ShortcutProcessor");
 
@@ -92,9 +93,7 @@ public class UIInputManager {
 
     static UIInputManager() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-        WindowBase.IsActiveProperty.Changed.AddClassHandler<WindowBase, bool>((o, args) => {
-            OnWindowActivated(o, args.NewValue.GetValueOrDefault());
-        });
+        WindowBase.IsActiveProperty.Changed.AddClassHandler<WindowBase, bool>((o, args) => OnWindowActivated(o, args.NewValue.GetValueOrDefault()));
         InputElement.GotFocusEvent.AddClassHandler<TopLevel>((s, e) => OnFocusChanged(s, e, false), handledEventsToo: true);
         InputElement.LostFocusEvent.AddClassHandler<TopLevel>((s, e) => OnFocusChanged(s, e, true), handledEventsToo: true);
 
@@ -107,6 +106,8 @@ public class UIInputManager {
         InputElement.PointerPressedEvent.AddClassHandler<TopLevel>(OnTopLevelPointerPressed, handledEventsToo: true);
         InputElement.PointerReleasedEvent.AddClassHandler<TopLevel>(OnTopLevelPreviewPointerReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
         InputElement.PointerReleasedEvent.AddClassHandler<TopLevel>(OnTopLevelPointerReleased, handledEventsToo: true);
+
+        FocusPathProperty.Changed.AddClassHandler<AvaloniaObject, string?>(OnFocusPathChanged);
 
         IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextBox), new StyledPropertyMetadata<bool>(true));
         IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextPresenter), new StyledPropertyMetadata<bool>(true));
@@ -211,59 +212,61 @@ public class UIInputManager {
 
     #region Focus managing
 
-    private static void OnFocusChanged(TopLevel sender, RoutedEventArgs e, bool lost) {
+    private static void OnWindowActivated(WindowBase window, bool isActive) {
+        if (isActive && GetCurrentFocusedElement(window) == null) {
+            bool isFocusable = window.Focusable;
+            if (!isFocusable) {
+                window.Focusable = true;
+            }
+            
+            window.Focus(NavigationMethod.Pointer);
+            if (!isFocusable) {
+                window.Focusable = false;
+            }
+        }
+    }
+    
+    private static void OnFocusChanged(TopLevel topLevel, RoutedEventArgs e, bool lost) {
         InputElement? element = e.Source as InputElement;
         if (element == null) {
             return;
         }
 
-        WeakReference? last = sender.GetValue(LastFocusedElementProperty);
+        WeakReference? last = topLevel.GetValue(LastFocusedElementProperty);
         if (last != null)
             last.Target = null; // Does this help the GC a bit?
 
-        WeakReference? curr = sender.GetValue(CurrentFocusedElementProperty);
-        sender.SetValue(LastFocusedElementProperty, curr);
-        sender.SetValue(CurrentFocusedElementProperty, lost ? null : new WeakReference(element));
-
-        Debug.WriteLine($"Focus changed: '{GetLastFocusedElement(sender)?.GetType().Name ?? "null"}' -> '{GetCurrentFocusedElement(sender)?.GetType().Name ?? "null"}'");
+        WeakReference? curr = topLevel.GetValue(CurrentFocusedElementProperty);
+        topLevel.SetValue(LastFocusedElementProperty, curr);
+        topLevel.SetValue(CurrentFocusedElementProperty, lost ? null : new WeakReference(element));
+        Debug.WriteLine($"Focus changed: '{GetLastFocusedElement(topLevel)?.GetType().Name ?? "null"}' -> '{GetCurrentFocusedElement(topLevel)?.GetType().Name ?? "null"}'");
 
         string? oldPath = Instance.FocusedPath;
         string? newPath = lost ? null : GetFocusPath(element);
         if (oldPath != newPath) {
             Instance.FocusedPath = newPath;
-            OnFocusedPathChanged?.Invoke(oldPath, newPath);
-            UpdateFocusGroup(element, newPath);
+            OnFocusedPathChanged?.Invoke(oldPath, newPath, false);
+            UpdateCurrentlyFocusedObject(element, newPath);
         }
     }
     
-    private static void OnWindowActivated(TopLevel window, bool isActivated) {
-        WeakReference? curr = window.GetValue(CurrentFocusedElementProperty);
-        if (isActivated) {
-            if (curr != null && curr.Target != null) {
-                return;
-            }
-        }
-        else if (curr == null || curr.Target == null) {
+    private static void OnFocusPathChanged(AvaloniaObject obj, AvaloniaPropertyChangedEventArgs<string?> e) {
+        string? oldPath = e.OldValue.GetValueOrDefault();
+        if (Instance.FocusedPath != oldPath) {
             return;
         }
         
-        WeakReference? last = window.GetValue(LastFocusedElementProperty);
-        if (last != null)
-            last.Target = null; // Does this help the GC a bit?
-
-        window.SetValue(LastFocusedElementProperty, null);
-        window.SetValue(CurrentFocusedElementProperty, isActivated ? new WeakReference(window) : null);
-
-        string oldFocus = GetLastFocusedElement(window)?.GetType().Name ?? "null";
-        string newFocus = GetCurrentFocusedElement(window)?.GetType().Name ?? "null";
-        Debug.WriteLine($"Focus changed: '{oldFocus}' -> '{newFocus}'");
-
-        string? oldPath = Instance.FocusedPath;
-        string? newPath = isActivated ? GetFocusPath(window) : null;
-        if (oldPath != newPath) {
+        string? newPath = e.NewValue.GetValueOrDefault();
+        if (oldPath == newPath) {
+            return;
+        }
+        
+        TopLevel? topLevel = obj as TopLevel ?? (obj as Visual)?.GetVisualRoot() as TopLevel; 
+        if (topLevel != null && GetCurrentFocusedElement(topLevel) == obj) {
             Instance.FocusedPath = newPath;
-            OnFocusedPathChanged?.Invoke(oldPath, newPath);
-            UpdateFocusGroup(window, newPath);
+            OnFocusedPathChanged?.Invoke(oldPath, newPath, false);
+            UpdateCurrentlyFocusedObject(obj, newPath);
+            Debug.WriteLine($"Focus Path swapped for '{obj.GetType().Name}'");
         }
     }
 
@@ -284,7 +287,7 @@ public class UIInputManager {
     /// </summary>
     /// <param name="target">Target/focused element which now has focus</param>
     /// <param name="newPath"></param>
-    public static void UpdateFocusGroup(AvaloniaObject target, string? newPath) {
+    public static void UpdateCurrentlyFocusedObject(AvaloniaObject target, string? newPath) {
         object? lastFocused = CurrentlyFocusedObject.Target;
         if (lastFocused != null) {
             CurrentlyFocusedObject.Target = null;

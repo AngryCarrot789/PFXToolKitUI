@@ -32,9 +32,9 @@ public interface IMessageDialogService {
     /// <param name="caption">The window titlebar message</param>
     /// <param name="message">The main message content</param>
     /// <param name="buttons">The buttons to show</param>
-    /// <param name="defaultButtons"></param>
+    /// <param name="defaultButton"></param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButtons = MessageBoxResult.None);
+    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None);
 
     /// <summary>
     /// Shows a dialog message
@@ -44,7 +44,7 @@ public interface IMessageDialogService {
     /// <param name="message">The main message content</param>
     /// <param name="buttons">The buttons to show</param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButtons = MessageBoxResult.None);
+    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None);
 
     /// <summary>
     /// Shows a message box dialog that is dynamically customisable; 3 buttons, caption, header and message

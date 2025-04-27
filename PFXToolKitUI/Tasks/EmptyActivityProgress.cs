@@ -25,16 +25,14 @@ namespace PFXToolKitUI.Tasks;
 public class EmptyActivityProgress : IActivityProgress {
     public static readonly IActivityProgress Instance = new EmptyActivityProgress();
 
-    bool IActivityProgress.IsIndeterminate { get => default; set { } }
-    string IActivityProgress.Caption { get => default; set { } }
-    string IActivityProgress.Text { get => default; set { } }
+    bool IActivityProgress.IsIndeterminate { get => false; set { } }
+    string? IActivityProgress.Caption { get => null; set { } }
+    string? IActivityProgress.Text { get => null; set { } }
     CompletionState IActivityProgress.CompletionState { get; } = new EmptyCompletionState();
 
     event ActivityProgressEventHandler IActivityProgress.IsIndeterminateChanged { add { } remove { } }
     event ActivityProgressEventHandler IActivityProgress.CaptionChanged { add { } remove { } }
     event ActivityProgressEventHandler IActivityProgress.TextChanged { add { } remove { } }
-
-    private int stackCount; // used to track possible bugs
 
     public EmptyActivityProgress() { }
 }

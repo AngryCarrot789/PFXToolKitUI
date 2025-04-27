@@ -17,19 +17,16 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia.Controls;
-using PFXToolKitUI.Avalonia.Services;
+using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Configurations;
 
 namespace PFXToolKitUI.Avalonia.Configurations;
 
 public class ConfigurationDialogServiceImpl : IConfigurationDialogService {
-    public Task ShowConfigurationDialog(ConfigurationManager configurationManager) {
-        if (IDesktopService.TryGetInstance(out IDesktopService? service) && service.TryGetActiveWindow(out Window? window)) {
-            ConfigurationDialog dialog = new ConfigurationDialog(configurationManager);
-            return dialog.ShowDialog(window);
+    public async Task ShowConfigurationDialog(ConfigurationManager configurationManager) {
+        if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out IWindow? activeWindow)) {
+            IWindow window = system.CreateWindow(new ConfigurationDialogView(configurationManager));
+            await window.ShowDialog(activeWindow);
         }
-
-        return Task.CompletedTask;
     }
 }

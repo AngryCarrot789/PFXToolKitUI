@@ -48,7 +48,7 @@ public class KeyboardShortcut : IKeyboardShortcut {
 
     public bool IsMouse => false;
 
-    public bool IsEmpty => this.keyStrokes.Count <= 0;
+    public bool IsEmpty => this.keyStrokes.Count < 1;
 
     public bool HasSecondaryStrokes => this.keyStrokes.Count > 1;
 

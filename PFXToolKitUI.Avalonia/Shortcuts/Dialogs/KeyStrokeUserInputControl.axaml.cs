@@ -40,7 +40,7 @@ public partial class KeyStrokeUserInputControl : UserControl, IUserInputContent 
         CanUpdateModel = false
     };
 
-    private UserInputDialog? myDialog;
+    private UserInputDialogView? myDialog;
 
     public KeyStrokeUserInputControl() {
         this.InitializeComponent();
@@ -65,7 +65,7 @@ public partial class KeyStrokeUserInputControl : UserControl, IUserInputContent 
         }
     }
 
-    public void Connect(UserInputDialog dialog, UserInputInfo info) {
+    public void Connect(UserInputDialogView dialog, UserInputInfo info) {
         this.InputInfo = (KeyStrokeUserInputInfo) info;
         this.myDialog = dialog;
         this.keyStrokeBinder.AttachModel(this.InputInfo);

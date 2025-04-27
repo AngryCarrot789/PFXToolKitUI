@@ -41,7 +41,7 @@ public abstract class BaseDataParameterNumberPropertyEditorSlot : DataParameterF
     }
 } 
 
-public class DataParameterNumberPropertyEditorSlot<T> : BaseDataParameterNumberPropertyEditorSlot where T : INumberBase<T>, IMinMaxValue<T>, IComparable<T> {
+public class DataParameterNumberPropertyEditorSlot<T> : BaseDataParameterNumberPropertyEditorSlot where T : unmanaged, INumberBase<T>, IMinMaxValue<T>, IComparable<T> {
     private static readonly T TWO = T.CreateChecked(2);
     
     private T value;

@@ -19,6 +19,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.CommandSystem;
@@ -119,11 +120,12 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the command threw ane exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public Task Execute(string commandId, IContextData context, bool isUserInitiated = true) {
+    public async Task Execute(string commandId, IContextData context, bool isUserInitiated = true) {
         ValidateId(commandId);
-        if (this.commands.TryGetValue(commandId, out CommandEntry? command))
-            return this.Execute(commandId, command.Command, context, isUserInitiated);
-        return Task.CompletedTask;
+        ValidateContext(context);
+        if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
+            await Command.InternalExecute(command.Command, new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+        }
     }
 
     /// <summary>
@@ -133,10 +135,10 @@ public sealed class CommandManager {
     /// <param name="command"></param>
     /// <param name="context"></param>
     /// <param name="isUserInitiated"></param>
-    public Task Execute(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
+    public async Task Execute(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
         ValidateId(commandId);
         ValidateContext(context);
-        return Command.InternalExecute(commandId, command, new CommandEventArgs(this, context, isUserInitiated));
+        await Command.InternalExecute(command, new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
     }
 
     /// <summary>
@@ -146,9 +148,9 @@ public sealed class CommandManager {
     /// <param name="context"></param>
     /// <param name="isUserInitiated"></param>
     /// <returns></returns>
-    public Task Execute(Command command, IContextData context, bool isUserInitiated = true) {
+    public async Task Execute(Command command, IContextData context, bool isUserInitiated = true) {
         ValidateContext(context);
-        return Command.InternalExecute(null, command, new CommandEventArgs(this, context, isUserInitiated));
+        await Command.InternalExecute(command, new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
     }
 
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
@@ -177,7 +179,7 @@ public sealed class CommandManager {
 
     public Executability CanExecute(Command command, IContextData context, bool isUserInitiated = true) {
         ValidateContext(context);
-        return command.CanExecute(new CommandEventArgs(this, context, isUserInitiated));
+        return command.CanExecute(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
     }
 
     /// <summary>

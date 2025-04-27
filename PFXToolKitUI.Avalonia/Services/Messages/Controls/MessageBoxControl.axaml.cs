@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of FramePFX.
 // 
@@ -23,27 +23,26 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
-using PFXToolKitUI.Avalonia.Themes.Controls;
 using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
-public partial class MessageBoxDialog : WindowEx {
-    public static readonly StyledProperty<MessageBoxInfo?> MessageBoxDataProperty = AvaloniaProperty.Register<MessageBoxDialog, MessageBoxInfo?>("MessageBoxData");
+public partial class MessageBoxControl : WindowingContentControl {
+    public static readonly StyledProperty<MessageBoxInfo?> MessageBoxDataProperty = AvaloniaProperty.Register<MessageBoxControl, MessageBoxInfo?>("MessageBoxData");
 
     public MessageBoxInfo? MessageBoxData {
         get => this.GetValue(MessageBoxDataProperty);
         set => this.SetValue(MessageBoxDataProperty, value);
     }
 
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> captionBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TitleProperty, MessageBoxInfo.CaptionParameter);
+    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> captionBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(WindowTitleProperty, MessageBoxInfo.CaptionParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> headerBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TextBlock.TextProperty, MessageBoxInfo.HeaderParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> messageBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TextBlock.TextProperty, MessageBoxInfo.MessageParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> yesOkTextBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(ContentProperty, MessageBoxInfo.YesOkTextParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> noTextBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(ContentProperty, MessageBoxInfo.NoTextParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> cancelTextBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(ContentProperty, MessageBoxInfo.CancelTextParameter);
 
-    public MessageBoxDialog() {
+    public MessageBoxControl() {
         this.InitializeComponent();
         this.captionBinder.AttachControl(this);
         this.headerBinder.AttachControl(this.PART_Header);
@@ -58,14 +57,35 @@ public partial class MessageBoxDialog : WindowEx {
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
     }
 
+    protected override void OnWindowOpened() {
+        base.OnWindowOpened();
+
+        this.Window!.Control.MinHeight = 100;
+        this.Window!.Control.MinWidth = 300;
+        this.Window!.Control.MaxWidth = 800;
+        this.Window!.Control.MaxHeight = 800;
+
+        // this.Window!.IsResizable = false;
+    }
+
+    protected override void OnWindowClosed() {
+        base.OnWindowClosed();
+    }
+
+    protected override Size MeasureOverride(Size availableSize) {
+        Size size = base.MeasureOverride(new Size(800, 800));
+        size = new Size(size.Width, size.Height);
+        return new Size(Math.Max(size.Width, 300), size.Height);
+    }
+
     private void OnHeaderTextBlockPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
         if (e.Property == TextBlock.TextProperty) {
             this.PART_MessageContainer.IsVisible = !string.IsNullOrWhiteSpace(e.GetNewValue<string?>());
         }
     }
 
-    static MessageBoxDialog() {
-        MessageBoxDataProperty.Changed.AddClassHandler<MessageBoxDialog, MessageBoxInfo?>((o, e) => o.OnMessageBoxDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    static MessageBoxControl() {
+        MessageBoxDataProperty.Changed.AddClassHandler<MessageBoxControl, MessageBoxInfo?>((o, e) => o.OnMessageBoxDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
 
     protected override void OnKeyDown(KeyEventArgs e) {
@@ -73,19 +93,6 @@ public partial class MessageBoxDialog : WindowEx {
         if (e.Key == Key.Escape) {
             this.CancelDialog();
         }
-    }
-
-    protected override void OnLoaded(RoutedEventArgs e) {
-        base.OnLoaded(e);
-        this.PART_DockPanelRoot.Measure(new Size(800, 800));
-        Size size = this.PART_DockPanelRoot.DesiredSize;
-        size = new Size(size.Width + 2, size.Height);
-        if (size.Width > 300.0) {
-            this.Width = size.Width;
-        }
-
-        const double TitleBarHeight = 32;
-        this.Height = Math.Max(size.Height + TitleBarHeight, 125);
     }
 
     private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) {
@@ -137,7 +144,7 @@ public partial class MessageBoxDialog : WindowEx {
         }
     }
 
-    private void CancelDialog() => base.Close(null);
+    private void CancelDialog() => base.Window!.Close(null);
 
     private void OnMessageBoxDataChanged(MessageBoxInfo? oldData, MessageBoxInfo? newData) {
         if (oldData != null)
@@ -219,6 +226,6 @@ public partial class MessageBoxDialog : WindowEx {
     /// <param name="result">The dialog result wanted</param>
     /// <returns>True if the dialog was closed, false if it could not be closed due to a validation error or other error</returns>
     public void Close(MessageBoxResult result) {
-        base.Close(result);
+        base.Window!.Close(result);
     }
 }

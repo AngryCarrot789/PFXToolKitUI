@@ -127,12 +127,7 @@ public static class ThemeKeys {
     public const string PFX_Editor_Timeline_ControlSurfaceItem_Background_MouseOver = "ABrush.PFX.Editor.Timeline.ControlSurfaceItem.Background.MouseOver";
     public const string PFX_Editor_Timeline_ControlSurfaceItem_Background_SelectedFocused = "ABrush.PFX.Editor.Timeline.ControlSurfaceItem.Background.SelectedFocused";
     public const string PFX_Editor_Timeline_ControlSurfaceItem_Background_SelectedUnfocused = "ABrush.PFX.Editor.Timeline.ControlSurfaceItem.Background.SelectedUnfocused";
-    public const string PFX_Editor_ResourceManager_TabStrip_Background = "ABrush.PFX.Editor.ResourceManager.TabStrip.Background";
-    public const string PFX_Editor_ResourceManager_TabItem_Background = "ABrush.PFX.Editor.ResourceManager.TabItem.Background";
-    public const string PFX_Editor_ResourceManager_List_Background = "ABrush.PFX.Editor.ResourceManager.List.Background";
-    public const string PFX_Editor_ResourceManager_Tree_Background = "ABrush.PFX.Editor.ResourceManager.Tree.Background";
     public const string PFX_Automation_Active_Fill = "ABrush.PFX.Automation.Active.Fill";
     public const string PFX_TrackAutomation_Active_Fill = "ABrush.PFX.TrackAutomation.Active.Fill";
-    public const string PFX_Editor_Timeline_PlayHeadThumb_Background = "ABrush.PFX.Editor.Timeline.PlayHeadThumb.Background";
     public const string PFX_PropertyEditor_Separator_MouseOverBrush = "ABrush.PFX.PropertyEditor.Separator.MouseOverBrush";
 }

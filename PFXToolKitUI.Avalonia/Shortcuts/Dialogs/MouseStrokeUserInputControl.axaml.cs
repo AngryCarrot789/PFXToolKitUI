@@ -53,7 +53,7 @@ public partial class MouseStrokeUserInputControl : UserControl, IUserInputConten
         }
     }
 
-    public void Connect(UserInputDialog dialog, UserInputInfo info) {
+    public void Connect(UserInputDialogView dialog, UserInputInfo info) {
         this.InputInfo = (MouseStrokeUserInputInfo) info;
         this.mouseStrokeBinder.AttachModel(this.InputInfo);
     }

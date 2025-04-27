@@ -39,9 +39,13 @@ public static class Maths {
     public static float Clamp(float value, float min, float max) => Math.Max(Math.Min(value, max), min);
     public static double Clamp(double value, double min, double max) => Math.Max(Math.Min(value, max), min);
     public static byte Clamp(byte value, byte min, byte max) => Math.Max(Math.Min(value, max), min);
+    public static sbyte Clamp(sbyte value, sbyte min, sbyte max) => Math.Max(Math.Min(value, max), min);
     public static short Clamp(short value, short min, short max) => Math.Max(Math.Min(value, max), min);
+    public static ushort Clamp(ushort value, ushort min, ushort max) => Math.Max(Math.Min(value, max), min);
     public static int Clamp(int value, int min, int max) => Math.Max(Math.Min(value, max), min);
+    public static uint Clamp(uint value, uint min, uint max) => Math.Max(Math.Min(value, max), min);
     public static long Clamp(long value, long min, long max) => Math.Max(Math.Min(value, max), min);
+    public static ulong Clamp(ulong value, ulong min, ulong max) => Math.Max(Math.Min(value, max), min);
     public static decimal Clamp(decimal value, decimal min, decimal max) => Math.Max(Math.Min(value, max), min);
 
     public static int Compare(double a, double b, double tolerance = 0.000001D) {

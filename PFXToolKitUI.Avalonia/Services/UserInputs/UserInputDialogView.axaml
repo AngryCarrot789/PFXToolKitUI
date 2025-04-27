@@ -1,15 +1,13 @@
-﻿<controls:WindowEx x:Class="PFXToolKitUI.Avalonia.Services.UserInputs.UserInputDialog"
-                   xmlns="https://github.com/avaloniaui"
-                   xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                   xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-                   xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-                   xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls"
-                   mc:Ignorable="d"
-                   Width="136" Height="32"
-                   CanResize="False"
-                   Title="Caption Here"
-                   TitleBarBrush="{DynamicResource ABrush.Tone4.Background.Static}"
-                   WindowStartupLocation="CenterOwner">
+﻿<c:WindowingContentControl xmlns="https://github.com/avaloniaui"
+                           xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                           xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                           xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                           xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Services"
+                           mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                           x:Class="PFXToolKitUI.Avalonia.Services.UserInputs.UserInputDialogView"
+                           WindowBorderBrush="DodgerBlue"
+                           WindowTitleBarBrush="{DynamicResource ABrush.Tone4.Background.Static}"
+                           WindowTitle="Message Caption Here">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
         <StackPanel x:Name="PART_MessageContainer" DockPanel.Dock="Top" Margin="10,10,10,0">
             <TextBlock x:Name="PART_Message" Padding="0,0,0,2" Text="Message Here" FontSize="16" Foreground="{DynamicResource ABrush.ColourfulGlyph.Static}" FontWeight="Medium"/>
@@ -53,4 +51,4 @@
                         VerticalContentAlignment="Stretch"
                         HorizontalContentAlignment="Stretch"/>
     </DockPanel>
-</controls:WindowEx>
+</c:WindowingContentControl>

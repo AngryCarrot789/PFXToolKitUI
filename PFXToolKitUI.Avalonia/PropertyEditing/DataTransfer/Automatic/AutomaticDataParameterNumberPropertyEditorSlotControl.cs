@@ -26,7 +26,7 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer.Automatic;
 
-public abstract class AutomaticDataParameterNumberPropertyEditorSlotControl<T> : BaseNumberDraggerDataParamPropEditorSlotControl where T : INumberBase<T>, IMinMaxValue<T>, IComparable<T>, IConvertible {
+public abstract class AutomaticDataParameterNumberPropertyEditorSlotControl<T> : BaseNumberDraggerDataParamPropEditorSlotControl where T : unmanaged, INumberBase<T>, IMinMaxValue<T>, IComparable<T>, IConvertible {
     public new AutomaticNumericDataParameterPropertyEditorSlot<T>? SlotModel => (AutomaticNumericDataParameterPropertyEditorSlot<T>?) base.SlotControl?.Model;
 
     public override double SlotValue {

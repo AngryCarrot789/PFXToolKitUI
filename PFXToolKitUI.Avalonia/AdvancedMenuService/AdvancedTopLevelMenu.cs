@@ -25,6 +25,7 @@ using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
@@ -46,6 +47,7 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
 
     private readonly Dictionary<Type, Stack<Control>> itemCache;
     private InputElement? lastFocus;
+    private ObservableItemProcessorIndexing<ContextEntryGroup>? processor;
 
     public AdvancedTopLevelMenu() {
         this.itemCache = new Dictionary<Type, Stack<Control>>();
@@ -72,29 +74,45 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
             return; // should be impossible... but just in case let's check
         }
 
-        ItemCollection list = this.Items;
-        if (oldValue != null) {
-            for (int i = list.Count - 1; i >= 0; i--) {
-                AdvancedMenuItem entry = (AdvancedMenuItem) list[i]!;
-                Type type = entry.Entry!.GetType();
-                entry.OnRemoving();
-                list.RemoveAt(i);
-                entry.OnRemoved();
-                this.PushCachedItem(type, entry);
-            }
-        }
+        this.processor?.RemoveExistingItems();
+        this.processor?.Dispose();
+        this.processor = null;
 
         if (newValue != null) {
-            int i = 0;
-            foreach (ContextEntryGroup entry in newValue.Items) {
-                AdvancedMenuItem menuItem = (AdvancedMenuItem) this.CreateItem(entry);
-                menuItem.OnAdding(this, this, entry);
-                list.Insert(i++, menuItem);
-                menuItem.ApplyStyling();
-                menuItem.ApplyTemplate();
-                menuItem.OnAdded();
-            }
+            this.processor = ObservableItemProcessor.MakeIndexable(newValue.Items, this.OnItemAdded, this.OnItemRemoved, this.OnItemMoved).AddExistingItems();
         }
+    }
+
+    private void OnItemAdded(object sender, int index, ContextEntryGroup item) {
+        AdvancedMenuItem menuItem = (AdvancedMenuItem) this.CreateItem(item);
+        menuItem.OnAdding(this, this, item);
+        this.Items.Insert(index, menuItem);
+        menuItem.ApplyStyling();
+        menuItem.ApplyTemplate();
+        menuItem.OnAdded();
+    }
+    
+    private void OnItemRemoved(object sender, int index, ContextEntryGroup item) {
+        ItemCollection list = this.Items;
+        this.OnItemRemoved(list, index, (AdvancedMenuItem) list[index]!);
+    }
+    
+    private void OnItemRemoved(ItemCollection items, int index, AdvancedMenuItem item) {
+        Type type = item.Entry!.GetType();
+        item.OnRemoving();
+        items.RemoveAt(index);
+        item.OnRemoved();
+        this.PushCachedItem(type, item);
+    }
+    
+    private void OnItemMoved(object sender, int oldindex, int newindex, ContextEntryGroup item) {
+        ItemCollection list = this.Items;
+        if (newindex < 0 || newindex >= list.Count)
+            throw new IndexOutOfRangeException($"{nameof(newindex)} is not within range: {(newindex < 0 ? "less than zero" : "greater than list length")} ({newindex})");
+        
+        object? removedItem = list[oldindex];
+        list.RemoveAt(oldindex);
+        list.Insert(newindex, removedItem);
     }
 
     protected override void OnSubmenuOpened(RoutedEventArgs e) {

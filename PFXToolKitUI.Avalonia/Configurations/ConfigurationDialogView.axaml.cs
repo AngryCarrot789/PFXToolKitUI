@@ -1,5 +1,5 @@
-// 
-// Copyright (c) 2023-2025 REghZy
+﻿// 
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of FramePFX.
 // 
@@ -20,19 +20,20 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using PFXToolKitUI.Avalonia.Themes.Controls;
+using PFXToolKitUI.Avalonia.Services;
+using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Configurations;
 
-public partial class ConfigurationDialog : WindowEx {
+public partial class ConfigurationDialogView : WindowingContentControl {
     private readonly ConfigurationManager configManager;
     private readonly AsyncRelayCommand ApplyCommand;
     private readonly AsyncRelayCommand ApplyThenCloseCommand;
     private readonly AsyncRelayCommand CancelCommand;
 
-    public ConfigurationDialog(ConfigurationManager manager) {
+    public ConfigurationDialogView(ConfigurationManager manager) {
         this.InitializeComponent();
         this.configManager = manager;
 
@@ -60,7 +61,7 @@ public partial class ConfigurationDialog : WindowEx {
             this.PART_EditorPanel.IsEnabled = false;
 
             await this.configManager.ApplyChangesInHierarchyAsync(null);
-            this.Close(true);
+            this.Window!.Close(true);
         });
 
         this.CancelCommand = new AsyncRelayCommand(async () => {
@@ -70,7 +71,7 @@ public partial class ConfigurationDialog : WindowEx {
             this.PART_EditorPanel.IsEnabled = false;
 
             await this.configManager.RevertLiveChangesInHierarchyAsync(null);
-            this.Close(false);
+            this.Window!.Close(false);
         });
 
         this.PART_ApplyButton.Command = this.ApplyCommand;
@@ -81,15 +82,20 @@ public partial class ConfigurationDialog : WindowEx {
         this.PART_EditorPanel.ConfigurationManager = manager;
     }
 
-    protected override void OnKeyDown(KeyEventArgs e) {
-        base.OnKeyDown(e);
+    protected override void OnWindowOpened() {
+        base.OnWindowOpened();
+        this.Window!.WindowClosing += this.OnWindowClosing;
+        this.Window.Control.KeyDown += this.OnWindowKeyDown;
+    }
+
+    private void OnWindowKeyDown(object? sender, KeyEventArgs e) {
         if (!e.Handled && e.Key == Key.Escape) {
             e.Handled = true;
             this.CancelCommand.Execute(null);
         }
     }
 
-    protected override async Task<bool> OnClosingAsync(WindowCloseReason reason) {
+    private async Task<bool> OnWindowClosing(IWindow sender, WindowCloseReason reason, bool iscancelled) {
         await this.configManager.RevertLiveChangesInHierarchyAsync(null);
         this.PART_EditorPanel.ConfigurationManager = null;
         return false;

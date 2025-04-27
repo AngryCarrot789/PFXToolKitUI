@@ -25,14 +25,12 @@ using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Utils;
-using PFXToolKitUI.AdvancedMenuService;
 
 namespace PFXToolKitUI.Avalonia.Themes.Controls;
 
 public class WindowEx : Window {
     public static readonly StyledProperty<IBrush?> TitleBarBrushProperty = AvaloniaProperty.Register<WindowEx, IBrush?>(nameof(TitleBarBrush));
     public static readonly StyledProperty<TextAlignment> TitleBarTextAlignmentProperty = AvaloniaProperty.Register<WindowEx, TextAlignment>(nameof(TitleBarTextAlignment));
-    public static readonly StyledProperty<TopLevelMenuRegistry?> TitleBarMenuRegistryProperty = AvaloniaProperty.Register<WindowEx, TopLevelMenuRegistry?>(nameof(TitleBarMenuRegistry));
 
     public IBrush? TitleBarBrush {
         get => this.GetValue(TitleBarBrushProperty);
@@ -44,15 +42,12 @@ public class WindowEx : Window {
         set => this.SetValue(TitleBarTextAlignmentProperty, value);
     }
 
-    public TopLevelMenuRegistry? TitleBarMenuRegistry {
-        get => this.GetValue(TitleBarMenuRegistryProperty);
-        set => this.SetValue(TitleBarMenuRegistryProperty, value);
-    }
-
     // Override it here so that any window using WindowEx gets the automatic WindowEx style
     protected override Type StyleKeyOverride => typeof(WindowEx);
 
     private bool isAwaitingClose, isStillAwaiting, userCancelledClose, doFinalClose;
+    private Button? PART_ButtonMinimize, PART_ButtonRestore, PART_ButtonMaximize, PART_ButtonClose;
+    private DockPanel? PART_TitleBar;
 
     public WindowEx() {
         if (AvUtils.TryGetService(out Win32PlatformOptions options)) {
@@ -70,6 +65,53 @@ public class WindowEx : Window {
     }
 
     static WindowEx() {
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e) {
+        base.OnLoaded(e);
+        this.UpdateTitleBar();
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
+        base.OnPropertyChanged(change);
+        if (change.Property == WindowStateProperty || change.Property == CanResizeProperty) {
+            this.UpdateTitleBar();
+        }
+    }
+
+    private void UpdateTitleBar() {
+        if (this.CanResize) {
+            switch (this.WindowState) {
+                case WindowState.Normal:
+                    this.PART_TitleBar!.IsVisible = true;
+                    this.PART_ButtonMaximize!.IsVisible = true;
+                    this.PART_ButtonRestore!.IsVisible = false;
+                break;
+                case WindowState.Maximized:
+                    this.PART_TitleBar!.IsVisible = true;
+                    this.PART_ButtonMaximize!.IsVisible = false;
+                    this.PART_ButtonRestore!.IsVisible = true;
+                break;
+                case WindowState.FullScreen: this.PART_TitleBar!.IsVisible = false; break;
+                default:                     this.PART_TitleBar!.IsVisible = false; break;
+            }
+        }
+        else {
+            switch (this.WindowState) {
+                case WindowState.Normal:
+                    this.PART_TitleBar!.IsVisible = true;
+                    this.PART_ButtonMaximize!.IsVisible = false;
+                    this.PART_ButtonRestore!.IsVisible = false;
+                break;
+                case WindowState.Maximized:
+                    this.PART_TitleBar!.IsVisible = true;
+                    this.PART_ButtonMaximize!.IsVisible = false;
+                    this.PART_ButtonRestore!.IsVisible = true;
+                break;
+                case WindowState.FullScreen: this.PART_TitleBar!.IsVisible = false; break;
+                default:                     this.PART_TitleBar!.IsVisible = false; break;
+            }
+        }
     }
 
     protected sealed override void OnClosing(WindowClosingEventArgs e) {
@@ -110,10 +152,10 @@ public class WindowEx : Window {
             this.isAwaitingClose = false;
         }
 
-        bool postClose = this.isStillAwaiting && !this.userCancelledClose; 
+        bool postClose = this.isStillAwaiting && !this.userCancelledClose;
         this.isStillAwaiting = false;
         this.userCancelledClose = false;
-        
+
         if (postClose) {
             this.doFinalClose = true;
             Dispatcher.UIThread.Post(this.Close);
@@ -131,10 +173,11 @@ public class WindowEx : Window {
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
-        e.NameScope.GetTemplateChild<Button>("PART_ButtonMinimize").Click += OnMinimizeButtonClick;
-        e.NameScope.GetTemplateChild<Button>("PART_ButtonRestore").Click += OnRestoreButtonClick;
-        e.NameScope.GetTemplateChild<Button>("PART_ButtonMaximize").Click += OnMaximizeButtonClick;
-        e.NameScope.GetTemplateChild<Button>("PART_ButtonClose").Click += OnCloseButtonClick;
+        (this.PART_ButtonMinimize = e.NameScope.GetTemplateChild<Button>("PART_ButtonMinimize")).Click += OnMinimizeButtonClick;
+        (this.PART_ButtonRestore = e.NameScope.GetTemplateChild<Button>("PART_ButtonRestore")).Click += OnRestoreButtonClick;
+        (this.PART_ButtonMaximize = e.NameScope.GetTemplateChild<Button>("PART_ButtonMaximize")).Click += OnMaximizeButtonClick;
+        (this.PART_ButtonClose = e.NameScope.GetTemplateChild<Button>("PART_ButtonClose")).Click += OnCloseButtonClick;
+        this.PART_TitleBar = e.NameScope.GetTemplateChild<DockPanel>("PART_TitleBar");
     }
 
     private static void OnMinimizeButtonClick(object? sender, RoutedEventArgs e) {

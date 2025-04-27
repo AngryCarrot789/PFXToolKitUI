@@ -23,22 +23,12 @@ public interface IUserInputDialogService {
     public static IUserInputDialogService Instance => ApplicationPFX.Instance.ServiceManager.GetService<IUserInputDialogService>();
 
     /// <summary>
-    /// Shows an input dialog with a single input field
-    /// </summary>
-    /// <param name="info">The information to present in the dialog</param>
-    /// <returns>
-    /// An async boolean. True when closed successfully (you can accept the result, and trust the
-    /// validation function was run), False when validation fails or the text field is empty and
-    /// empty is disabled, or Null when the dialog closed unexpectedly</returns>
-    Task<bool?> ShowInputDialogAsync(SingleUserInputInfo info);
-
-    /// <summary>
-    /// Shows an input dialog with two input fields
+    /// Shows an input dialog using the given information object
     /// </summary>
     /// <param name="info">The information to present in the dialog</param>
     /// <returns>
     /// An async boolean. True when closed successfully (you can accept the results, and trust the
     /// validation function was run), False when validation fails or the text field is empty and
     /// empty is disabled, or Null when the dialog closed unexpectedly</returns>
-    Task<bool?> ShowInputDialogAsync(DoubleUserInputInfo info);
+    Task<bool?> ShowInputDialogAsync(UserInputInfo info);
 }

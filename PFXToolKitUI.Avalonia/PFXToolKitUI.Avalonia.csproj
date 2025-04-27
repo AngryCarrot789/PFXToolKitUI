@@ -13,11 +13,11 @@
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Avalonia" Version="11.3.0-beta1" />
-      <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.0-beta1" />
-      <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.0-beta1" />
-      <PackageReference Include="Avalonia.Skia" Version="11.3.0-beta1" />
-      <PackageReference Include="Avalonia.Win32" Version="11.3.0-beta1" />
+      <PackageReference Include="Avalonia" Version="11.3.0-rc1" />
+      <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.0-rc1" />
+      <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.0-rc1" />
+      <PackageReference Include="Avalonia.Skia" Version="11.3.0-rc1" />
+      <PackageReference Include="Avalonia.Win32" Version="11.3.0-rc1" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.2.25163.2" />
     </ItemGroup>
 

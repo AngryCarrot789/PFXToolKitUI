@@ -1,17 +1,17 @@
-<c:WindowEx xmlns="https://github.com/avaloniaui"
-            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-            xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls;assembly=PFXToolKitUI.Avalonia"
-            xmlns:configurations1="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
-            mc:Ignorable="d" Width="950" Height="700"
-            x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialog"
-            Title="Settings"
-            Background="{DynamicResource PanelBackground0}"
-            BorderBrush="{DynamicResource PanelBorderBrush}"
-            TitleBarBrush="{DynamicResource ABrush.Tone7.Background.Static}"
-            FontFamily="{StaticResource FontOxanium}" FontWeight="Medium"
-            WindowStartupLocation="CenterScreen">
+﻿<s:WindowingContentControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:cfg="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
+             xmlns:s="clr-namespace:PFXToolKitUI.Avalonia.Services"
+             mc:Ignorable="d" Width="950" Height="700"
+             x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialogView"
+             WindowTitle="Settings"
+             Background="{DynamicResource PanelBackground0}"
+             WindowBorderBrush="{DynamicResource PanelBorderBrush}"
+             WindowTitleBarBrush="{DynamicResource ABrush.Tone7.Background.Static}"
+             FontFamily="{StaticResource FontOxanium}"
+             FontWeight="Medium">
     <DockPanel>
         <Border DockPanel.Dock="Bottom"
                 Background="{DynamicResource ABrush.Tone4.Background.Static}"
@@ -74,6 +74,6 @@
                 </Button>
             </StackPanel>
         </Border>
-        <configurations1:ConfigurationPanelControl x:Name="PART_EditorPanel"/>
+        <cfg:ConfigurationPanelControl x:Name="PART_EditorPanel"/>
     </DockPanel>
-</c:WindowEx>
+</s:WindowingContentControl>

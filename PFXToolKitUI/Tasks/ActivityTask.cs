@@ -176,10 +176,10 @@ public class ActivityTask<T> : ActivityTask {
 
     public new Task<T> Task => (Task<T>) this.theMainTask!;
 
-    protected ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource cts) : base(activityManager, action, activityProgress, cts) {
+    protected ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts) : base(activityManager, action, activityProgress, cts) {
     }
 
-    internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource cts, TaskCreationOptions creationOptions) {
+    internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions) {
         return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new DefaultProgressTracker(), cts), creationOptions);
     }
 

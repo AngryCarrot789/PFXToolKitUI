@@ -17,11 +17,18 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Services.Progressing;
+namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
-public interface IProgressionWindow {
+public interface IWindowContent {
     /// <summary>
-    /// Closes the progression window
+    /// Invoked when the window opens
     /// </summary>
-    void Close();
+    /// <param name="window"></param>
+    void OnOpened(IWindow window);
+    
+    /// <summary>
+    /// Invoked when the window closes
+    /// </summary>
+    /// <param name="window"></param>
+    void OnClosed(IWindow window);
 }

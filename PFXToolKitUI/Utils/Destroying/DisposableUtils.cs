@@ -205,4 +205,49 @@ public static class DisposableUtils {
             }
         }
     }
+
+    /// <summary>
+    /// Dispose a reference to a field and then set it to null
+    /// </summary>
+    /// <param name="disposable">The ref to disposable</param>
+    /// <param name="canThrow">True to allow the disposable to throw, False to swallow the exception and never throw</param>
+    public static void Dispose(ref IDisposable? disposable, bool canThrow = true) {
+        try {
+            if (canThrow) {
+                disposable?.Dispose();
+            }
+            else {
+                try {
+                    disposable?.Dispose();
+                }
+                catch {
+                    // ignored
+                }
+            }
+        }
+        finally {
+            disposable = null;
+        }
+    }
+    
+    /// <summary>
+    /// Dispose an array of disposables and set them to null
+    /// </summary>
+    /// <param name="array">The disposables</param>
+    /// <param name="canThrow">True to allow the disposable to throw, False to swallow the exception and never throw</param>
+    public static void DisposeArray(IDisposable?[] array, bool canThrow = true) {
+        using ErrorList list = new ErrorList("Exception while disposing one or more objects", true, true);
+        for (int i = 0; i < array.Length; i++) {
+            try {
+                array[i]?.Dispose();
+            }
+            catch (Exception e) {
+                if (canThrow)
+                    list.Add(e);
+            }
+            finally {
+                array[i] = null;
+            }
+        }
+    }
 }

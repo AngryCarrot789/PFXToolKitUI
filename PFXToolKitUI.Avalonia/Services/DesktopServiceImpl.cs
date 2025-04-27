@@ -17,11 +17,12 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
-using PFXToolKitUI.Avalonia.AvControls.Dragger;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
@@ -29,8 +30,11 @@ namespace PFXToolKitUI.Avalonia.Services;
 public class DesktopServiceImpl : IDesktopService {
     public Application Application { get; }
 
+    public IClassicDesktopStyleApplicationLifetime ApplicationLifetime { get; }
+    
     public DesktopServiceImpl(Application application) {
         this.Application = application ?? throw new ArgumentNullException(nameof(application));
+        this.ApplicationLifetime = (IClassicDesktopStyleApplicationLifetime?) application.ApplicationLifetime ?? throw new InvalidOperationException("Cannot create desktop service impl when not using classic desktop style");
     }
 
     // At some point, we need to stop using Window and instead rely on "window" wrappers.
@@ -39,6 +43,7 @@ public class DesktopServiceImpl : IDesktopService {
     // single view application, so Window won't work AFAIK. Our wrapper would be a service like IWindowService,
     // which returns IWindow or IDialogWindow (or both merged maybe... still to-do), which wraps a Window on desktop
     // and wraps a hovering window control (placed ontop of the main view) on single view apps
+
     public bool TryGetActiveWindow([NotNullWhen(true)] out Window? window, bool fallbackToMainWindow = true) {
         if (this.Application.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
             return (window = desktop.Windows.FirstOrDefault(x => x.IsActive) ?? (fallbackToMainWindow ? desktop.MainWindow : null)) != null;
@@ -48,10 +53,104 @@ public class DesktopServiceImpl : IDesktopService {
         return false;
     }
 
-    public void SetCursorPosition(int x, int y) {
+    public bool SetCursorPosition(int x, int y) {
         if (OperatingSystem.IsWindows()) {
-            Win32CursorUtils.SetCursorPos(x, y);
+            return Win32CursorUtils.SetCursorPos(x, y);
         }
+
         // TODO: other platforms
+        return false;
+    }
+
+    public bool GetCursorPosition(out int x, out int y) {
+        if (OperatingSystem.IsWindows()) {
+            return Win32CursorUtils.GetCursorPos(out x, out y);
+        }
+
+        // TODO: other platforms
+        x = y = 0;
+        return false;
+    }
+
+    public static class Win32CursorUtils {
+        [StructLayout(LayoutKind.Sequential)]
+        public struct RECT {
+            public int x;
+            public int y;
+            public int w;
+            public int h;
+
+            public RECT(int x, int y, int w, int h) {
+                this.x = x;
+                this.y = y;
+                this.w = w;
+                this.h = h;
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct POINT {
+            public int x;
+            public int y;
+
+            public POINT(int x, int y) {
+                this.x = x;
+                this.y = y;
+            }
+        }
+
+        [DllImport("user32.dll")]
+        private static extern unsafe bool ClipCursor([In] RECT* rect);
+
+        // rect will contain either the current clip or the screen clip
+        [DllImport("user32.dll")]
+        private static extern unsafe bool GetClipCursor([Out] RECT* rect);
+
+        [DllImport("user32.dll")]
+        private static extern unsafe bool SetCursorPos([In] POINT* p);
+
+        [DllImport("user32.dll", EntryPoint = "SetCursorPos")]
+        public static extern bool SetCursorPos(int x, int y);
+
+        [DllImport("user32.dll")]
+        private static extern unsafe bool GetCursorPos([Out] POINT* p);
+
+        /// <summary>
+        /// Whether this application has a logical clip on the cursor (set to true
+        /// when <see cref="SetClip"/> is invoked, and set to false when <see cref="ClearClip"/> is invoked)
+        /// </summary>
+        public static bool IsCursorClipped { get; private set; }
+
+        public static unsafe void SetClip(int x, int y, int width, int height) {
+            RECT rect = new RECT(x, y, width, height);
+            if (!ClipCursor(&rect))
+                throw new Win32Exception();
+            IsCursorClipped = true;
+        }
+
+        public static unsafe void ClearClip() {
+            if (!ClipCursor(null))
+                throw new Win32Exception();
+            IsCursorClipped = false;
+        }
+
+        public static unsafe RECT GetClip() {
+            RECT r;
+            if (!GetClipCursor(&r))
+                throw new Win32Exception();
+            return r;
+        }
+
+        public static unsafe bool GetCursorPos(out int x, out int y) {
+            POINT p;
+            if (!GetCursorPos(&p)) {
+                x = y = 0;
+                return false;
+            }
+
+            x = p.x;
+            y = p.y;
+            return true;
+        }
     }
 }

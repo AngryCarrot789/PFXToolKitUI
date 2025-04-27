@@ -20,7 +20,6 @@
 using System.Diagnostics;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Services.Messaging;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -95,11 +94,11 @@ public abstract class Command {
     /// <param name="e">The command event args, containing info about the current context</param>
     protected abstract Task ExecuteCommandAsync(CommandEventArgs e);
 
-    internal static Task InternalExecute(string? cmdId, Command command, CommandEventArgs e) {
-        return command.ExecuteImpl(cmdId, e);
+    internal static Task InternalExecute(Command command, CommandEventArgs e) {
+        return command.ExecuteImpl(e);
     }
 
-    private async Task ExecuteImpl(string? cmdId, CommandEventArgs args) {
+    private async Task ExecuteImpl(CommandEventArgs args) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
         int executing;
@@ -113,8 +112,14 @@ public abstract class Command {
 
         if (executing < 0)
             Debugger.Break();
-        if (executing == 0)
-            this.ExecutingChanged?.Invoke(this, args);
+        if (executing == 0) {
+            try {
+                this.ExecutingChanged?.Invoke(this, args);
+            }
+            catch {
+                Debugger.Break();
+            }
+        }
 
         try {
             await (this.ExecuteCommandAsync(args) ?? Task.CompletedTask);
@@ -125,7 +130,13 @@ public abstract class Command {
         catch (OperationCanceledException) {
             // ignored
         }
-        catch (Exception e) { // when (!Debugger.IsAttached) {
+        catch (Exception e) {
+            // ONLY USED WHEN CATCH ALL EXCEPTIONS ENABLED
+            // if (Debugger.IsAttached) {
+            //     throw;
+            // }
+
+            Debugger.Break();
             try {
                 await this.OnExecutionException(args, e);
             }
@@ -133,12 +144,20 @@ public abstract class Command {
                 // ignored -- oopsie
             }
         }
+        finally {
+            int value = Interlocked.Decrement(ref this.isExecuting);
+            if (value < 0)
+                Debugger.Break();
 
-        int value = Interlocked.Decrement(ref this.isExecuting);
-        if (value < 0)
-            Debugger.Break();
-        if (value == 0)
-            this.ExecutingChanged?.Invoke(this, args);
+            if (value == 0) {
+                try {
+                    this.ExecutingChanged?.Invoke(this, args);
+                }
+                catch {
+                    Debugger.Break();
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -148,7 +167,7 @@ public abstract class Command {
     /// <param name="args">Command event args</param>
     protected virtual Task OnAlreadyExecuting(CommandEventArgs args) {
         if (args.IsUserInitiated)
-            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete");
+            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete", defaultButton:MessageBoxResult.OK);
 
         return Task.CompletedTask;
     }

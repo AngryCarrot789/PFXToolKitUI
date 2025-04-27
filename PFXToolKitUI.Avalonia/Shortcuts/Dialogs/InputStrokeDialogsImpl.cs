@@ -29,7 +29,7 @@ public class InputStrokeDialogsImpl : IInputStrokeQueryDialogService {
             KeyStroke = keyStroke, Caption = "Key Input Stroke"
         };
 
-        return await UserInputDialog.ShowDialogAsync(info) == true ? info.KeyStroke : null;
+        return await UserInputDialogView.ShowDialogAsync(info) == true ? info.KeyStroke : null;
     }
 
     public async Task<MouseStroke?> ShowGetMouseStrokeDialog(MouseStroke? mouseStroke) {
@@ -37,6 +37,6 @@ public class InputStrokeDialogsImpl : IInputStrokeQueryDialogService {
             MouseStroke = mouseStroke, Caption = "Mouse Input Stroke"
         };
 
-        return await UserInputDialog.ShowDialogAsync(info) == true ? info.MouseStroke : null;
+        return await UserInputDialogView.ShowDialogAsync(info) == true ? info.MouseStroke : null;
     }
 }

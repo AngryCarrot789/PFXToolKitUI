@@ -46,6 +46,11 @@ public abstract class ShortcutManager {
     }
 
     /// <summary>
+    /// Gets the shortcut currently being activated
+    /// </summary>
+    public IShortcut? CurrentlyActivatingShortcut { get; private set; }
+    
+    /// <summary>
     /// An event fired when a <see cref="ShortcutEntry"/>'s shortcut is modified
     /// </summary>
     public event ShortcutModifiedEventHandler<ShortcutEntry>? ShortcutModified;
@@ -188,7 +193,15 @@ public abstract class ShortcutManager {
     /// <param name="inputProcessor">The processor that caused this activation</param>
     /// <param name="shortcutEntry">The shortcut that was activated</param>
     /// <returns>The outcome of the shortcut activation used by the processor's input manager</returns>
-    public bool OnShortcutActivated(ShortcutInputProcessor inputProcessor, ShortcutEntry shortcutEntry) => this.OnShortcutActivatedOverride(inputProcessor, shortcutEntry);
+    public bool OnShortcutActivated(ShortcutInputProcessor inputProcessor, ShortcutEntry shortcutEntry) {
+        try {
+            this.CurrentlyActivatingShortcut = shortcutEntry.Shortcut;
+            return this.OnShortcutActivatedOverride(inputProcessor, shortcutEntry);
+        }
+        finally {
+            this.CurrentlyActivatingShortcut = null;
+        }
+    }
 
     /// <summary>
     /// Further attempts to 'activate' a shortcut

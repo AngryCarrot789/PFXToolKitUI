@@ -23,11 +23,7 @@ using PFXToolKitUI.Services.UserInputs;
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class InputDialogServiceImpl : IUserInputDialogService {
-    public Task<bool?> ShowInputDialogAsync(SingleUserInputInfo info) {
-        return UserInputDialog.ShowDialogAsync(info);
-    }
-
-    public Task<bool?> ShowInputDialogAsync(DoubleUserInputInfo info) {
-        return UserInputDialog.ShowDialogAsync(info);
+    public async Task<bool?> ShowInputDialogAsync(UserInputInfo info) {
+        return await UserInputDialogView.ShowDialogAsync(info);
     }
 }

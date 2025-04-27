@@ -17,24 +17,24 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Services.Messages.Controls;
+using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class MessageDialogServiceImpl : IMessageDialogService {
-    public Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButtons = MessageBoxResult.None) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, message) { Buttons = buttons, DefaultButton = defaultButtons };
+    public async Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None) {
+        MessageBoxInfo info = new MessageBoxInfo(caption, message) { Buttons = buttons, DefaultButton = defaultButton };
         info.SetDefaultButtonText();
-        return this.ShowMessage(info);
+        return await this.ShowMessage(info);
     }
 
-    public Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButtons = MessageBoxResult.None) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, header, message) { Buttons = buttons, DefaultButton = defaultButtons};
+    public async Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None) {
+        MessageBoxInfo info = new MessageBoxInfo(caption, header, message) { Buttons = buttons, DefaultButton = defaultButton };
         info.SetDefaultButtonText();
-        return this.ShowMessage(info);
+        return await this.ShowMessage(info);
     }
 
     public async Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
@@ -49,13 +49,19 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
     private static async Task<MessageBoxResult> ShowMessageMainThread(MessageBoxInfo info) {
         Validate.NotNull(info);
-        if (IDesktopService.TryGetInstance(out IDesktopService? service) && service.TryGetActiveWindow(out Window? window)) {
-            MessageBoxDialog dialog = new MessageBoxDialog {
-                MessageBoxData = info
-            };
-
-            MessageBoxResult? result = await dialog.ShowDialog<MessageBoxResult?>(window);
+        if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out IWindow? activeWindow)) {
+            MessageBoxControl control = new MessageBoxControl() { MessageBoxData = info };
+            
+            IWindow dialog = system.CreateWindow(control);
+            MessageBoxResult? result = await dialog.ShowDialog<MessageBoxResult?>(activeWindow);
+            control.MessageBoxData = null;
+            
             return result ?? MessageBoxResult.None;
+        }
+        else {
+            Console.WriteLine("Warning: no message box library available");
+            Console.WriteLine($"[{info.Caption}] {info.Header}");
+            Console.WriteLine($"  {info.Message}");
         }
 
         return MessageBoxResult.None;

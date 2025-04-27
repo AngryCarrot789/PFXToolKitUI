@@ -82,8 +82,8 @@ public class AppLogger {
     /// Flushes cached entries to our <see cref="entries"/> collection
     /// </summary>
     /// <returns></returns>
-    public Task FlushEntries() {
-        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+    public async Task FlushEntries() {
+        await ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
             LogEntry[] items;
             lock (this.cachedEntries) {
                 items = this.cachedEntries.ToArray();

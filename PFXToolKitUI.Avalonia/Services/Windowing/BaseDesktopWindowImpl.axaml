@@ -1,0 +1,17 @@
+﻿<c:WindowEx x:Class="PFXToolKitUI.Avalonia.Services.Windowing.BaseDesktopWindowImpl" 
+            xmlns="https://github.com/avaloniaui"
+            xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+            xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+            xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+            xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls"
+            mc:Ignorable="d"
+            Title="BaseDesktopWindowImpl"
+            WindowStartupLocation="CenterOwner"
+            VerticalContentAlignment="Stretch"
+            HorizontalContentAlignment="Stretch">
+    <ContentControl x:Name="PART_Content" Focusable="False"
+                    VerticalAlignment="Stretch"
+                    HorizontalAlignment="Stretch"
+                    VerticalContentAlignment="Stretch"
+                    HorizontalContentAlignment="Stretch"/>
+</c:WindowEx>

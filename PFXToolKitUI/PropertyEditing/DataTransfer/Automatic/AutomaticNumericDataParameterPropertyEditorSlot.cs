@@ -36,7 +36,7 @@ namespace PFXToolKitUI.PropertyEditing.DataTransfer.Automatic;
 /// </para>
 /// </summary>
 /// <typeparam name="T">The parameter value type</typeparam>
-public class AutomaticNumericDataParameterPropertyEditorSlot<T> : DataParameterFormattablePropertyEditorSlot where T : INumberBase<T>, IMinMaxValue<T>, IComparable<T> {
+public class AutomaticNumericDataParameterPropertyEditorSlot<T> : DataParameterFormattablePropertyEditorSlot where T : unmanaged, INumberBase<T>, IMinMaxValue<T>, IComparable<T> {
     private static readonly T TWO = T.CreateChecked(2);
     private DragStepProfile stepProfile = DragStepProfile.Percentage;
     protected T myLocalValue;
@@ -49,14 +49,13 @@ public class AutomaticNumericDataParameterPropertyEditorSlot<T> : DataParameterF
         get => this.myLocalValue;
         set {
             this.myLocalValue = value;
-            DataParameter<T> parameter = this.Parameter;
-            IRangedParameter<T>? range = parameter as IRangedParameter<T>;
+            DataParameterNumber<T> parameter = this.Parameter;
             for (int i = 0, c = this.Handlers.Count; i < c; i++) {
                 ITransferableData obj = (ITransferableData) this.Handlers[i];
                 // Set IsAutomatic to false so that the value is no longer auto-calculated by the handlers.
                 // Though there ideally shouldn't be any issue setting it to false after setting the parameter
                 this.IsAutomaticParameter.SetValue(obj, false);
-                parameter.SetValue(obj, range != null ? range.Clamp(value) : value);
+                parameter.SetValue(obj, value);
             }
 
             this.OnValueChanged(false, true);
@@ -84,7 +83,7 @@ public class AutomaticNumericDataParameterPropertyEditorSlot<T> : DataParameterF
     public AutomaticNumericDataParameterPropertyEditorSlot(DataParameter<T> parameter, DataParameterBool isAutomaticParameter, Type applicableType, string displayName, DragStepProfile stepProfile) : base(parameter, applicableType, displayName) {
         this.StepProfile = stepProfile;
         this.IsAutomaticParameter = isAutomaticParameter;
-        this.myLocalValue = (parameter.DefaultValue ?? default(T))!;
+        this.myLocalValue = parameter.DefaultValue;
     }
 
     public override void QueryValueFromHandlers() {

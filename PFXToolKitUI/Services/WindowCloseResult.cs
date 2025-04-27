@@ -17,8 +17,18 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Services.Progressing;
+namespace PFXToolKitUI.Services;
 
-public class IProgressionWindowService {
-    
+/// <summary>
+/// The result of closing a window
+/// </summary>
+public enum WindowCloseResult {
+    /// <summary>
+    /// Window was closed
+    /// </summary>
+    Closed,
+    /// <summary>
+    /// Closing was stopped due to conditions preventing it from closing
+    /// </summary>
+    Cancelled
 }

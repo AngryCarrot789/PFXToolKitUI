@@ -121,9 +121,9 @@ public class HistoryManager {
         }
     }
 
-    public Task PerformUndo() => this.PerformUndoOrRedo(true);
+    public async Task PerformUndo() => await this.PerformUndoOrRedo(true);
 
-    public Task PerformRedo() => this.PerformUndoOrRedo(false);
+    public async Task PerformRedo() => await this.PerformUndoOrRedo(false);
 
     private async Task PerformUndoOrRedo(bool isUndo) {
         this.CheckStateForUndoOrRedo(isUndo);

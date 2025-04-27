@@ -27,12 +27,12 @@ namespace PFXToolKitUI.Shortcuts;
 /// </summary>
 public interface IShortcut {
     /// <summary>
-    /// Whether this shortcut is a keyboard-based shortcut. When false, it may be something else (mouse, joystick, etc)
+    /// Whether this shortcut contains keystrokes.
     /// </summary>
     bool IsKeyboard { get; }
 
     /// <summary>
-    /// Whether this shortcut is a mouse-based shortcut. When false, it may be something else (keyboard, joystick, etc)
+    /// Whether this shortcut contains mouse strokes
     /// </summary>
     bool IsMouse { get; }
 

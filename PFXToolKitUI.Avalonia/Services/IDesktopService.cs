@@ -19,6 +19,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
+using Avalonia.Controls.ApplicationLifetimes;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
@@ -34,7 +35,12 @@ public interface IDesktopService {
     public static bool TryGetInstance([NotNullWhen(true)] out IDesktopService? service) {
         return ApplicationPFX.Instance.ServiceManager.TryGetService(out service);
     }
-    
+
+    /// <summary>
+    /// Gets the classic desktop application lifetime
+    /// </summary>
+    IClassicDesktopStyleApplicationLifetime ApplicationLifetime { get; }
+
     /// <summary>
     /// Tries to get the window that is currently activated (focused), falling back to the main window if allowed
     /// </summary>
@@ -48,5 +54,13 @@ public interface IDesktopService {
     /// </summary>
     /// <param name="x">New Mouse X position</param>
     /// <param name="y">New Mouse X position</param>
-    void SetCursorPosition(int x, int y);
+    bool SetCursorPosition(int x, int y);
+    
+    /// <summary>
+    /// Gets the absolute mouse cursor position
+    /// </summary>
+    /// <param name="x">[out] The X position</param>
+    /// <param name="y">[out] The Y position</param>
+    /// <returns>True if the cursor position was accessed successfully</returns>
+    bool GetCursorPosition(out int x, out int y);
 }
