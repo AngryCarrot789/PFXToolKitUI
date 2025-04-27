@@ -32,6 +32,7 @@ public class GroupBox : HeaderedContentControl {
     public static readonly StyledProperty<double> HeaderContentGapProperty = AvaloniaProperty.Register<GroupBox, double>("HeaderContentGap", 1.0);
     public static readonly StyledProperty<HorizontalAlignment> HorizontalHeaderAlignmentProperty = AvaloniaProperty.Register<GroupBox, HorizontalAlignment>(nameof(HorizontalHeaderAlignment), HorizontalAlignment.Left);
     public static readonly StyledProperty<VerticalAlignment> VerticalHeaderAlignmentProperty = AvaloniaProperty.Register<GroupBox, VerticalAlignment>(nameof(VerticalHeaderAlignment), VerticalAlignment.Center);
+    public static readonly StyledProperty<Thickness> HeaderPaddingProperty = AvaloniaProperty.Register<GroupBox, Thickness>(nameof(HeaderPadding));
 
     public IBrush HeaderBrush {
         get => this.GetValue(HeaderBrushProperty);
@@ -51,6 +52,11 @@ public class GroupBox : HeaderedContentControl {
     public VerticalAlignment VerticalHeaderAlignment {
         get => this.GetValue(VerticalHeaderAlignmentProperty);
         set => this.SetValue(VerticalHeaderAlignmentProperty, value);
+    }
+
+    public Thickness HeaderPadding {
+        get => this.GetValue(HeaderPaddingProperty);
+        set => this.SetValue(HeaderPaddingProperty, value);
     }
 
     public GroupBox() {

@@ -33,7 +33,7 @@ public class ApplicationConfigurationManager : ConfigurationManager {
     private ApplicationConfigurationManager() {
         if (Instance != null)
             throw new InvalidOperationException("Singleton");
-
+        
         this.RootEntry.AddEntry(new ConfigurationEntry() {
             DisplayName = "Keymap", Id = "config.keymap", Page = new ShortcutEditorConfigurationPage(ShortcutManager.Instance)
         });

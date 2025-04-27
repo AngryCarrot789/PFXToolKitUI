@@ -104,7 +104,7 @@ public abstract class ConfigurationPage {
 
     /// <summary>
     /// Invoked when the context is no longer in use, meaning the settings dialog was closed.
-    /// This method is always called and can be used to for example unregistered global event handlers
+    /// This method is always called and can be used to for example unregistered global event handlers.
     /// </summary>
     /// <param name="context">The context that was destroyed</param>
     /// <returns></returns>
@@ -113,9 +113,13 @@ public abstract class ConfigurationPage {
     }
 
     /// <summary>
-    /// Invoked when the active context changes. One of the parameters will be null, unless I forget
+    /// Invoked when our active context changes. One of the parameters will be null, unless I forget
     /// to update this comment. This happens when the page is no longer being viewed (either by the user clicking
     /// another page, or closing the dialog), and so maybe the page shouldn't listen to intense application updates
+    /// <para>
+    /// If this method is ever called, it will always be at least AFTER <see cref="OnContextCreated"/> and BEFORE <see cref="OnContextDestroyed"/>.
+    /// Basically, it will always be called either zero times or at least two times during page lifetime
+    /// </para>
     /// </summary>
     /// <param name="oldContext">The previous context</param>
     /// <param name="newContext">The new context</param>

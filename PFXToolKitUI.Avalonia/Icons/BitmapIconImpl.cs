@@ -21,6 +21,7 @@ using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 using SkiaSharp;
 
@@ -34,11 +35,11 @@ public class BitmapIconImpl : AbstractAvaloniaIcon {
     }
 
     public override void Render(DrawingContext context, Rect size, SKMatrix transform) {
-        using (context.PushTransform(Unsafe.As<SKMatrix, Matrix>(ref transform)))
-            context.DrawImage(this.Bitmap, size);
+        using DrawingContext.PushedState? state = transform != SKMatrix.Identity ? context.PushTransform(transform.ToAvMatrix()) : null;
+        context.DrawImage(this.Bitmap, size);
     }
 
     public override (Size Size, SKMatrix Transform) Measure(Size availableSize, StretchMode stretchMode) {
-        return (this.Bitmap.Size, SKMatrix.Identity);
+        return (((Stretch) (int) stretchMode).CalculateSize(availableSize, this.Bitmap.Size), SKMatrix.Identity);
     }
 }

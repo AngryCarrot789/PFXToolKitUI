@@ -22,10 +22,14 @@
                     <StackPanel Spacing="3"
                                 HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
-                        <local:IconControl x:Name="PART_IconControl" Icon="{TemplateBinding Icon}" Stretch="{TemplateBinding Stretch}"
+                        <local:IconControl x:Name="PART_IconControl" 
+                                           Icon="{TemplateBinding Icon}" 
+                                           Stretch="{TemplateBinding Stretch}"
                                            IsVisible="{TemplateBinding Icon, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
                                            VerticalAlignment="Center" HorizontalAlignment="Center"/>
-                        <ContentPresenter x:Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
+                        <ContentPresenter x:Name="PART_ContentPresenter" 
+                                          Content="{TemplateBinding Content}" 
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
                                           IsVisible="{TemplateBinding Content, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"/>
                     </StackPanel>
                 </Border>

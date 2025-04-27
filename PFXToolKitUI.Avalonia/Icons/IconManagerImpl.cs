@@ -23,9 +23,11 @@ using Avalonia.Media.Imaging;
 using Avalonia.Media.Immutable;
 using Avalonia.Platform;
 using Avalonia.Skia;
+using PFXToolKitUI.Configurations.Shortcuts.Commands;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Icons;
@@ -39,15 +41,38 @@ public class IconManagerImpl : IconManager {
     public IconManagerImpl() {
     }
 
-    public override Icon RegisterIconByFilePath(string name, string filePath, bool lazilyLoad = true) {
+    public Icon RegisterIconUsingStream(string name, Stream stream) {
         Bitmap? bmp = null;
         try {
-            return this.RegisterCore(new BitmapIconImpl(name, bmp = new Bitmap(filePath)));
+            return this.RegisterCore(new BitmapIconImpl(name, bmp = new Bitmap(stream)));
         }
         catch (Exception e) {
-            AppLogger.Instance.WriteLine($"Exception while loading bitmap from file '{filePath}':\n{e}");
+            AppLogger.Instance.WriteLine($"Exception while loading bitmap from stream:{Environment.NewLine}{e.GetToString()}");
             bmp?.Dispose();
             return this.RegisterCore(new EmptyIcon(name));
+        }
+    }
+    
+    public override Icon RegisterIconByFilePath(string name, string filePath, bool lazilyLoad = true) {
+        using BufferedStream stream = new BufferedStream(File.OpenRead(filePath), 4096);
+        return this.RegisterIconUsingStream(name, stream);
+    }
+    
+    public override Icon RegisterIconByUri(string name, Uri uri, bool lazilyLoad = true) {
+        Stream stream;
+        try {
+            stream = AssetLoader.Open(uri);
+        }
+        catch (Exception e) {
+            AppLogger.Instance.WriteLine($"Exception while opening Uri '{uri}' as stream:{Environment.NewLine}{e.GetToString()}");
+            return this.RegisterCore(new EmptyIcon(name));
+        }
+
+        try {
+            return this.RegisterIconUsingStream(name, stream);
+        }
+        finally {
+            stream.Dispose();
         }
     }
 

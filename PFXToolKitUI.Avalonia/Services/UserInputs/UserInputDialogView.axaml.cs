@@ -90,10 +90,16 @@ public partial class UserInputDialogView : WindowingContentControl {
         base.OnWindowOpened();
         this.Window!.Control.AddHandler(KeyDownEvent, this.OnKeyDown, RoutingStrategies.Tunnel);
         this.Window.IsResizable = false;
+        if (this.PART_InputFieldContent.Content is IUserInputContent content) {
+            content.OnWindowOpened();
+        }
     }
 
     protected override void OnWindowClosed() {
         base.OnWindowClosed();
+        if (this.PART_InputFieldContent.Content is IUserInputContent content) {
+            content.OnWindowClosed();
+        }
     }
     
     protected override Size MeasureOverride(Size availableSize) {

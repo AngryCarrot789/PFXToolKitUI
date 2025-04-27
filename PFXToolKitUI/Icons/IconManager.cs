@@ -66,10 +66,19 @@ public abstract class IconManager {
     /// Registers an icon that is based on an image on the disk somewhere
     /// </summary>
     /// <param name="name">A globally identifiable key for the icon</param>
-    /// <param name="filePath"></param>
+    /// <param name="filePath">The file path</param>
     /// <param name="lazilyLoad">True to load only on demand, False to load during the execution of this method (blocking)</param>
     /// <returns></returns>
     public abstract Icon RegisterIconByFilePath(string name, string filePath, bool lazilyLoad = true);
+    
+    /// <summary>
+    /// Registers an icon that is based on an image on the disk somewhere
+    /// </summary>
+    /// <param name="name">A globally identifiable key for the icon</param>
+    /// <param name="uri">The uri</param>
+    /// <param name="lazilyLoad">True to load only on demand, False to load during the execution of this method (blocking)</param>
+    /// <returns></returns>
+    public abstract Icon RegisterIconByUri(string name, Uri uri, bool lazilyLoad = true);
 
     public abstract Icon RegisterIconUsingBitmap(string name, SKBitmap bitmap);
 

@@ -81,4 +81,10 @@ public partial class KeyStrokeUserInputControl : UserControl, IUserInputContent 
         this.InputBox.Focus();
         return true;
     }
+
+    public void OnWindowOpened() {
+    }
+
+    public void OnWindowClosed() {
+    }
 }

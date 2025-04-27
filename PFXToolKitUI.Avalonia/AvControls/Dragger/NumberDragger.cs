@@ -346,6 +346,7 @@ public class NumberDragger : RangeBase {
 
     private void OnTextInputKeyPress(object? sender, KeyEventArgs e) {
         if (e.Key == Key.Enter || e.Key == Key.Escape) {
+            e.Handled = true;
             this.CompleteEdit(e.Key, false);
         }
     }

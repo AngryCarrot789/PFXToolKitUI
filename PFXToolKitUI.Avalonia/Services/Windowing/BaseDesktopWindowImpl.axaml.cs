@@ -47,6 +47,8 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
         set => this.CanResize = value;
     }
 
+    public bool CanAutoSizeToContent { get; set; }
+
     ContentControl IWindow.Control => this;
 
     private readonly List<WindowClosingAsyncEventHandler> closingHandlers = new List<WindowClosingAsyncEventHandler>();
@@ -76,12 +78,13 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
     private Panel? PART_TitleBarPanel;
 
     public IClipboardService? ClipboardService { get; }
-    
+
     public BaseDesktopWindowImpl() {
         this.InitializeComponent();
+        this.CanAutoSizeToContent = true;
         IClipboard? clip = this.Clipboard;
         this.ClipboardService = clip != null ? new ClipboardServiceImpl(clip) : null;
-        using (var token = DataManager.GetContextData(this).BeginChange()) 
+        using (var token = DataManager.GetContextData(this).BeginChange())
             token.Context.Set(ITopLevel.DataKey, this).Set(IWindow.WindowDataKey, this);
     }
 
@@ -99,7 +102,7 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
         this.PART_VisualLayerManager = e.NameScope.GetTemplateChild<VisualLayerManager>("PART_VisualLayerManager");
         this.PART_TitleBarPanel = e.NameScope.GetTemplateChild<Panel>("PART_TitleBarPanel");
     }
-    
+
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
         if (this.isCallingOnOpening) {
@@ -120,30 +123,32 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
         this.StopRendering();
         this.IsClosed = false;
         this.IsOpen = true;
-        
+
         this.isCallingOnOpening = true;
         ((WindowingContentControl) this.PART_Content.Content!).OnOpened(this);
         this.isCallingOnOpening = false;
 
-        SizeToContent sizeToContent = SizeToContent.Manual;
-        if (!this.widthChangeDuringOpen)
-            sizeToContent |= SizeToContent.Width;
-        if (!this.heightChangeDuringOpen)
-            sizeToContent |= SizeToContent.Height;
+        if (this.CanAutoSizeToContent) {
+            SizeToContent sizeToContent = SizeToContent.Manual;
+            if (!this.widthChangeDuringOpen)
+                sizeToContent |= SizeToContent.Width;
+            if (!this.heightChangeDuringOpen)
+                sizeToContent |= SizeToContent.Height;
 
-        this.SizeToContent = sizeToContent;
+            this.SizeToContent = sizeToContent;
+        }
+
         this.InvalidateMeasure();
         this.InvalidateArrange();
         this.UpdateLayout();
-        
-        Thickness vtlMargin = this.PART_VisualLayerManager!.Margin;
-        
-        Size desiredSize = this.DesiredSize;
-        desiredSize = new Size(
-            desiredSize.Width + vtlMargin.Left + vtlMargin.Right, 
-            desiredSize.Height + vtlMargin.Top + vtlMargin.Bottom + this.PART_TitleBarPanel!.Height);
-        
+
         if (this.WindowStartupLocation == WindowStartupLocation.CenterOwner && this.Owner is Window owner) {
+            Thickness vtlMargin = this.PART_VisualLayerManager!.Margin;
+            Size desiredSize = this.DesiredSize;
+            desiredSize = new Size(
+                desiredSize.Width + vtlMargin.Left + vtlMargin.Right,
+                desiredSize.Height + vtlMargin.Top + vtlMargin.Bottom + this.PART_TitleBarPanel!.Height);
+
             Size ownerSize = owner.Bounds.Size;
             Size size = (ownerSize / 2) - (desiredSize / 2);
             this.Position = owner.Position + new PixelPoint((int) size.Width, (int) size.Height);

@@ -29,7 +29,7 @@ namespace PFXToolKitUI.Avalonia.AvControls;
 /// </summary>
 public class IconToggleButton : ToggleButton, IIconButton {
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconToggleButton, Icon?>(nameof(Icon));
-    public static readonly StyledProperty<Stretch> StretchProperty = AvaloniaProperty.Register<IconToggleButton, Stretch>(nameof(Stretch));
+    public static readonly StyledProperty<Stretch> StretchProperty = AvaloniaProperty.Register<IconToggleButton, Stretch>(nameof(Stretch), Stretch.Uniform);
 
     private double? iconW, iconH;
 

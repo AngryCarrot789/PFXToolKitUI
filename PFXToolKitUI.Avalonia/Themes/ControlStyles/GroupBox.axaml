@@ -2,6 +2,99 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls;assembly=PFXToolKitUI.Avalonia"
                     xmlns:cv="clr-namespace:PFXToolKitUI.Avalonia.Themes.Converters">
+    <Design.PreviewWith>
+        <c:GroupBox Grid.Row="5" Width="250"
+                    Background="{DynamicResource PanelBackground3}"
+                    BorderBrush="{DynamicResource PanelBackground0}"
+                    BorderThickness="1"
+                    HorizontalHeaderAlignment="Stretch"
+                    VerticalHeaderAlignment="Stretch">
+            <c:GroupBox.Header>
+                <DockPanel HorizontalSpacing="4">
+                    <ToggleButton x:Name="PART_MemScanExpander" DockPanel.Dock="Right" Width="18" Height="18" Padding="0" VerticalAlignment="Center"
+                                  BorderThickness="0" Background="{DynamicResource ABrush.Tone7.Background.Static}"
+                                  IsChecked="True">
+                        <TextBlock Margin="0,-2,0,0"/>
+                    </ToggleButton>
+                    <TextBlock Text="Memory Scanning Options" VerticalAlignment="Center"/>
+                </DockPanel>
+            </c:GroupBox.Header>
+            <StackPanel IsVisible="{Binding ElementName=PART_MemScanExpander, Path=IsChecked}">
+                <Grid x:Name="PART_Grid_ScanOptions" ColumnDefinitions="50,5,*" RowDefinitions="20,3,20,3,20,3,20,3,20" Margin="3">
+                    <TextBlock Grid.Column="0" Grid.Row="0" Text="Start" VerticalAlignment="Center" Padding="4,0"/>
+                    <TextBlock Grid.Column="0" Grid.Row="2" Text="Length" VerticalAlignment="Center" Padding="4,0"/>
+                    <TextBlock Grid.Column="0" Grid.Row="4" Text="Align" VerticalAlignment="Center" Padding="4,0"/>
+
+                    <Label Grid.Column="2" Grid.Row="0" FontFamily="Consolas" Background="Transparent"
+                           x:Name="PART_ScanOption_StartAddress"
+                           VerticalAlignment="Stretch" VerticalContentAlignment="Center"
+                           HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                           ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Hidden">
+                        <ToolTip.Tip>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="Double click to modify"/>
+                                <LineBreak/>
+                                <Run Text="This is the start of the scanning region."/>
+                                <LineBreak/>
+                                <Run Text="This is also used when Scan Memory Pages is enabled, so you may want to set this to 0 in that case"/>
+                            </TextBlock>
+                        </ToolTip.Tip>
+                    </Label>
+                    <Label Grid.Column="2" Grid.Row="2" FontFamily="Consolas" Background="Transparent"
+                           x:Name="PART_ScanOption_Length"
+                           VerticalAlignment="Stretch" VerticalContentAlignment="Center"
+                           HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                           ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Hidden">
+                        <ToolTip.Tip>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="Double click to modify"/>
+                                <LineBreak/>
+                                <Run Text="This is how many bytes are scanned. The end address (exclusive) is the start address + this value"/>
+                                <LineBreak/>
+                                <Run Text="This is also used when Scan Memory Pages is enabled, so you may want to set this to FFFFFFFF in that case"/>
+                            </TextBlock>
+                        </ToolTip.Tip>
+                    </Label>
+                    <Label Grid.Column="2" Grid.Row="4" FontFamily="Consolas" Background="Transparent"
+                           x:Name="PART_ScanOption_Alignment"
+                           VerticalAlignment="Stretch" VerticalContentAlignment="Center"
+                           HorizontalAlignment="Stretch" HorizontalContentAlignment="Left"
+                           ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Hidden">
+                        <ToolTip.Tip>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="Double click to modify"/>
+                                <LineBreak/>
+                                <Run Text="The address alignment. This is the value continually added to each address during the scan (e.g, if align is 4, we scan address 0, 4, 8, 12, 16)"/>
+                                <LineBreak/>
+                                <Run Text="This is required because if you're scanning for int32, you don't want to read half way through another integer (which would be the case if align was 1, 2 or 3)"/>
+                            </TextBlock>
+                        </ToolTip.Tip>
+                    </Label>
+                    <CheckBox Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="6"
+                              x:Name="PART_ScanOption_PauseConsole"
+                              Content="DEBUG PAUSE while scanning">
+                        <ToolTip.Tip>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="Signal to the Xbox to completely freeze while scanning."/>
+                                <LineBreak/>
+                                <Run Text="This prevents memory changing while scanning and speeds up the scan by a huge factor, especially while running a game"/>
+                            </TextBlock>
+                        </ToolTip.Tip>
+                    </CheckBox>
+                    <CheckBox Grid.Column="0" Grid.ColumnSpan="3" Grid.Row="8"
+                              x:Name="PART_ScanOption_ScanMemoryPages"
+                              Content="Scan Memory Pages">
+                        <ToolTip.Tip>
+                            <TextBlock TextWrapping="Wrap">
+                                <Run Text="Fetches the memory pages from the console and scans those instead of a set memory range"/>
+                            </TextBlock>
+                        </ToolTip.Tip>
+                    </CheckBox>
+                </Grid>
+            </StackPanel>
+        </c:GroupBox>
+    </Design.PreviewWith>
+
     <ControlTheme x:Key="{x:Type c:GroupBox}" TargetType="{x:Type c:GroupBox}">
         <Setter Property="Background" Value="{DynamicResource ABrush.Tone3.Background.Static}"/>
         <Setter Property="HeaderBrush" Value="{DynamicResource GroupBox.Header.Static.Background}"/>
@@ -11,14 +104,15 @@
         <Setter Property="HeaderContentGap" Value="1"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Padding" Value="1"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HeaderPadding" Value="5,2"/>
         <Setter Property="Template">
-            <ControlTemplate>
+            <ControlTemplate TargetType="{x:Type c:GroupBox}">
                 <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
                     <DockPanel>
                         <!-- Using a converter for the border thickness saves having an extra border element -->
                         <!-- in this template, which helps with performance a tiny bit -->
-                        <Border x:Name="PART_Header" Padding="3,3,3,2"
+                        <Border x:Name="PART_Header" Padding="{TemplateBinding HeaderPadding}"
                                 Background="{TemplateBinding HeaderBrush}"
                                 BorderBrush="{TemplateBinding BorderBrush}"
                                 BorderThickness="{TemplateBinding HeaderContentGap, Converter={x:Static cv:GroupBoxGapToThicknessConverter.Instance}}"
@@ -27,13 +121,12 @@
                                               Background="Transparent" BorderBrush="Transparent"
                                               Content="{TemplateBinding Header}"
                                               ContentTemplate="{Binding $parent[Expander].HeaderTemplate}"
-                                              VerticalAlignment="{TemplateBinding VerticalHeaderAlignment}" 
-                                              HorizontalAlignment="{TemplateBinding HorizontalHeaderAlignment}"
-                                              Margin="5,0,5,0"/>
+                                              VerticalAlignment="{TemplateBinding VerticalHeaderAlignment}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalHeaderAlignment}"/>
                         </Border>
-                        <Border x:Name="PART_ContentBorder"
-                                Background="{TemplateBinding Background}">
+                        <Border x:Name="PART_ContentBorder" Background="{TemplateBinding Background}">
                             <ContentPresenter x:Name="PART_ContentPresenter" Background="Transparent" BorderBrush="Transparent"
+                                              Margin="{TemplateBinding Padding}"
                                               Content="{TemplateBinding Content}"
                                               ContentTemplate="{Binding $parent[Expander].ContentTemplate}"/>
                         </Border>

@@ -34,7 +34,7 @@ namespace PFXToolKitUI.Avalonia.AvControls;
 /// </summary>
 public class IconControl : Control {
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconControl, Icon?>(nameof(Icon));
-    public static readonly StyledProperty<Stretch> StretchProperty = Shape.StretchProperty.AddOwner<IconControl>(new StyledPropertyMetadata<Stretch>(Stretch.Uniform));
+    public static readonly StyledProperty<Stretch> StretchProperty = Shape.StretchProperty.AddOwner<IconControl>();
 
     /// <summary>
     /// Gets or sets the icon we use for drawing this control
@@ -132,6 +132,11 @@ public class IconControl : Control {
     }
 
     protected override Size ArrangeOverride(Size finalSize) {
-        return finalSize;
+        if (this.Icon is AbstractAvaloniaIcon icon) {
+            (Size Size, SKMatrix Transform) measure = icon.Measure(finalSize, (StretchMode) this.Stretch);
+            return measure.Size;
+        }
+        
+        return default;
     }
 }

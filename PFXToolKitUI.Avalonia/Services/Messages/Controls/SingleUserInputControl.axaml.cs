@@ -89,6 +89,12 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         return true;
     }
 
+    public void OnWindowOpened() {
+    }
+
+    public void OnWindowClosed() {
+    }
+
     private void UpdateLabelVisibility() => this.PART_Label.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Label);
     private void UpdateFooterVisibility() => this.PART_FooterTextBlock.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Footer);
 

@@ -75,6 +75,11 @@ public interface IWindow : ITopLevel {
     bool IsResizable { get; set; }
 
     /// <summary>
+    /// Gets or sets if auto-sizing the window to the content minimum size is allowed. True by default
+    /// </summary>
+    bool CanAutoSizeToContent { get; set; }
+
+    /// <summary>
     /// Gets the underlying root control represented by this window. For desktop, typically returns
     /// the <see cref="Window"/> instance unless the app forces a single-view windowing system is used
     /// (therefore, never cast this object to a specific derived type unless absolutely certain)
