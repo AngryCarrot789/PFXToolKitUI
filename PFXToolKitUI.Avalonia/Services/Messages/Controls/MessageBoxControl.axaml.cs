@@ -72,12 +72,6 @@ public partial class MessageBoxControl : WindowingContentControl {
         base.OnWindowClosed();
     }
 
-    protected override Size MeasureOverride(Size availableSize) {
-        Size size = base.MeasureOverride(new Size(800, 800));
-        size = new Size(size.Width, size.Height);
-        return new Size(Math.Max(size.Width, 300), size.Height);
-    }
-
     private void OnHeaderTextBlockPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
         if (e.Property == TextBlock.TextProperty) {
             this.PART_MessageContainer.IsVisible = !string.IsNullOrWhiteSpace(e.GetNewValue<string?>());

@@ -26,6 +26,8 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 public class DataObjectWrapper : IDataObjekt {
     private readonly IDataObject mObject;
 
+    public IDataObject RawDataObject => this.mObject;
+    
     public DataObjectWrapper(IDataObject mObject) {
         this.mObject = mObject;
     }

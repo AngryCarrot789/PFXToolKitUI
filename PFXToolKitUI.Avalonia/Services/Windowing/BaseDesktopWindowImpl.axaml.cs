@@ -17,13 +17,19 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Threading.Channels;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Input;
+using Avalonia.Input.Platform;
 using Avalonia.Media;
+using Avalonia.Platform;
+using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.Controls;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Interactivity;
 
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
@@ -72,8 +78,14 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
     private VisualLayerManager? PART_VisualLayerManager;
     private Panel? PART_TitleBarPanel;
 
+    public IClipboardService? ClipboardService { get; }
+    
     public BaseDesktopWindowImpl() {
         this.InitializeComponent();
+        IClipboard? clip = this.Clipboard;
+        this.ClipboardService = clip != null ? new ClipboardServiceImpl(clip) : null;
+        using (var token = DataManager.GetContextData(this).BeginChange()) 
+            token.Context.Set(ITopLevel.DataKey, this).Set(IWindow.WindowDataKey, this);
     }
 
     public BaseDesktopWindowImpl(WindowingContentControl content) : this() {
@@ -184,6 +196,33 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
         }
         else {
             base.Show((BaseDesktopWindowImpl) parent);
+        }
+    }
+
+    private class ClipboardServiceImpl : IClipboardService {
+        private readonly IClipboard clipboard;
+
+        public ClipboardServiceImpl(IClipboard clipboard) {
+            this.clipboard = clipboard;
+        }
+
+        public async Task<string?> GetTextAsync() => await this.clipboard.GetTextAsync();
+
+        public Task SetTextAsync(string? text) => this.clipboard.SetTextAsync(text);
+
+        public Task ClearAsync() => this.clipboard.ClearAsync();
+
+        public Task SetDataObjectAsync(IDataObjekt data) => this.clipboard.SetDataObjectAsync(((DataObjectWrapper) data).RawDataObject);
+
+        public Task FlushAsync() => this.clipboard.FlushAsync();
+
+        public async Task<string[]> GetFormatsAsync() => await this.clipboard.GetFormatsAsync();
+
+        public async Task<object?> GetDataAsync(string format) => await this.clipboard.GetDataAsync(format);
+
+        public async Task<IDataObjekt?> TryGetInProcessDataObjectAsync() {
+            IDataObject? obj = await this.clipboard.TryGetInProcessDataObjectAsync();
+            return obj != null ? new DataObjectWrapper(obj) : null;
         }
     }
 }

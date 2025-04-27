@@ -187,7 +187,12 @@ public abstract class ApplicationPFX : IServiceable {
 
                 await progress.SynchroniseAsync();
             }
-            catch (Exception ex) when (!Debugger.IsAttached) {
+            catch (Exception ex) {
+                Console.WriteLine("Exception during setup:" + Environment.NewLine + ex.GetToString());
+                
+                if (Debugger.IsAttached)
+                    Debugger.Break();
+                
                 await instance.OnSetupFailed(ex);
                 return;
             }

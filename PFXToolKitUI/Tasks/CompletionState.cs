@@ -81,6 +81,17 @@ public abstract class CompletionState {
     /// ]]>
     /// </code>
     /// </para>
+    /// <para>
+    /// And another alternative is:
+    /// <code>
+    /// <![CDATA[
+    /// using var token = activity.CompletionState.PushCompletionRange(0, 1.0 / count);
+    /// for (int i = 0; i < count; i += incr) {
+    ///     activity.CompletionState.OnProgress(incr);
+    /// }
+    /// ]]>
+    /// </code>
+    /// </para>
     /// </summary>
     /// <param name="min">The minimum bound</param>
     /// <param name="max">The maximum bound</param>

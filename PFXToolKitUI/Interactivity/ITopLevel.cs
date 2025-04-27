@@ -17,7 +17,15 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Interactivity.Contexts;
+
 namespace PFXToolKitUI.Interactivity;
 
 public interface ITopLevel {
+    public static readonly DataKey<ITopLevel> DataKey = DataKey<ITopLevel>.Create("PFXTopLevel");
+    
+    /// <summary>
+    /// Gets this window's clipboard service
+    /// </summary>
+    IClipboardService? ClipboardService { get; }
 }

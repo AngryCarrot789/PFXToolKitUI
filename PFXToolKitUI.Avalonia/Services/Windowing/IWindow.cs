@@ -21,13 +21,17 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using PFXToolKitUI.Interactivity;
+using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
 /// <summary>
 /// The base interface for a modal or non-modal window.
 /// </summary>
-public interface IWindow {
+public interface IWindow : ITopLevel {
+    public static readonly DataKey<IWindow> WindowDataKey = DataKey<IWindow>.Create("PFXWindow");
+    
     /// <summary>
     /// Gets the property used to get/set/bind the title text
     /// </summary>
