@@ -29,9 +29,9 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 public class ShortcutIdToGestureConverter : IValueConverter {
     public static ShortcutIdToGestureConverter Instance { get; } = new ShortcutIdToGestureConverter();
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is string path) {
-            return ShortcutIdToGesture(path, null, out string gesture) ? gesture : AvaloniaProperty.UnsetValue;
+            return ShortcutIdToGesture(path, null, out string? gesture) ? gesture : AvaloniaProperty.UnsetValue;
         }
         else if (value is IEnumerable<string> paths) {
             return ShortcutIdToGesture(paths, null, out string gesture) ? gesture : AvaloniaProperty.UnsetValue;
@@ -40,12 +40,12 @@ public class ShortcutIdToGestureConverter : IValueConverter {
         throw new Exception("Value is not a shortcut string");
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) {
         throw new NotImplementedException();
     }
 
-    public static bool ShortcutIdToGesture(string path, string fallback, out string gesture) {
-        ShortcutEntry shortcutEntry = ShortcutManager.Instance?.FindShortcutByPath(path);
+    public static bool ShortcutIdToGesture(string path, string fallback, out string? gesture) {
+        ShortcutEntry? shortcutEntry = ShortcutManager.Instance?.FindShortcutByPath(path);
         if (shortcutEntry == null) {
             return (gesture = fallback) != null;
         }
@@ -55,7 +55,7 @@ public class ShortcutIdToGestureConverter : IValueConverter {
     }
 
     public static bool ShortcutIdToGesture(IEnumerable<string> paths, string fallback, out string gesture) {
-        List<ShortcutEntry> shortcut = ShortcutManager.Instance?.FindShortcutsByPaths(paths).ToList();
+        List<ShortcutEntry>? shortcut = ShortcutManager.Instance?.FindShortcutsByPaths(paths).ToList();
         if (shortcut == null || shortcut.Count < 1) {
             return (gesture = fallback) != null;
         }
@@ -69,8 +69,7 @@ public class ShortcutIdToGestureConverter : IValueConverter {
             List<string> newList = new List<string>();
             foreach (ShortcutEntry sc in shortcuts) {
                 string text = ToString(sc);
-                if (!strokes.Contains(text)) {
-                    strokes.Add(text);
+                if (strokes.Add(text)) {
                     newList.Add(text);
                 }
             }
@@ -94,7 +93,7 @@ public class ShortcutIdToGestureConverter : IValueConverter {
             return KeyStrokeStringConverter.ToStringFunction(ks.KeyCode, ks.Modifiers, ks.IsRelease, false, true);
         }
         else {
-            return stroke.ToString();
+            return stroke?.ToString() ?? "";
         }
     }
 }

@@ -150,7 +150,7 @@ public class UIInputManager {
         // we only want to handle shortcuts in preview events, since we will
         // have the target element but its non-preview typical handler will
         // not have been delivered yet
-        if (!isPreview)
+        if (isPreview || e.Handled)
             return;
 
         Key key = e.Key;
