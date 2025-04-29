@@ -261,8 +261,12 @@ public sealed class SimpleCompletionState : CompletionState {
                 return;
 
             this.myCompletion = value;
-            this.OnCompletionValueChanged();
+            base.OnCompletionValueChanged();
         }
+    }
+
+    public new void OnCompletionValueChanged() {
+        base.OnCompletionValueChanged();
     }
 }
 

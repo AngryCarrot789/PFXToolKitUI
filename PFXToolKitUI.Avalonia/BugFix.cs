@@ -27,7 +27,10 @@ public static class BugFix {
     public static void TextBox_FocusSelectAll(TextBox textBox) {
         textBox.Focus();
         textBox.SelectAll();
-
+        TextBox_UpdateSelection(textBox);
+    }
+    
+    public static void TextBox_UpdateSelection(TextBox textBox) {
         // Fixes an issue with the TextPresenter being rendered before the
         // SelectionStart/SelectionEnd properties update via the TemplateBinding
         // in the TextBox's ControlTheme

@@ -42,14 +42,6 @@ public interface IDesktopService {
     IClassicDesktopStyleApplicationLifetime ApplicationLifetime { get; }
 
     /// <summary>
-    /// Tries to get the window that is currently activated (focused), falling back to the main window if allowed
-    /// </summary>
-    /// <param name="window">The found window</param>
-    /// <param name="fallbackToMainWindow">True to use the main window if no focused window is found</param>
-    /// <returns>True if a window was found</returns>
-    bool TryGetActiveWindow([NotNullWhen(true)] out Window? window, bool fallbackToMainWindow = true);
-
-    /// <summary>
     /// Sets the absolute mouse cursor position
     /// </summary>
     /// <param name="x">New Mouse X position</param>

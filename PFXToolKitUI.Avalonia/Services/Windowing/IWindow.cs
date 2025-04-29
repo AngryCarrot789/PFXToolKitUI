@@ -21,6 +21,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using PFXToolKitUI.Interactivity;
 using PFXToolKitUI.Interactivity.Contexts;
 
@@ -109,6 +110,11 @@ public interface IWindow : ITopLevel {
         get => this.Control.GetValue(this.TitleProperty);
         set => this.Control.SetValue(this.TitleProperty, value);
     }
+    
+    /// <summary>
+    /// Gets the storage provider service this window is linked to
+    /// </summary>
+    IStorageProvider StorageProvider { get; }
 
     event WindowClosingAsyncEventHandler? WindowClosing;
     event WindowClosedEventHandler? WindowClosed;

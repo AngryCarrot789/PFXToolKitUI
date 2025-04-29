@@ -37,22 +37,6 @@ public class DesktopServiceImpl : IDesktopService {
         this.ApplicationLifetime = (IClassicDesktopStyleApplicationLifetime?) application.ApplicationLifetime ?? throw new InvalidOperationException("Cannot create desktop service impl when not using classic desktop style");
     }
 
-    // At some point, we need to stop using Window and instead rely on "window" wrappers.
-    // This is so that we can still use "windows" on platforms that do not support windows.
-    // E.g. using the avalonia linux screen buffer nuget package or whatever it's called, that is a
-    // single view application, so Window won't work AFAIK. Our wrapper would be a service like IWindowService,
-    // which returns IWindow or IDialogWindow (or both merged maybe... still to-do), which wraps a Window on desktop
-    // and wraps a hovering window control (placed ontop of the main view) on single view apps
-
-    public bool TryGetActiveWindow([NotNullWhen(true)] out Window? window, bool fallbackToMainWindow = true) {
-        if (this.Application.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop) {
-            return (window = desktop.Windows.FirstOrDefault(x => x.IsActive) ?? (fallbackToMainWindow ? desktop.MainWindow : null)) != null;
-        }
-
-        window = null;
-        return false;
-    }
-
     public bool SetCursorPosition(int x, int y) {
         if (OperatingSystem.IsWindows()) {
             return Win32CursorUtils.SetCursorPos(x, y);

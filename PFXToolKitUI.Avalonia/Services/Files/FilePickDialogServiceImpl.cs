@@ -20,6 +20,7 @@
 using System.Collections.Immutable;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
+using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Services.FilePicking;
 using PFXToolKitUI.Utils;
 using Path = System.IO.Path;
@@ -39,10 +40,10 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string?> OpenFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        if (!IDesktopService.TryGetInstance(out IDesktopService? service) || !service.TryGetActiveWindow(out Window? window)) {
+        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out IWindow? window)) {
             return null;
         }
-        
+
         string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
         IReadOnlyList<IStorageFile> list = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions() {
             Title = message ?? "Pick a file",
@@ -55,7 +56,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string[]?> OpenMultipleFiles(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        if (!IDesktopService.TryGetInstance(out IDesktopService? service) || !service.TryGetActiveWindow(out Window? window)) {
+        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out IWindow? window)) {
             return null;
         }
 
@@ -71,7 +72,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string?> SaveFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null, bool warnOverwrite = true) {
-        if (!IDesktopService.TryGetInstance(out IDesktopService? service) || !service.TryGetActiveWindow(out Window? window)) {
+        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out IWindow? window)) {
             return null;
         }
 
