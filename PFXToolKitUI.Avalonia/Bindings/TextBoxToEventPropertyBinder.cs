@@ -28,6 +28,13 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
     private readonly Func<IBinder<TModel>, string, Task> updateModel;
     private bool isHandlingChangeModel;
 
+    /// <summary>
+    /// Gets or sets if the model value can be set when the text box loses focus.
+    /// Default is true, which is the recommended value because the user may not
+    /// realise their change was undone since they had to click the Enter key to confirm changes.
+    /// </summary>
+    public bool CanChangeOnLostFocus { get; set; } = true;
+    
     public TextBoxToEventPropertyBinder(string eventName, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task> updateModel) : base(null, eventName) {
         this.getText = getText;
         this.updateModel = updateModel;
@@ -65,7 +72,14 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
     }
 
     private void OnLostFocus(object? sender, RoutedEventArgs e) {
-        this.UpdateControl();
+        if (this.CanChangeOnLostFocus) {
+            if (!this.isHandlingChangeModel) {
+                this.HandleChangeModel();
+            }
+        }
+        else {
+            this.UpdateControl();
+        }
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e) {
@@ -85,8 +99,11 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
                 return;
             }
             
+            TextBox control = (TextBox) this.myControl!;
             this.isHandlingChangeModel = true;
+            control.IsEnabled = false;
             await this.updateModel(this, ((TextBox) this.myControl!).Text ?? "");
+            control.IsEnabled = true;
             this.UpdateControl();
         }
         catch (Exception e) {

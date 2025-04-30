@@ -132,21 +132,6 @@ public abstract class ThemeManager {
 
         // MemEngine specific
         p.AssignMapping("Memory Engine/Status Bar Background", ThemeKeys.PFX_Editor_StatusBar_Background, "The background of the status bar (at the very bottom of the editor window)");
-        p.AssignMapping("Memory Engine/Timeline/Background (Static)", ThemeKeys.PFX_Editor_Timeline_Background, "The background of the bottom part of the timeline (below tracks)");
-        p.AssignMapping("Memory Engine/Timeline/Gap Between Tracks", ThemeKeys.PFX_Editor_Timeline_GapBetweenTracks, "The colour of the gap between each track (and also the bottom border of the last track)");
-        p.AssignMapping("Memory Engine/Timeline/Timestamp Background", ThemeKeys.PFX_Editor_Timeline_TimestampBoard_Background, "The background of the panel where the timestamp indicator is (as in, what shows the current frame time among other info)");
-        p.AssignMapping("Memory Engine/Timeline/Toolbar Background", ThemeKeys.PFX_Editor_Timeline_ToolBar_Background, "The background of the toolbars at the bottom of the timeline and control surface list");
-        p.AssignMapping("Memory Engine/Timeline/Ruler Background", ThemeKeys.PFX_Editor_Timeline_Ruler_Background, "The background of the timeline ruler");
-        p.AssignMapping("Memory Engine/Timeline/Header Background", ThemeKeys.PFX_Editor_Timeline_Header_Background, "The background of the timeline's group box header (which contains the timeline name and a close button)");
-        p.AssignMapping("Memory Engine/Timeline/Track/Background (Static)", ThemeKeys.PFX_Editor_Timeline_Track_Background, "The background of tracks when not selected");
-        p.AssignMapping("Memory Engine/Timeline/Track/Background (Selected)", ThemeKeys.PFX_Editor_Timeline_Track_Background_Selected, "The background of tracks when selected");
-        p.AssignMapping("Memory Engine/Timeline/Control Surface/Background (Static)", ThemeKeys.PFX_Editor_Timeline_ControlSurface_Background, "The background of the track control surface list box");
-        p.AssignMapping("Memory Engine/Timeline/Control Surface/Item Background (Static)", ThemeKeys.PFX_Editor_Timeline_ControlSurfaceItem_Background, "The background of a track control surface item");
-        p.AssignMapping("Memory Engine/Timeline/Control Surface/Item Background (Mouse Over)", ThemeKeys.PFX_Editor_Timeline_ControlSurfaceItem_Background_MouseOver, "The background of the item when the mouse is over it");
-        p.AssignMapping("Memory Engine/Timeline/Control Surface/Item Background (Selected, Focused)", ThemeKeys.PFX_Editor_Timeline_ControlSurfaceItem_Background_SelectedFocused, "The background of the item when it's selected and has UI focus");
-        p.AssignMapping("Memory Engine/Timeline/Control Surface/Item Background (Selected, Unfocused)", ThemeKeys.PFX_Editor_Timeline_ControlSurfaceItem_Background_SelectedUnfocused, "The background of the item when it's selected but does not have UI focus");
-        p.AssignMapping("Memory Engine/Automation/Fill (Active)", ThemeKeys.PFX_Automation_Active_Fill, "The colour for most automation LED indicators and pixels");
-        p.AssignMapping("Memory Engine/Automation/Fill (Track, Active)", ThemeKeys.PFX_TrackAutomation_Active_Fill, "The same as above except only for tracks (to provide some contrast between the two)");
         p.AssignMapping("Memory Engine/Property Editor/Separator Line (Mouse Over)", ThemeKeys.PFX_PropertyEditor_Separator_MouseOverBrush, "The background of the play head thumb");
     }
 

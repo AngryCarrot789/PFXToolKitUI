@@ -114,20 +114,5 @@ public static class ThemeKeys {
     public const string S20Tone8_Border_Disabled = "ABrush.Tone8.Border.Disabled";
 
     public const string PFX_Editor_StatusBar_Background = "ABrush.PFX.Editor.StatusBar.Background";
-    public const string PFX_Editor_Timeline_Background = "ABrush.PFX.Editor.Timeline.Background";
-    public const string PFX_Editor_Timeline_GapBetweenTracks = "ABrush.PFX.Editor.Timeline.GapBetweenTracks";
-    public const string PFX_Editor_Timeline_TimestampBoard_Background = "ABrush.PFX.Editor.Timeline.TimestampBoard.Background";
-    public const string PFX_Editor_Timeline_ToolBar_Background = "ABrush.PFX.Editor.Timeline.ToolBar.Background";
-    public const string PFX_Editor_Timeline_Ruler_Background = "ABrush.PFX.Editor.Timeline.Ruler.Background";
-    public const string PFX_Editor_Timeline_Header_Background = "ABrush.PFX.Editor.Timeline.Header.Background";
-    public const string PFX_Editor_Timeline_Track_Background = "ABrush.PFX.Editor.Timeline.Track.Background";
-    public const string PFX_Editor_Timeline_Track_Background_Selected = "ABrush.PFX.Editor.Timeline.Track.Background.Selected";
-    public const string PFX_Editor_Timeline_ControlSurface_Background = "ABrush.PFX.Editor.Timeline.ControlSurface.Background";
-    public const string PFX_Editor_Timeline_ControlSurfaceItem_Background = "ABrush.PFX.Editor.Timeline.ControlSurfaceItem.Background";
-    public const string PFX_Editor_Timeline_ControlSurfaceItem_Background_MouseOver = "ABrush.PFX.Editor.Timeline.ControlSurfaceItem.Background.MouseOver";
-    public const string PFX_Editor_Timeline_ControlSurfaceItem_Background_SelectedFocused = "ABrush.PFX.Editor.Timeline.ControlSurfaceItem.Background.SelectedFocused";
-    public const string PFX_Editor_Timeline_ControlSurfaceItem_Background_SelectedUnfocused = "ABrush.PFX.Editor.Timeline.ControlSurfaceItem.Background.SelectedUnfocused";
-    public const string PFX_Automation_Active_Fill = "ABrush.PFX.Automation.Active.Fill";
-    public const string PFX_TrackAutomation_Active_Fill = "ABrush.PFX.TrackAutomation.Active.Fill";
     public const string PFX_PropertyEditor_Separator_MouseOverBrush = "ABrush.PFX.PropertyEditor.Separator.MouseOverBrush";
 }

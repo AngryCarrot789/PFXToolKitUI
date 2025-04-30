@@ -39,6 +39,13 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     private bool isHandlingChangeModel;
 
     /// <summary>
+    /// Gets or sets if the model value can be set when the text box loses focus.
+    /// Default is true, which is the recommended value because the user may not
+    /// realise their change was undone since they had to click the Enter key to confirm changes.
+    /// </summary>
+    public bool CanChangeOnLostFocus { get; set; } = true;
+
+    /// <summary>
     /// Creates a new data parameter property binder
     /// </summary>
     /// <param name="property">The avalonia property, which is used to listen to property changes</param>
@@ -89,7 +96,14 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     }
 
     private void OnLostFocus(object? sender, RoutedEventArgs e) {
-        this.UpdateControl();
+        if (this.CanChangeOnLostFocus) {
+            if (!this.isHandlingChangeModel) {
+                this.HandleChangeModel();
+            }
+        }
+        else {
+            this.UpdateControl();
+        }
     }
 
     private void OnKeyDown(object? sender, KeyEventArgs e) {
@@ -110,8 +124,11 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
                 return;
             }
             
+            TextBox control = (TextBox) this.myControl!;
             this.isHandlingChangeModel = true;
-            value = await this.Convert(((TextBox) this.myControl!).Text ?? "");
+            control.IsEnabled = false;
+            value = await this.Convert(control.Text ?? "");
+            control.IsEnabled = true;
             if (!value.HasValue) {
                 return;
             }
