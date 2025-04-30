@@ -1,0 +1,36 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Activities"
+             xmlns:ac="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
+             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="24"
+             x:Class="PFXToolKitUI.Avalonia.Activities.ActivityStatusBarControl"
+             IsVisible="False">
+    <DockPanel Background="Transparent" PointerReleased="InputElement_OnPointerReleased">
+        <ac:IconButton DockPanel.Dock="Right" x:Name="PART_CancelActivityButton"
+                       Width="16" Height="16"
+                       Padding="4,1" Margin="0"
+                       BorderThickness="0"
+                       CornerRadius="2"
+                       ToolTip.Tip="Cancels this activity"
+                       Click="PART_CancelActivityButton_OnClick"
+                       Icon="{x:Static local:ActivityStatusBarControl.CrossIcon}"
+                       IconMaxHeight="12" IconMaxWidth="12" 
+                       VerticalContentAlignment="Center" 
+                       HorizontalContentAlignment="Center"/>
+
+        <TextBlock x:Name="PART_TaskCaption"
+                   DockPanel.Dock="Left"
+                   Text="Activity Text"
+                   VerticalAlignment="Center"
+                   Padding="2,0"/>
+
+        <local:ActivityProgressBar DockPanel.Dock="Right" x:Name="PART_ActiveBgProgress"
+                                   Height="9" BorderThickness="0" InitialWidth="150"
+                                   Background="{DynamicResource ABrush.Tone3.Background.Static}"
+                                   Minimum="0" Maximum="1" Value="0"
+                                   Margin="5,0"/>
+        <Border/>
+    </DockPanel>
+</UserControl>

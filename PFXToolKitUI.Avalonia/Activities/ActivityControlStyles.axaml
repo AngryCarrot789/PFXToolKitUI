@@ -1,0 +1,88 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Activities"
+                    xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls">
+    <ControlTheme x:Key="{x:Type local:ActivityListControl}" TargetType="{x:Type local:ActivityListControl}">
+        <Setter Property="Background" Value="{DynamicResource ABrush.Tone2.Background.Static}"/>
+        <Setter Property="HeaderBrush" Value="{DynamicResource ABrush.Tone5.Background.Static}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone6.Border.Static}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type local:ActivityListControl}">
+                <Border x:Name="PART_Border"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        TextElement.Foreground="{TemplateBinding Foreground}">
+                    <ScrollViewer>
+                        <ItemsControl x:Name="PART_ItemsControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="1"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <Design.PreviewWith>
+        <StackPanel>
+            <local:ActivityListItem/>
+            <local:ActivityListItem/>
+            <local:ActivityListItem/>
+        </StackPanel>
+    </Design.PreviewWith>
+
+    <ControlTheme x:Key="{x:Type local:ActivityListItem}" TargetType="{x:Type local:ActivityListItem}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="6,4"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type local:ActivityListItem}">
+                <Border>
+                    <StackPanel Margin="{TemplateBinding Padding}" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                        <TextBlock x:Name="PART_Header" Text="Header Here" Padding="1,3"/>
+                        <DockPanel HorizontalSpacing="5">
+                            <avc:IconButton DockPanel.Dock="Right"
+                                            x:Name="PART_CancelActivityButton"
+                                            Width="16" Height="16"
+                                            Padding="4,1" Margin="0"
+                                            BorderThickness="0"
+                                            CornerRadius="2"
+                                            ToolTip.Tip="Cancels this activity"
+                                            Icon="{x:Static local:ActivityStatusBarControl.CrossIcon}"
+                                            IconMaxHeight="12" IconMaxWidth="12"
+                                            VerticalContentAlignment="Center"
+                                            HorizontalContentAlignment="Center"/>
+                            <ProgressBar x:Name="PART_ProgressBar" Minimum="0" Maximum="1" Height="9" BorderThickness="0" CornerRadius="2"/>
+                        </DockPanel>
+                        <TextBlock x:Name="PART_Footer" Text="Footer Here" Padding="1,3" Foreground="{DynamicResource ABrush.Foreground.Disabled}"/>
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+        <Style Selector="^:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Item.MouseOver.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Item.MouseOver.Border}"/>
+        </Style>
+
+        <Style Selector="^:selected[IsFocused=False] /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Item.SelectedInactive.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Item.SelectedInactive.Border}"/>
+        </Style>
+
+        <Style Selector="^:selected[IsFocused=True] /template/ ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Item.SelectedActive.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource Item.SelectedActive.Border}"/>
+        </Style>
+    </ControlTheme>
+</ResourceDictionary>

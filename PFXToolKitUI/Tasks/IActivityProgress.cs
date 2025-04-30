@@ -62,4 +62,14 @@ public interface IActivityProgress {
     /// Gets this activity's completion state
     /// </summary>
     CompletionState CompletionState { get; }
+
+    void SetCaptionAndText(string value) {
+        this.Caption = value;
+        this.Text = value;
+    }
+    
+    void SetCaptionAndText(string caption, string text) {
+        this.Caption = caption;
+        this.Text = text;
+    }
 }

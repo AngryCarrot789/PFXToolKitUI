@@ -32,7 +32,14 @@ public sealed class ActivityManager : IDisposable {
     private readonly List<ActivityTask> tasks;
     private readonly object locker;
 
+    /// <summary>
+    /// Fired when a task is started. This is fired on the main thread
+    /// </summary>
     public event TaskManagerTaskEventHandler? TaskStarted;
+    
+    /// <summary>
+    /// Fired when a task is completed in any way. Fired on the main thread
+    /// </summary>
     public event TaskManagerTaskEventHandler? TaskCompleted;
 
     public IReadOnlyList<ActivityTask> ActiveTasks => this.tasks;

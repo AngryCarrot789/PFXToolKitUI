@@ -55,6 +55,9 @@ public class ActivityTask {
     /// </summary>
     public bool IsCancelled => this.state == 3;
 
+    /// <summary>
+    /// Returns true when this task can be cancelled via <see cref="TryCancel"/>
+    /// </summary>
     public bool IsDirectlyCancellable => this.cancellationTokenSource != null;
 
     /// <summary>
