@@ -19,10 +19,12 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Services;
 using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Themes;
@@ -141,6 +143,8 @@ public partial class ActivityStatusBarControl : UserControl {
         if (!e.Handled && this.IsPointerOver) {
             if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
                 IWindow window = system.CreateWindow(new ActivityListWindowingContent());
+                window.IsResizable = false;
+                window.CanAutoSizeToContent = false;
                 window.Show(system.GetActiveWindowOrNull());
             }
         }

@@ -30,7 +30,7 @@ using PFXToolKitUI.Interactivity;
 
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
-public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
+public partial class DesktopWindowImpl : WindowEx, IWindow {
     StyledProperty<string?> IWindow.TitleProperty => WindowEx.TitleProperty;
     StyledProperty<TextAlignment> IWindow.TitleBarTextAlignmentProperty => WindowEx.TitleBarTextAlignmentProperty;
     StyledProperty<IBrush?> IWindow.TitleBarBrushProperty => WindowEx.TitleBarBrushProperty;
@@ -79,7 +79,7 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
 
     public IClipboardService? ClipboardService { get; }
 
-    public BaseDesktopWindowImpl() {
+    public DesktopWindowImpl() {
         this.InitializeComponent();
         this.CanAutoSizeToContent = true;
         IClipboard? clip = this.Clipboard;
@@ -88,7 +88,7 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
             token.Context.Set(ITopLevel.DataKey, this).Set(IWindow.WindowDataKey, this);
     }
 
-    public BaseDesktopWindowImpl(WindowingContentControl content) : this() {
+    public DesktopWindowImpl(WindowingContentControl content) : this() {
         this.PART_Content.Content = content;
         // First we measure the initial minimum size the content takes up
         this.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
@@ -189,7 +189,7 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
 
     public async Task<TResult?> ShowDialog<TResult>(IWindow parent) {
         this.IsOpenAsDialog = true;
-        return await base.ShowDialog<TResult?>((BaseDesktopWindowImpl) parent);
+        return await base.ShowDialog<TResult?>((DesktopWindowImpl) parent);
     }
 
     public void Show(IWindow? parent) {
@@ -197,7 +197,7 @@ public partial class BaseDesktopWindowImpl : WindowEx, IWindow {
             base.Show();
         }
         else {
-            base.Show((BaseDesktopWindowImpl) parent);
+            base.Show((DesktopWindowImpl) parent);
         }
     }
 

@@ -125,7 +125,7 @@
                         <DockPanel>
                             <Panel x:Name="PART_TitleBarPanel" Height="30" IsHitTestVisible="True" DockPanel.Dock="Top" VerticalAlignment="Top" HorizontalAlignment="Stretch">
                                 <Border IsHitTestVisible="False" Background="{TemplateBinding TitleBarBrush}"/>
-                                <DockPanel x:Name="PART_TitleBar" Focusable="True">
+                                <DockPanel x:Name="PART_TitleBar">
                                     <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" DockPanel.Dock="Right">
                                         <Button x:Name="PART_ButtonMinimize" Focusable="False" IsHitTestVisible="True" Width="45" VerticalContentAlignment="Center"
                                                 Background="Transparent" BorderThickness="0" ZIndex="2147483548">

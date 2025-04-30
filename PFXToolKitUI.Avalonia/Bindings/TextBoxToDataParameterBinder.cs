@@ -1,0 +1,138 @@
+﻿// 
+// Copyright (c) 2024-2025 REghZy
+// 
+// This file is part of FramePFX.
+// 
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU Lesser General Public
+// License as published by the Free Software Foundation; either
+// version 3 of the License, or (at your option) any later version.
+// 
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+// Lesser General Public License for more details.
+// 
+// You should have received a copy of the GNU General Public License
+// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// 
+
+using Avalonia.Controls;
+using Avalonia.Data;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using PFXToolKitUI.DataTransfer;
+
+namespace PFXToolKitUI.Avalonia.Bindings;
+
+/// <summary>
+/// Same as <see cref="AvaloniaPropertyToDataParameterBinder{TModel}"/> but does not map the control property
+/// back to the model value directly, but instead tries to parse the control value to a model compatible value
+/// </summary>
+/// <typeparam name="TModel">Type of model</typeparam>
+/// <typeparam name="T">The type of value</typeparam>
+public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinder<TModel> where TModel : class, ITransferableData {
+    public DataParameter? Parameter { get; }
+
+    private readonly Func<T, string?>? ParamToProp;
+    private readonly Func<string, Task<Optional<T>>> Convert;
+    private bool isHandlingChangeModel;
+
+    /// <summary>
+    /// Creates a new data parameter property binder
+    /// </summary>
+    /// <param name="property">The avalonia property, which is used to listen to property changes</param>
+    /// <param name="parameter">The data parameter, used to listen to model value changes</param>
+    /// <param name="parameterToProperty">Converts the parameter value to an appropriate property value (e.g. double to string)</param>
+    /// <param name="propertyToParameter">Converts the property value back to the parameter value (e.g. string to double, or returns validation error)</param>
+    public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<string, Task<Optional<T>>> convert) : base(null) {
+        this.Parameter = parameter;
+        this.ParamToProp = parameterToProperty;
+        this.Convert = convert;
+    }
+
+    protected override void UpdateModelOverride() {
+    }
+
+    protected override void UpdateControlOverride() {
+        if (this.IsFullyAttached) {
+            T newValue = ((DataParameter<T>) this.Parameter!).GetValue(this.Model);
+            ((TextBox) this.myControl!).Text = this.ParamToProp != null ? this.ParamToProp(newValue) : newValue?.ToString();
+            BugFix.TextBox_UpdateSelection((TextBox) this.myControl!);
+        }
+    }
+
+    private void OnDataParameterValueChanged(DataParameter parameter, ITransferableData owner) => this.UpdateControl();
+
+    protected override void CheckAttachControl(Control control) {
+        base.CheckAttachControl(control);
+        if (!(control is TextBox))
+            throw new InvalidOperationException("Attempt to attach non-textbox");
+    }
+
+    protected override void OnAttached() {
+        base.OnAttached();
+        this.Parameter?.AddValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
+        
+        TextBox tb = (TextBox) this.Control;
+        tb.LostFocus += this.OnLostFocus;
+        tb.KeyDown += this.OnKeyDown;
+    }
+
+    protected override void OnDetached() {
+        base.OnDetached();
+        this.Parameter?.RemoveValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
+        
+        TextBox tb = (TextBox) this.Control;
+        tb.LostFocus -= this.OnLostFocus;
+        tb.KeyDown -= this.OnKeyDown;
+    }
+
+    private void OnLostFocus(object? sender, RoutedEventArgs e) {
+        this.UpdateControl();
+    }
+
+    private void OnKeyDown(object? sender, KeyEventArgs e) {
+        if (e.Key == Key.Escape) {
+            this.UpdateControl();
+        }
+        else if (e.Key == Key.Enter) {
+            if (!this.isHandlingChangeModel) {
+                this.HandleChangeModel();
+            }
+        }
+    }
+
+    private async void HandleChangeModel() {
+        Optional<T> value;
+        try {
+            if (!base.IsFullyAttached) {
+                return;
+            }
+            
+            this.isHandlingChangeModel = true;
+            value = await this.Convert(((TextBox) this.myControl!).Text ?? "");
+            if (!value.HasValue) {
+                return;
+            }
+        }
+        catch (Exception e) {
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+            return;
+        }
+        finally {
+            this.isHandlingChangeModel = false;
+        }
+
+        try {
+            if (this.IsFullyAttached) {
+                ((DataParameter<T>)this.Parameter!).SetValue(this.Model, value.Value);
+            }
+            
+            this.UpdateControl();
+        }
+        catch (Exception e) {
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+        }
+    }
+}
