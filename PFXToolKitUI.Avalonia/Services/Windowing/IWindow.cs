@@ -116,7 +116,19 @@ public interface IWindow : ITopLevel {
     /// </summary>
     IStorageProvider StorageProvider { get; }
 
+    /// <summary>
+    /// Fired when the user is trying to close the window. Async is supported, and the return
+    /// value is the 'isCloseCancelled' state, as in, return true to prevent the window closing.
+    /// <para>
+    /// Be weary of the passed <see cref="WindowCloseReason"/>, since cancellation may not
+    /// actually prevent the window from closing
+    /// </para>
+    /// </summary>
     event WindowClosingAsyncEventHandler? WindowClosing;
+    
+    /// <summary>
+    /// Fired when the window actually closes
+    /// </summary>
     event WindowClosedEventHandler? WindowClosed;
     
     /// <summary>
@@ -138,7 +150,7 @@ public interface IWindow : ITopLevel {
     /// <summary>
     /// Shows this window
     /// </summary>
-    /// <param name="parent"></param>
+    /// <param name="parent">The optional parent of this window. When specified, we are always on top of the parent window</param>
     /// <exception cref="InvalidOperationException">Attempt to open after already closed (<see cref="IWindow.IsClosed"/> is true)</exception>
     void Show(IWindow? parent);
 
