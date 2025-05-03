@@ -19,8 +19,10 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 
 namespace PFXToolKitUI.Avalonia.AvControls;
@@ -73,12 +75,40 @@ public class IconButton : Button, IIconButton {
     }
 
     private IconControl? PART_IconControl;
+    private ContentPresenter? PART_ContentPresenter;
+    private DockPanel? PART_DockPanel;
 
     public IconButton() {
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
+        base.OnPropertyChanged(change);
+
+        if (change.Property == ContentProperty || change.Property == IconProperty || change.Property == SpacingProperty) {
+            this.UpdateControlsVisibility();
+        }
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         IconButtonHelper.ApplyTemplate(this, e, ref this.PART_IconControl);
+        this.PART_ContentPresenter = e.NameScope.GetTemplateChild<ContentPresenter>("PART_ContentPresenter");
+        this.PART_DockPanel = e.NameScope.GetTemplateChild<DockPanel>("PART_DockPanel");
+        this.UpdateControlsVisibility();
+    }
+
+    private void UpdateControlsVisibility() {
+        if (this.PART_IconControl != null) {
+            this.PART_IconControl.IsVisible = this.Icon != null;
+        }
+
+        if (this.PART_ContentPresenter != null) {
+            this.PART_ContentPresenter.IsVisible = this.Content != null && (!(this.Content is string str) || !string.IsNullOrEmpty(str));
+        }
+
+        if (this.PART_DockPanel != null) {
+            double newSpacing = this.PART_IconControl?.IsVisible == true && this.PART_ContentPresenter?.IsVisible == true ? this.Spacing : 0.0;
+            this.PART_DockPanel.VerticalSpacing = this.PART_DockPanel.HorizontalSpacing = newSpacing;
+        }
     }
 }

@@ -19,8 +19,9 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         TextElement.Foreground="{TemplateBinding Foreground}">
-                    <DockPanel HorizontalSpacing="{TemplateBinding Spacing}" 
-                               VerticalSpacing="{Binding RelativeSource={RelativeSource Self}, Path=HorizontalSpacing}">
+                    <DockPanel x:Name="PART_DockPanel"
+                               HorizontalAlignment="Center"
+                               VerticalAlignment="Center">
                         <local:IconControl x:Name="PART_IconControl" 
                                            Icon="{TemplateBinding Icon}" 
                                            Stretch="{TemplateBinding Stretch}"
