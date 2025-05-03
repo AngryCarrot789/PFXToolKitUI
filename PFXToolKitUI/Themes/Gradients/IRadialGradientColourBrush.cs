@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of FramePFX.
@@ -17,9 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Plugins.Exceptions;
+namespace PFXToolKitUI.Themes.Gradients;
 
-public class NoSuchEntryTypeException : BasePluginLoadException {
-    public NoSuchEntryTypeException(string? typeName, Exception? innerException) : base($"No such type exists in the plugin's assembly: '{typeName}'", innerException) {
-    }
+public interface IRadialGradientColourBrush : IGradientBrush {
+    
 }

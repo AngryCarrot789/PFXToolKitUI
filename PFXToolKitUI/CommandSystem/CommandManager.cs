@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
@@ -36,9 +37,15 @@ public sealed class CommandManager {
     // using this just in case I soon add more data associated with commands
     private class CommandEntry {
         public readonly Command Command;
+#if DEBUG
+        public readonly string CreationStackTrace;
+#endif
 
         public CommandEntry(Command command) {
             this.Command = command;
+#if DEBUG
+            this.CreationStackTrace = new StackTrace().ToString();
+#endif
         }
     }
 
@@ -91,7 +98,7 @@ public sealed class CommandManager {
 
     private void RegisterInternal(string id, Command command) {
         if (this.commands.TryGetValue(id, out CommandEntry? existing)) {
-            throw new Exception($"a command is already registered with the ID '{id}': {existing.Command.GetType()}");
+            throw new Exception($"A command is already registered with the ID '{id}': {existing.Command.GetType()}");
         }
 
         this.commands[id] = new CommandEntry(command);
@@ -124,7 +131,7 @@ public sealed class CommandManager {
         ValidateId(commandId);
         ValidateContext(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            await Command.InternalExecute(command.Command, new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+            await command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
         }
     }
 
@@ -138,7 +145,7 @@ public sealed class CommandManager {
     public async Task Execute(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
         ValidateId(commandId);
         ValidateContext(context);
-        await Command.InternalExecute(command, new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+        await command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
     }
 
     /// <summary>
@@ -150,7 +157,7 @@ public sealed class CommandManager {
     /// <returns></returns>
     public async Task Execute(Command command, IContextData context, bool isUserInitiated = true) {
         ValidateContext(context);
-        await Command.InternalExecute(command, new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+        await command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
     }
 
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {

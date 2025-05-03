@@ -24,6 +24,46 @@ namespace PFXToolKitUI.Tasks;
 
 public delegate void TaskManagerTaskEventHandler(ActivityManager activityManager, ActivityTask task, int index);
 
+/// <summary>
+/// A service which manages activity tasks.
+/// <para>
+/// Activity tasks basically just wrap a <see cref="Task"/> (do work) or <see cref="Task{TResult}"/> (do work, produce a value)
+/// while also providing progression and status feedback and also start/completed notifications that the UI can hook onto
+/// and display in the status bar (which can also display a cancel button when provided <see cref="CancellationTokenSource"/>).
+/// </para>
+/// <para>
+/// An example of an activity task to produce a value:
+/// <code>
+/// <![CDATA[
+/// // Providing a CTS makes the activity cancellable. It is not disposed by
+/// // the ActivityManager, which is why we use it in a using block
+/// using CancellationTokenSource cts = new CancellationTokenSource();
+/// byte[] bytes = await ActivityManager.Instance.RunTask(async () => {
+///     ActivityTask task = ActivityManager.Instance.CurrentTask;
+///     IActivityProgress progress = task.Progress;
+///     progress.Caption = "Produce data";
+///     {
+///         progress.Text = "Reading data from server...";
+///         const int chunks = 32, incrementBy = 1;
+///         using var token = progress.CompletionState.PushCompletionRange(0, 1.0 / chunks);
+///         for (int i = 0; i < chunks; i += incrementBy) {
+///             progress.Text = $"Reading data from server (chunk {i}/{chunks})...";
+///             progress.CompletionState.OnProgress(incrementBy);
+///             await Task.Delay(100); // get server data
+///         }
+///     }
+///     {
+///         progress.Text = "Parsing data...";
+///         progress.IsIndeterminate = true;
+///         await Task.Delay(1500); // "parse" data
+///     }
+///     // return produced data
+///     return new byte[65536];
+/// }, cts);
+/// ]]>
+/// </code>
+/// </para>
+/// </summary>
 public sealed class ActivityManager : IDisposable {
     public static ActivityManager Instance => ApplicationPFX.Instance.ServiceManager.GetService<ActivityManager>();
 

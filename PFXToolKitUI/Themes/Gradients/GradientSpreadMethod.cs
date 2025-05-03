@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of FramePFX.
@@ -17,9 +17,10 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Plugins.Exceptions;
+namespace PFXToolKitUI.Themes.Gradients;
 
-public class UnknownPluginLoadException : BasePluginLoadException {
-    public UnknownPluginLoadException(Exception cause) : base("Unknown error while loading plugin", cause) {
-    }
+public enum GradientSpreadMethod {
+    Pad,
+    Reflect,
+    Repeat
 }

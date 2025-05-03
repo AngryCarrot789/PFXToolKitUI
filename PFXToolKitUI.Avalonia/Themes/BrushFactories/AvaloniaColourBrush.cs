@@ -23,6 +23,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Themes.Gradients;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Themes.BrushFactories;
@@ -45,6 +46,22 @@ public sealed class ConstantAvaloniaColourBrush : AvaloniaColourBrush, IConstant
     public ConstantAvaloniaColourBrush(SKColor colour) {
         this.Color = colour;
         this.Brush = new ImmutableSolidColorBrush(new Color(colour.Alpha, colour.Red, colour.Green, colour.Blue));
+    }
+}
+
+public sealed class ConstantAvaloniaLinearGradientBrush : AvaloniaColourBrush, ILinearGradientColourBrush {
+    public override ImmutableLinearGradientBrush Brush { get; }
+
+    public ConstantAvaloniaLinearGradientBrush(ImmutableLinearGradientBrush brush) {
+        this.Brush = brush;
+    }
+}
+
+public sealed class ConstantAvaloniaRadialGradientBrush : AvaloniaColourBrush, IRadialGradientColourBrush {
+    public override ImmutableRadialGradientBrush Brush { get; }
+
+    public ConstantAvaloniaRadialGradientBrush(ImmutableRadialGradientBrush brush) {
+        this.Brush = brush;
     }
 }
 

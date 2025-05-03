@@ -34,7 +34,7 @@ public static class AvUtils {
     public static void OnApplicationInitialised() {
         Locator = (AvaloniaLocator) GetProperty<AvaloniaLocator, IAvaloniaDependencyResolver>(null, "Current", true)!;
         GetServiceMethod = typeof(AvaloniaLocator).GetMethod("GetService", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(Type)], null) ?? throw new Exception("Could not find GetService method");
-
+        
         // Test that the above code works
         GetService(typeof(object));
     }

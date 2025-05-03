@@ -19,8 +19,8 @@
 
 namespace PFXToolKitUI.Plugins.Exceptions;
 
-public class BasePluginLoadException : Exception {
-    public BasePluginLoadException() { }
-    public BasePluginLoadException(string? message) : base(message) { }
-    public BasePluginLoadException(string? message, Exception? innerException) : base(message, innerException) { }
+public class PluginLoadException : Exception {
+    public PluginLoadException() { }
+    public PluginLoadException(string? message) : base(message) { }
+    public PluginLoadException(string? message, Exception? innerException) : base(message, innerException) { }
 }

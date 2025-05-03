@@ -64,7 +64,7 @@ public partial class MessageBoxControl : WindowingContentControl {
         this.Window!.Control.MinWidth = 300;
         this.Window!.Control.MaxWidth = 800;
         this.Window!.Control.MaxHeight = 800;
-
+        this.Window.CanAutoSizeToContent = true;
         // this.Window!.IsResizable = false;
     }
 

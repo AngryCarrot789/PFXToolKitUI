@@ -22,7 +22,6 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
-using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.Controls;
 using PFXToolKitUI.Avalonia.Utils;
@@ -31,11 +30,6 @@ using PFXToolKitUI.Interactivity;
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
 public partial class DesktopWindowImpl : WindowEx, IWindow {
-    StyledProperty<string?> IWindow.TitleProperty => WindowEx.TitleProperty;
-    StyledProperty<TextAlignment> IWindow.TitleBarTextAlignmentProperty => WindowEx.TitleBarTextAlignmentProperty;
-    StyledProperty<IBrush?> IWindow.TitleBarBrushProperty => WindowEx.TitleBarBrushProperty;
-    StyledProperty<IBrush?> IWindow.BorderBrushProperty => WindowEx.BorderBrushProperty;
-
     public bool IsOpen { get; private set; }
 
     public bool IsClosed { get; private set; }
@@ -73,7 +67,8 @@ public partial class DesktopWindowImpl : WindowEx, IWindow {
 
     public event WindowClosedEventHandler? WindowClosed;
 
-    private bool isCallingOnOpening, widthChangeDuringOpen, heightChangeDuringOpen;
+    private bool isCallingOnOpening;
+    private bool widthChangeDuringOpen, heightChangeDuringOpen;
     private VisualLayerManager? PART_VisualLayerManager;
     private Panel? PART_TitleBarPanel;
 
@@ -81,7 +76,7 @@ public partial class DesktopWindowImpl : WindowEx, IWindow {
 
     public DesktopWindowImpl() {
         this.InitializeComponent();
-        this.CanAutoSizeToContent = true;
+        this.CanAutoSizeToContent = false;
         IClipboard? clip = this.Clipboard;
         this.ClipboardService = clip != null ? new ClipboardServiceImpl(clip) : null;
         using (var token = DataManager.GetContextData(this).BeginChange())

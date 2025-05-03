@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of FramePFX.
@@ -17,9 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Plugins;
+namespace PFXToolKitUI.Themes.Gradients;
 
-public abstract class PluginDescriptor {
-    protected PluginDescriptor() {
-    }
+public interface IGradientBrush : IColourBrush {
+    
 }

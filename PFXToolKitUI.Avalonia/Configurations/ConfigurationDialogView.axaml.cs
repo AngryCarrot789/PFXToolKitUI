@@ -86,6 +86,10 @@ public partial class ConfigurationDialogView : WindowingContentControl {
         base.OnWindowOpened();
         this.Window!.WindowClosing += this.OnWindowClosing;
         this.Window.Control.KeyDown += this.OnWindowKeyDown;
+        this.Window.Control.MinWidth = 600;
+        this.Window.Control.MinHeight = 450;
+        this.Window.Width = 950;
+        this.Window.Height = 700;
     }
 
     private void OnWindowKeyDown(object? sender, KeyEventArgs e) {

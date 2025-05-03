@@ -27,15 +27,10 @@ namespace PFXToolKitUI.Plugins;
 /// </summary>
 public abstract class Plugin {
     /// <summary>
-    /// Gets the plugin descriptor of this plugin
-    /// </summary>
-    public PluginDescriptor Descriptor { get; internal set; } = null!;
-
-    /// <summary>
     /// Gets the plugin loader that created this plugin instance
     /// </summary>
     public PluginLoader PluginLoader { get; internal set; } = null!;
-
+    
     /// <summary>
     /// Gets the folder that this plugin exists in (which contains plugin.xml).
     /// If this is a core plugin (and therefore not loaded from an assembly), this will be null,

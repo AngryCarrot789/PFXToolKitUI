@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of FramePFX.
@@ -17,9 +17,17 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Plugins.Exceptions;
+using SkiaSharp;
 
-public class PluginAssemblyLoadException : BasePluginLoadException {
-    public PluginAssemblyLoadException(Exception e) : base("Failed to load plugin's assembly file", e) {
+namespace PFXToolKitUI.Themes.Gradients;
+
+public readonly struct GradientStop {
+    public SKColor Color { get; }
+    
+    public double Offset { get; }
+
+    public GradientStop(SKColor color, double offset = 0.0) {
+        this.Color = color;
+        this.Offset = offset;
     }
 }

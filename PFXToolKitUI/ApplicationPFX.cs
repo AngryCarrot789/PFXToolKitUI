@@ -200,7 +200,7 @@ public abstract class ApplicationPFX : IServiceable {
 
         await progress.ProgressAndSynchroniseAsync("Loading plugins");
         using (progress.CompletionState.PushCompletionRange(0.7, 0.8)) {
-            List<BasePluginLoadException> exceptions = new List<BasePluginLoadException>();
+            List<PluginLoadException> exceptions = new List<PluginLoadException>();
             instance.PluginLoader.LoadCorePlugins(exceptions);
 
 #if DEBUG

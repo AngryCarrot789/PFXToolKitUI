@@ -54,13 +54,13 @@ public partial class KeyStrokeUserInputControl : UserControl, IUserInputContent 
 
         KeyStroke s = this.InputInfo!.KeyStroke ?? default;
         this.InputInfo!.KeyStroke = new KeyStroke(s.KeyCode, s.Modifiers, this.IsKeyReleaseCheckBox.IsChecked ?? false);
-        this.myDialog!.UpdateAllErrors();
+        this.myDialog!.DoUpdateAllErrors();
     }
 
     private void InputBox_KeyDown(object? sender, KeyEventArgs e) {
         if (ShortcutUtils.GetKeyStrokeForEvent(e, out KeyStroke stroke, this.IsKeyReleaseCheckBox.IsChecked ?? false)) {
             this.InputInfo!.KeyStroke = stroke;
-            this.myDialog!.UpdateAllErrors();
+            this.myDialog!.DoUpdateAllErrors();
             e.Handled = true;
         }
     }

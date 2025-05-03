@@ -90,6 +90,7 @@ public partial class UserInputDialogView : WindowingContentControl {
         base.OnWindowOpened();
         this.Window!.Control.AddHandler(KeyDownEvent, this.OnKeyDown, RoutingStrategies.Tunnel);
         this.Window.IsResizable = false;
+        this.Window.CanAutoSizeToContent = true;
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowOpened();
         }
@@ -128,7 +129,7 @@ public partial class UserInputDialogView : WindowingContentControl {
         if (oldData != null) {
             (this.PART_InputFieldContent.Content as IUserInputContent)?.Disconnect();
             this.PART_InputFieldContent.Content = null;
-            oldData.HasErrorsChanged -= this.OnHasErrorsChanged;
+            oldData.HasErrorsChanged -= this.UpdateConfirmButton;
         }
 
         // Create this first just in case there's a problem with no registrations
@@ -139,14 +140,14 @@ public partial class UserInputDialogView : WindowingContentControl {
         this.confirmTextBinder.SwitchModel(newData);
         this.cancelTextBinder.SwitchModel(newData);
         if (control != null) {
-            newData!.HasErrorsChanged += this.OnHasErrorsChanged;
+            newData!.HasErrorsChanged += this.UpdateConfirmButton;
             this.PART_InputFieldContent.Content = control;
             control.ApplyStyling();
             control.ApplyTemplate();
             (control as IUserInputContent)?.Connect(this, newData);
         }
 
-        this.UpdateAllErrors();
+        this.DoUpdateAllErrors();
         Dispatcher.UIThread.InvokeAsync(() => {
             if ((this.PART_InputFieldContent.Content as IUserInputContent)?.FocusPrimaryInput() == true) {
                 return;
@@ -163,7 +164,7 @@ public partial class UserInputDialogView : WindowingContentControl {
         }, DispatcherPriority.Loaded);
     }
 
-    private void OnHasErrorsChanged(UserInputInfo info) {
+    private void UpdateConfirmButton(UserInputInfo info) {
         this.PART_ConfirmButton.IsEnabled = !info.HasErrors();
     }
 
@@ -171,7 +172,7 @@ public partial class UserInputDialogView : WindowingContentControl {
     /// Invokes the <see cref="UserInputInfo.UpdateAllErrors"/> on our user input info to forcefully
     /// update all errors, and then updates our confirm button
     /// </summary>
-    public void UpdateAllErrors() {
+    public void DoUpdateAllErrors() {
         if (this.UserInputInfo is UserInputInfo info) {
             info.UpdateAllErrors();
             this.PART_ConfirmButton.IsEnabled = !info.HasErrors();

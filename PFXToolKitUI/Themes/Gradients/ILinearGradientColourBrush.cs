@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of FramePFX.
@@ -17,14 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Plugins.Exceptions;
+namespace PFXToolKitUI.Themes.Gradients;
 
-public class MissingPluginEntryLibraryException : BasePluginLoadException {
-    public MissingPluginEntryLibraryException() : base("Missing the plugin's main library file path") {
-    }
-}
-
-public class MissingPluginEntryClassException : BasePluginLoadException {
-    public MissingPluginEntryClassException() : base("Missing the plugin's main type name") {
-    }
+public interface ILinearGradientColourBrush : IGradientBrush {
+    
 }

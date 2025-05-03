@@ -24,14 +24,13 @@ using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Persistence;
 using PFXToolKitUI.Plugins.Exceptions;
-using PFXToolKitUI.Plugins.XML;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Plugins;
 
 public sealed class PluginLoader {
     private readonly List<Plugin> plugins;
-    private List<CorePluginDescriptor>? corePlugins;
+    private List<Type>? corePlugins;
     private HashSet<Type> loadedPluginTypes; // is this a bad idea?
 
     public ReadOnlyCollection<Plugin> Plugins { get; }
@@ -48,35 +47,38 @@ public sealed class PluginLoader {
     /// being completely dynamically loaded
     /// </summary>
     /// <param name="descriptor">the descriptor</param>
-    public void AddCorePluginEntry(CorePluginDescriptor descriptor) {
-        Validate.NotNull(descriptor);
-        (this.corePlugins ??= new List<CorePluginDescriptor>()).Add(descriptor);
+    public void AddCorePlugin(Type pluginType) {
+        Validate.NotNull(pluginType);
+        if (!typeof(Plugin).IsAssignableFrom(pluginType))
+            throw new ArgumentException($"Plugin type does not derive from {nameof(Plugin)}: {pluginType}");
+        
+        (this.corePlugins ??= new List<Type>()).Add(pluginType);
     }
 
     /// <summary>
     /// Loads all registered core plugins
     /// </summary>
     /// <param name="exceptions">A list of exceptions encountered</param>
-    public void LoadCorePlugins(List<BasePluginLoadException> exceptions) {
+    public void LoadCorePlugins(List<PluginLoadException> exceptions) {
         if (this.corePlugins == null) {
             return;
         }
 
-        foreach (CorePluginDescriptor descriptor in this.corePlugins) {
-            if (this.loadedPluginTypes.Contains(descriptor.PluginType)) {
-                exceptions.Add(new BasePluginLoadException("Plugin type already in use: " + descriptor.PluginType));
+        foreach (Type pluginType in this.corePlugins) {
+            if (this.loadedPluginTypes.Contains(pluginType)) {
+                exceptions.Add(new PluginLoadException("Plugin type already in use: " + pluginType));
             }
             else {
                 Plugin? instance;
                 try {
-                    instance = (Plugin?) Activator.CreateInstance(descriptor.PluginType) ?? throw new InvalidOperationException($"Failed to create plugin instance of type {descriptor.PluginType}");
+                    instance = (Plugin?) Activator.CreateInstance(pluginType) ?? throw new InvalidOperationException($"Failed to create plugin instance of type {pluginType}");
                 }
                 catch (Exception e) {
-                    exceptions.Add(new BasePluginLoadException("Failed to create instance of plugin", e));
+                    exceptions.Add(new PluginLoadException("Failed to create instance of plugin", e));
                     continue;
                 }
 
-                this.OnPluginCreated(null, instance, descriptor);
+                this.OnPluginCreated(null, instance);
             }
         }
 
@@ -89,7 +91,7 @@ public sealed class PluginLoader {
     /// </summary>
     /// <param name="pluginsFolder">The plugins folder to load from</param>
     /// <param name="exceptions">A list of exceptions encountered</param>
-    public async Task LoadPlugins(string pluginsFolder, List<BasePluginLoadException> exceptions) {
+    public async Task LoadPlugins(string pluginsFolder, List<PluginLoadException> exceptions) {
         string[] dirs;
         try {
             // Plugins use relative paths, so we need to give them the full path so they can do their thing.
@@ -103,19 +105,19 @@ public sealed class PluginLoader {
         }
 
         foreach (string folder in dirs) {
-            (Plugin, AssemblyPluginDescriptor)? info = null;
+            Plugin? plugin = null;
             try {
-                info = await this.ReadDescriptorAndCreatePluginInstance(folder);
+                plugin = await this.ReadDescriptorAndCreatePluginInstance(folder);
             }
-            catch (BasePluginLoadException e) {
+            catch (PluginLoadException e) {
                 exceptions.Add(e);
             }
             catch (Exception e) {
-                exceptions.Add(new UnknownPluginLoadException(e));
+                exceptions.Add(new PluginLoadException($"Unknown error loading plugin in folder {folder}", e));
             }
 
-            if (info.HasValue) {
-                this.OnPluginCreated(folder, info.Value.Item1, info.Value.Item2);
+            if (plugin != null) {
+                this.OnPluginCreated(folder, plugin);
             }
         }
     }
@@ -144,16 +146,10 @@ public sealed class PluginLoader {
             plugin.GetXamlResources(pluginPaths);
 
             if (pluginPaths.Count > 0) {
-                string? asmFullName = null;
-                if (plugin.Descriptor is AssemblyPluginDescriptor descriptor) {
-                    asmFullName = Path.GetDirectoryName(descriptor.EntryPointLibraryPath);
-                }
-
-                if (string.IsNullOrWhiteSpace(asmFullName)) {
-                    Assembly asm = plugin.GetType().Assembly;
-                    if ((asmFullName = asm.GetName().Name) == null) {
-                        asmFullName = plugin.GetType().Namespace;
-                    }
+                string? asmFullName;
+                Assembly asm = plugin.GetType().Assembly;
+                if ((asmFullName = asm.GetName().Name) == null) {
+                    asmFullName = plugin.GetType().Namespace;
                 }
 
                 if (string.IsNullOrWhiteSpace(asmFullName)) {
@@ -179,61 +175,45 @@ public sealed class PluginLoader {
         return fullPaths;
     }
 
-    private void OnPluginCreated(string? pluginFolder, Plugin plugin, PluginDescriptor descriptor) {
+    private void OnPluginCreated(string? pluginFolder, Plugin plugin) {
         this.plugins.Add(plugin);
-        plugin.Descriptor = descriptor;
         plugin.PluginLoader = this;
         plugin.PluginFolder = pluginFolder;
         plugin.OnCreated();
     }
 
-    private async Task<(Plugin, AssemblyPluginDescriptor)> ReadDescriptorAndCreatePluginInstance(string folder) {
-        string path = Path.Combine(folder, "plugin.xml");
-        AssemblyPluginDescriptor descriptor;
+    private async Task<Plugin> ReadDescriptorAndCreatePluginInstance(string folder) {
+        foreach (string dllFile in Directory.EnumerateFiles(folder, "*.dll", SearchOption.TopDirectoryOnly)) {
+            Assembly assembly;
+            try {
+                assembly = await Task.Run(() => Assembly.LoadFrom(dllFile));
+            }
+            catch (Exception e) {
+                continue;
+            }
 
-        try {
-            await using FileStream stream = new FileStream(path, FileMode.Open);
-            descriptor = PluginDescriptorParser.Parse(stream);
-        }
-        catch (Exception e) {
-            throw new InvalidPluginDescriptorException(e);
-        }
+            Type? entryType = null;
+            foreach (Type type in assembly.ExportedTypes) {
+                if (typeof(Plugin).IsAssignableFrom(type.BaseType)) {
+                    entryType = type;
+                    break;
+                }
+            }
 
-        if (descriptor.EntryPointLibraryPath == null)
-            throw new MissingPluginEntryLibraryException();
-        if (descriptor.EntryPoint == null)
-            throw new MissingPluginEntryClassException();
-
-        Assembly assembly;
-        try {
-            descriptor.EntryPointLibraryPath = Path.Combine(folder, descriptor.EntryPointLibraryPath);
-            assembly = Assembly.LoadFrom(descriptor.EntryPointLibraryPath);
-        }
-        catch (Exception e) {
-            throw new PluginAssemblyLoadException(e);
-        }
-
-        Type? entryType;
-        try {
-            entryType = assembly.GetType(descriptor.EntryPoint, true, false);
             if (entryType == null)
-                throw new Exception("No such type");
-        }
-        catch (Exception e) {
-            throw new NoSuchEntryTypeException(descriptor.EntryPoint, e);
-        }
+                throw new PluginLoadException($"Could not find a class extending {nameof(Plugin)} in {dllFile}");
 
-        if (entryType.IsInterface || entryType.IsAbstract) {
-            throw new Exception("Plugin entry class must not be abstract or an interface");
-        }
+            if (entryType.IsInterface || entryType.IsAbstract)
+                throw new Exception($"Plugin entry class is abstract or an interface: {entryType.Name} in {dllFile}");
 
-        if (this.loadedPluginTypes.Contains(entryType)) {
-            throw new BasePluginLoadException("Plugin type already in use: " + entryType);
-        }
-        else {
+            if (this.loadedPluginTypes.Contains(entryType))
+                throw new PluginLoadException($"Plugin type already in use: {entryType}");
+
             Plugin plugin = (Plugin) Activator.CreateInstance(entryType)! ?? throw new Exception("Failed to instantiate plugin");
-            return (plugin, descriptor);
+            return plugin;
         }
+
+        throw new PluginLoadException("Failed to find a valid DLL file to load plugins from");
     }
 
     public void RegisterConfigurations(PersistentStorageManager manager) {

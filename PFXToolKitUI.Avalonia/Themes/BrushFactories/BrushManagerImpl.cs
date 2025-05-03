@@ -18,8 +18,13 @@
 // 
 
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Themes.Gradients;
 using SkiaSharp;
+using GradientSpreadMethod = PFXToolKitUI.Themes.Gradients.GradientSpreadMethod;
+using GradientStop = PFXToolKitUI.Themes.Gradients.GradientStop;
+using RelativeUnit = Avalonia.RelativeUnit;
 
 namespace PFXToolKitUI.Avalonia.Themes.BrushFactories;
 
@@ -29,6 +34,18 @@ public class BrushManagerImpl : BrushManager {
     public override ConstantAvaloniaColourBrush CreateConstant(SKColor colour) {
         // Not really any point to caching an immutable brush
         return new ConstantAvaloniaColourBrush(colour);
+    }
+
+    public override ILinearGradientColourBrush CreateConstantLinearGradient(IReadOnlyList<GradientStop> gradientStops, double opacity = 1, RelativePoint? transformOrigin = null, GradientSpreadMethod spreadMethod = GradientSpreadMethod.Pad, RelativePoint? startPoint = null, RelativePoint? endPoint = null) {
+        return new ConstantAvaloniaLinearGradientBrush(new ImmutableLinearGradientBrush(gradientStops.Select(x => new ImmutableGradientStop(x.Offset, new Color(x.Color.Alpha, x.Color.Red, x.Color.Green, x.Color.Blue))).ToList(), opacity, null, Cast(transformOrigin), (global::Avalonia.Media.GradientSpreadMethod) spreadMethod, Cast(startPoint), Cast(endPoint)));
+        
+        static global::Avalonia.RelativePoint Cast(RelativePoint? rp) => rp is RelativePoint rp1 ? new global::Avalonia.RelativePoint(rp1.Point.X, rp1.Point.Y, (RelativeUnit) rp1.Unit) : default;
+    }
+    
+    public override IRadialGradientColourBrush CreateConstantRadialGradient(IReadOnlyList<GradientStop> gradientStops, double opacity = 1, RelativePoint? transformOrigin = null, GradientSpreadMethod spreadMethod = GradientSpreadMethod.Pad, RelativePoint? center = null, RelativePoint? gradientOrigin = null, double radius = 0.5) {
+        return new ConstantAvaloniaRadialGradientBrush(new ImmutableRadialGradientBrush(gradientStops.Select(x => new ImmutableGradientStop(x.Offset, new Color(x.Color.Alpha, x.Color.Red, x.Color.Green, x.Color.Blue))).ToList(), opacity, null, Cast(transformOrigin), (global::Avalonia.Media.GradientSpreadMethod) spreadMethod, Cast(center), Cast(gradientOrigin), radius));
+        
+        static global::Avalonia.RelativePoint Cast(RelativePoint? rp) => rp is RelativePoint rp1 ? new global::Avalonia.RelativePoint(rp1.Point.X, rp1.Point.Y, (RelativeUnit) rp1.Unit) : default;
     }
 
     public override DynamicAvaloniaColourBrush GetDynamicThemeBrush(string themeKey) {

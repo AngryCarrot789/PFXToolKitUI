@@ -94,11 +94,7 @@ public abstract class Command {
     /// <param name="e">The command event args, containing info about the current context</param>
     protected abstract Task ExecuteCommandAsync(CommandEventArgs e);
 
-    internal static Task InternalExecute(Command command, CommandEventArgs e) {
-        return command.ExecuteImpl(e);
-    }
-
-    private async Task ExecuteImpl(CommandEventArgs args) {
+    internal async Task InternalExecuteImpl(CommandEventArgs args) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
         int executing;
@@ -123,9 +119,6 @@ public abstract class Command {
 
         try {
             await (this.ExecuteCommandAsync(args) ?? Task.CompletedTask);
-        }
-        catch (TaskCanceledException) {
-            // ignored
         }
         catch (OperationCanceledException) {
             // ignored

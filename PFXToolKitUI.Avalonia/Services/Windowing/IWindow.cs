@@ -17,9 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
 using PFXToolKitUI.Interactivity;
@@ -28,30 +26,41 @@ using PFXToolKitUI.Interactivity.Contexts;
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
 /// <summary>
-/// The base interface for a modal or non-modal window.
+/// The base interface for a modal or non-modal window. On single view applications
+/// this wraps a control placed ontop of the content of a single view
 /// </summary>
 public interface IWindow : ITopLevel {
     public static readonly DataKey<IWindow> WindowDataKey = DataKey<IWindow>.Create("PFXWindow");
     
     /// <summary>
-    /// Gets the property used to get/set/bind the title text
+    /// Gets or sets the text alignment for the window's titlebar
     /// </summary>
-    StyledProperty<string?> TitleProperty { get; }
+    TextAlignment TitleBarTextAlignment { get; set; }
     
     /// <summary>
-    /// Gets the property used to get/set/bind the title's text alignment
+    /// Sets or sets the title bar background
     /// </summary>
-    StyledProperty<TextAlignment> TitleBarTextAlignmentProperty { get; }
+    IBrush? TitleBarBrush { get; set; }    
     
     /// <summary>
-    /// Gets the property used to get/set/bind the title bar's brush
+    /// Gets or sets the window's border brush
     /// </summary>
-    StyledProperty<IBrush?> TitleBarBrushProperty { get; }    
+    IBrush? BorderBrush { get; set; }
     
     /// <summary>
-    /// Gets the property used to get/set/bind the window border brush
+    /// Gets or sets the width of the window
     /// </summary>
-    StyledProperty<IBrush?> BorderBrushProperty { get; }
+    double Width { get; set; }
+
+    /// <summary>
+    /// Gets or sets the height of the window
+    /// </summary>
+    double Height { get; set; }
+
+    /// <summary>
+    /// Gets or sets the title of the window
+    /// </summary>
+    string? Title { get; set; }
 
     /// <summary>
     /// Returns true when the window is open
@@ -76,7 +85,7 @@ public interface IWindow : ITopLevel {
     bool IsResizable { get; set; }
 
     /// <summary>
-    /// Gets or sets if auto-sizing the window to the content minimum size is allowed. True by default
+    /// Gets or sets if auto-sizing the window to the content minimum size is allowed. False by default
     /// </summary>
     bool CanAutoSizeToContent { get; set; }
 
@@ -87,30 +96,6 @@ public interface IWindow : ITopLevel {
     /// </summary>
     ContentControl Control { get; }
 
-    /// <summary>
-    /// Gets or sets the width of the window
-    /// </summary>
-    double Width {
-        get => this.Control.GetValue(Layoutable.WidthProperty);
-        set => this.Control.SetValue(Layoutable.WidthProperty, value);
-    }
-    
-    /// <summary>
-    /// Gets or sets the height of the window
-    /// </summary>
-    double Height {
-        get => this.Control.GetValue(Layoutable.HeightProperty);
-        set => this.Control.SetValue(Layoutable.HeightProperty, value);
-    }
-
-    /// <summary>
-    /// Gets or sets the title of the window
-    /// </summary>
-    string? Title {
-        get => this.Control.GetValue(this.TitleProperty);
-        set => this.Control.SetValue(this.TitleProperty, value);
-    }
-    
     /// <summary>
     /// Gets the storage provider service this window is linked to
     /// </summary>

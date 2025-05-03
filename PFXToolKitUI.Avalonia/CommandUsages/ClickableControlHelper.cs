@@ -38,6 +38,11 @@ public abstract class ClickableControlHelper {
         get => this.Control.IsEnabled;
         set => this.Control.IsEnabled = value;
     }
+    
+    public virtual bool IsVisible {
+        get => this.Control.IsVisible;
+        set => this.Control.IsVisible = value;
+    }
 
     protected ClickableControlHelper(Control obj, Action? onClick = null) {
         this.Control = obj;

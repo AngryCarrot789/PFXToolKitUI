@@ -25,6 +25,8 @@ namespace PFXToolKitUI.Avalonia.CommandUsages;
 public class SimpleButtonCommandUsage : CommandUsage {
     private ClickableControlHelper? button;
 
+    protected ClickableControlHelper Button => this.button ?? throw new InvalidOperationException("Not connected");
+
     public SimpleButtonCommandUsage(string commandId) : base(commandId) { }
     
     protected override void OnConnecting() {

@@ -11,7 +11,7 @@
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Padding" Value="4"/>
         <Setter Property="Template">
-            <ControlTemplate>
+            <ControlTemplate TargetType="{x:Type local:IconButton}">
                 <Border x:Name="PART_Border"
                         Padding="{TemplateBinding Padding}"
                         Background="{TemplateBinding Background}"
@@ -19,19 +19,21 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         TextElement.Foreground="{TemplateBinding Foreground}">
-                    <StackPanel Spacing="3"
-                                HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
+                    <DockPanel HorizontalSpacing="{TemplateBinding Spacing}" 
+                               VerticalSpacing="{Binding RelativeSource={RelativeSource Self}, Path=HorizontalSpacing}">
                         <local:IconControl x:Name="PART_IconControl" 
                                            Icon="{TemplateBinding Icon}" 
                                            Stretch="{TemplateBinding Stretch}"
                                            IsVisible="{TemplateBinding Icon, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                           VerticalAlignment="Center" HorizontalAlignment="Center"
+                                           DockPanel.Dock="{TemplateBinding IconPlacement}"/>
                         <ContentPresenter x:Name="PART_ContentPresenter" 
                                           Content="{TemplateBinding Content}" 
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
-                                          IsVisible="{TemplateBinding Content, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"/>
-                    </StackPanel>
+                                          IsVisible="{TemplateBinding Content, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>                        
+                    </DockPanel>
                 </Border>
             </ControlTemplate>
         </Setter>

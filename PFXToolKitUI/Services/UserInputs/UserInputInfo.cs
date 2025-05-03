@@ -87,11 +87,11 @@ public abstract class UserInputInfo : ITransferableData {
     /// </summary>
     public event UserInputInfoEventHandler? HasErrorsChanged;
 
-    public UserInputInfo() {
+    protected UserInputInfo() {
         this.TransferableData = new TransferableData(this);
     }
 
-    public UserInputInfo(string? caption, string? message) : this() {
+    protected UserInputInfo(string? caption, string? message) : this() {
         this.caption = caption;
         this.message = message;
     }
@@ -109,7 +109,11 @@ public abstract class UserInputInfo : ITransferableData {
     /// <summary>
     /// Forces any errors to be re-calculated. This is because this object will be in its
     /// initialised state and only just connected to the UI, so this method should set any
-    /// errors forcefully to update the UI and therefore the <see cref="HasErrors"/> state
+    /// errors forcefully.
+    /// <para>
+    /// This method does not need to call <see cref="RaiseHasErrorsChanged"/>, because this
+    /// method is only typically used just before calling <see cref="HasErrors"/>
+    /// </para>
     /// </summary>
     public abstract void UpdateAllErrors();
 }

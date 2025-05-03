@@ -48,10 +48,12 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     /// <summary>
     /// Creates a new data parameter property binder
     /// </summary>
-    /// <param name="property">The avalonia property, which is used to listen to property changes</param>
     /// <param name="parameter">The data parameter, used to listen to model value changes</param>
     /// <param name="parameterToProperty">Converts the parameter value to an appropriate property value (e.g. double to string)</param>
-    /// <param name="propertyToParameter">Converts the property value back to the parameter value (e.g. string to double, or returns validation error)</param>
+    /// <param name="convert">
+    /// Converts the text box string value back to the parameter value. This function
+    /// can show dialogs and then return default on failure to convert back
+    /// </param>
     public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<string, Task<Optional<T>>> convert) : base(null) {
         this.Parameter = parameter;
         this.ParamToProp = parameterToProperty;

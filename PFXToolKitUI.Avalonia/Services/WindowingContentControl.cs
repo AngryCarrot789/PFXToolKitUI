@@ -26,6 +26,9 @@ using PFXToolKitUI.Utils.Destroying;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
+/// <summary>
+/// An abstract <see cref="UserControl"/> which is the base for any control placed in a window
+/// </summary>
 public abstract class WindowingContentControl : UserControl {
     public static readonly StyledProperty<IBrush?> WindowTitleBarBrushProperty = AvaloniaProperty.Register<WindowingContentControl, IBrush?>(nameof(WindowTitleBarBrush));
     public static readonly StyledProperty<IBrush?> WindowBorderBrushProperty = AvaloniaProperty.Register<WindowingContentControl, IBrush?>(nameof(WindowBorderBrush));
@@ -122,21 +125,10 @@ public abstract class WindowingContentControl : UserControl {
     }
 
     private void OnWindowOpenedInternal() {
-        this.bindingDisposables[0] = this.GetObservable(WindowTitleBarBrushProperty).Subscribe(new AnonymousObserver<IBrush?>(brush => {
-            this.Window!.Control.SetValue(this.Window.TitleBarBrushProperty, brush);
-        }));
-        
-        this.bindingDisposables[1] = this.GetObservable(WindowBorderBrushProperty).Subscribe(new AnonymousObserver<IBrush?>(brush => {
-            this.Window!.Control.SetValue(this.Window.BorderBrushProperty, brush);
-        }));
-        
-        this.bindingDisposables[2] = this.GetObservable(WindowTitleProperty).Subscribe(new AnonymousObserver<string?>(text => {
-            this.Window!.Control.SetValue(this.Window.TitleProperty, text);
-        }));
-        
-        this.bindingDisposables[3] = this.GetObservable(WindowTitleBarTextAlignmentProperty).Subscribe(new AnonymousObserver<TextAlignment>(text => {
-            this.Window!.Control.SetValue(this.Window.TitleBarTextAlignmentProperty, text);
-        }));
+        this.bindingDisposables[0] = this.GetObservable(WindowTitleBarBrushProperty).Subscribe(new AnonymousObserver<IBrush?>(brush => this.Window!.TitleBarBrush = brush));
+        this.bindingDisposables[1] = this.GetObservable(WindowBorderBrushProperty).Subscribe(new AnonymousObserver<IBrush?>(brush => this.Window!.BorderBrush = brush));
+        this.bindingDisposables[2] = this.GetObservable(WindowTitleProperty).Subscribe(new AnonymousObserver<string?>(text => this.Window!.Title = text));
+        this.bindingDisposables[3] = this.GetObservable(WindowTitleBarTextAlignmentProperty).Subscribe(new AnonymousObserver<TextAlignment>(text => this.Window!.TitleBarTextAlignment = text));
     }
     
     private void OnWindowClosedInternal() {

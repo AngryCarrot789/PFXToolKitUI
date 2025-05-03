@@ -19,12 +19,10 @@
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Services;
 using PFXToolKitUI.Avalonia.Services.Windowing;
-using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Themes;
@@ -159,9 +157,10 @@ public partial class ActivityStatusBarControl : UserControl {
             base.OnWindowOpened();
             this.Window!.Control.MinWidth = 300;
             this.Window!.Control.MinHeight = 150;
+            this.Window.CanAutoSizeToContent = true;
 
-            this.Window!.Control.SetValue(this.Window!.TitleBarBrushProperty, ((ActivityListControl) this.Content!).HeaderBrush);
-            this.Window!.Control.SetValue(this.Window!.BorderBrushProperty, ((ActivityListControl) this.Content!).BorderBrush);
+            this.Window!.TitleBarBrush = ((ActivityListControl) this.Content!).HeaderBrush;
+            this.Window!.BorderBrush = ((ActivityListControl) this.Content!).BorderBrush;
             this.Window.Title = "Background Activities";
         }
     }

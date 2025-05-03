@@ -31,6 +31,8 @@ namespace PFXToolKitUI.Avalonia.AvControls;
 public class IconButton : Button, IIconButton {
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconButton, Icon?>(nameof(Icon));
     public static readonly StyledProperty<Stretch> StretchProperty = AvaloniaProperty.Register<IconButton, Stretch>(nameof(Stretch), Stretch.Uniform);
+    public static readonly StyledProperty<Dock> IconPlacementProperty = AvaloniaProperty.Register<IconButton, Dock>(nameof(IconPlacement), Dock.Left);
+    public static readonly StyledProperty<double> SpacingProperty = AvaloniaProperty.Register<IconButton, double>(nameof(Spacing), 5.0);
 
     private double? iconW, iconH;
 
@@ -58,6 +60,16 @@ public class IconButton : Button, IIconButton {
             this.iconH = value;
             IconButtonHelper.SetMaxHeight(this.PART_IconControl, value);
         }
+    }
+
+    public Dock IconPlacement {
+        get => this.GetValue(IconPlacementProperty);
+        set => this.SetValue(IconPlacementProperty, value);
+    }
+
+    public double Spacing {
+        get => this.GetValue(SpacingProperty);
+        set => this.SetValue(SpacingProperty, value);
     }
 
     private IconControl? PART_IconControl;
