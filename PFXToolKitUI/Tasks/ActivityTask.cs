@@ -141,7 +141,7 @@ public class ActivityTask {
             this.cancellationTokenSource.Cancel();
         }
         catch (ObjectDisposedException) {
-            // ignored -- means task is probably completed
+            // ignored
         }
 
         return true;

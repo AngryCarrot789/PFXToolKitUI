@@ -18,7 +18,6 @@
 // 
 
 using System.Collections.ObjectModel;
-using System.Data;
 using System.Reflection;
 using System.Text;
 using PFXToolKitUI.CommandSystem;
