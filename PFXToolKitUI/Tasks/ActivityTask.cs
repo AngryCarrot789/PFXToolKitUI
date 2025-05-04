@@ -177,7 +177,7 @@ public class ActivityTask {
 public class ActivityTask<T> : ActivityTask {
     public T? Result { get; private set; }
 
-    public new Task<T> Task => (Task<T>) this.theMainTask!;
+    public new Task<T?> Task => (Task<T?>) this.theMainTask!;
 
     protected ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts) : base(activityManager, action, activityProgress, cts) {
     }
@@ -187,7 +187,7 @@ public class ActivityTask<T> : ActivityTask {
     }
 
     /// <inheritdoc cref="ActivityTask.GetAwaiter"/>
-    public new TaskAwaiter<T> GetAwaiter() => this.Task.GetAwaiter();
+    public new TaskAwaiter<T?> GetAwaiter() => this.Task.GetAwaiter();
 
     protected override Task CreateTask(TaskCreationOptions creationOptions) {
         return System.Threading.Tasks.Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap().ContinueWith(x => this.Result, TaskContinuationOptions.ExecuteSynchronously);

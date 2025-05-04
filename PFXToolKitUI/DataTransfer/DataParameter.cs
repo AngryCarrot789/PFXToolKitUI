@@ -68,7 +68,7 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// Returns a string that is a concatenation of our owner type's simple name and our key, joined by '::'.
     /// This is a globally unique value, and no two parameters can be registered with the same global keys
     /// </summary>
-    public string GlobalKey => this.OwnerType.Name + "::" + this.Name;
+    public string GlobalKey => this.OwnerType.FullName + "::" + this.Name;
 
     /// <summary>
     /// Fired when the value of this parameter changes for any <see cref="ITransferableData"/> instance.
@@ -358,19 +358,19 @@ public class DataParameter<T> : DataParameter {
         }
 
         public override T? GetValue(object owner) {
-            throw new NotImplementedException();
+            return (T?) ((ITransferableData) owner).TransferableData.InternalGetStorageValue(this.parameter);
         }
 
         public override object? GetObjectValue(object owner) {
-            throw new NotImplementedException();
+            return ((ITransferableData) owner).TransferableData.InternalGetStorageValue(this.parameter);
         }
 
         public override void SetValue(object owner, T? value) {
-            throw new NotImplementedException();
+            ((ITransferableData) owner).TransferableData.InternalSetStorageValue(this.parameter, value);
         }
 
         public override void SetObjectValue(object owner, object? value) {
-            throw new NotImplementedException();
+            ((ITransferableData) owner).TransferableData.InternalSetStorageValue(this.parameter, value);
         }
     }
     

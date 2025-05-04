@@ -41,14 +41,14 @@ public abstract class Plugin {
     /// <summary>
     /// Gets the display name of this plugin
     /// </summary>
-    public virtual string Name => this.GetType().Name;
+    public virtual string Name => this.GetType().AssemblyQualifiedName ?? this.GetType().Name;
 
     protected Plugin() {
     }
 
     /// <summary>
     /// Invoked after the plugin is created and the descriptor is set.
-    /// Exceptions throw in this method will crash the entire application
+    /// This can be used for initial state detection, e.g. detecting if the operating system is supported
     /// </summary>
     public virtual void OnCreated() {
     }

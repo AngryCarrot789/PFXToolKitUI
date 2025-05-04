@@ -18,6 +18,7 @@
 // 
 
 using System.Collections.ObjectModel;
+using System.Data;
 using System.Reflection;
 using System.Text;
 using PFXToolKitUI.CommandSystem;
@@ -51,7 +52,7 @@ public sealed class PluginLoader {
         Validate.NotNull(pluginType);
         if (!typeof(Plugin).IsAssignableFrom(pluginType))
             throw new ArgumentException($"Plugin type does not derive from {nameof(Plugin)}: {pluginType}");
-        
+
         (this.corePlugins ??= new List<Type>()).Add(pluginType);
     }
 
@@ -183,37 +184,33 @@ public sealed class PluginLoader {
     }
 
     private async Task<Plugin> ReadDescriptorAndCreatePluginInstance(string folder) {
-        foreach (string dllFile in Directory.EnumerateFiles(folder, "*.dll", SearchOption.TopDirectoryOnly)) {
-            Assembly assembly;
-            try {
-                assembly = await Task.Run(() => Assembly.LoadFrom(dllFile));
-            }
-            catch (Exception e) {
-                continue;
-            }
-
-            Type? entryType = null;
-            foreach (Type type in assembly.ExportedTypes) {
-                if (typeof(Plugin).IsAssignableFrom(type.BaseType)) {
-                    entryType = type;
-                    break;
-                }
-            }
-
-            if (entryType == null)
-                throw new PluginLoadException($"Could not find a class extending {nameof(Plugin)} in {dllFile}");
-
-            if (entryType.IsInterface || entryType.IsAbstract)
-                throw new Exception($"Plugin entry class is abstract or an interface: {entryType.Name} in {dllFile}");
-
-            if (this.loadedPluginTypes.Contains(entryType))
-                throw new PluginLoadException($"Plugin type already in use: {entryType}");
-
-            Plugin plugin = (Plugin) Activator.CreateInstance(entryType)! ?? throw new Exception("Failed to instantiate plugin");
-            return plugin;
+        string dllFile = Path.Combine(folder, $"{Path.GetFileName(folder)}.dll");
+        Assembly assembly;
+        try {
+            assembly = await Task.Run(() => Assembly.LoadFrom(dllFile));
+        }
+        catch (Exception e) {
+            throw new Exception($"Invalid or missing DLL file '{dllFile}'", e);
         }
 
-        throw new PluginLoadException("Failed to find a valid DLL file to load plugins from");
+        Type? entryType = null;
+        foreach (Type type in assembly.ExportedTypes) {
+            if (typeof(Plugin).IsAssignableFrom(type.BaseType)) {
+                entryType = type;
+                break;
+            }
+        }
+
+        if (entryType == null)
+            throw new PluginLoadException($"Could not find a class extending {nameof(Plugin)} in {dllFile}");
+
+        if (entryType.IsInterface || entryType.IsAbstract)
+            throw new Exception($"Plugin entry class is abstract or an interface: {entryType.Name} in {dllFile}");
+
+        if (this.loadedPluginTypes.Contains(entryType))
+            throw new PluginLoadException($"Plugin type already in use: {entryType}");
+
+        return (Plugin) Activator.CreateInstance(entryType)! ?? throw new Exception("Failed to instantiate plugin");
     }
 
     public void RegisterConfigurations(PersistentStorageManager manager) {
