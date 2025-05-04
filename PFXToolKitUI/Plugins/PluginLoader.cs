@@ -117,7 +117,12 @@ public sealed class PluginLoader {
             }
 
             if (plugin != null) {
-                this.OnPluginCreated(folder, plugin);
+                try {
+                    this.OnPluginCreated(folder, plugin);
+                }
+                catch (Exception e) {
+                    exceptions.Add(new PluginLoadException($"Failed to initialize plugin", e));
+                }
             }
         }
     }
@@ -176,10 +181,10 @@ public sealed class PluginLoader {
     }
 
     private void OnPluginCreated(string? pluginFolder, Plugin plugin) {
-        this.plugins.Add(plugin);
         plugin.PluginLoader = this;
         plugin.PluginFolder = pluginFolder;
         plugin.OnCreated();
+        this.plugins.Add(plugin);
     }
 
     private async Task<Plugin> ReadDescriptorAndCreatePluginInstance(string folder) {
