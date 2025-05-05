@@ -61,6 +61,11 @@ public class ActivityTask {
     public bool IsDirectlyCancellable => this.cancellationTokenSource != null;
 
     /// <summary>
+    /// Returns true when cancellation is requested 
+    /// </summary>
+    public bool IsCancellationRequested => this.IsDirectlyCancellable && this.CancellationToken.IsCancellationRequested;
+    
+    /// <summary>
     /// Gets the exception that was thrown during the execution of the user action
     /// </summary>
     public Exception? Exception => this.exception;
