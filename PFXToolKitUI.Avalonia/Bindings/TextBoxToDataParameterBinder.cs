@@ -35,7 +35,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     public DataParameter? Parameter { get; }
 
     private readonly Func<T, string?>? ParamToProp;
-    private readonly Func<string, Task<Optional<T>>> Convert;
+    private readonly Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> Convert;
     private bool isHandlingChangeModel;
 
     /// <summary>
@@ -54,7 +54,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     /// Converts the text box string value back to the parameter value. This function
     /// can show dialogs and then return default on failure to convert back
     /// </param>
-    public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<string, Task<Optional<T>>> convert) : base(null) {
+    public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> convert) : base(null) {
         this.Parameter = parameter;
         this.ParamToProp = parameterToProperty;
         this.Convert = convert;
@@ -128,9 +128,10 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             
             TextBox control = (TextBox) this.myControl!;
             this.isHandlingChangeModel = true;
+            bool oldIsEnabled = control.IsEnabled;
             control.IsEnabled = false;
-            value = await this.Convert(control.Text ?? "");
-            control.IsEnabled = true;
+            value = await this.Convert(this, control.Text ?? "");
+            control.IsEnabled = oldIsEnabled;
             if (!value.HasValue) {
                 return;
             }

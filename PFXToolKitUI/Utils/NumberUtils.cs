@@ -17,14 +17,16 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 
 namespace PFXToolKitUI.Utils;
 
 public static class NumberUtils {
-    private static void NumberStyleFromIntInput(ref string input, out NumberStyles style) {
-        if (input.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase)) {
+    // Ladies and gentlemen, what the fuck     |    NOT NULL NULLABLE??   |
+    private static void NumberStyleFromIntInput([NotNull] ref string? input, out NumberStyles style) {
+        if (input != null && input.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase)) {
             input = input.Substring(2);
             style = NumberStyles.HexNumber;
         }
@@ -33,12 +35,12 @@ public static class NumberUtils {
         }
     }
     
-    public static bool TryParseHexOrRegular<T>(string input, out T result) where T : struct, IBinaryInteger<T> {
+    public static bool TryParseHexOrRegular<T>(string? input, out T result) where T : struct, IBinaryInteger<T> {
         NumberStyleFromIntInput(ref input, out NumberStyles style);
         return T.TryParse(input, style, null, out result);
     }
     
-    public static bool TryParseHexOrRegular<T>(string input, IFormatProvider? provider, out T result) where T : struct, IBinaryInteger<T> {
+    public static bool TryParseHexOrRegular<T>(string? input, IFormatProvider? provider, out T result) where T : struct, IBinaryInteger<T> {
         NumberStyleFromIntInput(ref input, out NumberStyles style);
         return T.TryParse(input, style, provider, out result);
     }

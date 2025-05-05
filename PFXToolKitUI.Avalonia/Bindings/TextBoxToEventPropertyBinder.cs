@@ -101,9 +101,10 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
             
             TextBox control = (TextBox) this.myControl!;
             this.isHandlingChangeModel = true;
+            bool oldIsEnabled = control.IsEnabled;
             control.IsEnabled = false;
             await this.updateModel(this, ((TextBox) this.myControl!).Text ?? "");
-            control.IsEnabled = true;
+            control.IsEnabled = oldIsEnabled;
             this.UpdateControl();
         }
         catch (Exception e) {
