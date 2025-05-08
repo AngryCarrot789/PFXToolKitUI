@@ -20,7 +20,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Interactivity;
 using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Tasks;
@@ -32,45 +31,50 @@ namespace PFXToolKitUI.Avalonia.Activities;
 /// </summary>
 public class ActivityListControl : TemplatedControl {
     public static readonly StyledProperty<IBrush?> HeaderBrushProperty = AvaloniaProperty.Register<ActivityListControl, IBrush?>(nameof(HeaderBrush));
+    public static readonly StyledProperty<ActivityManager?> ActivityManagerProperty = AvaloniaProperty.Register<ActivityListControl, ActivityManager?>(nameof(ActivityManager));
 
     public IBrush? HeaderBrush {
         get => this.GetValue(HeaderBrushProperty);
         set => this.SetValue(HeaderBrushProperty, value);
     }
 
+    public ActivityManager? ActivityManager {
+        get => this.GetValue(ActivityManagerProperty);
+        set => this.SetValue(ActivityManagerProperty, value);
+    }
+    
     private ItemsControl? PART_ItemsControl;
     private readonly Stack<ActivityListItem> itemCache = new Stack<ActivityListItem>();
     
     public ActivityListControl() {
+    }
+    
+    static ActivityListControl() {
+        ActivityManagerProperty.Changed.AddClassHandler<ActivityListControl, ActivityManager?>((o, e) => o.OnActivityManagerChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    }
+
+    private void OnActivityManagerChanged(ActivityManager? oldManager, ActivityManager? newManager) {
+        if (oldManager != null) {
+            oldManager.TaskStarted -= this.ActivityManagerOnTaskStarted;
+            oldManager.TaskCompleted -= this.ActivityManagerOnTaskCompleted;
+            for (int i = this.PART_ItemsControl!.Items.Count - 1; i >= 0; i--) {
+                this.RemoveItem(i);
+            }
+        }
         
+        if (newManager != null) {
+            newManager.TaskStarted += this.ActivityManagerOnTaskStarted;
+            newManager.TaskCompleted += this.ActivityManagerOnTaskCompleted;
+            int i = 0;
+            foreach (ActivityTask task in newManager.ActiveTasks) {
+                this.InsertItem(i++, task);
+            }
+        }
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_ItemsControl = e.NameScope.GetTemplateChild<ItemsControl>(nameof(this.PART_ItemsControl));
-    }
-
-    protected override void OnLoaded(RoutedEventArgs e) {
-        base.OnLoaded(e);
-        
-        ActivityManager activityManager = ActivityManager.Instance;
-        activityManager.TaskStarted += this.ActivityManagerOnTaskStarted;
-        activityManager.TaskCompleted += this.ActivityManagerOnTaskCompleted;
-        int i = 0;
-        foreach (ActivityTask task in activityManager.ActiveTasks) {
-            this.InsertItem(i++, task);
-        }
-    }
-
-    protected override void OnUnloaded(RoutedEventArgs e) {
-        base.OnUnloaded(e);
-        
-        ActivityManager activityManager = ActivityManager.Instance;
-        activityManager.TaskStarted -= this.ActivityManagerOnTaskStarted;
-        activityManager.TaskCompleted -= this.ActivityManagerOnTaskCompleted;
-        for (int i = this.PART_ItemsControl!.Items.Count - 1; i >= 0; i--) {
-            this.RemoveItem(i);
-        }
     }
     
     private void ActivityManagerOnTaskStarted(ActivityManager actMan, ActivityTask task, int index) {

@@ -39,6 +39,12 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     private bool isHandlingChangeModel;
 
     /// <summary>
+    /// Fired when <see cref="BaseBinder{TModel}.UpdateControl"/> is invoked (which is called
+    /// when we become fully attached, or when it is invoked manually or the model value changes)
+    /// </summary>
+    public event Action<TextBoxToDataParameterBinder<TModel, T>>? PostUpdateControl;
+
+    /// <summary>
     /// Gets or sets if the model value can be set when the text box loses focus.
     /// Default is true, which is the recommended value because the user may not
     /// realise their change was undone since they had to click the Enter key to confirm changes.
@@ -54,10 +60,11 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     /// Converts the text box string value back to the parameter value. This function
     /// can show dialogs and then return default on failure to convert back
     /// </param>
-    public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> convert) : base(null) {
+    public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> convert, Action<TextBoxToDataParameterBinder<TModel, T>>? postUpdateControl = null) : base(null) {
         this.Parameter = parameter;
         this.ParamToProp = parameterToProperty;
         this.Convert = convert;
+        this.PostUpdateControl = postUpdateControl;
     }
 
     protected override void UpdateModelOverride() {
@@ -68,6 +75,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             T newValue = ((DataParameter<T>) this.Parameter!).GetValue(this.Model);
             ((TextBox) this.myControl!).Text = this.ParamToProp != null ? this.ParamToProp(newValue) : newValue?.ToString();
             BugFix.TextBox_UpdateSelection((TextBox) this.myControl!);
+            this.PostUpdateControl?.Invoke(this);
         }
     }
 

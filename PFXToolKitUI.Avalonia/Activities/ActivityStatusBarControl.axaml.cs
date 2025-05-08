@@ -21,11 +21,14 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Services;
-using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Tasks;
+using PFXToolKitUI.Tasks.Pausable;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 
@@ -43,6 +46,22 @@ public partial class ActivityStatusBarControl : UserControl {
             ], 
             stretch: StretchMode.Uniform);
     
+    public static readonly Icon ContinueActivityIcon =
+        IconManager.Instance.RegisterGeometryIcon(
+            nameof(ContinueActivityIcon),
+            [
+                new GeometryEntry("M5.4947 2.5732 1.5008.1422C.8321-.2646 0 .25 0 1.0689L0 5.9309C0 6.7509.8321 7.2644 1.5008 6.8577L5.4947 4.4277C6.1684 4.0177 6.1684 2.9832 5.4947 2.5732", BrushManager.Instance.GetDynamicThemeBrush("ABrush.Glyph.Static")),
+            ], 
+            stretch: StretchMode.Uniform);
+    
+    public static readonly Icon PauseActivityIcon =
+        IconManager.Instance.RegisterGeometryIcon(
+            nameof(PauseActivityIcon),
+            [
+                new GeometryEntry("M0 8 2 8 2 0 0 0 0 8ZM4 8 6 8 6 0 4 0 4 8Z", BrushManager.Instance.GetDynamicThemeBrush("ABrush.Glyph.Static")),
+            ], 
+            stretch: StretchMode.Uniform);
+    
     public static readonly StyledProperty<ActivityTask?> ActivityTaskProperty = AvaloniaProperty.Register<ActivityStatusBarControl, ActivityTask?>(nameof(ActivityTask));
 
     public ActivityTask? ActivityTask {
@@ -50,8 +69,17 @@ public partial class ActivityStatusBarControl : UserControl {
         set => this.SetValue(ActivityTaskProperty, value);
     }
 
+    private readonly AsyncRelayCommand pauseActivityCommand;
+    private bool isExecutingShowActivityListCmd;
+
     public ActivityStatusBarControl() {
         this.InitializeComponent();
+        this.PART_PlayPauseButton.Command = this.pauseActivityCommand = new AsyncRelayCommand(async () => {
+            AdvancedPausableTask? task = this.ActivityTask?.PausableTask;
+            if (task != null) {
+                await task.TogglePaused();
+            }
+        });
     }
 
     static ActivityStatusBarControl() {
@@ -81,8 +109,12 @@ public partial class ActivityStatusBarControl : UserControl {
             prog.TextChanged -= this.OnActivityTaskTextChanged;
             prog.CompletionState.CompletionValueChanged -= this.OnPrimaryActionCompletionValueChanged;
             prog.IsIndeterminateChanged -= this.OnActivityTaskIndeterminateChanged;
-            if (oldActivity.IsDirectlyCancellable)
+            
+            if (oldActivity.IsDirectlyCancellable && !Design.IsDesignMode)
                 this.PART_CancelActivityButton.IsVisible = false;
+            
+            if (oldActivity.PausableTask != null)
+                oldActivity.PausableTask.PausedStateChanged -= this.OnPausedStateChanged;
 
             prog = null;
         }
@@ -93,21 +125,28 @@ public partial class ActivityStatusBarControl : UserControl {
             prog.TextChanged += this.OnActivityTaskTextChanged;
             prog.CompletionState.CompletionValueChanged += this.OnPrimaryActionCompletionValueChanged;
             prog.IsIndeterminateChanged += this.OnActivityTaskIndeterminateChanged;
-            if (newActivity.IsDirectlyCancellable)
+            if (newActivity.IsDirectlyCancellable && !Design.IsDesignMode)
                 this.PART_CancelActivityButton.IsVisible = true;
 
-            this.IsVisible = true;
+            if (!Design.IsDesignMode)
+                this.IsVisible = true;
+            
+            if (newActivity.PausableTask != null)
+                newActivity.PausableTask.PausedStateChanged += this.OnPausedStateChanged;
+            
         }
         else {
-            this.IsVisible = false;
+            if (!Design.IsDesignMode)
+                this.IsVisible = false;
         }
 
+        this.UpdatePauseContinueButton(newActivity?.PausableTask);
         this.PART_CancelActivityButton.IsEnabled = true;
         this.OnActivityTaskTextChanged(prog);
         this.OnPrimaryActionCompletionValueChanged(prog?.CompletionState);
         this.OnActivityTaskIndeterminateChanged(prog);
     }
-    
+
     private void OnTaskStarted(ActivityManager manager, ActivityTask task, int index) {
         if ((this.ActivityTask == null || this.ActivityTask.IsCompleted)) {
             this.ActivityTask = task;
@@ -136,15 +175,29 @@ public partial class ActivityStatusBarControl : UserControl {
         ((Button) sender!).IsEnabled = false;
         this.ActivityTask?.TryCancel();
     }
-
+    
     private void InputElement_OnPointerReleased(object? sender, PointerReleasedEventArgs e) {
-        if (!e.Handled && this.IsPointerOver) {
-            if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
-                IWindow window = system.CreateWindow(new ActivityListWindowingContent());
-                window.IsResizable = false;
-                window.CanAutoSizeToContent = false;
-                window.Show(system.GetActiveWindowOrNull());
-            }
+        if (!e.Handled && this.IsPointerOver && !this.isExecutingShowActivityListCmd) {
+            this.ShowActivityListAsync();
+            // if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
+            //     IWindow window = system.CreateWindow(new ActivityListWindowingContent());
+            //     window.IsResizable = false;
+            //     window.CanAutoSizeToContent = false;
+            //     window.Show(system.GetActiveWindowOrNull());
+            // }
+        }
+    }
+
+    private async void ShowActivityListAsync() {
+        try {
+            this.isExecutingShowActivityListCmd = true;
+            await CommandManager.Instance.Execute("commands.pfx.ShowActivityListCommand", DataManager.GetFullContextData(this));
+        }
+        catch (Exception e) {
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+        }
+        finally {
+            this.isExecutingShowActivityListCmd = false;
         }
     }
 
@@ -162,6 +215,23 @@ public partial class ActivityStatusBarControl : UserControl {
             this.Window!.TitleBarBrush = ((ActivityListControl) this.Content!).HeaderBrush;
             this.Window!.BorderBrush = ((ActivityListControl) this.Content!).BorderBrush;
             this.Window.Title = "Background Activities";
+        }
+    }
+    
+    private Task OnPausedStateChanged(AdvancedPausableTask task) {
+        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
+            this.UpdatePauseContinueButton(task);
+        });
+    }
+
+    private void UpdatePauseContinueButton(AdvancedPausableTask? task) {
+        if (task == null) {
+            this.PART_PlayPauseButton.IsVisible = false;
+        }
+        else {
+            this.PART_PlayPauseButton.IsVisible = true;
+            this.PART_PlayPauseButton.Icon = task.IsPaused ? ContinueActivityIcon : PauseActivityIcon;
+            ToolTip.SetTip(this.PART_PlayPauseButton, task.IsPaused ? "Continue the task" : "Pause the task");
         }
     }
 }

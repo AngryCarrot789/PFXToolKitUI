@@ -21,6 +21,9 @@ using System.Diagnostics;
 
 namespace PFXToolKitUI.Tasks.Pausable;
 
+public delegate void AdvancedPausableTaskEventHandler(AdvancedPausableTask task);
+public delegate Task AdvancedPausableTaskAsyncEventHandler(AdvancedPausableTask task);
+
 /// <summary>
 /// The base class for an advanced pausable task. An advanced pausable task provides
 /// a "Run First" and "Continue" method. This allows you to, for example, release locks
@@ -49,7 +52,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     private volatile int reqToPauseCount, reqToUnpauseCount;
     private volatile int continueAttempts;
 
-    private volatile Task firstTask, continueTask;
+    private volatile Task? firstTask, continueTask;
     private readonly object stateLock = new object();
     private volatile ActivityTask? activity;
     private volatile Exception? exception;
@@ -59,6 +62,13 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     private CancellationTokenRegistration? pauseCancellationRegistration;
 
     public ActivityTask Activity => this.activity ?? throw new InvalidOperationException("Not started yet");
+    
+    /// <summary>
+    /// Returns true when this task is absolutely paused and no code is running.
+    /// Due to tasks being drizzled with async and involving locked states, this should only
+    /// be checked from known checkpoints, e.g. during a <see cref="PausedStateChanged"/> handler
+    /// </summary>
+    public bool IsPaused => this.state == TASK_STATE.PAUSED_2;
     
     /// <summary>
     /// Returns true when completed for any reason (success, cancellation or exception)
@@ -74,6 +84,13 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     /// Gets the exception encountered during task execution. When non-null, <see cref="IsCompleted"/> returns true
     /// </summary>
     public Exception? Exception => this.exception;
+
+    /// <summary>
+    /// An event fired when the paused state of this task changes. This event is fired from
+    /// a task thread, so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/>
+    /// if they need to
+    /// </summary>
+    public event AdvancedPausableTaskAsyncEventHandler PausedStateChanged;
     
     protected AdvancedPausableTask(bool isCancellable) {
         this.actualCts = isCancellable ? new CancellationTokenSource() : null;
@@ -99,137 +116,8 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     /// Runs the task as a complete task operation
     /// </summary>
     /// <returns>The entire operation</returns>
-    public ActivityTask Run() {
-        return ActivityManager.Instance.RunTask(async () => {
-            lock (this.stateLock) {
-                this.activity = ActivityManager.Instance.CurrentTask;
-                this.state = TASK_STATE.RUNNING;
-                this.myPauseOrCancelSource = new CancellationTokenSource();
-                
-                // Register callback with actual cancellation ts to also 'cancel' the pause token, pausing the task again
-                this.pauseCancellationRegistration = this.actualCts?.Token.Register(this.myPauseOrCancelSource.Cancel);
-            }
-
-            CancellationToken pauseToken = this.myPauseOrCancelSource.Token;
-            try {
-                this.continueAttempts = -1;
-                await (this.firstTask = this.RunFirst(pauseToken));
-            }
-            catch (OperationCanceledException e) {
-                // Realistically if e is a PausedException, pauseState should always be REQUESTED
-                if (this.pauseState == PAUSE_STATE.REQUESTED || e is PausedException) {
-                    // unless RunFirst uses a custom CTS setup, e.CancellationToken should equal pauseToken;
-                    await this.OnPausedInternalAsync(false);
-                }
-                else {
-                    await this.OnCancelledInternal();
-                    return;
-                }
-            }
-            catch (Exception e) {
-                lock (this.stateLock) {
-                    this.exception = e;
-                    this.state = TASK_STATE.EXCEPTION;
-                }
-
-                await this.OnCompletedInternal();
-                return;
-            }
-
-            bool ranToSuccess = false;
-            lock (this.stateLock) {
-                if (this.state == TASK_STATE.RUNNING) {
-                    this.state = TASK_STATE.COMPLETED;
-                    ranToSuccess = true;
-                }
-            }
-            
-            if (ranToSuccess) {
-                this.activity!.Progress.Text = "Completed.";
-                await this.OnCompletedInternal();
-                return;
-            }
-            
-            while (true) {
-                if (this.state == TASK_STATE.PAUSED_2) {
-                    // This could probably be massively simplified using semaphores or something similar...
-                    this.activity!.Progress.Text = "Paused";
-                    while (true) {
-                        lock (this.stateLock) {
-                            if (this.reqToPauseCount < 1) {
-                                // No more requests to stay paused, so mark as CONTINUE.
-                                // Resume() callers notice this, and decrement reqToUnpauseCount
-                                this.pauseState = PAUSE_STATE.CONTINUE;
-                                break;
-                            }
-                        }
-
-                        await Task.Delay(10);
-                    }
-
-                    while (true) {
-                        lock (this.stateLock) {
-                            if (this.reqToUnpauseCount < 1) {
-                                // All Resume() waiters are done, so 
-                                this.pauseState = PAUSE_STATE.CONTINUE;
-                                this.state = TASK_STATE.RUNNING;
-
-                                // Dispose callback from true cancellation ts
-                                this.pauseCancellationRegistration?.Dispose();
-                                
-                                // re-create pause token source, since it will definitely be cancelled at this point
-                                this.myPauseOrCancelSource?.Dispose();
-                                this.myPauseOrCancelSource = new CancellationTokenSource();
-                                
-                                // Register callback with actual cancellation ts to also 'cancel' the pause token, pausing the task again
-                                this.pauseCancellationRegistration = this.actualCts?.Token.Register(this.myPauseOrCancelSource.Cancel);
-                                break;
-                            }
-                        }
-
-                        await Task.Delay(10);
-                    }
-                }
-
-                this.activity!.Progress.Text = "Continuing";
-
-                pauseToken = this.myPauseOrCancelSource.Token;
-                try {
-                    Interlocked.Increment(ref this.continueAttempts);
-                    await (this.continueTask = this.Continue(pauseToken));
-                }
-                catch (OperationCanceledException e) {
-                    // Realistically if e is a PausedException, pauseState should always be REQUESTED
-                    if (this.pauseState == PAUSE_STATE.REQUESTED || e is PausedException) {
-                        // unless Continue uses a custom CTS setup, e.CancellationToken should equal pauseToken;
-                        await this.OnPausedInternalAsync(false);
-                        continue;
-                    }
-                    else {
-                        await this.OnCancelledInternal();
-                        return;
-                    }
-                }
-                catch (Exception e) {
-                    lock (this.stateLock) {
-                        this.exception = e;
-                        this.state = TASK_STATE.EXCEPTION;
-                    }
-
-                    await this.OnCompletedInternal();
-                    return;
-                }
-
-                lock (this.stateLock) {
-                    Debug.Assert(this.state == TASK_STATE.RUNNING);
-                    this.state = TASK_STATE.COMPLETED;
-                }
-
-                this.activity!.Progress.Text = "Completed.";
-                await this.OnCompletedInternal();
-                return;
-            }
-        }, this.actualCts);
+    public ActivityTask Run(IActivityProgress? progress = null) {
+        return ActivityTask.InternalStartActivity(ActivityManager.Instance, this.RunMainInternal, progress ?? new DefaultProgressTracker(), this.actualCts, TaskCreationOptions.None, this);
     }
 
     private async Task OnCancelledInternal() {
@@ -250,6 +138,15 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         lock (this.stateLock) {
             this.state = TASK_STATE.PAUSED_2;
         }
+        
+        await this.RaiseOnPausedChanged();
+    }
+
+    private async Task RaiseOnPausedChanged() {
+        Delegate[] handler = this.PausedStateChanged.GetInvocationList();
+        for (int i = 0; i < handler.Length; i++) {
+            await ((AdvancedPausableTaskAsyncEventHandler) handler[i])(this);
+        }
     }
     
     /// <summary>
@@ -258,13 +155,13 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     public async Task Pause() {
         lock (this.stateLock) {
             TASK_STATE s = this.state;
-            if (s != TASK_STATE.WAITING && s != TASK_STATE.RUNNING) {
+            if (s >= TASK_STATE.COMPLETED || (s != TASK_STATE.WAITING && s != TASK_STATE.RUNNING)) {
                 return;
             }
 
             Interlocked.Increment(ref this.reqToPauseCount);
             this.pauseState = PAUSE_STATE.REQUESTED;
-            this.myPauseOrCancelSource!.Cancel();
+            this.CancelInternal();
         }
 
         while (true) {
@@ -308,6 +205,61 @@ public abstract class AdvancedPausableTask : BasePausableTask {
                     
                     Interlocked.Decrement(ref this.reqToUnpauseCount);
                     break;
+                }
+            }
+            
+            await Task.Delay(10);
+        }
+    }
+
+    /// <summary>
+    /// Toggles the paused state of this task. If we're paused, we continue. Otherwise, we pause
+    /// </summary>
+    public async Task TogglePaused() {
+        bool isPausingTask;
+        lock (this.stateLock) {
+            TASK_STATE s = this.state;
+            if (s >= TASK_STATE.COMPLETED) {
+                return;
+            }
+            else if (s == TASK_STATE.RUNNING) {
+                Interlocked.Increment(ref this.reqToPauseCount);
+                this.pauseState = PAUSE_STATE.REQUESTED;
+                this.myPauseOrCancelSource!.Cancel();
+                isPausingTask = true;
+            }
+            else if (s == TASK_STATE.PAUSED_1 || s == TASK_STATE.PAUSED_2) {
+                if (this.reqToPauseCount == 0)
+                    Debugger.Break(); // Excessive calls to Resume()
+
+                Interlocked.Decrement(ref this.reqToPauseCount);
+                Interlocked.Increment(ref this.reqToUnpauseCount);
+                isPausingTask = false;
+            }
+            else {
+                return;
+            }
+        }
+        
+        while (true) {
+            lock (this.stateLock) {
+                if (isPausingTask) {
+                    if (this.state >= TASK_STATE.PAUSED_2) { // include fully paused + completed
+                        return;
+                    }
+                }
+                else {
+                    if (this.state >= TASK_STATE.COMPLETED) {
+                        return; // task became completed
+                    }
+
+                    if (this.pauseState == PAUSE_STATE.CONTINUE) {
+                        if (this.reqToUnpauseCount == 0)
+                            Debugger.Break(); // Excessive calls to Resume()
+
+                        Interlocked.Decrement(ref this.reqToUnpauseCount);
+                        break;
+                    }
                 }
             }
             
@@ -380,6 +332,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     protected abstract Task OnCompleted();
 
     private async Task OnCompletedInternal() {
+        // Dispose callback from true cancellation ts
         if (this.pauseCancellationRegistration.HasValue)
             await this.pauseCancellationRegistration.Value.DisposeAsync();
         
@@ -390,4 +343,155 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     }
 
     private class PausedException() : OperationCanceledException("Activity paused");
+    
+    private async Task RunMainInternal() {
+        CancellationToken trueCancelToken;
+        if (this.actualCts != null) {
+            trueCancelToken = this.actualCts.Token;
+            
+            // Register callback with actual cancellation ts to also 'cancel' the pause token, pausing the task again
+            this.pauseCancellationRegistration = trueCancelToken.Register(this.CancelInternal);
+        }
+        else {
+            trueCancelToken = CancellationToken.None;
+        }
+        
+        lock (this.stateLock) {
+            this.activity = ActivityManager.Instance.CurrentTask;
+            this.state = TASK_STATE.RUNNING;
+            this.myPauseOrCancelSource = new CancellationTokenSource();
+        }
+
+        CancellationToken pauseToken = this.myPauseOrCancelSource.Token;
+        try {
+            this.continueAttempts = -1;
+            
+            pauseToken.ThrowIfCancellationRequested();
+            await (this.firstTask = this.RunFirst(pauseToken));
+        }
+        catch (OperationCanceledException e) {
+            // Realistically if e is a PausedException, pauseState should always be REQUESTED
+            if (this.pauseState == PAUSE_STATE.REQUESTED || e is PausedException) {
+                // unless RunFirst uses a custom CTS setup, e.CancellationToken should equal pauseToken;
+                await this.OnPausedInternalAsync(false);
+            }
+            else {
+                await this.OnCancelledInternal();
+                return;
+            }
+        }
+        catch (Exception e) {
+            lock (this.stateLock) {
+                this.exception = e;
+                this.state = TASK_STATE.EXCEPTION;
+            }
+
+            await this.OnCompletedInternal();
+            return;
+        }
+
+        bool ranToSuccess = false;
+        lock (this.stateLock) {
+            if (this.state == TASK_STATE.RUNNING) {
+                this.state = TASK_STATE.COMPLETED;
+                ranToSuccess = true;
+            }
+        }
+
+        if (ranToSuccess) {
+            this.activity!.Progress.Text = "Completed";
+            await this.OnCompletedInternal();
+            return;
+        }
+
+        while (true) {
+            if (this.state == TASK_STATE.PAUSED_2) {
+                // This could probably be massively simplified using semaphores or something similar...
+                while (true) {
+                    lock (this.stateLock) {
+                        if (this.reqToPauseCount < 1) {
+                            // No more requests to stay paused, so mark as CONTINUE.
+                            // Resume() callers notice this, and decrement reqToUnpauseCount
+                            this.pauseState = PAUSE_STATE.CONTINUE;
+                            break;
+                        }
+                    }
+
+                    await this.WaitSomeOrCancel(trueCancelToken);
+                }
+
+                while (true) {
+                    lock (this.stateLock) {
+                        if (this.reqToUnpauseCount < 1) {
+                            // All Resume() waiters are done, so 
+                            this.pauseState = PAUSE_STATE.CONTINUE;
+                            this.state = TASK_STATE.RUNNING;
+
+                            // re-create pause token source, since it will definitely be cancelled at this point
+                            this.myPauseOrCancelSource?.Dispose();
+                            this.myPauseOrCancelSource = new CancellationTokenSource();
+                            pauseToken = this.myPauseOrCancelSource.Token;
+                            break;
+                        }
+                    }
+
+                    await this.WaitSomeOrCancel(trueCancelToken);
+                }
+            }
+
+            this.activity!.Progress.Text = "Continuing";
+            await this.RaiseOnPausedChanged();
+
+            try {
+                Interlocked.Increment(ref this.continueAttempts);
+                
+                pauseToken.ThrowIfCancellationRequested();
+                await (this.continueTask = this.Continue(pauseToken));
+            }
+            catch (OperationCanceledException e) {
+                // Realistically if e is a PausedException, pauseState should always be REQUESTED
+                if (this.pauseState == PAUSE_STATE.REQUESTED || e is PausedException) {
+                    // unless Continue uses a custom CTS setup, e.CancellationToken should equal pauseToken;
+                    await this.OnPausedInternalAsync(false);
+                    continue;
+                }
+                else {
+                    await this.OnCancelledInternal();
+                    return;
+                }
+            }
+            catch (Exception e) {
+                lock (this.stateLock) {
+                    this.exception = e;
+                    this.state = TASK_STATE.EXCEPTION;
+                }
+
+                await this.OnCompletedInternal();
+                return;
+            }
+
+            lock (this.stateLock) {
+                Debug.Assert(this.state == TASK_STATE.RUNNING);
+                this.state = TASK_STATE.COMPLETED;
+            }
+
+            this.activity!.Progress.Text = "Completed.";
+            await this.OnCompletedInternal();
+            return;
+        }
+    }
+
+    private void CancelInternal() {
+        this.myPauseOrCancelSource?.Cancel();
+    }
+
+    private async Task WaitSomeOrCancel(CancellationToken token) {
+        try {
+            await Task.Delay(10, token);
+        }
+        catch (OperationCanceledException) {
+            await this.OnCancelledInternal();
+            throw;
+        }
+    }
 }

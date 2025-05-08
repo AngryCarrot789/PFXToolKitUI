@@ -19,6 +19,15 @@
                        IconMaxHeight="12" IconMaxWidth="12" 
                        VerticalContentAlignment="Center" 
                        HorizontalContentAlignment="Center"/>
+        
+        <ac:IconButton DockPanel.Dock="Right" x:Name="PART_PlayPauseButton"
+                       Width="16" Height="16"
+                       Padding="4,1" Margin="0"
+                       BorderThickness="0"
+                       CornerRadius="2"
+                       IconMaxHeight="12" IconMaxWidth="12" 
+                       VerticalContentAlignment="Center" 
+                       HorizontalContentAlignment="Center"/>
 
         <TextBlock x:Name="PART_TaskCaption"
                    DockPanel.Dock="Left"

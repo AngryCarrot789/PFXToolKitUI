@@ -18,6 +18,7 @@
 // 
 
 using System.Runtime.CompilerServices;
+using PFXToolKitUI.Tasks.Pausable;
 
 namespace PFXToolKitUI.Tasks;
 
@@ -81,6 +82,14 @@ public class ActivityTask {
     public CancellationToken CancellationToken { get; }
 
     /// <summary>
+    /// Gets the pausable task associated with this activity. When non-null, pausing is supported.
+    /// <para>
+    /// This value never changes once the activity has started running
+    /// </para>
+    /// </summary>
+    public AdvancedPausableTask? PausableTask => this.myPausableTask as AdvancedPausableTask;
+
+    /// <summary>
     /// Gets this activity's task, which can be used to await completion. This task is a proxy of
     /// the user task function, and will not throw <see cref="OperationCanceledException"/> when
     /// awaited if our <see cref="CancellationToken"/>'s is cancelled
@@ -90,7 +99,7 @@ public class ActivityTask {
         private set => this.theMainTask = value;
     }
 
-    // internal int OwningThreadId;
+    internal BasePausableTask? myPausableTask;
 
     protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellationTokenSource) {
         this.activityManager = activityManager ?? throw new ArgumentNullException(nameof(activityManager));
@@ -151,7 +160,7 @@ public class ActivityTask {
 
         return true;
     }
-
+    
     private Task OnCancelled() => ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 3);
 
     protected virtual async Task OnCompleted(Exception? e) {
@@ -159,8 +168,8 @@ public class ActivityTask {
         await ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 2);
     }
 
-    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions) {
-        return InternalStartActivityImpl(new ActivityTask(activityManager, action, progress ?? new DefaultProgressTracker(), cts), creationOptions);
+    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions, BasePausableTask? pausableTask = null) {
+        return InternalStartActivityImpl(new ActivityTask(activityManager, action, progress ?? new DefaultProgressTracker(), cts) {myPausableTask = pausableTask}, creationOptions);
     }
 
     internal static ActivityTask InternalStartActivityImpl(ActivityTask task, TaskCreationOptions creationOptions) {

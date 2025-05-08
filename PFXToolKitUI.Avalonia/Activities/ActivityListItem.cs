@@ -21,8 +21,11 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Tasks;
+using PFXToolKitUI.Tasks.Pausable;
+using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 
@@ -38,8 +41,16 @@ public class ActivityListItem : TemplatedControl {
     private ProgressBar? PART_ProgressBar;
     private TextBlock? PART_Footer;
     private Button? PART_CancelActivityButton;
+    private IconButton? PART_PlayPauseButton;
+    private readonly AsyncRelayCommand pauseActivityCommand;
 
     public ActivityListItem() {
+        this.pauseActivityCommand = new AsyncRelayCommand(async () => {
+            AdvancedPausableTask? task = this.ActivityTask?.PausableTask;
+            if (task != null) {
+                await task.TogglePaused();
+            }
+        });
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
@@ -49,6 +60,8 @@ public class ActivityListItem : TemplatedControl {
         this.PART_Footer = e.NameScope.GetTemplateChild<TextBlock>(nameof(this.PART_Footer));
         this.PART_CancelActivityButton = e.NameScope.GetTemplateChild<Button>(nameof(this.PART_CancelActivityButton));
         this.PART_CancelActivityButton.Click += this.PART_CancelActivityButtonOnClick;
+        this.PART_PlayPauseButton = e.NameScope.GetTemplateChild<IconButton>(nameof(this.PART_PlayPauseButton));
+        this.PART_PlayPauseButton.Command = this.pauseActivityCommand;
     }
 
     public void Connect(ActivityTask task) {
@@ -64,6 +77,10 @@ public class ActivityListItem : TemplatedControl {
         this.OnActivityTaskTextChanged(task.Progress);
         this.OnActivityTaskIndeterminateChanged(task.Progress);
         this.OnActivityTaskCompletionValueChanged(task.Progress.CompletionState);
+        
+        if (task.PausableTask != null)
+            task.PausableTask.PausedStateChanged += this.OnPausedStateChanged;
+        this.UpdatePauseContinueButton(task.PausableTask);
     }
 
     public void Disconnect() {
@@ -72,13 +89,17 @@ public class ActivityListItem : TemplatedControl {
         task.Progress.TextChanged -= this.OnActivityTaskTextChanged;
         task.Progress.IsIndeterminateChanged -= this.OnActivityTaskIndeterminateChanged;
         task.Progress.CompletionState.CompletionValueChanged -= this.OnActivityTaskCompletionValueChanged;
+        
+        if (task.PausableTask != null)
+            task.PausableTask.PausedStateChanged -= this.OnPausedStateChanged;
+        this.UpdatePauseContinueButton(null);
     }
 
     private void PART_CancelActivityButtonOnClick(object? sender, RoutedEventArgs e) {
         this.PART_CancelActivityButton!.IsEnabled = false;
         this.ActivityTask?.TryCancel();
     }
-    
+
     private void OnActivityTaskCaptionChanged(IActivityProgress tracker) {
         ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_Header!.Text = tracker.Caption, DispatchPriority.Loaded);
     }
@@ -93,5 +114,22 @@ public class ActivityListItem : TemplatedControl {
 
     private void OnActivityTaskCompletionValueChanged(CompletionState state) {
         ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_ProgressBar!.Value = state.TotalCompletion, DispatchPriority.Loaded);
+    }
+
+    private Task OnPausedStateChanged(AdvancedPausableTask task) {
+        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
+            this.UpdatePauseContinueButton(task);
+        });
+    }
+
+    private void UpdatePauseContinueButton(AdvancedPausableTask? task) {
+        if (task == null) {
+            this.PART_PlayPauseButton!.IsVisible = false;
+        }
+        else {
+            this.PART_PlayPauseButton!.IsVisible = true;
+            this.PART_PlayPauseButton.Icon = task.IsPaused ? ActivityStatusBarControl.ContinueActivityIcon : ActivityStatusBarControl.PauseActivityIcon;
+            ToolTip.SetTip(this.PART_PlayPauseButton, task.IsPaused ? "Continue the task" : "Pause the task");
+        }
     }
 }

@@ -17,8 +17,6 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
-
 namespace PFXToolKitUI.Utils.Commands;
 
 /// <summary>

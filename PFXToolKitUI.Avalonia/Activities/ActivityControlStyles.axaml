@@ -63,6 +63,14 @@
                                             IconMaxHeight="12" IconMaxWidth="12"
                                             VerticalContentAlignment="Center"
                                             HorizontalContentAlignment="Center"/>
+                            <avc:IconButton DockPanel.Dock="Right" x:Name="PART_PlayPauseButton"
+                                            Width="16" Height="16"
+                                            Padding="4,1" Margin="0"
+                                            BorderThickness="0"
+                                            CornerRadius="2"
+                                            IconMaxHeight="12" IconMaxWidth="12" 
+                                            VerticalContentAlignment="Center" 
+                                            HorizontalContentAlignment="Center"/>
                             <ProgressBar x:Name="PART_ProgressBar" Minimum="0" Maximum="1" Height="9" BorderThickness="0" CornerRadius="2"/>
                         </DockPanel>
                         <TextBlock x:Name="PART_Footer" Text="Footer Here" Padding="1,3" Foreground="{DynamicResource ABrush.Foreground.Disabled}"/>

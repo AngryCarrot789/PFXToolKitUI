@@ -82,6 +82,9 @@ public sealed class ActivityManager : IDisposable {
     /// </summary>
     public event TaskManagerTaskEventHandler? TaskCompleted;
 
+    /// <summary>
+    /// Returns a list of activities currently running. This list is only modified on the main thread
+    /// </summary>
     public IReadOnlyList<ActivityTask> ActiveTasks => this.tasks;
 
     public ActivityManager() {
