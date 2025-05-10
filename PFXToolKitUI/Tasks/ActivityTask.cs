@@ -169,7 +169,10 @@ public class ActivityTask {
     }
 
     internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions, BasePausableTask? pausableTask = null) {
-        return InternalStartActivityImpl(new ActivityTask(activityManager, action, progress ?? new DefaultProgressTracker(), cts) {myPausableTask = pausableTask}, creationOptions);
+        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DefaultProgressTracker(), cts) { myPausableTask = pausableTask };
+        if (pausableTask is AdvancedPausableTask)
+            ((AdvancedPausableTask) pausableTask).activity = task;
+        return InternalStartActivityImpl(task, creationOptions);
     }
 
     internal static ActivityTask InternalStartActivityImpl(ActivityTask task, TaskCreationOptions creationOptions) {

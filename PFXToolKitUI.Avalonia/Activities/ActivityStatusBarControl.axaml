@@ -7,27 +7,38 @@
              mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="24"
              x:Class="PFXToolKitUI.Avalonia.Activities.ActivityStatusBarControl"
              IsVisible="False">
-    <DockPanel Background="Transparent" PointerReleased="InputElement_OnPointerReleased">
-        <ac:IconButton DockPanel.Dock="Right" x:Name="PART_CancelActivityButton"
-                       Width="16" Height="16"
-                       Padding="4,1" Margin="0"
-                       BorderThickness="0"
-                       CornerRadius="2"
-                       ToolTip.Tip="Cancels this activity"
-                       Click="PART_CancelActivityButton_OnClick"
-                       Icon="{x:Static local:ActivityStatusBarControl.CrossIcon}"
-                       IconMaxHeight="12" IconMaxWidth="12" 
-                       VerticalContentAlignment="Center" 
-                       HorizontalContentAlignment="Center"/>
+    <DockPanel x:Name="PART_DockPanel" PointerReleased="InputElement_OnPointerReleased">
+        <DockPanel.Styles>
+            <Style Selector="DockPanel#PART_DockPanel">
+                <Setter Property="Background" Value="Transparent"/>
+            </Style>
+            <Style Selector="DockPanel#PART_DockPanel[IsPointerOver=True]">
+                <Setter Property="Background" Value="{DynamicResource ABrush.Tone8.Background.Static}"/>
+            </Style>
+        </DockPanel.Styles>
         
-        <ac:IconButton DockPanel.Dock="Right" x:Name="PART_PlayPauseButton"
-                       Width="16" Height="16"
-                       Padding="4,1" Margin="0"
-                       BorderThickness="0"
-                       CornerRadius="2"
-                       IconMaxHeight="12" IconMaxWidth="12" 
-                       VerticalContentAlignment="Center" 
-                       HorizontalContentAlignment="Center"/>
+        <DockPanel HorizontalSpacing="2" DockPanel.Dock="Right">
+            <ac:IconButton DockPanel.Dock="Right" x:Name="PART_CancelActivityButton"
+                           Width="16" Height="16"
+                           Padding="4,1" Margin="0,0,2,0"
+                           BorderThickness="0"
+                           CornerRadius="2"
+                           ToolTip.Tip="Cancels the task"
+                           Click="PART_CancelActivityButton_OnClick"
+                           Icon="{x:Static local:ActivityStatusBarControl.CrossIcon}"
+                           IconMaxHeight="12" IconMaxWidth="12"
+                           VerticalContentAlignment="Center"
+                           HorizontalContentAlignment="Center"/>
+
+            <ac:IconButton DockPanel.Dock="Right" x:Name="PART_PlayPauseButton"
+                           Width="16" Height="16"
+                           Padding="4,1" Margin="0"
+                           BorderThickness="0"
+                           CornerRadius="2"
+                           IconMaxHeight="12" IconMaxWidth="12"
+                           VerticalContentAlignment="Center"
+                           HorizontalContentAlignment="Center"/>
+        </DockPanel>
 
         <TextBlock x:Name="PART_TaskCaption"
                    DockPanel.Dock="Left"

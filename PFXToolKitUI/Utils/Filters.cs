@@ -25,6 +25,7 @@ namespace PFXToolKitUI.Utils;
 public static class Filters {
     public static readonly FileFilter All = FileFilter.Builder("All").Patterns("*.*").AppleUniformTypeIds("public.item").MimeTypes("*/*").Build();
     public static readonly FileFilter TextType = FileFilter.Builder("Text Files").Patterns("*.txt", "*.text").AppleUniformTypeIds("public.plain-text").MimeTypes("text/plain").Build();
+    public static readonly FileFilter Csv = FileFilter.Builder("Comma Separated Values").Patterns("*.csv").AppleUniformTypeIds("public.comma-separated").MimeTypes("text/csv\n").Build();
 
     public static readonly FileFilter Png = FileFilter.Builder("PNG Image").Patterns("*.png").AppleUniformTypeIds("public.image").MimeTypes("image/*").Build();
     public static readonly FileFilter Jpg = FileFilter.Builder("JPG Image").Patterns("*.jpg").AppleUniformTypeIds("public.image").MimeTypes("image/*").Build();
@@ -53,6 +54,8 @@ public static class Filters {
 
     public static readonly FileFilter CombinedVideoTypes = FileFilter.Combine("All Videos", [MediaMp4, MediaM4v, MediaMpg, MediaMpeg, MediaMp2, MediaMov, MediaAvi, MediaMkv, MediaFlv, MediaGifv, MediaQt]);
     public static readonly IReadOnlyList<FileFilter> CombinedVideoTypesAndAll = [CombinedVideoTypes, MediaMp4, MediaM4v, MediaMpg, MediaMpeg, MediaMp2, MediaMov, MediaAvi, MediaMkv, MediaFlv, MediaGifv, MediaQt, All];
+    
+    public static readonly IReadOnlyList<FileFilter> CsvAndAll = [Csv, All];
 }
 
 public class FileFilter {

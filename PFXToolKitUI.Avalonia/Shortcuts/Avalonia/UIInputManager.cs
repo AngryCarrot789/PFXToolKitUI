@@ -182,7 +182,8 @@ public class UIInputManager {
         if (!ReferenceEquals(e.Source, sender)) {
             if (focused != null && !ReferenceEquals(focused, e.Source)) {
                 // hmm
-                Debugger.Break();
+                // Debugger.Break();
+                Debug.WriteLine($"Focused element (tracked by {nameof(UIInputManager)}) differs from key event source. {focused} != {e.Source}");
             }
         }
 

@@ -58,7 +58,7 @@
                                             Padding="4,1" Margin="0"
                                             BorderThickness="0"
                                             CornerRadius="2"
-                                            ToolTip.Tip="Cancels this activity"
+                                            ToolTip.Tip="Cancels this task"
                                             Icon="{x:Static local:ActivityStatusBarControl.CrossIcon}"
                                             IconMaxHeight="12" IconMaxWidth="12"
                                             VerticalContentAlignment="Center"

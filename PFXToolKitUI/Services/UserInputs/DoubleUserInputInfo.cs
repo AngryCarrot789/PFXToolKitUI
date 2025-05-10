@@ -39,30 +39,52 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     private bool isUpdatingErrorA, isUpdatingErrorB;
     private bool doUpdateBAfterA, doUpdateAAfterB;
 
+    /// <summary>
+    /// Gets or sets the text in the A field
+    /// </summary>
     public string TextA {
         get => this.textA;
         set => DataParameter.SetValueHelper<string?>(this, TextAParameter, ref this.textA!, value ?? "");
     }
 
+    /// <summary>
+    /// Gets or sets the text in the B field
+    /// </summary>
     public string TextB {
         get => this.textB;
         set => DataParameter.SetValueHelper<string?>(this, TextBParameter, ref this.textB!, value ?? "");
     }
 
+    /// <summary>
+    /// Gets or sets the text displayed above the <see cref="TextA"/> text field
+    /// </summary>
     public string? LabelA {
         get => this.labelA;
         set => DataParameter.SetValueHelper(this, LabelAParameter, ref this.labelA, value);
     }
 
+    /// <summary>
+    /// Gets or sets the text displayed above the <see cref="TextB"/> text field
+    /// </summary>
     public string? LabelB {
         get => this.labelB;
         set => DataParameter.SetValueHelper(this, LabelBParameter, ref this.labelB, value);
     }
 
+    /// <summary>
+    /// A validation callback for <see cref="TextA"/>
+    /// </summary>
     public Action<ValidationArgs>? ValidateA { get; set; }
 
+    /// <summary>
+    /// A validation callback for <see cref="TextB"/>
+    /// </summary>
     public Action<ValidationArgs>? ValidateB { get; set; }
 
+    /// <summary>
+    /// Gets the error messages with <see cref="TextA"/>. Only non-null
+    /// when <see cref="ValidateA"/> is non-null and actually produces errors
+    /// </summary>
     public IImmutableList<string>? TextErrorsA {
         get => this.textErrorsA;
         private set {
@@ -78,6 +100,10 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
         }
     }
 
+    /// <summary>
+    /// Gets the error messages with <see cref="TextB"/>. Only non-null
+    /// when <see cref="ValidateB"/> is non-null and actually produces errors
+    /// </summary>
     public IImmutableList<string>? TextErrorsB {
         get => this.textErrorsB;
         private set {

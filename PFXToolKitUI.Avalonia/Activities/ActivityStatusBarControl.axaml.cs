@@ -89,17 +89,21 @@ public partial class ActivityStatusBarControl : UserControl {
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
         
-        ActivityManager activityManager = ActivityManager.Instance;
-        activityManager.TaskStarted += this.OnTaskStarted;
-        activityManager.TaskCompleted += this.OnTaskCompleted;
+        ActivityManager am = ActivityManager.Instance;
+        am.TaskStarted += this.OnTaskStarted;
+        am.TaskCompleted += this.OnTaskCompleted;
+        if (am.ActiveTasks.Count > 0) {
+            this.ActivityTask = am.ActiveTasks[0];
+        }
     }
 
     protected override void OnUnloaded(RoutedEventArgs e) {
         base.OnUnloaded(e);
         
-        ActivityManager activityManager = ActivityManager.Instance;
-        activityManager.TaskStarted -= this.OnTaskStarted;
-        activityManager.TaskCompleted -= this.OnTaskCompleted;
+        ActivityManager am = ActivityManager.Instance;
+        am.TaskStarted -= this.OnTaskStarted;
+        am.TaskCompleted -= this.OnTaskCompleted;
+        this.ActivityTask = null;
     }
 
     private void OnActivityChanged(ActivityTask? oldActivity, ActivityTask? newActivity) {

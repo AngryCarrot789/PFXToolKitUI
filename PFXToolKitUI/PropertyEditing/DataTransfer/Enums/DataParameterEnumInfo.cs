@@ -29,7 +29,7 @@ namespace PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
     public static readonly ReadOnlyCollection<TEnum> EnumValues = Enum.GetValues<TEnum>().ToList().AsReadOnly();
     public static readonly IReadOnlySet<TEnum> EnumValuesSet = new HashSet<TEnum>(EnumValues);
-    public static readonly ReadOnlyCollection<TEnum> EnumValuesOrderedByName = Enum.GetValues<TEnum>().OrderBy(x => x.ToString()).ToList().AsReadOnly();
+    public static readonly ReadOnlyCollection<TEnum> EnumValuesOrderedByName = EnumValues.OrderBy(x => x.ToString()).ToList().AsReadOnly();
     public static readonly TEnum DefaultValue = default(TEnum);
 
     /// <summary>
@@ -87,7 +87,7 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
     /// Returns enum info for all enum constants of the enum type
     /// </summary>
     public static DataParameterEnumInfo<TEnum> All() {
-        return new DataParameterEnumInfo<TEnum>(typeof(TEnum).GetEnumValues().Cast<TEnum>());
+        return new DataParameterEnumInfo<TEnum>(EnumValues);
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
     /// </summary>
     /// <param name="enumToTextMap"></param>
     public static DataParameterEnumInfo<TEnum> All(IReadOnlyDictionary<TEnum, string> enumToTextMap) {
-        return new DataParameterEnumInfo<TEnum>(typeof(TEnum).GetEnumValues().Cast<TEnum>(), enumToTextMap);
+        return new DataParameterEnumInfo<TEnum>(EnumValues, enumToTextMap);
     }
 
     /// <summary>
