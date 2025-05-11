@@ -17,18 +17,10 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia.Controls;
-
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
 /// <summary>
-/// An event handler for when a window is trying to close
+/// An event handler for when a window closes.
 /// <param name="window">The sender window</param>
-/// <param name="reason">The reason for window close</param>
-/// <param name="isCancelled">True when another handler has cancelled the close</param>
 /// </summary>
-/// <returns>
-/// A task which contains the cancellation boolean. True means do not close,
-/// False means we don't want to stop it from closing (another handler may cancel though)
-/// </returns>
-public delegate Task<bool> WindowClosingAsyncEventHandler(IWindow sender, WindowCloseReason reason, bool isCancelled);
+public delegate void DesktopWindowClosedEventHandler(DesktopWindow window);

@@ -5,7 +5,7 @@
     <Design.PreviewWith>
         <c:GroupBox Grid.Row="5" Width="250"
                     Background="{DynamicResource PanelBackground3}"
-                    BorderBrush="{DynamicResource PanelBackground0}"
+                    BorderBrush="{DynamicResource PanelBorderBrush}"
                     BorderThickness="1"
                     HorizontalHeaderAlignment="Stretch"
                     VerticalHeaderAlignment="Stretch">

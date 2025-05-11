@@ -1,0 +1,18 @@
+﻿<w:DesktopWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:w="clr-namespace:PFXToolKitUI.Avalonia.Services.Windowing"
+                 xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages.Controls"
+                 xmlns:windows="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages.Windows"
+                 mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+                 x:Class="PFXToolKitUI.Avalonia.Services.Messages.Windows.MessageBoxWindow"
+                 BorderBrush="DodgerBlue"
+                 TitleBarBrush="{DynamicResource ABrush.Tone4.Background.Static}"
+                 Title="Message Caption Here"
+                 MinHeight="100" MinWidth="300"
+                 MaxWidth="800" MaxHeight="800"
+                 SizeToContent="WidthAndHeight">
+    <c:MessageBoxControl x:Name="PART_MessageBoxControl"
+                         MessageBoxData="{Binding RelativeSource={RelativeSource AncestorType={x:Type windows:MessageBoxWindow}}, Path=MessageBoxData, Mode=TwoWay}"/>
+</w:DesktopWindow>

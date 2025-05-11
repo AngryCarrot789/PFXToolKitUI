@@ -39,7 +39,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string?> OpenFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out IWindow? window)) {
+        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out DesktopWindow? window)) {
             return null;
         }
 
@@ -55,7 +55,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string[]?> OpenMultipleFiles(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out IWindow? window)) {
+        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out DesktopWindow? window)) {
             return null;
         }
 
@@ -71,7 +71,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string?> SaveFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null, bool warnOverwrite = true) {
-        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out IWindow? window)) {
+        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out DesktopWindow? window)) {
             return null;
         }
 

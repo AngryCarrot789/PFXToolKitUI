@@ -22,7 +22,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity;
-using PFXToolKitUI.Avalonia.Services;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Tasks;
@@ -205,23 +204,6 @@ public partial class ActivityStatusBarControl : UserControl {
         }
     }
 
-    private class ActivityListWindowingContent : WindowingContentControl {
-        public ActivityListWindowingContent() {
-            this.Content = new ActivityListControl();
-        }
-
-        protected override void OnWindowOpened() {
-            base.OnWindowOpened();
-            this.Window!.Control.MinWidth = 300;
-            this.Window!.Control.MinHeight = 150;
-            this.Window.CanAutoSizeToContent = true;
-
-            this.Window!.TitleBarBrush = ((ActivityListControl) this.Content!).HeaderBrush;
-            this.Window!.BorderBrush = ((ActivityListControl) this.Content!).BorderBrush;
-            this.Window.Title = "Background Activities";
-        }
-    }
-    
     private Task OnPausedStateChanged(AdvancedPausableTask task) {
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
             this.UpdatePauseContinueButton(task);

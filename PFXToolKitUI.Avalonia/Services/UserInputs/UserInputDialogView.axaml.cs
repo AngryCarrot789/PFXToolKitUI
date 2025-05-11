@@ -19,7 +19,6 @@
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
@@ -36,7 +35,7 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services.UserInputs;
 
-public partial class UserInputDialogView : WindowingContentControl {
+public partial class UserInputDialogView : UserControl {
     public static readonly SingleUserInputInfo DummySingleInput = new SingleUserInputInfo("Text Input Here") { Message = "A primary message here", ConfirmText = "Confirm", CancelText = "Cancel", Caption = "The caption here", Label = "The label here" };
     public static readonly DoubleUserInputInfo DummyDoubleInput = new DoubleUserInputInfo("Text A Here", "Text B Here") { Message = "A primary message here", ConfirmText = "Confirm", CancelText = "Cancel", Caption = "The caption here", LabelA = "Label A Here:", LabelB = "Label B Here:" };
 
@@ -59,14 +58,17 @@ public partial class UserInputDialogView : WindowingContentControl {
     /// </summary>
     public bool? DialogResult { get; private set; }
 
-    private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> captionBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(WindowTitleProperty, UserInputInfo.CaptionParameter);
+    /// <summary>
+    /// Gets the window we are opened in
+    /// </summary>
+    public DesktopWindow? Window { get; private set; }
+
     private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> messageBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(TextBlock.TextProperty, UserInputInfo.MessageParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> confirmTextBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(ContentProperty, UserInputInfo.ConfirmTextParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> cancelTextBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(ContentProperty, UserInputInfo.CancelTextParameter);
 
     public UserInputDialogView() {
         this.InitializeComponent();
-        this.captionBinder.AttachControl(this);
         this.messageBinder.AttachControl(this.PART_Message);
         this.confirmTextBinder.AttachControl(this.PART_ConfirmButton);
         this.cancelTextBinder.AttachControl(this.PART_CancelButton);
@@ -86,21 +88,19 @@ public partial class UserInputDialogView : WindowingContentControl {
         UserInputInfoProperty.Changed.AddClassHandler<UserInputDialogView, UserInputInfo?>((o, e) => o.OnUserInputDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
 
-    protected override void OnWindowOpened() {
-        base.OnWindowOpened();
-        this.Window!.Control.AddHandler(KeyDownEvent, this.OnKeyDown, RoutingStrategies.Tunnel);
-        this.Window.IsResizable = false;
-        this.Window.CanAutoSizeToContent = true;
+    internal void OnWindowOpened() {
+        this.Window = (DesktopWindow) (TopLevel.GetTopLevel(this) ?? throw new Exception("No top level present"));
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowOpened();
         }
     }
-
-    protected override void OnWindowClosed() {
-        base.OnWindowClosed();
+    
+    internal void OnWindowClosed() {
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowClosed();
         }
+        
+        this.Window = null;
     }
     
     protected override Size MeasureOverride(Size availableSize) {
@@ -112,12 +112,6 @@ public partial class UserInputDialogView : WindowingContentControl {
     private void OnMessageTextBlockPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
         if (e.Property == TextBlock.TextProperty) {
             this.PART_MessageContainer.IsVisible = !string.IsNullOrWhiteSpace(e.GetNewValue<string?>());
-        }
-    }
-    
-    private void OnKeyDown(object? sender, KeyEventArgs e) {
-        if (!e.Handled && e.Key == Key.Escape) {
-            this.TryCloseDialog(false);
         }
     }
     
@@ -135,7 +129,6 @@ public partial class UserInputDialogView : WindowingContentControl {
         // Create this first just in case there's a problem with no registrations
         Control? control = newData != null ? Registry.NewInstance(newData) : null;
 
-        this.captionBinder.SwitchModel(newData);
         this.messageBinder.SwitchModel(newData);
         this.confirmTextBinder.SwitchModel(newData);
         this.cancelTextBinder.SwitchModel(newData);
@@ -191,20 +184,20 @@ public partial class UserInputDialogView : WindowingContentControl {
     /// false if it could not be closed due to a validation error or other error
     /// </returns>
     public bool TryCloseDialog(bool result) {
-        if (this.Window == null) {
-            return false;
-        }
-
         if (result) {
             UserInputInfo? data = this.UserInputInfo;
             if (data == null || data.HasErrors()) {
                 return false;
             }
 
-            this.Window.Close(this.DialogResult = true);
+            if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
+                window.Close(this.DialogResult = true);
+            }
         }
         else {
-            this.Window.Close(this.DialogResult = false);
+            if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
+                window.Close(this.DialogResult = false);
+            }
         }
 
         return true;
@@ -219,18 +212,17 @@ public partial class UserInputDialogView : WindowingContentControl {
         Validate.NotNull(info);
         
         if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
-            if (!system.TryGetActiveWindow(out IWindow? activeWindow)) {
+            if (!system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {
                 return false;
             }
-            
-            UserInputDialogView content = new UserInputDialogView() {
+
+            UserInputDialogWindow win = new UserInputDialogWindow() {
                 UserInputInfo = info
             };
             
-            IWindow dialog = system.CreateWindow(content);
-            bool? result = await dialog.ShowDialog<bool?>(activeWindow);
-            content.UserInputInfo = null; // unhook models' event handlers
-            if (result == true && content.DialogResult == true) {
+            bool? result = await system.Register(win).ShowDialog<bool?>(activeWindow);
+            win.UserInputInfo = null; // unhook models' event handlers
+            if (result == true && win.PART_UserInputDialogView.DialogResult == true) {
                 return true;
             }
             return result;

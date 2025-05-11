@@ -59,3 +59,15 @@ public enum Executability {
     /// </summary>
     Valid
 }
+
+public static class ExecutabilityExtensions {
+    /// <summary>
+    /// Returns <see cref="second"/> when <see cref="first"/> is <see cref="Executability.Valid"/>
+    /// </summary>
+    /// <param name="first">The source</param>
+    /// <param name="second">The other, when source is valid</param>
+    /// <returns>First if not valid, otherwise second</returns>
+    public static Executability MergeValid(this Executability first, Executability second) {
+        return first != Executability.Valid ? first : second;
+    }
+}

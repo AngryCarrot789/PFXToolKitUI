@@ -22,6 +22,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
+using Avalonia.Layout;
+using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.Controls;
 using PFXToolKitUI.Avalonia.Utils;
@@ -29,110 +31,84 @@ using PFXToolKitUI.Interactivity;
 
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
-public partial class DesktopWindowImpl : WindowEx, IWindow {
+/// <summary>
+/// The base class for windows supported by a <see cref="WindowingSystem"/>
+/// </summary>
+public class DesktopWindow : WindowEx, ITopLevel {
+    /// <summary>
+    /// Gets whether the window is actually open or not
+    /// </summary>
     public bool IsOpen { get; private set; }
 
+    /// <summary>
+    /// Gets whether the window has closed after being opened
+    /// </summary>
     public bool IsClosed { get; private set; }
 
+    /// <summary>
+    /// Gets whether this window is open as a modal dialog
+    /// </summary>
     public bool IsOpenAsDialog { get; private set; }
 
-    public bool IsResizable {
-        get => this.CanResize;
-        set => this.CanResize = value;
-    }
+    public event DesktopWindowClosingAsyncEventHandler? WindowClosing;
+    public event DesktopWindowClosedEventHandler? WindowClosed;
 
-    public bool CanAutoSizeToContent { get; set; }
-
-    ContentControl IWindow.Control => this;
-
-    private readonly List<WindowClosingAsyncEventHandler> closingHandlers = new List<WindowClosingAsyncEventHandler>();
-
-    public event WindowClosingAsyncEventHandler? WindowClosing {
-        add {
-            if (value != null) {
-                lock (this.closingHandlers) {
-                    if (!this.closingHandlers.Contains(value))
-                        this.closingHandlers.Add(value);
-                }
-            }
-        }
-        remove {
-            if (value != null) {
-                lock (this.closingHandlers) {
-                    this.closingHandlers.Remove(value);
-                }
-            }
-        }
-    }
-
-    public event WindowClosedEventHandler? WindowClosed;
-
-    private bool isCallingOnOpening;
-    private bool widthChangeDuringOpen, heightChangeDuringOpen;
     private VisualLayerManager? PART_VisualLayerManager;
     private Panel? PART_TitleBarPanel;
 
     public IClipboardService? ClipboardService { get; }
 
-    public DesktopWindowImpl() {
-        this.InitializeComponent();
-        this.CanAutoSizeToContent = false;
+    public DesktopWindow() {
+        this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
+        this.VerticalContentAlignment = VerticalAlignment.Stretch;
+        this.HorizontalContentAlignment = HorizontalAlignment.Stretch;
+
         IClipboard? clip = this.Clipboard;
         this.ClipboardService = clip != null ? new ClipboardServiceImpl(clip) : null;
         using (var token = DataManager.GetContextData(this).BeginChange())
-            token.Context.Set(ITopLevel.DataKey, this).Set(IWindow.WindowDataKey, this);
+            token.Context.Set(ITopLevel.DataKey, this);
     }
 
-    public DesktopWindowImpl(WindowingContentControl content) : this() {
-        this.PART_Content.Content = content;
-        // First we measure the initial minimum size the content takes up
-        this.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        Size dsSize = content.DesiredSize;
-        this.Width = dsSize.Width;
-        this.Height = dsSize.Height;
+    public void Show(DesktopWindow? parent) {
+        if (parent == null) {
+            base.Show();
+        }
+        else {
+            base.Show(parent);
+        }
     }
-
+    
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_VisualLayerManager = e.NameScope.GetTemplateChild<VisualLayerManager>("PART_VisualLayerManager");
         this.PART_TitleBarPanel = e.NameScope.GetTemplateChild<Panel>("PART_TitleBarPanel");
     }
 
-    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
-        base.OnPropertyChanged(change);
-        if (this.isCallingOnOpening) {
-            if (change.Property == WidthProperty)
-                this.widthChangeDuringOpen = true;
-            else if (change.Property == HeightProperty)
-                this.heightChangeDuringOpen = true;
-        }
+    protected virtual void OnOpenedCore() {
+        
     }
 
-    protected override void OnOpened(EventArgs e) {
+    protected sealed override void OnOpened(EventArgs e) {
         if (this.IsClosed || this.IsOpen) {
             throw new InvalidOperationException($"Invalid state. IsClosed = {this.IsClosed}, IsOpen = {this.IsOpen}");
         }
-
-        base.OnOpened(e);
-
+        
         this.StopRendering();
         this.IsClosed = false;
         this.IsOpen = true;
+        
+        // if (this.Content is Layoutable control) {
+        //     this.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
+        //     Size dsSize = control.DesiredSize;
+        //     if (!this.IsSet(WidthProperty))
+        //         this.Width = dsSize.Width;
+        //     if (!this.IsSet(HeightProperty))
+        //         this.Height = dsSize.Height;
+        // }
 
-        this.isCallingOnOpening = true;
-        ((WindowingContentControl) this.PART_Content.Content!).OnOpened(this);
-        this.isCallingOnOpening = false;
-
-        if (this.CanAutoSizeToContent) {
-            SizeToContent sizeToContent = SizeToContent.Manual;
-            if (!this.widthChangeDuringOpen)
-                sizeToContent |= SizeToContent.Width;
-            if (!this.heightChangeDuringOpen)
-                sizeToContent |= SizeToContent.Height;
-
-            this.SizeToContent = sizeToContent;
-        }
-
+        this.OnOpenedCore();
+        base.OnOpened(e);
+        
         this.InvalidateMeasure();
         this.InvalidateArrange();
         this.UpdateLayout();
@@ -142,7 +118,7 @@ public partial class DesktopWindowImpl : WindowEx, IWindow {
             Size desiredSize = this.DesiredSize;
             desiredSize = new Size(
                 desiredSize.Width + vtlMargin.Left + vtlMargin.Right,
-                desiredSize.Height + vtlMargin.Top + vtlMargin.Bottom + this.PART_TitleBarPanel!.Height);
+                desiredSize.Height + vtlMargin.Top + vtlMargin.Bottom);
 
             Size ownerSize = owner.Bounds.Size;
             Size size = (ownerSize / 2) - (desiredSize / 2);
@@ -150,17 +126,17 @@ public partial class DesktopWindowImpl : WindowEx, IWindow {
         }
 
         this.StartRendering();
+        
+        Dispatcher.UIThread.Invoke(() => this.SizeToContent = SizeToContent.Manual, DispatcherPriority.Loaded);
     }
 
     protected override async Task<bool> OnClosingAsync(WindowCloseReason reason) {
         bool isCancelled = false;
-        List<WindowClosingAsyncEventHandler> list;
-        lock (this.closingHandlers) {
-            list = this.closingHandlers.ToList();
-        }
-
-        foreach (WindowClosingAsyncEventHandler handler in list) {
-            isCancelled |= await handler(this, reason, isCancelled);
+        Delegate[]? handlers = this.WindowClosing?.GetInvocationList();
+        if (handlers != null) {
+            foreach (Delegate handler in handlers) {
+                isCancelled |= await ((DesktopWindowClosingAsyncEventHandler) handler)(this, reason, isCancelled);
+            }
         }
 
         return isCancelled;
@@ -175,25 +151,12 @@ public partial class DesktopWindowImpl : WindowEx, IWindow {
         this.IsOpen = false;
         this.IsClosed = true;
 
-        if (this.PART_Content.Content is WindowingContentControl content) {
-            content.OnClosed(this);
-        }
-
         this.WindowClosed?.Invoke(this);
     }
 
-    public async Task<TResult?> ShowDialog<TResult>(IWindow parent) {
+    public new Task<TResult> ShowDialog<TResult>(Window owner) {
         this.IsOpenAsDialog = true;
-        return await base.ShowDialog<TResult?>((DesktopWindowImpl) parent);
-    }
-
-    public void Show(IWindow? parent) {
-        if (parent == null) {
-            base.Show();
-        }
-        else {
-            base.Show((DesktopWindowImpl) parent);
-        }
+        return base.ShowDialog<TResult>(owner)!;
     }
 
     private class ClipboardServiceImpl : IClipboardService {

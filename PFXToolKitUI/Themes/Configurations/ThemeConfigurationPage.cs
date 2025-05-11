@@ -153,6 +153,8 @@ public class ThemeConfigurationPage : ConfigurationPage {
         ThemeConfigurationOptions options = ThemeConfigurationOptions.Instance;
         options.SaveThemesToModels(ThemeManager.Instance);
         options.StorageManager.SaveArea(options);
+        
+        this.IsModified = false;
 
         return ValueTask.CompletedTask;
     }

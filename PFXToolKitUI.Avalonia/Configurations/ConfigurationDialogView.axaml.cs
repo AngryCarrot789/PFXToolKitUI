@@ -18,20 +18,18 @@
 // 
 
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
-using PFXToolKitUI.Avalonia.Services;
 using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Configurations;
 
-public partial class ConfigurationDialogView : WindowingContentControl {
-    private readonly ConfigurationManager configManager;
-    private readonly AsyncRelayCommand ApplyCommand;
-    private readonly AsyncRelayCommand ApplyThenCloseCommand;
-    private readonly AsyncRelayCommand CancelCommand;
+public partial class ConfigurationDialogView : UserControl {
+    internal readonly ConfigurationManager configManager;
+    internal readonly AsyncRelayCommand ApplyCommand;
+    internal readonly AsyncRelayCommand ApplyThenCloseCommand;
+    internal readonly AsyncRelayCommand CancelCommand;
 
     public ConfigurationDialogView(ConfigurationManager manager) {
         this.InitializeComponent();
@@ -52,6 +50,7 @@ public partial class ConfigurationDialogView : WindowingContentControl {
             this.PART_ConfirmButton.IsEnabled = true;
             this.PART_CancelButton.IsEnabled = true;
             this.PART_EditorPanel.IsEnabled = true;
+            this.UpdateConfirm();
         });
 
         this.ApplyThenCloseCommand = new AsyncRelayCommand(async () => {
@@ -61,7 +60,9 @@ public partial class ConfigurationDialogView : WindowingContentControl {
             this.PART_EditorPanel.IsEnabled = false;
 
             await this.configManager.ApplyChangesInHierarchyAsync(null);
-            this.Window!.Close(true);
+            if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
+                window.Close(true);
+            }
         });
 
         this.CancelCommand = new AsyncRelayCommand(async () => {
@@ -71,7 +72,9 @@ public partial class ConfigurationDialogView : WindowingContentControl {
             this.PART_EditorPanel.IsEnabled = false;
 
             await this.configManager.RevertLiveChangesInHierarchyAsync(null);
-            this.Window!.Close(false);
+            if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
+                window.Close(false);
+            }
         });
 
         this.PART_ApplyButton.Command = this.ApplyCommand;
@@ -80,29 +83,6 @@ public partial class ConfigurationDialogView : WindowingContentControl {
 
         this.PART_EditorPanel.ActiveContextChanged += this.OnEditorContextChanged;
         this.PART_EditorPanel.ConfigurationManager = manager;
-    }
-
-    protected override void OnWindowOpened() {
-        base.OnWindowOpened();
-        this.Window!.WindowClosing += this.OnWindowClosing;
-        this.Window.Control.KeyDown += this.OnWindowKeyDown;
-        this.Window.Control.MinWidth = 600;
-        this.Window.Control.MinHeight = 450;
-        this.Window.Width = 950;
-        this.Window.Height = 700;
-    }
-
-    private void OnWindowKeyDown(object? sender, KeyEventArgs e) {
-        if (!e.Handled && e.Key == Key.Escape) {
-            e.Handled = true;
-            this.CancelCommand.Execute(null);
-        }
-    }
-
-    private async Task<bool> OnWindowClosing(IWindow sender, WindowCloseReason reason, bool iscancelled) {
-        await this.configManager.RevertLiveChangesInHierarchyAsync(null);
-        this.PART_EditorPanel.ConfigurationManager = null;
-        return false;
     }
 
     protected override void OnLoaded(RoutedEventArgs e) {

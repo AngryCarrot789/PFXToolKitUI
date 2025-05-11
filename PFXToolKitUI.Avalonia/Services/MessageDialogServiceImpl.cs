@@ -17,7 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Avalonia.Services.Messages.Controls;
+using PFXToolKitUI.Avalonia.Services.Messages.Windows;
 using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
@@ -49,13 +49,11 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
     private static async Task<MessageBoxResult> ShowMessageMainThread(MessageBoxInfo info) {
         Validate.NotNull(info);
-        if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out IWindow? activeWindow)) {
-            MessageBoxControl control = new MessageBoxControl() { MessageBoxData = info };
-            
-            IWindow dialog = system.CreateWindow(control);
-            MessageBoxResult? result = await dialog.ShowDialog<MessageBoxResult?>(activeWindow);
-            control.MessageBoxData = null;
-            
+        if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {
+            MessageBoxWindow window = new MessageBoxWindow() { MessageBoxData = info };
+            MessageBoxResult? result = await system.Register(window).ShowDialog<MessageBoxResult?>(activeWindow);
+            window.MessageBoxData = null;
+
             return result ?? MessageBoxResult.None;
         }
         else {

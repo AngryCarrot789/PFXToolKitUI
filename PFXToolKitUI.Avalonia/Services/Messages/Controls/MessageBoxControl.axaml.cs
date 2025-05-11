@@ -19,15 +19,15 @@
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
+using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
-public partial class MessageBoxControl : WindowingContentControl {
+public partial class MessageBoxControl : UserControl {
     public static readonly StyledProperty<MessageBoxInfo?> MessageBoxDataProperty = AvaloniaProperty.Register<MessageBoxControl, MessageBoxInfo?>("MessageBoxData");
 
     public MessageBoxInfo? MessageBoxData {
@@ -35,7 +35,6 @@ public partial class MessageBoxControl : WindowingContentControl {
         set => this.SetValue(MessageBoxDataProperty, value);
     }
 
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> captionBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(WindowTitleProperty, MessageBoxInfo.CaptionParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> headerBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TextBlock.TextProperty, MessageBoxInfo.HeaderParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> messageBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TextBlock.TextProperty, MessageBoxInfo.MessageParameter);
     private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> yesOkTextBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(ContentProperty, MessageBoxInfo.YesOkTextParameter);
@@ -44,7 +43,6 @@ public partial class MessageBoxControl : WindowingContentControl {
 
     public MessageBoxControl() {
         this.InitializeComponent();
-        this.captionBinder.AttachControl(this);
         this.headerBinder.AttachControl(this.PART_Header);
         this.messageBinder.AttachControl(this.PART_Message);
         this.yesOkTextBinder.AttachControl(this.PART_YesOkButton);
@@ -57,21 +55,6 @@ public partial class MessageBoxControl : WindowingContentControl {
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
     }
 
-    protected override void OnWindowOpened() {
-        base.OnWindowOpened();
-
-        this.Window!.Control.MinHeight = 100;
-        this.Window!.Control.MinWidth = 300;
-        this.Window!.Control.MaxWidth = 800;
-        this.Window!.Control.MaxHeight = 800;
-        this.Window.CanAutoSizeToContent = true;
-        // this.Window!.IsResizable = false;
-    }
-
-    protected override void OnWindowClosed() {
-        base.OnWindowClosed();
-    }
-
     private void OnHeaderTextBlockPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
         if (e.Property == TextBlock.TextProperty) {
             this.PART_MessageContainer.IsVisible = !string.IsNullOrWhiteSpace(e.GetNewValue<string?>());
@@ -80,13 +63,6 @@ public partial class MessageBoxControl : WindowingContentControl {
 
     static MessageBoxControl() {
         MessageBoxDataProperty.Changed.AddClassHandler<MessageBoxControl, MessageBoxInfo?>((o, e) => o.OnMessageBoxDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
-    }
-
-    protected override void OnKeyDown(KeyEventArgs e) {
-        base.OnKeyDown(e);
-        if (e.Key == Key.Escape) {
-            this.CancelDialog();
-        }
     }
 
     private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) {
@@ -138,8 +114,6 @@ public partial class MessageBoxControl : WindowingContentControl {
         }
     }
 
-    private void CancelDialog() => base.Window!.Close(null);
-
     private void OnMessageBoxDataChanged(MessageBoxInfo? oldData, MessageBoxInfo? newData) {
         if (oldData != null)
             oldData.ButtonsChanged -= this.OnActiveButtonsChanged;
@@ -147,7 +121,6 @@ public partial class MessageBoxControl : WindowingContentControl {
             newData.ButtonsChanged += this.OnActiveButtonsChanged;
 
         // Create this first just in case there's a problem with no registrations
-        this.captionBinder.SwitchModel(newData);
         this.headerBinder.SwitchModel(newData);
         this.messageBinder.SwitchModel(newData);
         this.yesOkTextBinder.SwitchModel(newData);
@@ -220,6 +193,8 @@ public partial class MessageBoxControl : WindowingContentControl {
     /// <param name="result">The dialog result wanted</param>
     /// <returns>True if the dialog was closed, false if it could not be closed due to a validation error or other error</returns>
     public void Close(MessageBoxResult result) {
-        base.Window!.Close(result);
+        if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
+            window.Close(result);
+        }
     }
 }

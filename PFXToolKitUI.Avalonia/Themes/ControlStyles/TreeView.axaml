@@ -28,5 +28,10 @@
                 </Border>
             </ControlTemplate>
         </Setter>
+        
+        <Style Selector="^:disabled /template/ Border#border">
+            <Setter Property="Background" Value="{DynamicResource TreeView.Disabled.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource TreeView.Disabled.Border}"/>
+        </Style>
     </ControlTheme>
 </ResourceDictionary>

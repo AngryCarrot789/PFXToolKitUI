@@ -1,17 +1,11 @@
-﻿<s:WindowingContentControl xmlns="https://github.com/avaloniaui"
+﻿<UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:cfg="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
              xmlns:s="clr-namespace:PFXToolKitUI.Avalonia.Services"
              mc:Ignorable="d"
-             x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialogView"
-             WindowTitle="Settings"
-             Background="{DynamicResource PanelBackground0}"
-             WindowBorderBrush="{DynamicResource PanelBorderBrush}"
-             WindowTitleBarBrush="{DynamicResource ABrush.Tone7.Background.Static}"
-             FontFamily="{StaticResource FontOxanium}"
-             FontWeight="Medium">
+             x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialogView">
     <DockPanel>
         <Border DockPanel.Dock="Bottom"
                 Background="{DynamicResource ABrush.Tone4.Background.Static}"
@@ -76,4 +70,4 @@
         </Border>
         <cfg:ConfigurationPanelControl x:Name="PART_EditorPanel"/>
     </DockPanel>
-</s:WindowingContentControl>
+</UserControl>

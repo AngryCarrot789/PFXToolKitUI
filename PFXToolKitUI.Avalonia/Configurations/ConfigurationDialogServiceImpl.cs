@@ -24,9 +24,8 @@ namespace PFXToolKitUI.Avalonia.Configurations;
 
 public class ConfigurationDialogServiceImpl : IConfigurationDialogService {
     public async Task ShowConfigurationDialog(ConfigurationManager configurationManager) {
-        if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out IWindow? activeWindow)) {
-            IWindow window = system.CreateWindow(new ConfigurationDialogView(configurationManager));
-            await window.ShowDialog(activeWindow);
+        if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {
+            await system.Register(new ConfigurationDialogWindow(configurationManager)).ShowDialog(activeWindow);
         }
     }
 }

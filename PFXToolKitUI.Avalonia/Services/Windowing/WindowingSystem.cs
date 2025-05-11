@@ -37,58 +37,48 @@ public abstract class WindowingSystem {
     }
     
     /// <summary>
-    /// Creates a window object using the given content object
+    /// Registers the window with this windowing system. The window cannot be open.
+    /// It is automatically unregistered when the window closes
     /// </summary>
-    /// <param name="content">The content of the window</param>
+    /// <param name="window">The window</param>
     /// <param name="isMainWindowable">True to allow the window to be elegible for main window status</param>
-    /// <returns>The new window instance</returns>
-    public abstract IWindow CreateWindow(WindowingContentControl content, bool isMainWindowable = false);
+    /// <returns>The parameter, for chain calling</returns>
+    public abstract DesktopWindow Register(DesktopWindow window, bool isMainWindowable = false);
 
     /// <summary>
     /// Tries to get the window that is currently focused.
     /// </summary>
     /// <param name="window">The active window</param>
     /// <returns>True if an active window was found</returns>
-    public abstract bool TryGetActiveWindow([NotNullWhen(true)] out IWindow? window);
+    public abstract bool TryGetActiveWindow([NotNullWhen(true)] out DesktopWindow? window);
 
-    public IWindow? GetActiveWindowOrNull() {
-        return this.TryGetActiveWindow(out IWindow? window) ? window : null;
+    public DesktopWindow? GetActiveWindowOrNull() {
+        return this.TryGetActiveWindow(out DesktopWindow? window) ? window : null;
     }
 }
 
-public sealed class WindowingSystemDesktop : WindowingSystem {
+public sealed class WindowingSystemImpl : WindowingSystem {
     private readonly IDesktopService desktop;
-    private readonly List<DesktopWindowImpl> mainWindowable;
-    private readonly List<DesktopWindowImpl> openWindows;
-    private DesktopWindowImpl? lastActivated;
+    private readonly List<DesktopWindow> mainWindowable;
+    private readonly List<DesktopWindow> openWindows;
+    private DesktopWindow? lastActivated;
 
-    public WindowingSystemDesktop() {
+    public WindowingSystemImpl() {
         this.desktop = ApplicationPFX.Instance.ServiceManager.GetService<IDesktopService>();
-        this.mainWindowable = new List<DesktopWindowImpl>();
-        this.openWindows = new List<DesktopWindowImpl>();
-    }
-
-    public override IWindow CreateWindow(WindowingContentControl content, bool isMainWindowable = false) {
-        DesktopWindowImpl window = new DesktopWindowImpl(content);
-        window.Opened += this.OnWindowOpened;
-        window.Closed += this.OnWindowClosed;
-        if (isMainWindowable) {
-            this.mainWindowable.Add(window);
-        }
-        
-        return window;
+        this.mainWindowable = new List<DesktopWindow>();
+        this.openWindows = new List<DesktopWindow>();
     }
     
     private void OnWindowOpened(object? sender, EventArgs e) {
-        DesktopWindowImpl window = (DesktopWindowImpl) sender!;
+        DesktopWindow window = (DesktopWindow) sender!;
         this.openWindows.Add(window);
         this.lastActivated = window;
         window.Activated += this.OnWindowActivated;
-        window.Activated += this.OnWindowDeactivated;
+        window.Deactivated += this.OnWindowDeactivated;
         
         // Try find suitable main window or update main window if current one is not mainwindowable
         IClassicDesktopStyleApplicationLifetime lifetime = this.desktop.ApplicationLifetime;
-        if (lifetime.MainWindow is DesktopWindowImpl impl && impl.IsOpen && this.mainWindowable.Contains(impl)) {
+        if (lifetime.MainWindow is DesktopWindow impl && impl.IsOpen && this.mainWindowable.Contains(impl)) {
             return;
         }
 
@@ -96,24 +86,24 @@ public sealed class WindowingSystemDesktop : WindowingSystem {
     }
 
     private void OnWindowClosed(object? sender, EventArgs e) {
-        DesktopWindowImpl window = (DesktopWindowImpl) sender!;
+        DesktopWindow window = (DesktopWindow) sender!;
         this.mainWindowable.Remove(window);
         if (window == this.lastActivated) {
             this.lastActivated = null;
         }
 
         window.Activated -= this.OnWindowActivated;
-        window.Activated -= this.OnWindowDeactivated;
+        window.Deactivated -= this.OnWindowDeactivated;
 
         // If we closed the main window, then try to find another suitable main window.
         // Otherwise, leave it alone to allow ShutdownMode.OnMainWindowClosed to work
         IClassicDesktopStyleApplicationLifetime lifetime = this.desktop.ApplicationLifetime;
         Window? mainWindow = lifetime.MainWindow;
         if (mainWindow == window || mainWindow == null || !mainWindow.IsLoaded) {
-            if (window.Owner is DesktopWindowImpl owner && this.mainWindowable.Contains(owner) && owner.IsOpen) {
+            if (window.Owner is DesktopWindow owner && this.mainWindowable.Contains(owner) && owner.IsOpen) {
                 lifetime.MainWindow = owner;
             }
-            else if (this.mainWindowable.FirstOrDefault(x => x.IsOpen) is DesktopWindowImpl found) {
+            else if (this.mainWindowable.FirstOrDefault(x => x.IsOpen) is DesktopWindow found) {
                 lifetime.MainWindow = found;
             }
             else {
@@ -125,20 +115,30 @@ public sealed class WindowingSystemDesktop : WindowingSystem {
     }
     
     private void OnWindowActivated(object? sender, EventArgs e) {
-        this.lastActivated = (DesktopWindowImpl) sender!;
+        this.lastActivated = (DesktopWindow) sender!;
     }
     
     private void OnWindowDeactivated(object? sender, EventArgs e) {
         
     }
 
-    public override bool TryGetActiveWindow([NotNullWhen(true)] out IWindow? window) {
+    public override DesktopWindow Register(DesktopWindow window, bool isMainWindowable = false) {
+        window.Opened += this.OnWindowOpened;
+        window.Closed += this.OnWindowClosed;
+        if (isMainWindowable) {
+            this.mainWindowable.Add(window);
+        }
+
+        return window;
+    }
+
+    public override bool TryGetActiveWindow([NotNullWhen(true)] out DesktopWindow? window) {
         // Get last activated, or find the first that is activated
         window = this.lastActivated ?? this.openWindows.FirstOrDefault(x => x.IsActive);
         
         if (this.desktop.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime classic) {
             // No windows are activated. App is completely unfocused. So find the main window
-            window ??= classic.MainWindow as DesktopWindowImpl;
+            window ??= classic.MainWindow as DesktopWindow;
             if (window != null && !window.IsOpen) {
                 window = null;
             }
