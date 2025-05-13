@@ -78,6 +78,7 @@ public class ActivityListItem : TemplatedControl {
         this.OnActivityTaskIndeterminateChanged(task.Progress);
         this.OnActivityTaskCompletionValueChanged(task.Progress.CompletionState);
         
+        task.PausableTaskChanged += this.OnActivityPausableTaskChanged;
         if (task.PausableTask != null)
             task.PausableTask.PausedStateChanged += this.OnPausedStateChanged;
         this.UpdatePauseContinueButton(task.PausableTask);
@@ -90,9 +91,19 @@ public class ActivityListItem : TemplatedControl {
         task.Progress.IsIndeterminateChanged -= this.OnActivityTaskIndeterminateChanged;
         task.Progress.CompletionState.CompletionValueChanged -= this.OnActivityTaskCompletionValueChanged;
         
+        task.PausableTaskChanged -= this.OnActivityPausableTaskChanged;
         if (task.PausableTask != null)
             task.PausableTask.PausedStateChanged -= this.OnPausedStateChanged;
         this.UpdatePauseContinueButton(null);
+    }
+
+    private void OnActivityPausableTaskChanged(ActivityTask sender, AdvancedPausableTask? oldTask, AdvancedPausableTask? newTask) {
+        if (oldTask != null)
+            oldTask.PausedStateChanged -= this.OnPausedStateChanged;
+        if (newTask != null)
+            newTask.PausedStateChanged += this.OnPausedStateChanged;
+        
+        ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => this.UpdatePauseContinueButton(newTask));
     }
 
     private void PART_CancelActivityButtonOnClick(object? sender, RoutedEventArgs e) {

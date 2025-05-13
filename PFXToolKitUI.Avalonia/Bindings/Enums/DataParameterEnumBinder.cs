@@ -17,8 +17,6 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia.Controls;
-using Avalonia.Interactivity;
 using PFXToolKitUI.DataTransfer;
 
 namespace PFXToolKitUI.Avalonia.Bindings.Enums;
@@ -26,91 +24,52 @@ namespace PFXToolKitUI.Avalonia.Bindings.Enums;
 /// <summary>
 /// A class which helps bind radio buttons to an enum data parameter
 /// </summary>
-public class DataParameterEnumBinder<TEnum> where TEnum : struct {
-    public delegate void DataParameterEnumBinderCurrentValueChangedEventHandler(DataParameterEnumBinder<TEnum> sender, TEnum oldCurrentValue, TEnum newCurrentValue);
-
-    private readonly Dictionary<RadioButton, TEnum> buttonToState;
-    private readonly List<RadioButton> defaultButtons;
-    private readonly TEnum defaultEnum;
-    private TEnum currentValue;
-
-    public TEnum CurrentValue {
-        get => this.currentValue;
-        set {
-            TEnum oldCurrentValue = this.currentValue;
-            this.currentValue = value;
-            this.CurrentValueChanged?.Invoke(this, oldCurrentValue, value);
-            if (this.Owner != null) {
-                this.Parameter.SetValue(this.Owner, value);
-            }
-        }
-    }
-
+public class DataParameterEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum : struct, Enum {
     /// <summary>
     /// Gets or sets the active transferable data owner
     /// </summary>
-    public ITransferableData? Owner { get; private set; }
+    public ITransferableData? Model { get; private set; }
 
+    /// <summary>
+    /// Gets the parameter used to get/set the enum value in the <see cref="Model"/>
+    /// </summary>
     public DataParameter<TEnum> Parameter { get; }
 
-    public event DataParameterEnumBinderCurrentValueChangedEventHandler? CurrentValueChanged;
-
-    public DataParameterEnumBinder(DataParameter<TEnum> parameter, TEnum defaultValue = default) {
-        this.buttonToState = new Dictionary<RadioButton, TEnum>();
-        this.defaultButtons = new List<RadioButton>();
-        this.currentValue = defaultValue;
-        this.defaultEnum = defaultValue;
+    public override bool IsAttached => this.Model != null;
+    
+    public DataParameterEnumBinder(DataParameter<TEnum> parameter) {
         this.Parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
     }
 
-    public void Assign(RadioButton button, TEnum enumValue) {
-        // If now added then add event, otherwise, just update target enum value
-        if (this.buttonToState.TryAdd(button, enumValue)) {
-            button.IsCheckedChanged += this.OnCheckChanged;
-        }
-        else {
-            this.buttonToState[button] = enumValue;
-        }
-
-        if (enumValue.Equals(this.defaultEnum)) {
-            this.defaultButtons.Add(button);
-        }
+    private void OnDataParameterChanged(DataParameter parameter, ITransferableData owner) {
+        if (this.Model == null)
+            throw new Exception("Fatal application bug");
+        this.UpdateControls(this.GetValue());
     }
+    
+    public void Attach(ITransferableData model) {
+        ArgumentNullException.ThrowIfNull(model);
+        if (this.Model != null)
+            throw new InvalidOperationException("Already attached");
 
-    public void Unasign(RadioButton button) {
-        if (this.buttonToState.Remove(button)) {
-            button.IsCheckedChanged -= this.OnCheckChanged;
-            this.defaultButtons.Remove(button);
-        }
-    }
-
-    private void OnCheckChanged(object? sender, RoutedEventArgs e) {
-        if (sender is RadioButton button && button.IsChecked == true)
-            this.CurrentValue = this.buttonToState[button];
-    }
-
-    public void Attach(ITransferableData owner) {
-        if (owner == null)
-            throw new ArgumentNullException(nameof(owner));
-
-        this.Owner = owner;
-        foreach (KeyValuePair<RadioButton, TEnum> pair in this.buttonToState) {
-            if (pair.Key.IsChecked == true) {
-                this.CurrentValue = pair.Value;
-                return;
-            }
-        }
-
-        if (this.defaultButtons.Count > 0) {
-            foreach (RadioButton button in this.defaultButtons) {
-                button.IsChecked = true;
-            }
-        }
+        this.Model = model;
+        this.Parameter.AddValueChangedHandler(model, this.OnDataParameterChanged);
+        this.UpdateControls(this.GetValue());
     }
 
     public void Detach() {
-        if (this.Owner != null) {
-            this.Owner = null;
-        }
+        if (this.Model == null)
+            throw new InvalidOperationException("Not attached");
+
+        this.Parameter.RemoveValueChangedHandler(this.Model, this.OnDataParameterChanged);
+        this.Model = null;
+    }
+
+    protected override void SetValue(TEnum value) {
+        this.Parameter.SetValue(this.Model!, value);
+    }
+
+    protected override TEnum GetValue() {
+        return this.Parameter.GetValue(this.Model!);
     }
 }

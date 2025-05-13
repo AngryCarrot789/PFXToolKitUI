@@ -116,6 +116,7 @@ public partial class ActivityStatusBarControl : UserControl {
             if (oldActivity.IsDirectlyCancellable && !Design.IsDesignMode)
                 this.PART_CancelActivityButton.IsVisible = false;
             
+            oldActivity.PausableTaskChanged -= this.OnCurrentActivityPausableTaskChanged;
             if (oldActivity.PausableTask != null)
                 oldActivity.PausableTask.PausedStateChanged -= this.OnPausedStateChanged;
 
@@ -134,20 +135,29 @@ public partial class ActivityStatusBarControl : UserControl {
             if (!Design.IsDesignMode)
                 this.IsVisible = true;
             
+            newActivity.PausableTaskChanged += this.OnCurrentActivityPausableTaskChanged;
             if (newActivity.PausableTask != null)
                 newActivity.PausableTask.PausedStateChanged += this.OnPausedStateChanged;
-            
         }
         else {
             if (!Design.IsDesignMode)
                 this.IsVisible = false;
         }
-
+        
         this.UpdatePauseContinueButton(newActivity?.PausableTask);
         this.PART_CancelActivityButton.IsEnabled = true;
         this.OnActivityTaskTextChanged(prog);
         this.OnPrimaryActionCompletionValueChanged(prog?.CompletionState);
         this.OnActivityTaskIndeterminateChanged(prog);
+    }
+
+    private void OnCurrentActivityPausableTaskChanged(ActivityTask sender, AdvancedPausableTask? oldTask, AdvancedPausableTask? newTask) {
+        if (oldTask != null)
+            oldTask.PausedStateChanged -= this.OnPausedStateChanged;
+        if (newTask != null)
+            newTask.PausedStateChanged += this.OnPausedStateChanged;
+
+        ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => this.UpdatePauseContinueButton(newTask));
     }
 
     private void OnTaskStarted(ActivityManager manager, ActivityTask task, int index) {

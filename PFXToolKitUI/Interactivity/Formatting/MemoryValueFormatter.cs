@@ -51,14 +51,9 @@ public class MemoryValueFormatter : BaseSimpleValueFormatter {
         MemoryFormatType.Byte, MemoryFormatType.KibiByte1024, MemoryFormatType.MebiByte1024, MemoryFormatType.GibiByte1024, MemoryFormatType.TebiByte1024
     }.ToImmutableHashSet();
 
-    public readonly struct MemoryFormatConversion {
-        public readonly MemoryFormatType Format;
-        public readonly double Bytes;
-
-        public MemoryFormatConversion(MemoryFormatType format, double bytes) {
-            this.Format = format;
-            this.Bytes = bytes;
-        }
+    public readonly struct MemoryFormatConversion(MemoryFormatType format, double bytes) {
+        public readonly MemoryFormatType Format = format;
+        public readonly double Bytes = bytes;
     }
 
     public static readonly ImmutableList<MemoryFormatConversion> Conversions = new List<MemoryFormatConversion>() {

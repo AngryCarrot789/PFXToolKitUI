@@ -94,8 +94,8 @@ public class UIInputManager {
     static UIInputManager() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
         WindowBase.IsActiveProperty.Changed.AddClassHandler<WindowBase, bool>((o, args) => OnWindowActivated(o, args.NewValue.GetValueOrDefault()));
-        InputElement.GotFocusEvent.AddClassHandler<TopLevel>((s, e) => OnFocusChanged(s, e, false), handledEventsToo: true);
-        InputElement.LostFocusEvent.AddClassHandler<TopLevel>((s, e) => OnFocusChanged(s, e, true), handledEventsToo: true);
+        InputElement.GotFocusEvent.AddClassHandler<TopLevel>((s, e) => OnGotOrLostFocus(s, e, false), handledEventsToo: true);
+        InputElement.LostFocusEvent.AddClassHandler<TopLevel>((s, e) => OnGotOrLostFocus(s, e, true), handledEventsToo: true);
 
         InputElement.KeyDownEvent.AddClassHandler<TopLevel>(OnTopLevelPreviewKeyDown, RoutingStrategies.Tunnel, handledEventsToo: true);
         InputElement.KeyDownEvent.AddClassHandler<TopLevel>(OnTopLevelKeyDown, handledEventsToo: true);
@@ -219,28 +219,48 @@ public class UIInputManager {
             if (!isFocusable) {
                 window.Focusable = true;
             }
-            
+
             window.Focus(NavigationMethod.Pointer);
             if (!isFocusable) {
                 window.Focusable = false;
             }
         }
     }
-    
-    private static void OnFocusChanged(TopLevel topLevel, RoutedEventArgs e, bool lost) {
+
+    private static void OnGotOrLostFocus(TopLevel topLevel, RoutedEventArgs e, bool lost) {
         InputElement? element = e.Source as InputElement;
         if (element == null) {
             return;
         }
 
         WeakReference? last = topLevel.GetValue(LastFocusedElementProperty);
-        if (last != null)
-            last.Target = null; // Does this help the GC a bit?
+        if (last == null)
+            topLevel.SetValue(LastFocusedElementProperty, last = new WeakReference(null));
 
         WeakReference? curr = topLevel.GetValue(CurrentFocusedElementProperty);
-        topLevel.SetValue(LastFocusedElementProperty, curr);
-        topLevel.SetValue(CurrentFocusedElementProperty, lost ? null : new WeakReference(element));
-        Debug.WriteLine($"Focus changed: '{GetLastFocusedElement(topLevel)?.GetType().Name ?? "null"}' -> '{GetCurrentFocusedElement(topLevel)?.GetType().Name ?? "null"}'");
+        if (curr == null)
+            topLevel.SetValue(CurrentFocusedElementProperty, curr = new WeakReference(null));
+
+        object? lastTarget = curr.Target; 
+        last.Target = lastTarget;
+        if (lost) {
+            curr.Target = null;
+            string msg = "";
+            if (!ReferenceEquals(lastTarget, element)) {
+                msg = $" (error: differing lastTarget from LostFocus source '{element.GetType().Name}')";
+            }
+            
+            Debug.WriteLine($"Focus LOST: '{lastTarget?.GetType().Name ?? "null"}'{msg}");
+        }
+        else {
+            curr.Target = element;
+            string msg = "";
+            if (lastTarget != null) {
+                msg = $" (error: lastTarget still valid '{lastTarget.GetType().Name}')";
+            }
+            
+            Debug.WriteLine($"Focus GAINED: null -> '{curr.Target?.GetType().Name ?? "null"}'{msg}");
+        }
 
         string? oldPath = Instance.FocusedPath;
         string? newPath = lost ? null : GetFocusPath(element);
@@ -250,19 +270,19 @@ public class UIInputManager {
             UpdateCurrentlyFocusedObject(element, newPath);
         }
     }
-    
+
     private static void OnFocusPathChanged(AvaloniaObject obj, AvaloniaPropertyChangedEventArgs<string?> e) {
         string? oldPath = e.OldValue.GetValueOrDefault();
         if (Instance.FocusedPath != oldPath) {
             return;
         }
-        
+
         string? newPath = e.NewValue.GetValueOrDefault();
         if (oldPath == newPath) {
             return;
         }
-        
-        TopLevel? topLevel = obj as TopLevel ?? (obj as Visual)?.GetVisualRoot() as TopLevel; 
+
+        TopLevel? topLevel = obj as TopLevel ?? (obj as Visual)?.GetVisualRoot() as TopLevel;
         if (topLevel != null && GetCurrentFocusedElement(topLevel) == obj) {
             Instance.FocusedPath = newPath;
             OnFocusedPathChanged?.Invoke(oldPath, newPath, false);

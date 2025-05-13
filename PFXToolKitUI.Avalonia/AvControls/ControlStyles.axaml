@@ -22,18 +22,18 @@
                     <DockPanel x:Name="PART_DockPanel"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center">
-                        <local:IconControl x:Name="PART_IconControl" 
-                                           Icon="{TemplateBinding Icon}" 
+                        <local:IconControl x:Name="PART_IconControl"
+                                           Icon="{TemplateBinding Icon}"
                                            Stretch="{TemplateBinding Stretch}"
                                            IsVisible="{TemplateBinding Icon, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
                                            VerticalAlignment="Center" HorizontalAlignment="Center"
                                            DockPanel.Dock="{TemplateBinding IconPlacement}"/>
-                        <ContentPresenter x:Name="PART_ContentPresenter" 
-                                          Content="{TemplateBinding Content}" 
+                        <ContentPresenter x:Name="PART_ContentPresenter"
+                                          Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           IsVisible="{TemplateBinding Content, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
-                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>                        
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
                     </DockPanel>
                 </Border>
             </ControlTemplate>

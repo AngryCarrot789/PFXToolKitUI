@@ -22,6 +22,8 @@ using PFXToolKitUI.Tasks.Pausable;
 
 namespace PFXToolKitUI.Tasks;
 
+public delegate void ActivityTaskPausableTaskChangedEventHandler(ActivityTask sender, AdvancedPausableTask? oldPausableTask, AdvancedPausableTask? newPausableTask);
+
 /// <summary>
 /// Represents a task that can be run by a <see cref="ActivityManager"/> on a background thread
 /// </summary>
@@ -37,7 +39,8 @@ public class ActivityTask {
     private volatile int state;
     private volatile Task? userTask; // task from action()
     protected Task? theMainTask; // task we created
-    private readonly CancellationTokenSource? cancellationTokenSource;
+    internal readonly CancellationTokenSource? cancellationTokenSource;
+    private AdvancedPausableTask? myInternalPausableTask;
 
     protected Task? UserTask => this.userTask;
 
@@ -82,14 +85,6 @@ public class ActivityTask {
     public CancellationToken CancellationToken { get; }
 
     /// <summary>
-    /// Gets the pausable task associated with this activity. When non-null, pausing is supported.
-    /// <para>
-    /// This value never changes once the activity has started running
-    /// </para>
-    /// </summary>
-    public AdvancedPausableTask? PausableTask => this.myPausableTask as AdvancedPausableTask;
-
-    /// <summary>
     /// Gets this activity's task, which can be used to await completion. This task is a proxy of
     /// the user task function, and will not throw <see cref="OperationCanceledException"/> when
     /// awaited if our <see cref="CancellationToken"/>'s is cancelled
@@ -99,7 +94,28 @@ public class ActivityTask {
         private set => this.theMainTask = value;
     }
 
-    internal BasePausableTask? myPausableTask;
+    /// <summary>
+    /// Gets the pausable task associated with this activity. When non-null, pausing is supported.
+    /// <para>
+    /// This value never changes once the activity has started running
+    /// </para>
+    /// </summary>
+    public AdvancedPausableTask? PausableTask {
+        get => this.myInternalPausableTask;
+        internal set {
+            AdvancedPausableTask? oldPausableTask = this.myInternalPausableTask;
+            if (oldPausableTask != value) {
+                this.myInternalPausableTask = value;
+                this.PausableTaskChanged?.Invoke(this, oldPausableTask, value);
+            }
+        }
+    }
+
+    /// <summary>
+    /// An event fired when <see cref="PausableTask"/> changes, because it was run via <see cref="AdvancedPausableTask.RunWithCurrentActivity"/>.
+    /// This event is fired from a task thread, so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/> if they need to
+    /// </summary>
+    public event ActivityTaskPausableTaskChangedEventHandler? PausableTaskChanged;
 
     protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellationTokenSource) {
         this.activityManager = activityManager ?? throw new ArgumentNullException(nameof(activityManager));
@@ -168,10 +184,10 @@ public class ActivityTask {
         await ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 2);
     }
 
-    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions, BasePausableTask? pausableTask = null) {
-        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DefaultProgressTracker(), cts) { myPausableTask = pausableTask };
-        if (pausableTask is AdvancedPausableTask)
-            ((AdvancedPausableTask) pausableTask).activity = task;
+    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions, AdvancedPausableTask? pausableTask = null) {
+        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DefaultProgressTracker(), cts) { myInternalPausableTask = pausableTask };
+        if (pausableTask != null)
+            pausableTask.activity = task;
         return InternalStartActivityImpl(task, creationOptions);
     }
 
