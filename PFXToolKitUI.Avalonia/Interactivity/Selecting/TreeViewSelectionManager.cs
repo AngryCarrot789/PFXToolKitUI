@@ -26,36 +26,36 @@ using PFXToolKitUI.Interactivity;
 namespace PFXToolKitUI.Avalonia.Interactivity.Selecting;
 
 /// <summary>
-/// A selection manager for a data grid
+/// A selection manager for a tree view
 /// </summary>
-/// <typeparam name="T">The type of item the data grid makes selectable</typeparam>
-public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : class {
-    public DataGrid? DataGrid {
-        get => this.dataGrid;
+/// <typeparam name="T">The type of item the tree view makes selectable</typeparam>
+public class TreeViewSelectionManager<T> : IListSelectionManager<T> where T : class {
+    public TreeView? TreeView {
+        get => this.myTree;
         set {
-            DataGrid? oldGrid = this.dataGrid;
+            TreeView? oldTree = this.myTree;
             ReadOnlyCollection<T>? oldItems = null;
-            if (oldGrid != null) {
+            if (oldTree != null) {
                 this.castingSelectionList = null;
                 if (value == null) {
                     // Tree is being set to null; clear selection first
-                    oldGrid.SelectedItems.Clear();
-                    oldGrid.SelectionChanged -= this.OnDataGridSelectionChanged;
-                    this.dataGrid = null;
+                    oldTree.SelectedItems.Clear();
+                    oldTree.SelectionChanged -= this.OnSelectionChanged;
+                    this.myTree = null;
                     return;
                 }
 
                 // Since there's an old and new tree, we need to first say cleared then selection
                 // changed from old selection to new selection, even if they're the exact same
-                if ((oldItems = AsReadOnly(CastSelectedItems(oldGrid).ToList())) != null && this.KeepSelectedItemsFromOldTree)
-                    oldGrid.SelectedItems.Clear();
-                oldGrid.SelectionChanged -= this.OnDataGridSelectionChanged;
+                if ((oldItems = AsReadOnly(CastSelectedItems(oldTree).ToList())) != null && this.KeepSelectedItemsFromOldTree)
+                    oldTree.SelectedItems.Clear();
+                oldTree.SelectionChanged -= this.OnSelectionChanged;
             }
 
-            this.dataGrid = value;
+            this.myTree = value;
             if (value != null) {
                 this.castingSelectionList = new CastingList(value);
-                value.SelectionChanged += this.OnDataGridSelectionChanged;
+                value.SelectionChanged += this.OnSelectionChanged;
                 if (this.KeepSelectedItemsFromOldTree) {
                     if (oldItems != null)
                         this.Select(oldItems);
@@ -68,10 +68,10 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
         }
     }
 
-    public int Count => this.dataGrid?.SelectedItems.Count ?? 0;
+    public int Count => this.myTree?.SelectedItems.Count ?? 0;
 
     /// <summary>
-    /// Specifies whether to move the old tree's selected items to the new tree when our <see cref="DataGrid"/> property changes. True by default.
+    /// Specifies whether to move the old tree's selected items to the new tree when our <see cref="TreeView"/> property changes. True by default.
     /// <br/>
     /// <para>
     /// When true, the old tree's items are saved then the tree is cleared, and the new tree's selection becomes that saved list
@@ -82,7 +82,7 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
     /// </summary>
     public bool KeepSelectedItemsFromOldTree { get; set; } = true;
 
-    public IEnumerable<T> SelectedItems => this.dataGrid != null ? CastSelectedItems(this.dataGrid) : ImmutableArray<T>.Empty;
+    public IEnumerable<T> SelectedItems => this.myTree != null ? CastSelectedItems(this.myTree) : ImmutableArray<T>.Empty;
 
     public IList<T> SelectedItemList => this.castingSelectionList ?? ReadOnlyCollection<T>.Empty;
 
@@ -91,16 +91,16 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
     public event LightSelectionChangedEventHandler<T>? LightSelectionChanged;
 
     private IList<T>? castingSelectionList;
-    private DataGrid? dataGrid;
+    private TreeView? myTree;
 
-    public DataGridSelectionManager() {
+    public TreeViewSelectionManager() {
     }
 
-    public DataGridSelectionManager(DataGrid dataGridView) {
-        this.DataGrid = dataGridView;
+    public TreeViewSelectionManager(TreeView treeView) {
+        this.TreeView = treeView;
     }
-    
-    private void OnDataGridSelectionChanged(object? sender, SelectionChangedEventArgs e) {
+
+    private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e) {
         this.ProcessTreeSelection(e.RemovedItems, e.AddedItems);
     }
 
@@ -122,9 +122,9 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
     }
 
     public bool IsSelected(T item) {
-        if (this.dataGrid == null)
+        if (this.myTree == null)
             return false;
-        return this.dataGrid.SelectedItems.Contains(item);
+        return this.myTree.SelectedItems.Contains(item);
     }
 
     private void OnSelectionCleared() {
@@ -133,32 +133,32 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
     }
 
     public void SetSelection(T item) {
-        if (this.dataGrid == null) {
+        if (this.myTree == null) {
             return;
         }
 
-        this.dataGrid.SelectedItems.Clear();
+        this.myTree.SelectedItems.Clear();
         this.Select(item);
     }
 
     public void SetSelection(IEnumerable<T> items) {
-        if (this.dataGrid == null) {
+        if (this.myTree == null) {
             return;
         }
 
-        this.dataGrid.SelectedItems.Clear();
+        this.myTree.SelectedItems.Clear();
         this.Select(items);
     }
 
     public void Select(T item) {
-        if (this.dataGrid == null)
+        if (this.myTree == null)
             return;
-        if (!this.dataGrid.SelectedItems.Contains(item))
-            this.dataGrid.SelectedItems.Add(item);
+        if (!this.myTree.SelectedItems.Contains(item))
+            this.myTree.SelectedItems.Add(item);
     }
 
     public void Select(IEnumerable<T> items) {
-        if (this.dataGrid == null) {
+        if (this.myTree == null) {
             return;
         }
 
@@ -168,15 +168,15 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
     }
 
     public void Unselect(T item) {
-        if (this.dataGrid == null) {
+        if (this.myTree == null) {
             return;
         }
 
-        this.dataGrid.SelectedItems.Remove(item);
+        this.myTree.SelectedItems.Remove(item);
     }
 
     public void Unselect(IEnumerable<T> items) {
-        if (this.dataGrid == null) {
+        if (this.myTree == null) {
             return;
         }
 
@@ -193,18 +193,18 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
     }
 
     public void Clear() {
-        this.dataGrid?.SelectedItems.Clear();
+        this.myTree?.SelectedItems.Clear();
     }
 
     public void SelectAll() {
-        this.dataGrid?.SelectAll();
+        this.myTree?.SelectAll();
     }
 
-    private static IEnumerable<T> CastSelectedItems(DataGrid tree) => tree.SelectedItems.Cast<T>();
+    private static IEnumerable<T> CastSelectedItems(TreeView tree) => tree.SelectedItems.Cast<T>();
     private static ReadOnlyCollection<T>? AsReadOnly(List<T>? list) => list != null && list.Count > 0 ? list.AsReadOnly() : null;
 
     private class CastingList : IList<T> {
-        private readonly DataGrid dataGrid;
+        private readonly TreeView dataGrid;
 
         public int Count => this.dataGrid.SelectedItems.Count;
         public bool IsReadOnly => this.dataGrid.SelectedItems.IsReadOnly;
@@ -213,8 +213,8 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
             get => (T) this.dataGrid.SelectedItems[index]!;
             set => this.dataGrid.SelectedItems[index] = value;
         }
-        
-        public CastingList(DataGrid dataGrid) {
+
+        public CastingList(TreeView dataGrid) {
             this.dataGrid = dataGrid;
         }
 
@@ -246,7 +246,7 @@ public class DataGridSelectionManager<T> : IListSelectionManager<T> where T : cl
             this.dataGrid.SelectedItems.Remove(item);
             return true;
         }
-        
+
         public int IndexOf(T item) {
             return this.dataGrid.SelectedItems.IndexOf(item);
         }
