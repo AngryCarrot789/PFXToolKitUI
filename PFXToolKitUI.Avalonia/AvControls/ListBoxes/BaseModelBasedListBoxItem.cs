@@ -29,53 +29,58 @@ using PFXToolKitUI.Utils;
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
 public class BaseModelBasedListBoxItem : ListBoxItem {
+    private Control dragInitiator;
     private PixelPoint lastMovePosAbs;
     private Point leftClickPos;
     private bool isMovingBetweenTracks;
     internal IPointer? initiatedDragPointer;
 
-    private double height1, height2;
-
     public BaseModelBasedListBox? ListBox { get; internal set; }
 
     public BaseModelBasedListBoxItem() {
+        this.dragInitiator = this;
+        this.HookDragEvents(this);
     }
 
-    protected override void OnPointerPressed(PointerPressedEventArgs e) {
-        if (!e.Handled) {
-            PointerPoint point = e.GetCurrentPoint(this);
-            if (point.Properties.PointerUpdateKind == PointerUpdateKind.LeftButtonPressed) {
-                this.leftClickPos = e.GetPosition(this);
-                this.lastMovePosAbs = this.PointToScreen(this.leftClickPos);
-                this.initiatedDragPointer = e.Pointer;
-            }
+    /// <summary>
+    /// Sets the control that acts as the source for drag initiation. Default is 'this'
+    /// </summary>
+    /// <param name="control"></param>
+    public void SetDragSourceControl(Control control) {
+        ArgumentNullException.ThrowIfNull(control);
+        this.UnhookDragEvents(this.dragInitiator);
+        this.HookDragEvents(this.dragInitiator = control);
+    }
+
+    private void UnhookDragEvents(Control control) {
+        control.PointerPressed -= this.OnDragSourcePointerPressed;
+        control.PointerReleased -= this.OnDragSourcePointerReleased;
+        control.PointerMoved -= this.OnDragSourcePointerMoved;
+    }
+
+    private void HookDragEvents(Control control) {
+        control.PointerPressed += this.OnDragSourcePointerPressed;
+        control.PointerReleased += this.OnDragSourcePointerReleased;
+        control.PointerMoved += this.OnDragSourcePointerMoved;
+    }
+
+    private void OnDragSourcePointerPressed(object? sender, PointerEventArgs e) {
+        if (!e.Handled && e.GetCurrentPoint(this.dragInitiator).Properties.PointerUpdateKind == PointerUpdateKind.LeftButtonPressed) {
+            this.leftClickPos = e.GetPosition(this);
+            this.lastMovePosAbs = this.PointToScreen(this.leftClickPos);
+            this.initiatedDragPointer = e.Pointer;
         }
-        
-        base.OnPointerPressed(e);
     }
 
-    protected override void OnPointerReleased(PointerReleasedEventArgs e) {
-        base.OnPointerReleased(e);
+    private void OnDragSourcePointerReleased(object? sender, PointerEventArgs e) {
         this.initiatedDragPointer = null;
     }
 
-    protected override void OnLoaded(RoutedEventArgs e) {
-        base.OnLoaded(e);
-        Dispatcher.UIThread.InvokeAsync(() => {
-            if (this.isMovingBetweenTracks) {
-                this.isMovingBetweenTracks = false;
-                this.Focus(NavigationMethod.Pointer);
-                this.initiatedDragPointer?.Capture(this);
-            }
-        }, DispatcherPriority.Send);
-    }
-
-    protected override void OnPointerMoved(PointerEventArgs e) {
-        base.OnPointerMoved(e);
+    private void OnDragSourcePointerMoved(object? sender, PointerEventArgs e) {
         if (e.Handled) {
             return;
         }
-        
+
         PointerPoint point = e.GetCurrentPoint(this);
         Point mPos = e.GetPosition(this);
 
@@ -102,20 +107,18 @@ public class BaseModelBasedListBoxItem : ListBoxItem {
 
         Vector mPosDiffRel = mPos - this.leftClickPos;
         if (hasMovedY && !this.isMovingBetweenTracks && Math.Abs(mPosDiffRel.Y) >= 1.0d) {
-            int srcIdx = this.ListBox.Items.IndexOf(this);
-            Point pointerPos = e.GetPosition(this.ListBox);
-            IEnumerable<Visual> visuals = this.ListBox.GetVisualsAt(pointerPos);
-            foreach (Visual visual in visuals) {
-                BaseModelBasedListBoxItem? listItem = VisualTreeUtils.GetParent<BaseModelBasedListBoxItem>(visual);
-                if (listItem != null && listItem != this) {
-                    int dstIdx = this.ListBox.Items.IndexOf(listItem);
+            List<BaseModelBasedListBoxItem> items = this.ListBox.Items.Cast<BaseModelBasedListBoxItem>().ToList();
+            int srcIdx = items.IndexOf(this);
+            foreach (BaseModelBasedListBoxItem item in items) {
+                if (item != this) {
+                    int dstIdx = this.ListBox.Items.IndexOf(item);
                     if (srcIdx == dstIdx) {
                         break;
                     }
 
                     bool isMovingDown = dstIdx > srcIdx;
-                    Point mPosItemRel2List = e.GetPosition(listItem);
-                    double threshold = listItem.Bounds.Height / 2;
+                    Point mPosItemRel2List = e.GetPosition(item);
+                    double threshold = item.Bounds.Height / 2;
                     if ((isMovingDown && mPosItemRel2List.Y > threshold) || (!isMovingDown && mPosItemRel2List.Y < threshold)) {
                         this.isMovingBetweenTracks = true;
                         e.Pointer.Capture(null);
@@ -124,32 +127,17 @@ public class BaseModelBasedListBoxItem : ListBoxItem {
                     }
                 }
             }
-
-            // double spacing = 0, totalHeight = 0.0;
-            // Panel? panel = this.ListBox.ItemsPanelRoot;
-            // if (panel is StackPanel) {
-            //     spacing = ((StackPanel) panel).Spacing;
-            // }
-            // 
-            // List<BaseModelBasedListBoxItem> items = new List<BaseModelBasedListBoxItem>(this.ListBox.Items.Cast<BaseModelBasedListBoxItem>());
-            // Point mPosList = e.GetPosition(this.ListBox);
-            // int srcIdx = this.ListBox.Items.IndexOf(this);
-            // for (int i = 0, endIndex = items.Count - 1; i <= endIndex; i++) {
-            //     BaseModelBasedListBoxItem item = items[i];
-            //     if (item != this && DoubleUtils.GreaterThanOrClose(mPosList.Y, totalHeight) && DoubleUtils.LessThanOrClose(mPosList.Y, totalHeight + item.Bounds.Height)) {
-            //         int dstIdx = this.ListBox.Items.IndexOf(item);
-            //         if (srcIdx != dstIdx) {
-            //             this.isMovingBetweenTracks = true;
-            //             e.Pointer.Capture(null);
-            //             this.ListBox.MoveItemIndex(srcIdx, dstIdx);
-            //             e.Handled = true;
-            //             break;
-            //         }
-            //     }
-            //
-            //     // 1.0 includes the gap between tracks
-            //     totalHeight += item.Bounds.Height + spacing;
-            // }
         }
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e) {
+        base.OnLoaded(e);
+        Dispatcher.UIThread.InvokeAsync(() => {
+            if (this.isMovingBetweenTracks) {
+                this.isMovingBetweenTracks = false;
+                this.dragInitiator.Focus(NavigationMethod.Pointer);
+                this.initiatedDragPointer?.Capture(this.dragInitiator);
+            }
+        }, DispatcherPriority.Send);
     }
 }

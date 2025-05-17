@@ -32,7 +32,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     private IObservableList<TModel>? observableList;
 
     /// <summary>
-    /// Gets the item map for this list box
+    /// Gets the item map for this list box. This is used to map models to the list box items and vice versa
     /// </summary>
     public IModelControlDictionary<TModel, ModelBasedListBoxItem<TModel>> ItemMap => this.itemMap;
 
