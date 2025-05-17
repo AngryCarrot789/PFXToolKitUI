@@ -28,7 +28,7 @@ public interface IObservableItemProcessorEx<out T> : IDisposable {
 }
 
 /// <summary>
-/// A helper class for creating observable item processors
+/// A helper class for creating observable item processors for an <see cref="IObservableListEx{T}"/>
 /// </summary>
 public static class ObservableItemProcessorEx {
     /// <summary>

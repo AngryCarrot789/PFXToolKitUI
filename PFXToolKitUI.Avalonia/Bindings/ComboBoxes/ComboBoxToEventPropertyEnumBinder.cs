@@ -29,7 +29,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
     private static readonly ReadOnlyCollection<TEnum> ENUM_VALUES = Enum.GetValues(typeof(TEnum)).Cast<TEnum>().ToList().AsReadOnly();
     
     private readonly Action<object, TEnum> setter;
-    private readonly Func<object, TEnum> getter;
+    private readonly Func<object, TEnum?> getter;
     private readonly AutoEventHelper eventHelper;
     private readonly DataParameterEnumInfo<TEnum>? enumInfo;
     private bool isUpdatingControl;
@@ -44,7 +44,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
     /// </summary>
     public object? Model { get; private set; }
 
-    public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum> getter, Action<object, TEnum> setter, DataParameterEnumInfo<TEnum>? info = null) {
+    public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum?> getter, Action<object, TEnum> setter, DataParameterEnumInfo<TEnum>? info = null) {
         this.eventHelper = new AutoEventHelper(eventName, modelType, this.OnModelEnumChanged);
         this.setter = setter;
         this.getter = getter;
@@ -54,10 +54,10 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
     private void OnModelEnumChanged() {
         if (this.Model == null)
             throw new Exception("Fatal application bug");
-        
+
         this.UpdateControl(this.getter(this.Model!));
     }
-    
+
     private void OnControlPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
         if (!this.isUpdatingControl && e.Property == SelectingItemsControl.SelectedIndexProperty) {
             int idx = ((AvaloniaPropertyChangedEventArgs<int>) e).NewValue.GetValueOrDefault();
@@ -88,7 +88,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
         this.Model = null;
     }
     
-    private void UpdateControl(TEnum currentValue) {
+    private void UpdateControl(TEnum? currentValue) {
         try {
             this.isUpdatingControl = true;
             if (this.Control!.Items.Count == 0 && (this.enumInfo != null ? this.enumInfo.AllowedEnumList.Count : ENUM_VALUES.Count) > 0) {
@@ -105,7 +105,12 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
                 }
             }
 
-            this.Control.SelectedIndex = (this.enumInfo?.EnumList ?? ENUM_VALUES).IndexOf(currentValue);
+            if (currentValue.HasValue) {
+                this.Control.SelectedIndex = (this.enumInfo?.EnumList ?? ENUM_VALUES).IndexOf(currentValue.Value);
+            }
+            else {
+                this.Control.SelectedIndex = -1;
+            }
         }
         finally {
             this.isUpdatingControl = false;

@@ -21,9 +21,12 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 
 /// <summary>
 /// A binder which inherits <see cref="BaseEventPropertyBinder{TModel}"/> that
-/// uses two action events for updating the control and the model
+/// uses two action events for updating the control and the model.
+/// <para>
+/// This is basically <see cref="AvaloniaPropertyToEventPropertyBinder{TModel}"/> except without property changing support
+/// </para>
 /// </summary>
-/// <typeparam name="TModel"></typeparam>
+/// <typeparam name="TModel">Model type</typeparam>
 public class EventPropertyBinder<TModel> : BaseEventPropertyBinder<TModel> where TModel : class {
     public event Action<IBinder<TModel>>? DoUpdateControl;
     public event Action<IBinder<TModel>>? DoUpdateModel;

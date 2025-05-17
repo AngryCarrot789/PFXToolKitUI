@@ -25,7 +25,7 @@
                            CornerRadius="2"
                            ToolTip.Tip="Cancels the task"
                            Click="PART_CancelActivityButton_OnClick"
-                           Icon="{x:Static local:ActivityStatusBarControl.CrossIcon}"
+                           Icon="{x:Static local:ActivityStatusBarControl.CancelIcon}"
                            IconMaxHeight="12" IconMaxWidth="12"
                            VerticalContentAlignment="Center"
                            HorizontalContentAlignment="Center"/>

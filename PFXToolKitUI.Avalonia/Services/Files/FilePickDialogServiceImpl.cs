@@ -27,6 +27,11 @@ using Path = System.IO.Path;
 namespace PFXToolKitUI.Avalonia.Services.Files;
 
 public class FilePickDialogServiceImpl : IFilePickDialogService {
+    // We wait for this much time in order to get around an issue where opening a file
+    // picker right after another dialog closes can cause WM_ENABLE not to be sent to
+    // the parent window, basically freezing the whole application
+    private const int WaitTimeMillisForWM_ENABLE = 100;
+    
     public static IReadOnlyList<FilePickerFileType>? ConvertFilters(IEnumerable<FileFilter>? filters) {
         if (filters == null)
             return null;
@@ -43,6 +48,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
             return null;
         }
 
+        await Task.Delay(WaitTimeMillisForWM_ENABLE);
         string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
         IReadOnlyList<IStorageFile> list = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions() {
             Title = message ?? "Pick a file",
@@ -59,6 +65,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
             return null;
         }
 
+        await Task.Delay(WaitTimeMillisForWM_ENABLE);
         string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
         IReadOnlyList<IStorageFile> list = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions() {
             Title = message ?? "Pick some files",
@@ -75,6 +82,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
             return null;
         }
 
+        await Task.Delay(WaitTimeMillisForWM_ENABLE);
         string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
         string? extension = fileName != null ? Path.GetExtension(fileName) : null;
         IStorageFile? item = await window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions() {
