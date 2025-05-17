@@ -64,6 +64,16 @@ public interface IBinder<TModel> : IBinder where TModel : class {
     TModel Model { get; }
 
     /// <summary>
+    /// Returns true when a control is attached
+    /// </summary>
+    bool HasControl { get; }
+
+    /// <summary>
+    /// Returns true when a model is attached
+    /// </summary>
+    bool HasModel { get; }
+
+    /// <summary>
     /// Attaches both the control and the model to this binder. This is equivalent to
     /// calling <see cref="AttachControl"/> and <see cref="AttachModel"/>.
     /// </summary>

@@ -17,6 +17,9 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
+using PFXToolKitUI.Avalonia.Bindings;
+
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
 public abstract class ModelBasedListBoxItem<TModel> : BaseModelBasedListBoxItem where TModel : class {
@@ -27,7 +30,66 @@ public abstract class ModelBasedListBoxItem<TModel> : BaseModelBasedListBoxItem 
 
     public TModel? Model { get; private set; }
 
+    private List<IBinder<TModel>>? modelBinderList;
+
     protected ModelBasedListBoxItem() {
+    }
+
+    /// <summary>
+    /// Adds a binder to our internal list. When we become connected to or
+    /// disconnected from the model, the binder is attached/detached accordingly
+    /// </summary>
+    /// <param name="binder">The binder</param>
+    /// <exception cref="InvalidOperationException">Binder is already attached or already added</exception>
+    public void AddBinderForModel(IBinder<TModel> binder) {
+        if (binder.HasModel)
+            throw new InvalidOperationException("Binder is already attached");
+
+        if (this.modelBinderList == null)
+            this.modelBinderList = new List<IBinder<TModel>>();
+        else if (this.modelBinderList.Contains(binder))
+            throw new InvalidOperationException("Binder already added");
+
+        this.modelBinderList.Add(binder);
+        if (this.Model != null)
+            binder.AttachModel(this.Model!);
+    }
+
+    /// <summary>
+    /// Adds multiple binders to our internal list. See <see cref="AddBinderForModel(PFXToolKitUI.Avalonia.Bindings.IBinder{TModel})"/> for more info
+    /// </summary>
+    /// <param name="binders">The binders</param>
+    /// <exception cref="InvalidOperationException">Binder is already attached or already added</exception>
+    public void AddBinderForModel(params IBinder<TModel>[] binders) {
+        if (binders.Length < 1) {
+            return;
+        }
+
+        foreach (IBinder<TModel> binder in binders) {
+            if (binder.HasModel)
+                throw new InvalidOperationException("Binder is already attached");
+            if (this.modelBinderList != null && this.modelBinderList.Contains(binder))
+                throw new InvalidOperationException("Binder already added");
+        }
+
+        this.modelBinderList ??= new List<IBinder<TModel>>(binders.Length);
+        foreach (IBinder<TModel> binder in binders) {
+            this.modelBinderList.Add(binder);
+            if (this.Model != null)
+                binder.AttachModel(this.Model!);
+        }
+    }
+
+    public bool RemoveBinderForModel(IBinder<TModel> binder) {
+        if (this.modelBinderList == null || !this.modelBinderList.Remove(binder)) {
+            return false;
+        }
+
+        if (this.Model != null && binder.HasModel && binder.Model == this.Model) {
+            binder.DetachModel();
+        }
+
+        return true;
     }
 
     internal void InternalOnAddingToList(ModelBasedListBox<TModel> explorerList, TModel resource) {
@@ -36,9 +98,25 @@ public abstract class ModelBasedListBoxItem<TModel> : BaseModelBasedListBoxItem 
         this.OnAddingToList();
     }
 
-    internal void InternalOnAddedToList() => this.OnAddedToList();
+    internal void InternalOnAddedToList() {
+        if (this.modelBinderList != null) {
+            foreach (IBinder<TModel> binder in this.modelBinderList) {
+                binder.AttachModel(this.Model!);
+            }
+        }
 
-    internal void InternalOnRemovingFromList() => this.OnRemovingFromList();
+        this.OnAddedToList();
+    }
+
+    internal void InternalOnRemovingFromList() {
+        if (this.modelBinderList != null) {
+            foreach (IBinder<TModel> binder in this.modelBinderList) {
+                binder.DetachModel();
+            }
+        }
+
+        this.OnRemovingFromList();
+    }
 
     internal void InternalOnRemovedFromList() {
         this.OnRemovedFromList();

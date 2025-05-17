@@ -125,7 +125,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     /// Sets up event handlers for the list to automatically add/remove/replace/move models and then adds all the models to this list box
     /// </summary>
     /// <param name="list">The list to observe</param>
-    protected void SetItemsSource(IObservableList<TModel>? list) {
+    public void SetItemsSource(IObservableList<TModel>? list) {
         if (this.observableList != null) {
             this.observableList.ItemsAdded -= this.OnItemsAdded;
             this.observableList.ItemsRemoved -= this.OnItemsRemoved;
