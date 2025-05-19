@@ -104,7 +104,8 @@ public class ListBoxSelectionManager<T> : IListSelectionManager<T> where T : cla
     }
 
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e) {
-        this.ProcessTreeSelection(e.RemovedItems, e.AddedItems);
+        if (sender == e.Source)
+            this.ProcessTreeSelection(e.RemovedItems, e.AddedItems);
     }
 
     internal void ProcessTreeSelection(IList? oldItems, IList? newItems) {

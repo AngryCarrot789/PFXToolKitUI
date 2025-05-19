@@ -156,7 +156,5 @@ public interface IBaseListSelectionManager<T> : IBaseSelectionManagerEx<T> {
 }
 
 public interface IListSelectionManager<TModel> : ISelectionManager<TModel>, ILightSelectionManager<TModel>, IBaseListSelectionManager<TModel> {
-    IList<TModel> IBaseListSelectionManager<TModel>.SelectedItemList => this.SelectedItemList;
-
     int IBaseSelectionManagerEx<TModel>.Count => this.SelectedItemList.Count;
 }

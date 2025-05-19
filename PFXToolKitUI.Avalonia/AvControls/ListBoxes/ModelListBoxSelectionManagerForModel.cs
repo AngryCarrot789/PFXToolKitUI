@@ -20,47 +20,37 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using Avalonia;
 using Avalonia.Collections;
-using Avalonia.Controls;
 using PFXToolKitUI.Interactivity;
-using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Selecting;
+namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
-/// <summary>
-/// A selection manager that uses an avalonia list to store the selected list controls, and an item map to map between control and model
-/// </summary>
-public class AVListModelSelectionManager<TModel, TControl> : IListSelectionManager<TModel> where TModel : class where TControl : Control {
-    private readonly AvaloniaList<object> mySelectionList;
+public class ModelListBoxSelectionManagerForModel<TModel> : IListSelectionManager<TModel> where TModel : class {
+    private readonly ModelBasedListBox<TModel> listBox;
+    private readonly AvaloniaList<object> selectedControls;
 
-    public ListBox ListBox { get; }
+    public IEnumerable<TModel> SelectedItems => this.SelectedItemList;
 
-    public IEnumerable<TModel> SelectedItems => this.SelectedControls.Select(x => this.itemMap.GetModel(x));
-
-    public IEnumerable<TControl> SelectedControls => this.mySelectionList.Cast<TControl>();
-
-    public int Count => this.mySelectionList.Count;
+    public IList<TModel> SelectedItemList { get; }
+    
+    private bool isBatching;
+    private List<TModel>? batchResources_old;
+    private List<TModel>? batchResources_new;
 
     public event SelectionChangedEventHandler<TModel>? SelectionChanged;
     public event SelectionClearedEventHandler<TModel>? SelectionCleared;
     public event LightSelectionChangedEventHandler<TModel>? LightSelectionChanged;
 
-    private bool isBatching;
-    private List<TModel>? batchResources_old;
-    private List<TModel>? batchResources_new;
-    private readonly IModelControlDictionary<TModel,TControl> itemMap;
-    private readonly AvaloniaProperty<bool> isSelectedProperty;
+    public ModelListBoxSelectionManagerForModel(ModelBasedListBox<TModel> listBox) {
+        this.selectedControls = new AvaloniaList<object>();
+        this.selectedControls.CollectionChanged += this.OnSelectedItemsChanged;
 
-    public AVListModelSelectionManager(ListBox listBox, IModelControlDictionary<TModel, TControl> itemMap, AvaloniaProperty<bool> isSelectedProperty) {
-        this.ListBox = listBox;
-        this.ListBox.SelectedItems = this.mySelectionList = new AvaloniaList<object>();
-        this.mySelectionList.CollectionChanged += this.OnSelectionCollectionChanged;
-        this.itemMap = itemMap;
-        this.isSelectedProperty = isSelectedProperty;
+        this.SelectedItemList = new CastingList(this);
+        this.listBox = listBox;
+        this.listBox.SelectedItems = this.selectedControls;
     }
 
-    private void OnSelectionCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+    private void OnSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) {
         switch (e.Action) {
             case NotifyCollectionChangedAction.Add:     this.ProcessTreeSelection(null, e.NewItems ?? null); break;
             case NotifyCollectionChangedAction.Remove:  this.ProcessTreeSelection(e.OldItems, null); break;
@@ -72,8 +62,8 @@ public class AVListModelSelectionManager<TModel, TControl> : IListSelectionManag
     }
 
     internal void ProcessTreeSelection(IList? oldItems, IList? newItems) {
-        List<TModel>? oldList = oldItems?.Cast<TControl>().Select(x => this.itemMap.GetModel(x)).ToList();
-        List<TModel>? newList = newItems?.Cast<TControl>().Select(x => this.itemMap.GetModel(x)).ToList();
+        List<TModel>? oldList = oldItems?.Cast<ModelBasedListBoxItem<TModel>>().Select(x => x.Model!).ToList();
+        List<TModel>? newList = newItems?.Cast<ModelBasedListBoxItem<TModel>>().Select(x => x.Model!).ToList();
         if (this.isBatching) {
             // Batch them into one final event that will get called after isBatching is set to false
             if (newList != null && newList.Count > 0)
@@ -87,7 +77,7 @@ public class AVListModelSelectionManager<TModel, TControl> : IListSelectionManag
     }
 
     public bool IsSelected(TModel item) {
-        return this.itemMap.TryGetControl(item, out TControl? control) && (bool) (control.GetValue(this.isSelectedProperty) ?? BoolBox.False);
+        return this.listBox.ItemMap.TryGetControl(item, out ModelBasedListBoxItem<TModel>? control) && control.IsSelected;
     }
 
     public void SetSelection(TModel item) {
@@ -101,8 +91,8 @@ public class AVListModelSelectionManager<TModel, TControl> : IListSelectionManag
     }
 
     public void Select(TModel item) {
-        if (this.itemMap.TryGetControl(item, out TControl? control)) {
-            control.SetValue(this.isSelectedProperty, BoolBox.True);
+        if (this.listBox.ItemMap.TryGetControl(item, out ModelBasedListBoxItem<TModel>? control)) {
+            control.IsSelected = true;
         }
     }
 
@@ -127,8 +117,8 @@ public class AVListModelSelectionManager<TModel, TControl> : IListSelectionManag
     }
 
     public void Unselect(TModel item) {
-        if (this.itemMap.TryGetControl(item, out TControl? control)) {
-            control.SetValue(this.isSelectedProperty, BoolBox.False);
+        if (this.listBox.ItemMap.TryGetControl(item, out ModelBasedListBoxItem<TModel>? control)) {
+            control.IsSelected = false;
         }
     }
 
@@ -153,20 +143,20 @@ public class AVListModelSelectionManager<TModel, TControl> : IListSelectionManag
     }
 
     public void ToggleSelected(TModel item) {
-        if (this.itemMap.TryGetControl(item, out TControl? control)) {
-            control.SetValue(this.isSelectedProperty, !(bool) (control.GetValue(this.isSelectedProperty) ?? BoolBox.False));
+        if (this.listBox.ItemMap.TryGetControl(item, out ModelBasedListBoxItem<TModel>? control)) {
+            control.IsSelected = !control.IsSelected;
         }
     }
 
     public void Clear() {
-        this.mySelectionList.Clear();
+        this.selectedControls.Clear();
     }
 
     public void SelectAll() {
         try {
             this.isBatching = true;
-            foreach (TControl control in this.itemMap.Controls) {
-                control.SetValue(this.isSelectedProperty, BoolBox.True);
+            foreach (ModelBasedListBoxItem<TModel> control in this.listBox.ItemMap.Controls) {
+                control.IsSelected = true;
             }
         }
         finally {
@@ -197,4 +187,48 @@ public class AVListModelSelectionManager<TModel, TControl> : IListSelectionManag
     }
 
     private static ReadOnlyCollection<TModel>? GetList(List<TModel>? list) => list == null || list.Count < 1 ? null : list.AsReadOnly();
+
+    private class CastingList : IList<TModel> {
+        private readonly ModelListBoxSelectionManagerForModel<TModel> owner;
+
+        public int Count => ((IListSelectionManager<TModel>) this.owner).Count;
+        public bool IsReadOnly => false;
+
+        public TModel this[int index] {
+            get => this.owner.listBox.ItemMap.GetModel((ModelBasedListBoxItem<TModel>) this.owner.selectedControls[index]!);
+            set => this.owner.selectedControls[index] = this.owner.listBox.ItemMap.GetControl(value);
+        }
+        
+        public CastingList(ModelListBoxSelectionManagerForModel<TModel> owner) {
+            this.owner = owner;
+        }
+
+        public IEnumerator<TModel> GetEnumerator() => this.owner.selectedControls.Select(x => this.owner.listBox.ItemMap.GetModel((ModelBasedListBoxItem<TModel>) x)).GetEnumerator();
+
+        IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
+
+        public void Add(TModel item) => this.owner.Select(item);
+
+        public void Clear() => this.owner.Clear();
+
+        public bool Contains(TModel item) => this.owner.IsSelected(item);
+
+        public void CopyTo(TModel[] array, int arrayIndex) {
+            foreach (TModel item in this)
+                array[arrayIndex++] = item;
+        }
+
+        public bool Remove(TModel item) {
+            if (!this.owner.IsSelected(item))
+                return false;
+            this.owner.Unselect(item);
+            return true;
+        }
+
+        public int IndexOf(TModel item) => this.owner.selectedControls.IndexOf(this.owner.listBox.ItemMap.GetControl(item));
+
+        public void Insert(int index, TModel item) => this.owner.selectedControls.Insert(index, this.owner.listBox.ItemMap.GetControl(item));
+
+        public void RemoveAt(int index) => this.owner.selectedControls.RemoveAt(index);
+    }
 }

@@ -18,6 +18,7 @@
 // 
 
 using Avalonia.Controls;
+using PFXToolKitUI.Interactivity;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
@@ -35,7 +36,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     /// Gets the item map for this list box. This is used to map models to the list box items and vice versa
     /// </summary>
     public IModelControlDictionary<TModel, ModelBasedListBoxItem<TModel>> ItemMap => this.itemMap;
-
+    
     /// <summary>
     /// Gets the selected item's model, or null, if there's no selected item
     /// </summary>
@@ -64,7 +65,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
 
     protected void InsertModel(int index, TModel model) {
         ModelBasedListBoxItem<TModel> control = this.itemCache?.Count > 0 ? this.itemCache.Pop() : this.CreateItem();
-        this.itemMap.AddMapping(model, control);;
+        this.itemMap.AddMapping(model, control);
         this.OnAddingItemToList(control, model);
         this.Items.Insert(index, control);
         this.OnAddedItemToList(control, model);
