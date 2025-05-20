@@ -26,6 +26,7 @@ public class DefaultProgressTracker : IActivityProgress {
     private bool isIndeterminate;
     private string? headerText;
     private string? descriptionText;
+    private volatile bool isTextUpdated = true;
 
     public bool IsIndeterminate {
         get => this.isIndeterminate;
@@ -60,11 +61,17 @@ public class DefaultProgressTracker : IActivityProgress {
                 if (this.descriptionText == value)
                     return;
                 this.descriptionText = value;
+                this.isTextUpdated = false;
             }
 
             this.updateTextRda?.InvokeAsync();
         }
     }
+
+    /// <summary>
+    /// Returns true when the text change has been processed on the main thread
+    /// </summary>
+    public bool HasTextUpdated => this.isTextUpdated;
 
     public event ActivityProgressEventHandler? IsIndeterminateChanged;
     public event ActivityProgressEventHandler? CaptionChanged;
@@ -76,7 +83,7 @@ public class DefaultProgressTracker : IActivityProgress {
     private readonly DispatchPriority eventDispatchPriority;
 
     public CompletionState CompletionState { get; }
-
+    
     public DefaultProgressTracker() : this(DispatchPriority.Loaded) {
     }
 
@@ -84,7 +91,10 @@ public class DefaultProgressTracker : IActivityProgress {
         this.eventDispatchPriority = eventDispatchPriority;
         this.updateIsIndeterminateRda = RapidDispatchActionEx.ForSync(() => this.IsIndeterminateChanged?.Invoke(this), eventDispatchPriority);
         this.updateCaptionRda = RapidDispatchActionEx.ForSync(() => this.CaptionChanged?.Invoke(this), eventDispatchPriority);
-        this.updateTextRda = RapidDispatchActionEx.ForSync(() => this.TextChanged?.Invoke(this), eventDispatchPriority);
+        this.updateTextRda = RapidDispatchActionEx.ForSync(() => {
+            this.isTextUpdated = true;
+            this.TextChanged?.Invoke(this);
+        }, eventDispatchPriority);
         this.CompletionState = new ConcurrentCompletionState(eventDispatchPriority);
     }
 }

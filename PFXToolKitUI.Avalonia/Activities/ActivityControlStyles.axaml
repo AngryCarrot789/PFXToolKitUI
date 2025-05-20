@@ -18,7 +18,7 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         TextElement.Foreground="{TemplateBinding Foreground}">
-                    <ScrollViewer>
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl x:Name="PART_ItemsControl">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -73,7 +73,7 @@
                                             HorizontalContentAlignment="Center"/>
                             <ProgressBar x:Name="PART_ProgressBar" Minimum="0" Maximum="1" Height="9" BorderThickness="0" CornerRadius="2"/>
                         </DockPanel>
-                        <TextBlock x:Name="PART_Footer" Text="Footer Here" Padding="1,3" Foreground="{DynamicResource ABrush.Foreground.Disabled}"/>
+                        <TextBlock x:Name="PART_Footer" Text="Footer Here" Padding="1,3" Foreground="{DynamicResource ABrush.Foreground.Disabled}" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
             </ControlTemplate>

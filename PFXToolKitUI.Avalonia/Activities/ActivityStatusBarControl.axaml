@@ -44,7 +44,8 @@
                    DockPanel.Dock="Left"
                    Text="Activity Text"
                    VerticalAlignment="Center"
-                   Padding="2,0"/>
+                   Padding="2,0"
+                   TextTrimming="WordEllipsis"/>
 
         <local:ActivityProgressBar DockPanel.Dock="Right" x:Name="PART_ActiveBgProgress"
                                    Height="9" BorderThickness="0" InitialWidth="150"
