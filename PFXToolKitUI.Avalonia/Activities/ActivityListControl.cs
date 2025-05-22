@@ -57,17 +57,21 @@ public class ActivityListControl : TemplatedControl {
         if (oldManager != null) {
             oldManager.TaskStarted -= this.ActivityManagerOnTaskStarted;
             oldManager.TaskCompleted -= this.ActivityManagerOnTaskCompleted;
-            for (int i = this.PART_ItemsControl!.Items.Count - 1; i >= 0; i--) {
-                this.RemoveItem(i);
+            if (this.PART_ItemsControl != null) {
+                for (int i = this.PART_ItemsControl!.Items.Count - 1; i >= 0; i--) {
+                    this.RemoveItem(i);
+                }
             }
         }
         
         if (newManager != null) {
             newManager.TaskStarted += this.ActivityManagerOnTaskStarted;
             newManager.TaskCompleted += this.ActivityManagerOnTaskCompleted;
-            int i = 0;
-            foreach (ActivityTask task in newManager.ActiveTasks) {
-                this.InsertItem(i++, task);
+            if (this.PART_ItemsControl != null) {
+                int i = 0;
+                foreach (ActivityTask task in newManager.ActiveTasks) {
+                    this.InsertItem(i++, task);
+                }
             }
         }
     }
@@ -75,14 +79,22 @@ public class ActivityListControl : TemplatedControl {
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_ItemsControl = e.NameScope.GetTemplateChild<ItemsControl>(nameof(this.PART_ItemsControl));
+        if (this.ActivityManager is ActivityManager manager) {
+            int i = 0;
+            foreach (ActivityTask task in manager.ActiveTasks) {
+                this.InsertItem(i++, task);
+            }
+        }
     }
     
     private void ActivityManagerOnTaskStarted(ActivityManager actMan, ActivityTask task, int index) {
-        this.InsertItem(index, task);
+        if (this.PART_ItemsControl != null)
+            this.InsertItem(index, task);
     }
     
     private void ActivityManagerOnTaskCompleted(ActivityManager actMan, ActivityTask task, int index) {
-        this.RemoveItem(index);
+        if (this.PART_ItemsControl != null)
+            this.RemoveItem(index);
     }
 
     private void InsertItem(int index, ActivityTask task) {

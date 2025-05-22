@@ -17,7 +17,6 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics;
 using PFXToolKitUI.Avalonia.Bindings;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;

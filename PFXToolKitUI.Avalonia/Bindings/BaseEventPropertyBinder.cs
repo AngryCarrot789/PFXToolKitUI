@@ -17,6 +17,9 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
+using PFXToolKitUI.Utils.RDA;
+
 namespace PFXToolKitUI.Avalonia.Bindings;
 
 /// <summary>
@@ -25,15 +28,53 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// <typeparam name="TModel">The model type</typeparam>
 public abstract class BaseEventPropertyBinder<TModel> : BaseBinder<TModel> where TModel : class {
     private readonly AutoEventHelper autoEventHelper;
+    private readonly IDispatcher dispatcher;
+    private volatile RapidDispatchActionEx? rdaUpdateControl;
+    private volatile int rdaLock;
+
+    /// <summary>
+    /// Gets or sets if the event can be fired from any thread. Default is true
+    /// <para>
+    /// When true, we will use a <see cref="RapidDispatchActionEx"/> to dispatch the <see cref="BaseBinder{TModel}.UpdateControl"/> signal
+    /// back to the main thread. When false, if the event is fired outside of the main thread, we throw an exception
+    /// </para> 
+    /// </summary>
+    public bool AllowEventFiredOnAnyThread { get; set; } = true;
 
     protected BaseEventPropertyBinder(string eventName) {
         this.autoEventHelper = new AutoEventHelper(eventName, typeof(TModel), this.OnModelValueChanged);
+        this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
 
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
     /// </summary>
-    protected virtual void OnModelValueChanged() => this.UpdateControl();
+    protected virtual void OnModelValueChanged() {
+        if (!this.dispatcher.CheckAccess()) {
+            if (this.AllowEventFiredOnAnyThread) {
+                if (this.rdaUpdateControl == null) {
+                    while (Interlocked.CompareExchange(ref this.rdaLock, 1, 0) != 0)
+                        Thread.Yield();
+
+                    try {
+                        if (this.rdaUpdateControl == null)
+                            this.rdaUpdateControl = RapidDispatchActionEx.ForSync(this.UpdateControl, this.dispatcher, DispatchPriority.Normal, "BaseEventPropertyBinder");
+                    }
+                    finally {
+                        this.rdaLock = 0;
+                    }
+                }
+                
+                this.rdaUpdateControl!.InvokeAsync();
+                return;
+            }
+            
+            Debugger.Break();
+            throw new InvalidOperationException("This property binder requires the event be fired on the main thread");
+        }
+
+        this.UpdateControl();
+    }
 
     protected override void OnAttached() {
         this.autoEventHelper.AddEventHandler(this.myModel!);

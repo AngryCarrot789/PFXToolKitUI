@@ -52,13 +52,20 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     public bool CanChangeOnLostFocus { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets if the text box should be re-focused when the update callback returns false.
+    /// Default is true, because it's annoying to the user to have to re-click the text box again
+    /// </summary>
+    public bool FocusTextBoxOnError { get; set; } = true;
+
+    /// <summary>
     /// Creates a new data parameter property binder
     /// </summary>
     /// <param name="parameter">The data parameter, used to listen to model value changes</param>
     /// <param name="parameterToProperty">Converts the parameter value to an appropriate property value (e.g. double to string)</param>
     /// <param name="convert">
     /// Converts the text box string value back to the parameter value. This function
-    /// can show dialogs and then return default on failure to convert back
+    /// can show dialogs and then return default on failure to convert back, and also
+    /// re-selects the text box when <see cref="FocusTextBoxOnError"/> is true
     /// </param>
     public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> convert, Action<TextBoxToDataParameterBinder<TModel, T>>? postUpdateControl = null) : base(null) {
         this.Parameter = parameter;
@@ -90,7 +97,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     protected override void OnAttached() {
         base.OnAttached();
         this.Parameter?.AddValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
-        
+
         TextBox tb = (TextBox) this.Control;
         tb.LostFocus += this.OnLostFocus;
         tb.KeyDown += this.OnKeyDown;
@@ -99,7 +106,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     protected override void OnDetached() {
         base.OnDetached();
         this.Parameter?.RemoveValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
-        
+
         TextBox tb = (TextBox) this.Control;
         tb.LostFocus -= this.OnLostFocus;
         tb.KeyDown -= this.OnKeyDown;
@@ -133,7 +140,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             if (!base.IsFullyAttached) {
                 return;
             }
-            
+
             TextBox control = (TextBox) this.myControl!;
             this.isHandlingChangeModel = true;
             bool oldIsEnabled = control.IsEnabled;
@@ -141,6 +148,8 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             value = await this.Convert(this, control.Text ?? "");
             control.IsEnabled = oldIsEnabled;
             if (!value.HasValue) {
+                if (this.FocusTextBoxOnError)
+                    await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => BugFix.TextBox_FocusSelectAll(control));
                 return;
             }
         }
@@ -154,9 +163,9 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
 
         try {
             if (this.IsFullyAttached) {
-                ((DataParameter<T>)this.Parameter!).SetValue(this.Model, value.Value);
+                ((DataParameter<T>) this.Parameter!).SetValue(this.Model, value.Value);
             }
-            
+
             this.UpdateControl();
         }
         catch (Exception e) {

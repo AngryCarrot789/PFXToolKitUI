@@ -2,44 +2,6 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Activities"
                     xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls">
-    <ControlTheme x:Key="{x:Type local:ActivityListControl}" TargetType="{x:Type local:ActivityListControl}">
-        <Setter Property="Background" Value="{DynamicResource ABrush.Tone2.Background.Static}"/>
-        <Setter Property="HeaderBrush" Value="{DynamicResource ABrush.Tone5.Background.Static}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone6.Border.Static}"/>
-        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
-        <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="Template">
-            <ControlTemplate TargetType="{x:Type local:ActivityListControl}">
-                <Border x:Name="PART_Border"
-                        Padding="{TemplateBinding Padding}"
-                        Background="{TemplateBinding Background}"
-                        BorderBrush="{TemplateBinding BorderBrush}"
-                        BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="{TemplateBinding CornerRadius}"
-                        TextElement.Foreground="{TemplateBinding Foreground}">
-                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-                        <ItemsControl x:Name="PART_ItemsControl">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Spacing="1"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                        </ItemsControl>
-                    </ScrollViewer>
-                </Border>
-            </ControlTemplate>
-        </Setter>
-    </ControlTheme>
-
-    <Design.PreviewWith>
-        <StackPanel>
-            <local:ActivityListItem/>
-            <local:ActivityListItem/>
-            <local:ActivityListItem/>
-        </StackPanel>
-    </Design.PreviewWith>
-
     <ControlTheme x:Key="{x:Type local:ActivityListItem}" TargetType="{x:Type local:ActivityListItem}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -93,4 +55,41 @@
             <Setter Property="BorderBrush" Value="{DynamicResource Item.SelectedActive.Border}"/>
         </Style>
     </ControlTheme>
+    <ControlTheme x:Key="{x:Type local:ActivityListControl}" TargetType="{x:Type local:ActivityListControl}">
+        <Setter Property="Background" Value="{DynamicResource ABrush.Tone2.Background.Static}"/>
+        <Setter Property="HeaderBrush" Value="{DynamicResource ABrush.Tone5.Background.Static}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone6.Border.Static}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type local:ActivityListControl}">
+                <Border x:Name="PART_Border"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        TextElement.Foreground="{TemplateBinding Foreground}">
+                    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl x:Name="PART_ItemsControl">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <StackPanel Spacing="1"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <Design.PreviewWith>
+        <StackPanel>
+            <local:ActivityListItem/>
+            <local:ActivityListItem/>
+            <local:ActivityListItem/>
+        </StackPanel>
+    </Design.PreviewWith>
 </ResourceDictionary>

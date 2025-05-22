@@ -22,8 +22,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
-using Avalonia.VisualTree;
-using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;

@@ -25,7 +25,7 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 
 public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventPropertyBinder<TModel> where TModel : class {
     private readonly Func<IBinder<TModel>, string> getText;
-    private readonly Func<IBinder<TModel>, string, Task> updateModel;
+    private readonly Func<IBinder<TModel>, string, Task<bool>> updateModel;
     private bool isHandlingChangeModel;
 
     /// <summary>
@@ -34,8 +34,24 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
     /// realise their change was undone since they had to click the Enter key to confirm changes.
     /// </summary>
     public bool CanChangeOnLostFocus { get; set; } = true;
-    
-    public TextBoxToEventPropertyBinder(string eventName, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task> updateModel) : base(null, eventName) {
+
+    /// <summary>
+    /// Gets or sets if the text box should be re-focused when the update callback returns false.
+    /// Default is true, because it's annoying to the user to have to re-click the text box again
+    /// </summary>
+    public bool FocusTextBoxOnError { get; set; } = true;
+
+    /// <summary>
+    /// Initialises the <see cref="TextBoxToEventPropertyBinder{TModel}"/> object
+    /// </summary>
+    /// <param name="eventName">The name of the model's event</param>
+    /// <param name="getText">A getter to fetch the model's value as raw text for the text box</param>
+    /// <param name="updateModel">
+    /// A function which tries to update the model's value from the text box's text. Returns true on success,
+    /// returns false when the text box contains invalid data (and it's assumed it shows a dialog too).
+    /// When this returns false, the text box's text is re-selected (if <see cref="FocusTextBoxOnError"/> is true)
+    /// </param>
+    public TextBoxToEventPropertyBinder(string eventName, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task<bool>> updateModel) : base(null, eventName) {
         this.getText = getText;
         this.updateModel = updateModel;
     }
@@ -74,7 +90,7 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
     private void OnLostFocus(object? sender, RoutedEventArgs e) {
         if (this.CanChangeOnLostFocus) {
             if (!this.isHandlingChangeModel) {
-                this.HandleChangeModel();
+                this.OnHandleUpdateModel();
             }
         }
         else {
@@ -88,14 +104,17 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
         }
         else if (e.Key == Key.Enter) {
             if (!this.isHandlingChangeModel) {
-                this.HandleChangeModel();
+                this.OnHandleUpdateModel();
             }
         }
     }
 
-    private async void HandleChangeModel() {
+    /// <summary>
+    /// Updates our model based on what's present in the text block
+    /// </summary>
+    public async void OnHandleUpdateModel() {
         try {
-            if (!base.IsFullyAttached) {
+            if (this.isHandlingChangeModel || !base.IsFullyAttached) {
                 return;
             }
             
@@ -103,9 +122,11 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
             this.isHandlingChangeModel = true;
             bool oldIsEnabled = control.IsEnabled;
             control.IsEnabled = false;
-            await this.updateModel(this, ((TextBox) this.myControl!).Text ?? "");
+            bool success = await this.updateModel(this, ((TextBox) this.myControl!).Text ?? "");
             control.IsEnabled = oldIsEnabled;
             this.UpdateControl();
+            if (!success && this.FocusTextBoxOnError)
+                await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => BugFix.TextBox_FocusSelectAll(control));
         }
         catch (Exception e) {
             ApplicationPFX.Instance.Dispatcher.Post(() => throw e);

@@ -4,10 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Activities"
              xmlns:ac="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
-             mc:Ignorable="d" d:DesignWidth="350" d:DesignHeight="24"
+             mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="24"
              x:Class="PFXToolKitUI.Avalonia.Activities.ActivityStatusBarControl"
              IsVisible="False">
-    <DockPanel x:Name="PART_DockPanel" PointerReleased="InputElement_OnPointerReleased">
+    <DockPanel x:Name="PART_DockPanel" PointerReleased="InputElement_OnPointerReleased" LastChildFill="True">
         <DockPanel.Styles>
             <Style Selector="DockPanel#PART_DockPanel">
                 <Setter Property="Background" Value="Transparent"/>
@@ -16,7 +16,7 @@
                 <Setter Property="Background" Value="{DynamicResource ABrush.Tone8.Background.Static}"/>
             </Style>
         </DockPanel.Styles>
-        
+
         <DockPanel HorizontalSpacing="2" DockPanel.Dock="Right">
             <ac:IconButton DockPanel.Dock="Right" x:Name="PART_CancelActivityButton"
                            Width="16" Height="16"
@@ -39,19 +39,18 @@
                            VerticalContentAlignment="Center"
                            HorizontalContentAlignment="Center"/>
         </DockPanel>
-
-        <TextBlock x:Name="PART_TaskCaption"
-                   DockPanel.Dock="Left"
-                   Text="Activity Text"
-                   VerticalAlignment="Center"
-                   Padding="2,0"
-                   TextTrimming="WordEllipsis"/>
-
+        
         <local:ActivityProgressBar DockPanel.Dock="Right" x:Name="PART_ActiveBgProgress"
-                                   Height="9" BorderThickness="0" InitialWidth="150"
+                                   Height="9" BorderThickness="0" InitialWidth="150" MinWidth="50"
                                    Background="{DynamicResource ABrush.Tone3.Background.Static}"
                                    Minimum="0" Maximum="1" Value="0"
                                    Margin="5,0"/>
-        <Border/>
+        
+        <TextBlock x:Name="PART_TaskCaption"
+                   Text="Activity Text That's really Long Test Ultra Long!"
+                   VerticalAlignment="Center"
+                   HorizontalAlignment="Right"
+                   Padding="2,0"
+                   TextTrimming="WordEllipsis"/>
     </DockPanel>
 </UserControl>

@@ -37,8 +37,29 @@ public class ActivityProgressBar : ProgressBar {
     
     protected override Size MeasureOverride(Size availableSize) {
         Size size = base.MeasureOverride(availableSize);
-        if (this.InitialWidth is double width)
-            size = size.WithWidth(Math.Min(availableSize.Width, width));
+        if (this.InitialWidth is double width) {
+            double newWidth = Math.Min(availableSize.Width, width);
+            // Console.WriteLine($"[Measure] availableSize = {availableSize}, size = {size}, new width = {newWidth}");
+            size = size.WithWidth(newWidth);
+        }
+        else {
+            // Console.WriteLine($"[Measure] availableSize = {availableSize}, size = {size}");
+        }
+
+        return size;
+    }
+
+    protected override Size ArrangeOverride(Size finalSize) {
+        Size size = base.ArrangeOverride(finalSize);
+        // if (this.InitialWidth is double width) {
+        //     // double newWidth = Math.Min(finalSize.Width, width);
+        //     // Console.WriteLine($"[Arrange] finalSize = {finalSize}, size = {size}, new width = {newWidth}");
+        //     // size = size.WithWidth(newWidth);
+        // }
+        // else {
+        //     // Console.WriteLine($"[Arrange] finalSize = {finalSize}, size = {size}");
+        // }
+
         return size;
     }
 }
