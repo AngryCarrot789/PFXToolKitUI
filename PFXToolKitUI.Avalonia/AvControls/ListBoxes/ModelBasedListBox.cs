@@ -84,8 +84,9 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
 
     protected void MoveModel(int oldIndex, int newIndex) {
         ModelBasedListBoxItem<TModel> control = (ModelBasedListBoxItem<TModel>) this.Items[oldIndex]!;
-        this.Items.RemoveAt(oldIndex);
-        this.Items.Insert(newIndex, control);
+        TModel model = control.Model!;
+        this.RemoveModelAt(oldIndex);
+        this.InsertModel(newIndex, model);
     }
 
     protected void ClearModels() {
@@ -163,8 +164,4 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     protected abstract ModelBasedListBoxItem<TModel> CreateItem();
 
     protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey) => this.CreateItem();
-
-    internal override void MoveItemIndex(int oldIndex, int newIndex) {
-        this.MoveModel(oldIndex, newIndex);
-    }
 }

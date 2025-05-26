@@ -22,18 +22,46 @@ using Avalonia.Controls;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
+/// <summary>
+/// The base non-generic version of <see cref="ModelBasedListBox{TModel}"/>
+/// </summary>
 public class BaseModelBasedListBox : ListBox {
     public static readonly StyledProperty<bool> CanDragItemPositionProperty = AvaloniaProperty.Register<BaseModelBasedListBox, bool>(nameof(CanDragItemPosition));
-
+    
+    /// <summary>
+    /// Gets or sets whether dragging items is allowed. Even when true, dragging items may not be possible
+    /// if it's not implemented (see <see cref="MoveItemIndex"/> and <see cref="CanDragItemPositionCore"/>)
+    /// </summary>
     public bool CanDragItemPosition {
         get => this.GetValue(CanDragItemPositionProperty);
         set => this.SetValue(CanDragItemPositionProperty, value);
     }
 
+    /// <summary>
+    /// Indicates whether calling <see cref="MoveItemIndex"/> will actually do anything. By default, it
+    /// invokes <see cref="MoveItemHandler"/> therefore this property checks if the handler is non-null.
+    /// <para>
+    /// If a custom implementation of <see cref="MoveItemIndex"/> is used, this property should be overridden
+    /// </para>
+    /// </summary>
+    protected virtual bool CanDragItemPositionCore => false;
+
+    /// <summary>
+    /// Returns true when dragging items is actually possible and calls to <see cref="MoveItemIndex"/>
+    /// will most likely result in the item being moved
+    /// </summary>
+    public bool CanEffectivelyDragItemPosition => this.CanDragItemPosition && this.CanDragItemPositionCore;
+    
     public BaseModelBasedListBox() {
     }
 
-    internal virtual void MoveItemIndex(int oldIndex, int newIndex) {
+    /// <summary>
+    /// Actually moves the items in this list box. By default, this does nothing. When you override this,
+    /// make sure to override <see cref="CanDragItemPositionCore"/> to return true when possible
+    /// </summary>
+    /// <param name="oldIndex">Source index</param>
+    /// <param name="newIndex">Destination index</param>
+    protected internal virtual void MoveItemIndex(int oldIndex, int newIndex) {
         
     }
 }

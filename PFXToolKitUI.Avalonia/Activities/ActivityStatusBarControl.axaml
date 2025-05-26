@@ -51,6 +51,6 @@
                    VerticalAlignment="Center"
                    HorizontalAlignment="Right"
                    Padding="2,0"
-                   TextTrimming="WordEllipsis"/>
+                   TextTrimming="CharacterEllipsis"/>
     </DockPanel>
 </UserControl>

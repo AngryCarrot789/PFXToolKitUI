@@ -99,7 +99,7 @@ public class BaseModelBasedListBoxItem : ListBoxItem {
             return;
         }
 
-        if (this.ListBox?.CanDragItemPosition != true) {
+        if (this.ListBox?.CanEffectivelyDragItemPosition != true) {
             return;
         }
 
