@@ -145,7 +145,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         return true;
     }
 
-    public static async ValueTask ExecuteCommandAndHandleError(string cmdId, IContextData context) {
+    public static async Task ExecuteCommandAndHandleError(string cmdId, IContextData context) {
         try {
             await CommandManager.Instance.Execute(cmdId, context);
         }

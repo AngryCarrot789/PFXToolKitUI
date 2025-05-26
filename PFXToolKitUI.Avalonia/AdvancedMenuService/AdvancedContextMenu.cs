@@ -36,8 +36,6 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     private static readonly Dictionary<ContextRegistry, AdvancedContextMenu> contextMenus;
 
     public static readonly AttachedProperty<ContextRegistry?> ContextRegistryProperty = AvaloniaProperty.RegisterAttached<AdvancedContextMenu, Control, ContextRegistry?>("ContextRegistry");
-    private static readonly AttachedProperty<AdvancedContextMenu?> AdvancedContextMenuProperty = AvaloniaProperty.RegisterAttached<AdvancedContextMenu, Control, AdvancedContextMenu?>("AdvancedContextMenu");
-
     public static readonly StyledProperty<string?> ContextCaptionProperty = AvaloniaProperty.Register<AdvancedContextMenu, string?>(nameof(ContextCaption));
 
     public string? ContextCaption {
@@ -56,7 +54,8 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     public IContextData? CapturedContext { get; private set; }
     IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
 
-    public AdvancedContextMenu() {
+    public AdvancedContextMenu(ContextRegistry registry) {
+        this.ContextRegistry = registry ?? throw new ArgumentNullException(nameof(registry));
         this.captionBinder = new AvaloniaPropertyToEventPropertyGetSetBinder<ContextRegistry>(ContextCaptionProperty, nameof(this.ContextRegistry.CaptionChanged), (b) => b.Model.Caption, null);
         this.itemCache = new Dictionary<Type, Stack<Control>>();
         this.owners = new List<Control>();
@@ -141,7 +140,6 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     }
 
     private void CaptureContextFromObject(InputElement inputElement) {
-        ;
         DataManager.SetDelegateContextData(this, this.CapturedContext = DataManager.GetFullContextData(inputElement));
     }
 
@@ -159,10 +157,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         if (newValue != null) {
             // Generate context menu, if required
             if (!contextMenus.TryGetValue(newValue, out AdvancedContextMenu? menu)) {
-                contextMenus[newValue] = menu = new AdvancedContextMenu() {
-                    ContextRegistry = newValue
-                };
-
+                contextMenus[newValue] = menu = new AdvancedContextMenu(newValue);
                 List<IContextObject> contextObjects = new List<IContextObject>();
 
                 int i = 0;
@@ -177,15 +172,6 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
                 }
 
                 AdvancedMenuService.InsertItemNodes(menu, contextObjects);
-
-                // int sI = 0;
-                // if (sI++ != 0)
-                //     menu.Items.Add(new Separator());
-                // int count = menu.Items.Count;
-                // MenuService.InsertItemNodes(menu, menu, entry.Value.Items);
-                // if (menu.Items.Count == count) { // no items added, so don't insert separator
-                //     sI = 0;
-                // }
             }
 
             // Slide in and add ContextRequested handler before the base ContextMenu

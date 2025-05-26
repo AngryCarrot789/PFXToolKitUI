@@ -473,4 +473,19 @@ public static class CollectionUtils {
             list.SetValueAtIndex(index, updater(list.GetValueAtIndex(index)));
         }
     }
+    
+    /// <summary>
+    /// Obtains a lock, adds the source list's items to a new list, releases the lock and returns the new list.
+    /// </summary>
+    /// <param name="lockObject">The lock to obtain before processing the items</param>
+    /// <param name="source">The item source</param>
+    /// <typeparam name="T">The type of item</typeparam>
+    /// <returns>A new list containing all items in the source list after the lock is obtained</returns>
+    public static List<T> AtomicGetAndClear<T>(object lockObject, ICollection<T> source) {
+        lock (lockObject) {
+            List<T> completions = source.ToList();
+            source.Clear();
+            return completions;
+        }
+    }
 }

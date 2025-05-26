@@ -23,14 +23,16 @@ using PFXToolKitUI.Interactivity.Contexts;
 namespace PFXToolKitUI.AdvancedMenuService;
 
 /// <summary>
-/// A context entry that invokes a callback method
+/// A context entry that has a <see cref="CanExecute"/> and <see cref="OnExecute"/> method
 /// </summary>
 public abstract class CustomContextEntry : BaseContextEntry {
-    public Action<CustomContextEntry, IContextData>? Action { get; init; }
-
-    protected CustomContextEntry(string displayName, string? description, Icon? icon = null) : base(displayName, description, icon) {
+    protected CustomContextEntry() {
     }
 
+    protected CustomContextEntry(string displayName, string? description, Icon? icon = null) : base(displayName, description, icon) {
+        
+    }
+    
     public virtual bool CanExecute(IContextData context) {
         return true;
     }

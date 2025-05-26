@@ -48,8 +48,8 @@ public class FixedContextGroup : IContextGroup {
         return entry;
     }
 
-    public CommandContextEntry AddCommand(string cmdId, string displayName, string? description = null, Icon? icon = null, StretchMode stretchMode = StretchMode.None) {
-        CommandContextEntry entry = new CommandContextEntry(cmdId, displayName, description, icon, stretchMode);
+    public CommandContextEntry AddCommand(string cmdId, string displayName, string? description = null, Icon? icon = null) {
+        CommandContextEntry entry = new CommandContextEntry(cmdId, displayName, description, icon);
         this.AddEntry(entry);
         return entry;
     }

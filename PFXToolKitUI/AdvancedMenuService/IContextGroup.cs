@@ -29,8 +29,7 @@ namespace PFXToolKitUI.AdvancedMenuService;
 /// Dynamic groups, represented by <see cref="DynamicContextGroup"/>, generate their entries
 /// when required. Their generator callback is given the context available at generation, which
 /// allows highly customisable menu options based on the available context and therefore states of
-/// objects, rather than staying static and unchangable like <see cref="FixedContextGroup"/>
+/// objects, rather than staying static and unchangeable like <see cref="FixedContextGroup"/>
 /// </para>
 /// </summary>
-public interface IContextGroup {
-}
+public interface IContextGroup;

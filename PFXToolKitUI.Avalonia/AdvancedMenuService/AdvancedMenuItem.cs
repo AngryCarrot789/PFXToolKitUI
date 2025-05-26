@@ -21,10 +21,11 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.AdvancedMenuService;
+using PFXToolKitUI.Icons;
+using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -57,12 +58,14 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
+        BaseContextEntry.OnUserAdded(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
         AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
         Dispatcher.UIThread.InvokeAsync(() => AdvancedMenuService.NormaliseSeparators(this), DispatcherPriority.Loaded);
     }
 
     protected override void OnUnloaded(RoutedEventArgs e) {
         base.OnUnloaded(e);
+        BaseContextEntry.OnUserRemoved(this.Entry!);
         AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
     }
 
@@ -79,12 +82,15 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
         if (this.Entry.Icon != null) {
             this.myIconControl = new IconControl() {
-                Icon = this.Entry.Icon,
-                Stretch = (Stretch) this.Entry.StretchMode
+                Icon = this.Entry.Icon
             };
 
             this.Icon = this.myIconControl;
         }
+
+        this.Entry.DisplayNameChanged += this.OnEntryDisplayNameChanged;
+        this.Entry.DescriptionChanged += this.OnEntryDescriptionChanged;
+        this.Entry.IconChanged += this.OnEntryIconChanged;
 
         if (this.Entry is ContextEntryGroup list) {
             AdvancedMenuService.InsertItemNodes(this, list.Items);
@@ -93,6 +99,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
             list.Items.ItemMoved += this.ItemsOnItemMoved;
             list.Items.ItemReplaced += this.ItemsOnItemReplaced;
         }
+
+        this.Entry.CanExecuteChanged += this.OnCanExecuteChanged;
     }
 
     public virtual void OnRemoving() {
@@ -103,12 +111,18 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
             list.Items.ItemReplaced -= this.ItemsOnItemReplaced;
         }
 
+        this.Entry!.DisplayNameChanged -= this.OnEntryDisplayNameChanged;
+        this.Entry!.DescriptionChanged -= this.OnEntryDescriptionChanged;
+        this.Entry!.IconChanged -= this.OnEntryIconChanged;
+        this.Entry!.CanExecuteChanged -= this.OnCanExecuteChanged;
+
         if (this.myIconControl != null) {
             this.myIconControl.Icon = null;
             this.myIconControl = null;
             this.Icon = null;
         }
 
+        this.ClearValue(ToolTip.TipProperty);
         AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
         AdvancedMenuService.ClearItemNodes(this);
     }
@@ -118,6 +132,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.ParentNode = null;
         this.Entry = null;
     }
+
+    private void OnCanExecuteChanged(BaseContextEntry baseContextEntry) => this.UpdateCanExecute();
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
@@ -157,4 +173,33 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         AdvancedMenuService.RemoveItemNodesWithDynamicSupport(this.OwnerMenu!, this, index, [oldItem], ref this.dynamicInsertion, ref this.dynamicInserted);
         AdvancedMenuService.InsertItemNodesWithDynamicSupport(this, index, [newItem], ref this.dynamicInsertion, ref this.dynamicInserted);
     }
+
+    private void OnEntryIconChanged(BaseContextEntry sender, Icon? oldicon, Icon? newicon) {
+        if (newicon != null) {
+            if (this.myIconControl == null) {
+                this.myIconControl ??= new IconControl {
+                    Icon = newicon
+                };
+
+                this.Icon = this.myIconControl;
+            }
+            else {
+                this.myIconControl.Icon = newicon;
+            }
+        }
+        else if (this.myIconControl != null) {
+            this.myIconControl.Icon = null;
+        }
+    }
+
+    private void OnEntryDescriptionChanged(BaseContextEntry sender) {
+        if (sender.Description != null) {
+            ToolTip.SetTip(this, sender.Description ?? "");
+        }
+        else {
+            this.ClearValue(ToolTip.TipProperty);
+        }
+    }
+
+    private void OnEntryDisplayNameChanged(BaseContextEntry sender) => this.Header = sender.DisplayName;
 }

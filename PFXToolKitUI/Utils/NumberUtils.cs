@@ -25,10 +25,10 @@ using System.Runtime.InteropServices;
 
 namespace PFXToolKitUI.Utils;
 
-public static class NumberUtils { 
+public static class NumberUtils {
     private static readonly char[] HEX_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
     public static readonly byte[] HEX_CHARS_ASCII = "0123456789ABCDEF"u8.ToArray();
-    
+
     // Ladies and gentlemen, what the fuck     |    NOT NULL NULLABLE??   |
     private static void NumberStyleFromIntInput([NotNull] ref string? input, out NumberStyles style) {
         if (input != null && input.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase)) {
@@ -39,17 +39,17 @@ public static class NumberUtils {
             style = NumberStyles.Integer;
         }
     }
-    
+
     public static bool TryParseHexOrRegular<T>(string? input, out T result) where T : struct, IBinaryInteger<T> {
         NumberStyleFromIntInput(ref input, out NumberStyles style);
         return T.TryParse(input, style, null, out result);
     }
-    
+
     public static bool TryParseHexOrRegular<T>(string? input, IFormatProvider? provider, out T result) where T : struct, IBinaryInteger<T> {
         NumberStyleFromIntInput(ref input, out NumberStyles style);
         return T.TryParse(input, style, provider, out result);
     }
-    
+
     public static T ParseHexOrRegular<T>(string input, IFormatProvider? provider = null) where T : struct, IBinaryInteger<T> {
         NumberStyleFromIntInput(ref input, out NumberStyles style);
         return T.Parse(input, style, provider);
@@ -71,4 +71,49 @@ public static class NumberUtils {
             Unsafe.AddByteOffset(ref dstAsciiChars, j + offset) = Unsafe.ReadUnaligned<byte>(ref Unsafe.AddByteOffset(ref asciiHexChars, value & 0xF));
         }
     }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public static string BytesToHexAscii(ReadOnlySpan<byte> srcBuffer, char? join = ' ') {
+        if (srcBuffer.Length < 1) {
+            return "";
+        }
+
+        char[] dstBuffer = new char[(srcBuffer.Length << 1) + (join.HasValue ? (srcBuffer.Length - 1) : 0)];
+        for (int i = 0, j = 0, ichLast = dstBuffer.Length - 2, incr = join.HasValue ? 3 : 2; i < srcBuffer.Length; i++, j += incr) {
+            byte b = srcBuffer[i];
+            dstBuffer[j + 0] = HEX_CHARS[b & 0xF];
+            dstBuffer[j + 1] = HEX_CHARS[(b >> 4) & 0xF];
+            if (j != ichLast && join.HasValue)
+                dstBuffer[j + 2] = join.Value;
+        }
+
+        return new string(dstBuffer);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    public static bool TryParseHexAsciiToBytes(ReadOnlySpan<char> srcText, [NotNullWhen(true)] out byte[]? bytes, char? join = ' ') {
+        if (srcText.Length < 1) {
+            bytes = [];
+            return true;
+        }
+
+        // [FF FF FF FF FF FF] C = 6, WSC = 5, HCH = 12, LEN = 17, WSC+C=11
+        int cchJoin = join.HasValue ? srcText.Count(join.Value) : 0;
+        byte[] dstBuffer = new byte[(srcText.Length - cchJoin) >> 1];
+        for (int i = 0, j = 0, incr = join.HasValue ? 3 : 2; i < srcText.Length; i += incr, j++) {
+            char ch1 = srcText[i + 0];
+            char ch2 = srcText[i + 1];
+            if (!IsCharValidHex(ch1) || !IsCharValidHex(ch2)) {
+                bytes = null;
+                return false;
+            }
+            
+            dstBuffer[j] = (byte) ((HexCharToInt(ch1) << 4) | HexCharToInt(ch2));
+        }
+
+        bytes = dstBuffer;
+        return true;
+    }
+
+    public static bool IsCharValidHex(char c) => StringUtils.Digit(c, 16) != -1;
 }

@@ -19,28 +19,30 @@
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
-public delegate void GroupCaptionEntryCaptionChangedEventHandler(CaptionEntry sender);
+public delegate void GroupCaptionEntryEventHandler(CaptionEntry sender);
 
 /// <summary>
 /// A context entry that is placed above a group of items. This is not necessarily related to <see cref="IContextGroup"/> objects
 /// </summary>
 public class CaptionEntry : IContextObject {
-    private string? caption;
+    private string? text;
 
-    public string? Caption {
-        get => this.caption;
+    /// <summary>
+    /// Gets or sets the text of this caption entry
+    /// </summary>
+    public string? Text {
+        get => this.text;
         set {
-            if (this.caption == value)
-                return;
-
-            this.caption = value;
-            this.CaptionChanged?.Invoke(this);
+            if (this.text != value) {
+                this.text = value;
+                this.TextChanged?.Invoke(this);
+            }
         }
     }
 
-    public event GroupCaptionEntryCaptionChangedEventHandler? CaptionChanged;
+    public event GroupCaptionEntryEventHandler? TextChanged;
 
-    public CaptionEntry(string caption) {
-        this.caption = caption;
+    public CaptionEntry(string text) {
+        this.text = text;
     }
 }

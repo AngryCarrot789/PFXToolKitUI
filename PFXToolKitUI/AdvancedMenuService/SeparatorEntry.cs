@@ -19,5 +19,7 @@
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
-public sealed class SeparatorEntry : IContextObject {
-}
+/// <summary>
+/// An entry that is just a separator
+/// </summary>
+public sealed class SeparatorEntry : IContextObject;

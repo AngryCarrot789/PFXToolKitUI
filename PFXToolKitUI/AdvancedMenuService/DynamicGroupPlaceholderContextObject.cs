@@ -20,9 +20,12 @@
 namespace PFXToolKitUI.AdvancedMenuService;
 
 /// <summary>
-/// This interface is an invisible placeholder which is where dynamic items will be injected
+/// This context object is an invisible placeholder which is where dynamic items will be inserted after
 /// </summary>
 public class DynamicGroupPlaceholderContextObject : IContextObject {
+    /// <summary>
+    /// Gets the dynamic context group we used to generate entries on demand
+    /// </summary>
     public DynamicContextGroup DynamicGroup { get; }
 
     public DynamicGroupPlaceholderContextObject(DynamicContextGroup dynamicGroup) {

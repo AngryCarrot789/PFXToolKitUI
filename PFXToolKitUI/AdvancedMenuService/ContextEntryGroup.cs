@@ -22,10 +22,18 @@ using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
+/// <summary>
+/// A context entry that is a regular entry but also contain child entries in a drop-down menu.
+/// This is different from <see cref="IContextGroup"/>
+/// </summary>
 public class ContextEntryGroup : BaseContextEntry {
     public ObservableList<IContextObject> Items { get; }
 
-    public ContextEntryGroup(string displayName, string? description = null, Icon? icon = null, StretchMode stretchMode = StretchMode.None) : base(displayName, description, icon, stretchMode) {
+    public ContextEntryGroup() {
+        this.Items = new ObservableList<IContextObject>();
+    }
+
+    public ContextEntryGroup(string displayName, string? description = null, Icon? icon = null, StretchMode stretchMode = StretchMode.None) : base(displayName, description, icon) {
         this.Items = new ObservableList<IContextObject>();
     }
 }

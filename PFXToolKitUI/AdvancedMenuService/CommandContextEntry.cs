@@ -27,7 +27,11 @@ namespace PFXToolKitUI.AdvancedMenuService;
 public class CommandContextEntry : BaseContextEntry {
     public string CommandId { get; }
 
-    public CommandContextEntry(string commandId, string displayName, string? description = null, Icon? icon = null, StretchMode stretchMode = StretchMode.None) : base(displayName, description, icon, stretchMode) {
+    public CommandContextEntry(string commandId) {
+        this.CommandId = commandId;
+    }
+
+    public CommandContextEntry(string commandId, string displayName, string? description = null, Icon? icon = null) : base(displayName, description, icon) {
         this.CommandId = commandId;
     }
 }
