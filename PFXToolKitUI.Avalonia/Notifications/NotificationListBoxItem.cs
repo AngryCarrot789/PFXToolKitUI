@@ -27,6 +27,7 @@ using Avalonia.Input;
 using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
+using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Notifications;
 using PFXToolKitUI.Tasks;
@@ -88,7 +89,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
         private void OnTextChanged(Notification sender) {
             Debug.Assert(this.notification == sender);
-            
+
             this.Text = this.notification.Text;
         }
 
@@ -200,17 +201,19 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         }
     }
 
+    // Note: the buttons are added/removed when the actual notification is added to/removed from the notification list box.
+    // This is only done so that we can cache hyperlinks. Even though the IBinders aren't that expensive, it's still good to do
     private void OnCommandInserted(object sender, int index, NotificationCommand item) {
-        if (this.PART_ActionPanel != null) {
-            this.PART_ActionPanel!.Children.Insert(index, new HyperlinkButton() {
-                Content = item.Text, Command = new CommandWrapper(item)
-            });
-        }
+        if (this.PART_ActionPanel != null)
+            this.PART_ActionPanel!.Children.Insert(index, NotificationHyperlinkButton.GetCachedOrCreate(item));
     }
 
     private void OnCommandRemoved(object sender, int index, NotificationCommand item) {
-        if (this.PART_ActionPanel != null)
+        if (this.PART_ActionPanel != null) {
+            NotificationHyperlinkButton button = (NotificationHyperlinkButton) this.PART_ActionPanel!.Children[index]; 
             this.PART_ActionPanel!.Children.RemoveAt(index);
+            NotificationHyperlinkButton.PushCachedButton(button);
+        }
     }
 
     private void OnCommandMoved(object sender, int oldindex, int newindex, NotificationCommand item) {
@@ -218,15 +221,86 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             this.PART_ActionPanel!.Children.Move(oldindex, newindex);
     }
 
-    private class CommandWrapper : BaseAsyncRelayCommand {
-        private readonly NotificationCommand command;
+    private class NotificationHyperlinkButton : HyperlinkButton {
+        private static readonly Stack<NotificationHyperlinkButton> buttonCache = new Stack<NotificationHyperlinkButton>(8);
 
-        public CommandWrapper(NotificationCommand command) {
-            this.command = command;
+        protected override Type StyleKeyOverride => typeof(HyperlinkButton);
+
+        private readonly EventPropertyBinder<NotificationCommand> textBinder = new EventPropertyBinder<NotificationCommand>(nameof(NotificationCommand.TextChanged), (b) => ((NotificationHyperlinkButton) b.Control).Content = b.Model.Text);
+        private readonly EventPropertyBinder<NotificationCommand> toolTipBinder = new EventPropertyBinder<NotificationCommand>(nameof(NotificationCommand.ToolTipChanged), (b) => {
+            if (!string.IsNullOrEmpty(b.Model.ToolTip)) {
+                ToolTip.SetTip((NotificationHyperlinkButton) b.Control, b.Model.ToolTip);
+            }
+            else {
+                b.Control.ClearValue(ToolTip.TipProperty);
+            }
+        });
+
+        private NotificationCommand? myCurrentCommand;
+
+        public NotificationHyperlinkButton() {
+            this.Command = new NotificationCommandWrapper(this);
+            Binders.AttachControls(this, this.toolTipBinder, this.textBinder);
         }
 
-        protected override Task ExecuteCoreAsync(object? parameter) {
-            return this.command.Execute();
+        public static NotificationHyperlinkButton GetCachedOrCreate(NotificationCommand item) {
+            if (!buttonCache.TryPop(out NotificationHyperlinkButton? button)) {
+                button = new NotificationHyperlinkButton();
+            }
+
+            button.myCurrentCommand = item;
+            return button;
+        }
+
+        public static bool PushCachedButton(NotificationHyperlinkButton button) {
+            Debug.Assert(button.myCurrentCommand != null);
+            button.myCurrentCommand = null;
+            bool pushed = buttonCache.Count < 8;
+            if (pushed)
+                buttonCache.Push(button);
+            return pushed;
+        }
+
+        protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
+            base.OnAttachedToVisualTree(e);
+            if (this.myCurrentCommand == null) {
+                throw new Exception(nameof(this.myCurrentCommand) + " not set");
+            }
+
+            Binders.AttachModels(this.myCurrentCommand, this.toolTipBinder, this.textBinder);
+            ((NotificationCommandWrapper?) this.Command)?.OnButtonAttachedToVT();
+        }
+
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
+            base.OnDetachedFromVisualTree(e);
+            Binders.DetachModels(this.toolTipBinder, this.textBinder);
+            ((NotificationCommandWrapper?) this.Command)?.OnButtonDetachedFromVT();
+        }
+
+        // We delegate to ICommand just because it's simpler to do that over managing
+        // the clicking and also effectively enabled state ourself :P
+        private class NotificationCommandWrapper(NotificationHyperlinkButton button) : BaseAsyncRelayCommand {
+            private NotificationCommand? cmd;
+
+            protected override bool CanExecuteCore(object? parameter) => button.myCurrentCommand?.CanExecute() ?? false;
+
+            protected override Task ExecuteCoreAsync(object? parameter) => button.myCurrentCommand?.Execute() ?? Task.CompletedTask;
+
+            // Delegate NotificationCommand's CanExecuteChange to the ICommand version
+            private void OnCanExecuteChanged(NotificationCommand sender) => this.RaiseCanExecuteChanged();
+
+            public void OnButtonAttachedToVT() {
+                this.cmd = button.myCurrentCommand!;
+                Debug.Assert(this.cmd != null);
+                
+                this.cmd.CanExecuteChanged += this.OnCanExecuteChanged;
+            }
+
+            public void OnButtonDetachedFromVT() {
+                Debug.Assert(this.cmd != null);
+                
+                this.cmd!.CanExecuteChanged -= this.OnCanExecuteChanged;
+            }
         }
     }
 }

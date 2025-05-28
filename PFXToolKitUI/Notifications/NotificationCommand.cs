@@ -26,7 +26,7 @@ public delegate void NotificationCommandEventHandler(NotificationCommand sender)
 
 public abstract class NotificationCommand {
     private Notification? notification;
-    private string? text;
+    private string? text, tooltip;
 
     public string? Text {
         get => this.text;
@@ -34,6 +34,16 @@ public abstract class NotificationCommand {
             if (this.text != value) {
                 this.text = value;
                 this.TextChanged?.Invoke(this);
+            }
+        }
+    }
+
+    public string? ToolTip {
+        get => this.tooltip;
+        set {
+            if (this.tooltip != value) {
+                this.tooltip = value;
+                this.ToolTipChanged?.Invoke(this);
             }
         }
     }
@@ -61,11 +71,12 @@ public abstract class NotificationCommand {
             }
         }
     }
-    
+
     public IContextData? ContextData { get; private set; }
 
     public event NotificationCommandEventHandler? NotificationChanged;
     public event NotificationCommandEventHandler? TextChanged;
+    public event NotificationCommandEventHandler? ToolTipChanged;
     public event NotificationCommandEventHandler? ContextDataChanged;
     public event NotificationCommandEventHandler? CanExecuteChanged;
 
@@ -97,7 +108,7 @@ public abstract class NotificationCommand {
 
     internal static void InternalOnNotificationContextChanged(NotificationCommand command, IContextData? oldCtx, IContextData? newCtx) {
         Debug.Assert(command.ContextData == oldCtx);
-        
+
         command.ContextData = newCtx;
         command.OnContextChanged(command.ContextData, newCtx);
     }

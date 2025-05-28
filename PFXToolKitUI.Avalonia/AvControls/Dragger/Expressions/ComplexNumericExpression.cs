@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 //
 
+using System.Globalization;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AvControls.Dragger.Expressions;
@@ -141,7 +142,7 @@ public class ComplexNumericExpression {
 
         char ch = input[index];
         if (char.IsDigit(ch) || ch == '.') {
-            return ParseNumber(input, ref index);
+            return ParseNumber(input, ref index, this.state.IsIntegerOnly);
         }
         else if (ch == '(') {
             index++;
@@ -225,17 +226,36 @@ public class ComplexNumericExpression {
         return input.Substring(startIndex, index - startIndex);
     }
 
-    private static double ParseNumber(string input, ref int index) {
+    private static double ParseNumber(string input, ref int index, bool isIntegerOnly) {
         int startIndex = index;
-        while (index < input.Length && (char.IsDigit(input[index]) || input[index] == '.')) {
-            index++;
+        bool isHex = (index + 1) < input.Length && char.ToLower(input[index + 1]) == 'x';
+        if (isHex && input[index] != '0')
+            throw new Exception("Hexadecimal must be prefixed with '0x'");
+        
+        bool hasHexChars = false;
+        while (index < input.Length) {
+            char ch = input[index];
+            if (ch == '.' ||
+                (ch == 'x' && isHex && index == (startIndex + 1)) ||
+                (ch >= '0' && ch <= '9') ||
+                (hasHexChars = (ch >= 'a' && ch <= 'f') || (ch >= 'a' && ch <= 'f'))) {
+                if (!isHex && hasHexChars)
+                    throw new Exception("Hexadecimal must be prefixed with '0x'");
+                if (ch == '.' && isIntegerOnly)
+                    throw new Exception("Only integer numbers are allowed");
+                index++;
+            }
+            else {
+                break;
+            }
         }
 
-        string numberStr = input.Substring(startIndex, index - startIndex);
-        if (double.TryParse(numberStr, out double result))
+        ReadOnlySpan<char> span = input.AsSpan(startIndex, index - startIndex);
+        if (isHex && ulong.TryParse(span.Slice(2), NumberStyles.HexNumber, null, out ulong longValue))
+            return longValue;
+        if (!isIntegerOnly && double.TryParse(span, out double result))
             return result;
-        else
-            throw new Exception("Invalid number format");
+        throw new Exception("Invalid number format");
     }
 
     private static bool IsLexerChar(char ch) {
@@ -256,6 +276,11 @@ public class ComplexNumericExpression {
         private readonly ComplexNumericExpression expression;
         private readonly int index;
         private readonly ExpressionState? parent;
+
+        /// <summary>
+        /// Gets or sets if the state can only parse numeric values as integer. Default is false
+        /// </summary>
+        public bool IsIntegerOnly { get; set; } = false;
 
         public bool IsReadOnly => this.index == -1 && this.expression.isReadOnly;
 

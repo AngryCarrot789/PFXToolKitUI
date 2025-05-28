@@ -19,7 +19,6 @@
 
 using System.Diagnostics;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;

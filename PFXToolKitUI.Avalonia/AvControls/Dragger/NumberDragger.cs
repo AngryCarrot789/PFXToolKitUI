@@ -374,8 +374,6 @@ public class NumberDragger : RangeBase {
 
         using ComplexNumericExpression.ExpressionState state = ComplexNumericExpression.DefaultParser.PushState();
         state.SetVariable("value", this.Value);
-        state.SetVariable("pi", Math.PI);
-        state.SetVariable("e", Math.E);
         try {
             parsedValue = state.Expression.Parse(parseText);
         }

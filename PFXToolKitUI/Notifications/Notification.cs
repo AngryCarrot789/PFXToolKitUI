@@ -192,10 +192,10 @@ public abstract class Notification {
     }
 
     /// <summary>
-    /// Adds this notification to the given notification manager. If we already exist in another NM we remove
-    /// ourself from it first before adding to the new one. Does nothing if already added to the given NM
+    /// Adds this notification to the given notification manager. Does nothing if already opened in the given notification manager.
+    /// If we already exist in another notification manager, we remove ourself from it first before adding to the new one.
     /// </summary>
-    /// <param name="notificationManager"></param>
+    /// <param name="notificationManager">The notification manager to add ourself to</param>
     public void Open(NotificationManager notificationManager) {
         ArgumentNullException.ThrowIfNull(notificationManager);
         if (!ReferenceEquals(this.NotificationManager, notificationManager)) {

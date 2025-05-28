@@ -42,16 +42,81 @@ public static class Binders {
         return new AvaloniaPropertyToEventPropertyBinder<TModel>(property, eventName, updateControl, updateModel);
     }
 
+    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1) where TModel : class {
+        binder1.AttachControl(control);
+    }
+    
+    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
+        binder1.AttachControl(control);
+        binder2.AttachControl(control);
+    }
+    
+    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
+        binder1.AttachControl(control);
+        binder2.AttachControl(control);
+        binder3.AttachControl(control);
+    }
+    
+    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
+        binder1.AttachControl(control);
+        binder2.AttachControl(control);
+        binder3.AttachControl(control);
+        binder4.AttachControl(control);
+    }
+    
     public static void AttachControls<TModel>(Control control, params IBinder<TModel>[] binders) where TModel : class {
-        foreach (IBinder<TModel> b in binders) {
+        foreach (IBinder<TModel> b in binders)
             b.AttachControl(control);
-        }
+    }
+    
+    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1) where TModel : class {
+        binder1.AttachModel(model);
+    }
+    
+    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
+        binder1.AttachModel(model);
+        binder2.AttachModel(model);
+    }
+    
+    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
+        binder1.AttachModel(model);
+        binder2.AttachModel(model);
+        binder3.AttachModel(model);
+    }
+    
+    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
+        binder1.AttachModel(model);
+        binder2.AttachModel(model);
+        binder3.AttachModel(model);
+        binder4.AttachModel(model);
     }
 
     public static void AttachModels<TModel>(TModel model, params IBinder<TModel>[] binders) where TModel : class {
         foreach (IBinder<TModel> b in binders) {
             b.AttachModel(model);
         }
+    }
+    
+    public static void DetachModels<TModel>(IBinder<TModel> binder1) where TModel : class {
+        binder1.DetachModel();
+    }
+    
+    public static void DetachModels<TModel>(IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
+        binder1.DetachModel();
+        binder2.DetachModel();
+    }
+    
+    public static void DetachModels<TModel>(IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
+        binder1.DetachModel();
+        binder2.DetachModel();
+        binder3.DetachModel();
+    }
+    
+    public static void DetachModels<TModel>(IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
+        binder1.DetachModel();
+        binder2.DetachModel();
+        binder3.DetachModel();
+        binder4.DetachModel();
     }
 
     public static void DetachModels<TModel>(params IBinder<TModel>[] binders) where TModel : class {

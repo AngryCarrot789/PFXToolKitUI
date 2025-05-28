@@ -324,6 +324,8 @@ public class DataManager {
     /// <param name="autoInvalidateOnUnsuspended"></param>
     /// <returns></returns>
     public static IDisposable SuspendMergedContextInvalidation(AvaloniaObject obj, bool autoInvalidateOnUnsuspended = true) {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        
         totalSuspensionCount++;
         return new SuspendInvalidation(obj, autoInvalidateOnUnsuspended);
     }
@@ -340,12 +342,10 @@ public class DataManager {
     /// <summary>
     /// Gets the data key used to key the data context object
     /// </summary>
-    /// <param name="obj"></param>
-    /// <returns></returns>
     public static DataKey? GetDataContextDataKey(AvaloniaObject obj) => obj.GetValue(DataContextDataKeyProperty);
     
     private class SuspendInvalidation : IDisposable {
-        private AvaloniaObject target;
+        private AvaloniaObject? target;
         private readonly bool autoInvalidateOnUnsuspended;
 
         public SuspendInvalidation(AvaloniaObject target, bool autoInvalidateOnUnsuspended) {
@@ -355,29 +355,29 @@ public class DataManager {
         }
 
         public void Dispose() {
-            AvaloniaObject dp = this.target;
-            if (dp == null) {
+            ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+            if (this.target == null) {
                 return;
             }
-
-            this.target = null;
+            
             totalSuspensionCount--;
-
-            int count = GetSuspendedInvalidationCount(dp);
+            int count = GetSuspendedInvalidationCount(this.target);
             if (count < 0) {
                 Debugger.Break();
                 return;
             }
 
             if (count == 1) {
-                dp.SetValue(SuspendedInvalidationCountProperty, SuspendedInvalidationCountProperty.GetDefaultValue(dp.GetType()));
+                this.target.SetValue(SuspendedInvalidationCountProperty, SuspendedInvalidationCountProperty.GetDefaultValue(this.target.GetType()));
                 if (this.autoInvalidateOnUnsuspended) {
-                    InvalidateInheritedContext(dp);
+                    InvalidateInheritedContext(this.target);
                 }
             }
             else {
-                dp.SetValue(SuspendedInvalidationCountProperty, count - 1);
+                this.target.SetValue(SuspendedInvalidationCountProperty, count - 1);
             }
+            
+            this.target = null;
         }
     }
 }

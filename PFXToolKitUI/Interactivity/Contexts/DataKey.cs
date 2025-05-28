@@ -82,7 +82,7 @@ public abstract class DataKey {
 
 public sealed class DataKey<T> : DataKey {
     private DataKey(string id) : base(id) { }
-
+    
     public static DataKey<T> Create(string id) {
         DataKey<T> key = new DataKey<T>(id);
         RegisterInternal(id, key);
