@@ -1,0 +1,57 @@
+﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls;assembly=PFXToolKitUI.Avalonia"
+                    xmlns:aa="clr-namespace:PFXToolKitUI.Avalonia.Activities;assembly=PFXToolKitUI.Avalonia"
+                    xmlns:n="clr-namespace:PFXToolKitUI.Avalonia.Notifications">
+    <ControlTheme x:Key="{x:Type n:NotificationListBox}" TargetType="{x:Type n:NotificationListBox}" BasedOn="{StaticResource {x:Type ListBox}}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+    </ControlTheme>
+    
+    <ControlTheme x:Key="{x:Type n:NotificationListBoxItem}" TargetType="{x:Type n:NotificationListBoxItem}">
+        <Setter Property="Background" Value="{DynamicResource ABrush.Tone6.Background.Static}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone7.Border.Static}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type n:NotificationListBoxItem}">
+                <Border x:Name="PART_LayoutRoot"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}">
+                    <DockPanel VerticalSpacing="2">
+                        <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1" DockPanel.Dock="Top" Height="21">
+                            <DockPanel>
+                                <!-- <Button x:Name="PART_Close" Content="X" DockPanel.Dock="Right" Padding="6,2" Background="Transparent" BorderThickness="0"/> -->
+
+                                <avc:IconButton x:Name="PART_Close" DockPanel.Dock="Right" 
+                                                Icon="{x:Static aa:ActivityStatusBarControl.CancelIcon}" 
+                                                IconMaxHeight="10" IconMaxWidth="10"
+                                                Background="Transparent" BorderThickness="0"/>
+                                <TextBlock Text="{TemplateBinding Caption}" VerticalAlignment="Center" Padding="4,2"/>
+                            </DockPanel>
+                        </Border>
+                        <WrapPanel x:Name="PART_ActionPanel" DockPanel.Dock="Bottom" Orientation="Horizontal" ItemSpacing="3" LineSpacing="3"/>
+                        <ContentPresenter x:Name="PART_ContentPresenter"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                          Background="Transparent"
+                                          BorderBrush="Transparent"
+                                          Padding="{TemplateBinding Padding}"
+                                          BorderThickness="0"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          CornerRadius="{TemplateBinding CornerRadius}"/>
+                    </DockPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+    
+    <Design.PreviewWith>
+        <n:NotificationListBoxItem Caption="caption" Content="Ok test"/>
+    </Design.PreviewWith>
+</ResourceDictionary>

@@ -173,7 +173,7 @@ public partial class ActivityStatusBarControl : UserControl {
     }
 
     private void OnActivityTaskTextChanged(IActivityProgress? tracker) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_TaskCaption.Text = tracker?.Text ?? "", DispatchPriority.Loaded);
+        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_TaskBodyText.Text = tracker?.Text ?? "", DispatchPriority.Loaded);
     }
 
     private void OnPrimaryActionCompletionValueChanged(CompletionState? state) {

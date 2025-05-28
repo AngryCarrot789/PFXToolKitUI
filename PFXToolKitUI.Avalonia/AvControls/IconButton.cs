@@ -36,7 +36,7 @@ public class IconButton : Button, IIconButton {
     public static readonly StyledProperty<Dock> IconPlacementProperty = AvaloniaProperty.Register<IconButton, Dock>(nameof(IconPlacement), Dock.Left);
     public static readonly StyledProperty<double> SpacingProperty = AvaloniaProperty.Register<IconButton, double>(nameof(Spacing), 5.0);
 
-    private double? iconW, iconH;
+    private double? iconW = 64, iconH = 64; // prevent crashing in designer due to infinitely or giant sized icons
 
     public Icon? Icon {
         get => this.GetValue(IconProperty);

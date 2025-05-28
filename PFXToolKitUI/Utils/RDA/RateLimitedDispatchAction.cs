@@ -103,6 +103,7 @@ public abstract class RateLimitedDispatchActionBase {
     private async Task TaskMain() {
         long lastExecTime = Interlocked.Read(ref this.lastExecutionTime);
         long currInterval = Time.GetSystemTicks() - lastExecTime;
+        Exception? exception = null;
 
         do {
             // We will sleep at least twice, even if InvokeAsync is only called once.
@@ -137,8 +138,7 @@ public abstract class RateLimitedDispatchActionBase {
                 // ignored
             }
             catch (Exception e) {
-                // post error to application, causing it to crash.
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw new Exception("Exception while awaiting operation", e));
+                exception = e;
             }
             finally {
                 // This sets CONTINUE to false, indicating that there is no more work required.
@@ -153,7 +153,9 @@ public abstract class RateLimitedDispatchActionBase {
                 lock (this.stateLock) {
                     if (((myState = this.state) & S_CONTINUE_CRITICAL) != 0) {
                         // Critical condition is active, so: Remove CRITICAL and append CONTINUE
-                        myState = (myState & ~S_CONTINUE_CRITICAL) | S_CONTINUE;
+                        myState = (myState & ~S_CONTINUE_CRITICAL);
+                        if (exception == null)
+                            myState |= S_CONTINUE;
                     }
                     else {
                         // Critical condition not met, so just remove continue,
@@ -166,6 +168,12 @@ public abstract class RateLimitedDispatchActionBase {
                     // RUNNING will still be present
                     this.state = myState & ~S_EXECUTING;
                 }
+            }
+
+            if (exception != null) {
+                // post error to application, causing it to crash.
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw exception);
+                return;
             }
 
             lastExecTime = Time.GetSystemTicks();

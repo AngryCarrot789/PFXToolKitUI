@@ -102,14 +102,13 @@ public class ActivityListControl : TemplatedControl {
             item = new ActivityListItem();
         
         this.PART_ItemsControl!.Items.Insert(index, item);
-        item.ApplyStyling();
-        item.ApplyTemplate();
-        item.Connect(task);
+        TemplateUtils.Apply(item);
+        item.ActivityTask = task;
     }
     
     private void RemoveItem(int index) {
         ActivityListItem item = (ActivityListItem) this.PART_ItemsControl!.Items[index]!;
-        item.Disconnect();
+        item.ActivityTask = null;
         this.PART_ItemsControl!.Items.RemoveAt(index);
         if (this.itemCache.Count < 16)
             this.itemCache.Push(item);

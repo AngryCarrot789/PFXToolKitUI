@@ -46,4 +46,6 @@ public abstract class AbstractAvaloniaIcon : Icon {
     public abstract void Render(DrawingContext context, Rect size, SKMatrix transform);
 
     public abstract (Size Size, SKMatrix Transform) Measure(Size availableSize, StretchMode stretch);
+
+    public abstract Rect GetBounds();
 }

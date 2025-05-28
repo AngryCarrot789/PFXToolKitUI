@@ -79,7 +79,7 @@ public class EllipseIconImpl : AbstractAvaloniaIcon {
         context.DrawEllipse(this.myFillBrush, this.myPen, new Point(size.Width / 2.0, size.Height / 2.0), this.RadiusX, this.RadiusY);
     }
 
-    public Rect GetBounds() {
+    public override Rect GetBounds() {
         return new Rect(0, 0, this.RadiusX * 2.0, this.RadiusY * 2.0);
     }
 

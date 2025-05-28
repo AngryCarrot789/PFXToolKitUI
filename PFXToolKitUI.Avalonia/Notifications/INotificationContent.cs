@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of FramePFX.
@@ -17,25 +17,16 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Utils;
+namespace PFXToolKitUI.Avalonia.Notifications;
 
-/// <summary>
-/// An event raised when an exception is caught
-/// <param name="sender">The object that raised this event</param>
-/// <param name="e">The args</param>
-/// </summary>
-public delegate void ExceptionEventHandler(object sender, ExceptionEventArgs e);
-
-/// <summary>
-/// A class which stores event args for a <see cref="ExceptionEventHandler"/>
-/// </summary>
-public class ExceptionEventArgs : EventArgs {
+public interface INotificationContent {
     /// <summary>
-    /// The exception that was caught. This will not be null
+    /// Called when the notification becomes visible in the UI (notification opened)
     /// </summary>
-    public Exception Exception { get; }
-
-    public ExceptionEventArgs(Exception exception) {
-        this.Exception = exception ?? throw new ArgumentNullException(nameof(exception));
-    }
+    void OnShown();
+    
+    /// <summary>
+    /// Called when the notification becomes hidden in the UI (notification closed)
+    /// </summary>
+    void OnHidden();
 }

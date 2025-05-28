@@ -1,0 +1,211 @@
+﻿//
+// Copyright (c) 2024-2025 REghZy
+//
+// This file is part of FramePFX.
+//
+// FramePFX is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either
+// version 3.0 of the License, or (at your option) any later version.
+//
+// FramePFX is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+// Lesser General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+//
+
+using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils.Collections.Observable;
+
+namespace PFXToolKitUI.Notifications;
+
+public delegate void NotificationEventHandler(Notification sender);
+
+public delegate void NotificationContextDataChangedEventHandler(Notification sender, IContextData? oldContextData, IContextData? newContextData);
+
+public abstract class Notification {
+    private string? caption;
+    private bool canAutoHide = true;
+    private bool isAutoHideActive;
+    private CancellationTokenSource? ctsAutoHide;
+    private IContextData? ctxData;
+    private TimeSpan autoHideDelay = TimeSpan.FromSeconds(5);
+
+    /// <summary>
+    /// Gets or sets the text displayed in the notification's header
+    /// </summary>
+    public string? Caption {
+        get => this.caption;
+        set {
+            if (this.caption != value) {
+                this.caption = value;
+                this.CaptionChanged?.Invoke(this);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets if this notification can be auto-hidden (via <see cref="StartAutoHide"/>). Default value is true.
+    /// Some notifications may not want to auto hide as they may contain crucial information such as errors which you
+    /// may want to look at, so set this property to false.
+    /// <para>
+    /// Note, <see cref="StartAutoHide"/> is called as soon as the notification is added to a <see cref="NotificationManager"/>
+    /// </para>
+    /// </summary>
+    public bool CanAutoHide {
+        get => this.canAutoHide;
+        set {
+            if (this.canAutoHide != value) {
+                this.canAutoHide = value;
+                this.CanAutoHideChanged?.Invoke(this);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets whether this notification is currently in the process of auto-hiding.
+    /// As is, is the background task waiting to finally hide the notification
+    /// </summary>
+    public bool IsAutoHideActive {
+        get => this.isAutoHideActive;
+        private set {
+            if (this.isAutoHideActive != value) {
+                this.isAutoHideActive = value;
+                this.IsAutoHideActiveChanged?.Invoke(this);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets the amount of time to wait until auto-hide calls <see cref="Close"/>. Default is 5 seconds.
+    /// This cannot be changed while <see cref="IsAutoHideActive"/> is true
+    /// </summary>
+    public TimeSpan AutoHideDelay {
+        get => this.autoHideDelay;
+        set {
+            if (this.isAutoHideActive)
+                throw new InvalidOperationException("Cannot change while auto-hide is currently active");
+            
+            if (this.autoHideDelay != value) {
+                long totalMilliseconds = (long)value.TotalMilliseconds;
+                if (totalMilliseconds < 0)
+                    throw new ArgumentOutOfRangeException(nameof(value), "Value cannot represent negative time");
+                if (totalMilliseconds > 0xFFFFFFFE)
+                    throw new ArgumentOutOfRangeException(nameof(value), "Value is too large");
+                
+                this.autoHideDelay = value;
+                this.AutoHideDelayChanged?.Invoke(this);
+            }
+        }
+    }
+
+    public DateTime AutoHideStartTime { get; private set; }
+
+    /// <summary>
+    /// Gets or sets the context data for this notification. This is used by our commands
+    /// </summary>
+    public IContextData? ContextData {
+        get => this.ctxData;
+        set {
+            IContextData? oldContextData = this.ctxData;
+            if (!Equals(oldContextData, value)) {
+                this.ctxData = value;
+                this.ContextDataChanged?.Invoke(this, oldContextData, value);
+                foreach (NotificationCommand command in this.Commands) {
+                    NotificationCommand.InternalOnNotificationContextChanged(command, oldContextData, value);
+                }
+            }
+        }
+    }
+    
+    public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
+
+    public ObservableList<NotificationCommand> Commands { get; }
+
+    /// <summary>
+    /// Gets the notification manager this notification exists in
+    /// </summary>
+    public NotificationManager? NotificationManager { get; internal set; }
+
+    public event NotificationEventHandler? CaptionChanged;
+    public event NotificationEventHandler? CanAutoHideChanged;
+
+    /// <summary>
+    /// Fired when <see cref="IsAutoHideActive"/> changes. This is only fired on the main thread
+    /// </summary>
+    public event NotificationEventHandler? IsAutoHideActiveChanged;
+
+    public event NotificationEventHandler? AutoHideDelayChanged;
+    public event NotificationContextDataChangedEventHandler? ContextDataChanged;
+
+    protected Notification() {
+        this.Commands = new ObservableList<NotificationCommand>();
+        ObservableItemProcessor.MakeSimple(this.Commands, c => c.Notification = this, c => c.Notification = null);
+    }
+
+    public void StartAutoHide() {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        if (!this.CanAutoHide || this.IsAutoHideActive || this.NotificationManager == null) {
+            return;
+        }
+
+        this.ctsAutoHide = new CancellationTokenSource();
+        this.AutoHideStartTime = DateTime.Now;
+        this.IsAutoHideActive = true;
+        Task.Run(async () => {
+            if (!this.ctsAutoHide.IsCancellationRequested) {
+                try {
+                    await Task.Delay(this.autoHideDelay, this.ctsAutoHide.Token).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) {
+                    // someone stopped the auto-hide
+                }
+            }
+
+            await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
+                // Double check whether auto-hide is cancelled
+                if (!this.ctsAutoHide.IsCancellationRequested) {
+                    this.Close();
+                }
+                
+                this.ctsAutoHide.Cancel();
+                this.ctsAutoHide.Dispose();
+                this.ctsAutoHide = null;
+                this.IsAutoHideActive = false;
+            });
+        });
+    }
+
+    public void CancelAutoHide() {
+        this.ctsAutoHide?.Cancel();
+    }
+
+    protected internal virtual void OnShowing() {
+        this.StartAutoHide();
+    }
+
+    protected internal virtual void OnHidden() {
+        this.ctsAutoHide?.Cancel();
+    }
+
+    /// <summary>
+    /// Adds this notification to the given notification manager. If we already exist in another NM we remove
+    /// ourself from it first before adding to the new one. Does nothing if already added to the given NM
+    /// </summary>
+    /// <param name="notificationManager"></param>
+    public void Open(NotificationManager notificationManager) {
+        ArgumentNullException.ThrowIfNull(notificationManager);
+        if (!ReferenceEquals(this.NotificationManager, notificationManager)) {
+            this.NotificationManager?.RemoveNotification(this);
+            notificationManager.AddNotification(this);
+        }
+    }
+    
+    /// <summary>
+    /// Closes this notification, removing it from the <see cref="NotificationManager"/>
+    /// </summary>
+    public void Close() => this.NotificationManager?.RemoveNotification(this);
+}

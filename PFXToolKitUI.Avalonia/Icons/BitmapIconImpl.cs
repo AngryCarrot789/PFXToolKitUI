@@ -41,4 +41,8 @@ public class BitmapIconImpl : AbstractAvaloniaIcon {
     public override (Size Size, SKMatrix Transform) Measure(Size availableSize, StretchMode stretchMode) {
         return (((Stretch) (int) stretchMode).CalculateSize(availableSize, this.Bitmap.Size), SKMatrix.Identity);
     }
+
+    public override Rect GetBounds() {
+        return new Rect(default, this.Bitmap.Size);
+    }
 }

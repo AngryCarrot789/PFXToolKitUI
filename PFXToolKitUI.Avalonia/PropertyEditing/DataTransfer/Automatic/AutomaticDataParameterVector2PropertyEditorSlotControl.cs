@@ -48,7 +48,7 @@ public class AutomaticDataParameterVector2PropertyEditorSlotControl : BaseDataPa
             AutomaticDataParameterVector2PropertyEditorSlotControl editor = (AutomaticDataParameterVector2PropertyEditorSlotControl) x.Control;
             editor.draggerX.ValueFormatter = x.Model.ValueFormatter;
             editor.draggerY.ValueFormatter = x.Model.ValueFormatter;
-        }, null);
+        });
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {

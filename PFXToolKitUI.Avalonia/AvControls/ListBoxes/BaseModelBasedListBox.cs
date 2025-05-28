@@ -19,6 +19,8 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Templates;
+using Avalonia.Interactivity;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
@@ -53,6 +55,17 @@ public class BaseModelBasedListBox : ListBox {
     public bool CanEffectivelyDragItemPosition => this.CanDragItemPosition && this.CanDragItemPositionCore;
     
     public BaseModelBasedListBox() {
+    }
+
+    static BaseModelBasedListBox() {
+        ItemsPanelProperty.OverrideDefaultValue<BaseModelBasedListBox>(new FuncTemplate<Panel?>(() => new StackPanel()));
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e) {
+        base.OnLoaded(e);
+        if (this.ItemsPanelRoot is VirtualizingPanel) {
+            throw new InvalidOperationException("Cannot use a virtualizing panel on a model based list box");
+        }
     }
 
     /// <summary>

@@ -41,11 +41,6 @@ public abstract class RapidDispatchActionExBase {
     public DispatchPriority Priority { get; }
 
     /// <summary>
-    /// An event that gets raised when an unhandled exception is thrown by the callback action
-    /// </summary>
-    public event ExceptionEventHandler? ExecutionException;
-
-    /// <summary>
     /// Constructor for a RDA-Ex
     /// </summary>
     /// <param name="callback">The callback action</param>
@@ -60,14 +55,15 @@ public abstract class RapidDispatchActionExBase {
     }
 
     private async void DoExecuteAsync() {
-        Exception exception = null;
+        Exception? exception = null;
 
         int state;
         lock (this.stateLock)
             this.myState = S_RUNNING;
 
         try {
-            await this.ExecuteCore();
+            Task task = this.ExecuteCore();
+            await task;
         }
         catch (Exception e) {
             exception = e;
@@ -88,8 +84,10 @@ public abstract class RapidDispatchActionExBase {
             }
         }
 
-        if (exception != null)
-            this.ExecutionException?.Invoke(this, new ExceptionEventArgs(exception));
+        if (exception != null) {
+            this.dispatcher.Post(() => throw exception);
+            return;
+        }
 
         // Schedule outside of the lock, because ScheduleExecute is slightly expensive,
         // and we don't want to keep the lock acquired for a long time (and clogg up
@@ -98,7 +96,7 @@ public abstract class RapidDispatchActionExBase {
             this.ScheduleExecute();
     }
 
-    private void ScheduleExecute() => this.dispatcher.InvokeAsync(this.doExecuteCallback, this.Priority);
+    private void ScheduleExecute() => this.dispatcher.Post(this.doExecuteCallback, this.Priority);
 
     protected bool BeginInvoke() {
         lock (this.stateLock) {

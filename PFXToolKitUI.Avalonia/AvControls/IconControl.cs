@@ -124,19 +124,17 @@ public class IconControl : Control {
             (Size Size, SKMatrix Transform) m = icon.Measure(availableSize, (StretchMode) (int) this.Stretch);
             this.myTransform = m.Transform;
             return m.Size;
-            // Size size = icon.GetSize();
-            // return this.ScaleIcon ? availableSize.Constrain(size) : size;
         }
 
         return default;
     }
 
     protected override Size ArrangeOverride(Size finalSize) {
-        if (this.Icon is AbstractAvaloniaIcon icon) {
-            (Size Size, SKMatrix Transform) measure = icon.Measure(finalSize, (StretchMode) this.Stretch);
-            return measure.Size;
-        }
+        // if (this.Icon is AbstractAvaloniaIcon icon) {
+        //     (Size Size, SKMatrix Transform) measure = icon.Measure(finalSize, (StretchMode) this.Stretch);
+        //     return measure.Size;
+        // }
         
-        return default;
+        return finalSize;
     }
 }

@@ -46,7 +46,7 @@
                                    Minimum="0" Maximum="1" Value="0"
                                    Margin="5,0"/>
         
-        <TextBlock x:Name="PART_TaskCaption"
+        <TextBlock x:Name="PART_TaskBodyText"
                    Text="Activity Text That's really Long Test Ultra Long!"
                    VerticalAlignment="Center"
                    HorizontalAlignment="Right"

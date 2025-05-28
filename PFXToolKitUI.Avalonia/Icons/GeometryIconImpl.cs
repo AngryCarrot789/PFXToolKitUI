@@ -40,7 +40,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon {
         public IDisposable? disposeFillBrush, disposeStrokeBrush;
         public IBrush? myFillBrush, myPenBrush;
         public IPen? myPen;
-        
+
         public GeometryEntryRef(GeometryIconImpl iconImpl, GeometryEntry entry) {
             this.iconImpl = iconImpl;
             this.entry = entry;
@@ -115,7 +115,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon {
         }
     }
 
-    public Rect GetBounds() {
+    public override Rect GetBounds() {
         int count = 0;
         double l = double.MaxValue, t = double.MaxValue, r = double.MinValue, b = double.MinValue;
         foreach (Geometry? g in this.Geometries) {

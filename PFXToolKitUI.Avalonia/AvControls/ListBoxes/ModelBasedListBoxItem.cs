@@ -122,26 +122,4 @@ public abstract class ModelBasedListBoxItem<TModel> : BaseModelBasedListBoxItem 
         this.ListBox = null;
         this.Model = null;
     }
-
-    /// <summary>
-    /// Called before this item is added to the <see cref="ListBox"/> but after the <see cref="ListBox"/> and <see cref="Model"/> references are set
-    /// </summary>
-    protected abstract void OnAddingToList();
-
-    /// <summary>
-    /// Invoked once the styling and template is applied and we're added to the <see cref="ListBox"/>.
-    /// This can connect binders and add event handlers
-    /// </summary>
-    protected abstract void OnAddedToList();
-
-    /// <summary>
-    /// Invoked when we're about to be removed from our <see cref="ListBox"/>.
-    /// This can disconnect binders and remove event handlers
-    /// </summary>
-    protected abstract void OnRemovingFromList();
-
-    /// <summary>
-    /// Invoked once removed from <see cref="ListBox"/> but before the <see cref="ListBox"/> and <see cref="Model"/> references are cleared
-    /// </summary>
-    protected abstract void OnRemovedFromList();
 }

@@ -129,12 +129,16 @@ public abstract class Command {
             //     throw;
             // }
 
-            Debugger.Break();
-            try {
-                await this.OnExecutionException(args, e);
+            if (Debugger.IsAttached) {
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
             }
-            catch {
-                // ignored -- oopsie
+            else {
+                try {
+                    await this.OnExecutionException(args, e);
+                }
+                catch {
+                    // ignored -- oopsie
+                }   
             }
         }
         finally {

@@ -33,13 +33,18 @@ public abstract class BaseEventPropertyBinder<TModel> : BaseBinder<TModel> where
     private volatile int rdaLock;
 
     /// <summary>
-    /// Gets or sets if the event can be fired from any thread. Default is true
+    /// Gets or sets (init only) if the event can be fired from any thread. Default is true
     /// <para>
     /// When true, we will use a <see cref="RapidDispatchActionEx"/> to dispatch the <see cref="BaseBinder{TModel}.UpdateControl"/> signal
     /// back to the main thread. When false, if the event is fired outside of the main thread, we throw an exception
     /// </para> 
     /// </summary>
-    public bool AllowEventFiredOnAnyThread { get; set; } = true;
+    public bool AllowEventFiredOnAnyThread { get; init; } = true;
+
+    /// <summary>
+    /// Gets or sets (init only) the dispatch priority for a <see cref="RapidDispatchActionEx"/> when <see cref="AllowEventFiredOnAnyThread"/> is true
+    /// </summary>
+    public DispatchPriority DispatchPriority { get; init; } = DispatchPriority.Normal;
 
     protected BaseEventPropertyBinder(string eventName) {
         this.autoEventHelper = new AutoEventHelper(eventName, typeof(TModel), this.OnModelValueChanged);
@@ -58,7 +63,7 @@ public abstract class BaseEventPropertyBinder<TModel> : BaseBinder<TModel> where
 
                     try {
                         if (this.rdaUpdateControl == null)
-                            this.rdaUpdateControl = RapidDispatchActionEx.ForSync(this.UpdateControl, this.dispatcher, DispatchPriority.Normal, "BaseEventPropertyBinder");
+                            this.rdaUpdateControl = RapidDispatchActionEx.ForSync(this.UpdateControl, this.dispatcher, this.DispatchPriority, "BaseEventPropertyBinder");
                     }
                     finally {
                         this.rdaLock = 0;

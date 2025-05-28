@@ -22,6 +22,7 @@ using PFXToolKitUI.Tasks.Pausable;
 
 namespace PFXToolKitUI.Tasks;
 
+public delegate void ActivityTaskEventHandler(ActivityTask sender);
 public delegate void ActivityTaskPausableTaskChangedEventHandler(ActivityTask sender, AdvancedPausableTask? oldPausableTask, AdvancedPausableTask? newPausableTask);
 
 /// <summary>
@@ -116,6 +117,11 @@ public class ActivityTask {
     /// This event is fired from a task thread, so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/> if they need to
     /// </summary>
     public event ActivityTaskPausableTaskChangedEventHandler? PausableTaskChanged;
+    
+    /// <summary>
+    /// Raises (on the main thread) when <see cref="IsCompleted"/> changes
+    /// </summary>
+    public event ActivityTaskEventHandler? IsCompletedChanged;
 
     protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellationTokenSource) {
         this.activityManager = activityManager ?? throw new ArgumentNullException(nameof(activityManager));
@@ -203,6 +209,8 @@ public class ActivityTask {
     public static void InternalComplete(ActivityTask task, int state) {
         task.state = state;
     }
+
+    internal void InternalOnCompletedOnMainThread() => this.IsCompletedChanged?.Invoke(this);
 }
 
 // This system isn't great but it just about works... i'd rather not use public new ... methods but oh well

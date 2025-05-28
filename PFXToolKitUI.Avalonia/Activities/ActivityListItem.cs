@@ -22,6 +22,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.AvControls;
+using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Tasks.Pausable;
@@ -31,10 +32,16 @@ namespace PFXToolKitUI.Avalonia.Activities;
 
 public class ActivityListItem : TemplatedControl {
     public static readonly StyledProperty<ActivityTask?> ActivityTaskProperty = AvaloniaProperty.Register<ActivityListItem, ActivityTask?>(nameof(ActivityTask));
+    public static readonly StyledProperty<bool> ShowCaptionProperty = AvaloniaProperty.Register<ActivityListItem, bool>(nameof(ShowCaption), true);
 
     public ActivityTask? ActivityTask {
         get => this.GetValue(ActivityTaskProperty);
         set => this.SetValue(ActivityTaskProperty, value);
+    }
+
+    public bool ShowCaption {
+        get => this.GetValue(ShowCaptionProperty);
+        set => this.SetValue(ShowCaptionProperty, value);
     }
 
     private TextBlock? PART_Header;
@@ -43,6 +50,11 @@ public class ActivityListItem : TemplatedControl {
     private Button? PART_CancelActivityButton;
     private IconButton? PART_PlayPauseButton;
     private readonly AsyncRelayCommand pauseActivityCommand;
+
+    private readonly EventPropertyBinder<IActivityProgress> binderCaption = new EventPropertyBinder<IActivityProgress>(nameof(IActivityProgress.CaptionChanged), (b) => ((ActivityListItem) b.Control).PART_Header!.Text = b.Model.Caption);
+    private readonly EventPropertyBinder<IActivityProgress> binderText = new EventPropertyBinder<IActivityProgress>(nameof(IActivityProgress.TextChanged), (b) => ((ActivityListItem) b.Control).PART_Footer!.Text = b.Model.Text);
+    private readonly EventPropertyBinder<IActivityProgress> binderIsIndeterminate = new EventPropertyBinder<IActivityProgress>(nameof(IActivityProgress.IsIndeterminateChanged), (b) => ((ActivityListItem) b.Control).PART_ProgressBar!.IsIndeterminate = b.Model.IsIndeterminate);
+    private readonly EventPropertyBinder<CompletionState> binderCompletionValue = new EventPropertyBinder<CompletionState>(nameof(CompletionState.CompletionValueChanged), (b) => ((ActivityListItem) b.Control).PART_ProgressBar!.Value = b.Model.TotalCompletion);
 
     public ActivityListItem() {
         this.pauseActivityCommand = new AsyncRelayCommand(async () => {
@@ -53,48 +65,52 @@ public class ActivityListItem : TemplatedControl {
         });
     }
 
+    static ActivityListItem() {
+        ActivityTaskProperty.Changed.AddClassHandler<ActivityListItem, ActivityTask?>((s, e) => s.OnActivityTaskChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+        ShowCaptionProperty.Changed.AddClassHandler<ActivityListItem, bool>((s, e) => {
+            if (s.PART_Header != null)
+                s.PART_Header.IsVisible = e.NewValue.GetValueOrDefault();
+        });
+    }
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_Header = e.NameScope.GetTemplateChild<TextBlock>(nameof(this.PART_Header));
+        this.PART_Header.IsVisible = this.ShowCaption;
         this.PART_ProgressBar = e.NameScope.GetTemplateChild<ProgressBar>(nameof(this.PART_ProgressBar));
         this.PART_Footer = e.NameScope.GetTemplateChild<TextBlock>(nameof(this.PART_Footer));
         this.PART_CancelActivityButton = e.NameScope.GetTemplateChild<Button>(nameof(this.PART_CancelActivityButton));
         this.PART_CancelActivityButton.Click += this.PART_CancelActivityButtonOnClick;
         this.PART_PlayPauseButton = e.NameScope.GetTemplateChild<IconButton>(nameof(this.PART_PlayPauseButton));
         this.PART_PlayPauseButton.Command = this.pauseActivityCommand;
+
+        this.binderCaption.AttachControl(this);
+        this.binderText.AttachControl(this);
+        this.binderIsIndeterminate.AttachControl(this);
+        this.binderCompletionValue.AttachControl(this);
+        this.UpdateCancelButton();
     }
 
-    public void Connect(ActivityTask task) {
-        this.ActivityTask = task;
-        this.PART_CancelActivityButton!.IsEnabled = task.IsDirectlyCancellable;
-        this.PART_CancelActivityButton!.IsVisible = task.IsDirectlyCancellable;
-        task.Progress.CaptionChanged += this.OnActivityTaskCaptionChanged;
-        task.Progress.TextChanged += this.OnActivityTaskTextChanged;
-        task.Progress.IsIndeterminateChanged += this.OnActivityTaskIndeterminateChanged;
-        task.Progress.CompletionState.CompletionValueChanged += this.OnActivityTaskCompletionValueChanged;
+    private void OnActivityTaskChanged(ActivityTask? oldTask, ActivityTask? newTask) {
+        if (oldTask != null) {
+            oldTask.PausableTaskChanged -= this.OnActivityPausableTaskChanged;
+            if (oldTask.PausableTask != null)
+                oldTask.PausableTask.PausedStateChanged -= this.OnPausedStateChanged;
+        }
 
-        this.OnActivityTaskCaptionChanged(task.Progress);
-        this.OnActivityTaskTextChanged(task.Progress);
-        this.OnActivityTaskIndeterminateChanged(task.Progress);
-        this.OnActivityTaskCompletionValueChanged(task.Progress.CompletionState);
-        
-        task.PausableTaskChanged += this.OnActivityPausableTaskChanged;
-        if (task.PausableTask != null)
-            task.PausableTask.PausedStateChanged += this.OnPausedStateChanged;
-        this.UpdatePauseContinueButton(task.PausableTask);
-    }
+        if (newTask != null) {
+            this.UpdateCancelButton();
+            newTask.PausableTaskChanged += this.OnActivityPausableTaskChanged;
+            if (newTask.PausableTask != null)
+                newTask.PausableTask.PausedStateChanged += this.OnPausedStateChanged;
+        }
 
-    public void Disconnect() {
-        ActivityTask task = this.ActivityTask!;
-        task.Progress.CaptionChanged -= this.OnActivityTaskCaptionChanged;
-        task.Progress.TextChanged -= this.OnActivityTaskTextChanged;
-        task.Progress.IsIndeterminateChanged -= this.OnActivityTaskIndeterminateChanged;
-        task.Progress.CompletionState.CompletionValueChanged -= this.OnActivityTaskCompletionValueChanged;
-        
-        task.PausableTaskChanged -= this.OnActivityPausableTaskChanged;
-        if (task.PausableTask != null)
-            task.PausableTask.PausedStateChanged -= this.OnPausedStateChanged;
-        this.UpdatePauseContinueButton(null);
+        this.binderCaption.SwitchModel(newTask?.Progress);
+        this.binderText.SwitchModel(newTask?.Progress);
+        this.binderIsIndeterminate.SwitchModel(newTask?.Progress);
+        this.binderCompletionValue.SwitchModel(newTask?.Progress.CompletionState);
+
+        this.UpdatePauseContinueButton(newTask?.PausableTask);
     }
 
     private void OnActivityPausableTaskChanged(ActivityTask sender, AdvancedPausableTask? oldTask, AdvancedPausableTask? newTask) {
@@ -102,29 +118,21 @@ public class ActivityListItem : TemplatedControl {
             oldTask.PausedStateChanged -= this.OnPausedStateChanged;
         if (newTask != null)
             newTask.PausedStateChanged += this.OnPausedStateChanged;
-        
+
         ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => this.UpdatePauseContinueButton(newTask));
+    }
+
+    private void UpdateCancelButton() {
+        if (this.PART_CancelActivityButton != null) {
+            ActivityTask? task = this.ActivityTask;
+            this.PART_CancelActivityButton!.IsEnabled = task?.IsDirectlyCancellable ?? false;
+            this.PART_CancelActivityButton!.IsVisible = task?.IsDirectlyCancellable ?? false;
+        }
     }
 
     private void PART_CancelActivityButtonOnClick(object? sender, RoutedEventArgs e) {
         this.PART_CancelActivityButton!.IsEnabled = false;
         this.ActivityTask?.TryCancel();
-    }
-
-    private void OnActivityTaskCaptionChanged(IActivityProgress tracker) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_Header!.Text = tracker.Caption, DispatchPriority.Loaded);
-    }
-
-    private void OnActivityTaskTextChanged(IActivityProgress tracker) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_Footer!.Text = tracker.Text, DispatchPriority.Loaded);
-    }
-
-    private void OnActivityTaskIndeterminateChanged(IActivityProgress tracker) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_ProgressBar!.IsIndeterminate = tracker.IsIndeterminate, DispatchPriority.Loaded);
-    }
-
-    private void OnActivityTaskCompletionValueChanged(CompletionState state) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_ProgressBar!.Value = state.TotalCompletion, DispatchPriority.Loaded);
     }
 
     private Task OnPausedStateChanged(AdvancedPausableTask task) {
@@ -134,6 +142,10 @@ public class ActivityListItem : TemplatedControl {
     }
 
     private void UpdatePauseContinueButton(AdvancedPausableTask? task) {
+        if (this.PART_PlayPauseButton == null) {
+            return;
+        }
+
         if (task == null) {
             this.PART_PlayPauseButton!.IsVisible = false;
         }

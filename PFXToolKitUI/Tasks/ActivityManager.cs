@@ -180,6 +180,8 @@ public sealed class ActivityManager : IDisposable {
 
             activityManager.tasks.RemoveAt(index);
             activityManager.TaskCompleted?.Invoke(activityManager, task, index);
+
+            task.InternalOnCompletedOnMainThread();
         }
     }
 }

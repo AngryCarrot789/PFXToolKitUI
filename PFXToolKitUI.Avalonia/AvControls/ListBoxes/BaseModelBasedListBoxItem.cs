@@ -26,7 +26,7 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
-public class BaseModelBasedListBoxItem : ListBoxItem {
+public abstract class BaseModelBasedListBoxItem : ListBoxItem {
     private Control dragInitiator;
     private PixelPoint lastMovePosAbs;
     private Point leftClickPos;
@@ -39,6 +39,28 @@ public class BaseModelBasedListBoxItem : ListBoxItem {
         this.dragInitiator = this;
         this.HookDragEvents(this);
     }
+    
+    /// <summary>
+    /// Called before this item is added to the <see cref="ListBox"/> but after the <see cref="ListBox"/> and <see cref="Model"/> references are set
+    /// </summary>
+    protected abstract void OnAddingToList();
+
+    /// <summary>
+    /// Invoked once the styling and template is applied and we're added to the <see cref="ListBox"/>.
+    /// This can connect binders and add event handlers
+    /// </summary>
+    protected abstract void OnAddedToList();
+
+    /// <summary>
+    /// Invoked when we're about to be removed from our <see cref="ListBox"/>.
+    /// This can disconnect binders and remove event handlers
+    /// </summary>
+    protected abstract void OnRemovingFromList();
+
+    /// <summary>
+    /// Invoked once removed from <see cref="ListBox"/> but before the <see cref="ListBox"/> and <see cref="Model"/> references are cleared
+    /// </summary>
+    protected abstract void OnRemovedFromList();
 
     /// <summary>
     /// Sets the control that acts as the source for drag initiation. Default is 'this'
@@ -84,9 +106,7 @@ public class BaseModelBasedListBoxItem : ListBoxItem {
 
         // This is used to prevent "drag jumping" which occurs when a screen pixel is
         // somewhere in between a frame in a sweet spot that results in the control
-        // jumping back and forth. To test, do CTRL+MouseWheelUp once to zoom in a bit,
-        // and then drag a clip 1 frame at a time and you might see it with the code below removed.
-        // This code is pretty much the exact same as what Thumb uses
+        // jumping back and forth. This code is pretty much the exact same as what Thumb uses
         PixelPoint mPosAbs = this.PointToScreen(mPos);
         bool hasMovedX = !DoubleUtils.AreClose(mPosAbs.X, this.lastMovePosAbs.X);
         bool hasMovedY = !DoubleUtils.AreClose(mPosAbs.Y, this.lastMovePosAbs.Y);

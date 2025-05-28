@@ -17,7 +17,9 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
@@ -35,7 +37,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     /// Gets the item map for this list box. This is used to map models to the list box items and vice versa
     /// </summary>
     public IModelControlDictionary<TModel, ModelBasedListBoxItem<TModel>> ItemMap => this.itemMap;
-    
+
     /// <summary>
     /// Gets the selected item's model, or null, if there's no selected item
     /// </summary>
@@ -48,7 +50,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     /// Gets the size of our item cache. When zero, caching is disabled
     /// </summary>
     public int MaxCacheSize { get; }
-    
+
     protected ModelBasedListBox() : this(0) {
     }
 
@@ -94,34 +96,34 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
             this.RemoveModelAt(i);
         }
     }
-    
+
     protected void AddModels(IEnumerable<TModel> models) {
         foreach (TModel model in models) {
             this.AddModel(model);
         }
     }
-    
+
     private void OnItemsAdded(IObservableList<TModel> list, IList<TModel> items, int index) {
         foreach (TModel model in items) {
             this.InsertModel(index++, model);
         }
     }
-    
+
     private void OnItemsRemoved(IObservableList<TModel> list, IList<TModel> items, int index) {
         for (int i = index + items.Count - 1; i >= index; i--) {
             this.RemoveModelAt(i);
         }
     }
-    
+
     private void OnItemReplaced(IObservableList<TModel> list, TModel oldItem, TModel newItem, int index) {
         this.RemoveModelAt(index);
         this.InsertModel(index, newItem);
     }
-    
+
     private void OnItemMoved(IObservableList<TModel> list, TModel item, int oldIdx, int newIdx) {
         this.MoveModel(oldIdx, newIdx);
     }
-    
+
     /// <summary>
     /// Sets up event handlers for the list to automatically add/remove/replace/move models and then adds all the models to this list box
     /// </summary>
@@ -146,21 +148,26 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     }
 
     protected virtual void OnAddingItemToList(ModelBasedListBoxItem<TModel> control, TModel model) {
+        Debug.Assert(control.Model == null);
         control.InternalOnAddingToList(this, model);
     }
-    
+
     protected virtual void OnAddedItemToList(ModelBasedListBoxItem<TModel> control, TModel model) {
+        Debug.Assert(control.Model == model);
         control.InternalOnAddedToList();
     }
-    
+
     protected virtual void OnRemovingItemFromList(ModelBasedListBoxItem<TModel> control, TModel model) {
+        Debug.Assert(control.Model == model);
         control.InternalOnRemovingFromList();
     }
-    
+
     protected virtual void OnRemovedItemFromList(ModelBasedListBoxItem<TModel> control, TModel model) {
+        Debug.Assert(control.Model == model);
         control.InternalOnRemovedFromList();
+        Debug.Assert(control.Model == null);
     }
-    
+
     protected abstract ModelBasedListBoxItem<TModel> CreateItem();
 
     protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey) => this.CreateItem();
