@@ -35,7 +35,7 @@ public interface IRangedParameter<T> {
     T Maximum { get; }
 
     /// <summary>
-    /// Gets whether or not the range limit is actually active.
+    /// Gets whether the range limit is actually active.
     /// This tends to be false when <see cref="Minimum"/> and <see cref="Maximum"/>
     /// are the lowest and highest possible values for the data type, respectively
     /// </summary>

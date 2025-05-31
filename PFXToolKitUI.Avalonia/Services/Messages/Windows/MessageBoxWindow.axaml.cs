@@ -18,7 +18,9 @@
 // 
 
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Services.Messaging;
@@ -38,6 +40,11 @@ public partial class MessageBoxWindow : DesktopWindow {
     public MessageBoxWindow() {
         this.InitializeComponent();
         this.captionBinder.AttachControl(this);
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e) {
+        base.OnLoaded(e);
+        this.SizeToContent = SizeToContent.Manual;
     }
 
     static MessageBoxWindow() {

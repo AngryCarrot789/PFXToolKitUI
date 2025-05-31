@@ -19,6 +19,10 @@
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
 
+public delegate void ObservableListBeforeAddedEventHandler<T>(IObservableList<T> list, T item, int index);
+
+public delegate void ObservableListBeforeRemovedEventHandler<T>(IObservableList<T> list, int index, int count);
+
 public delegate void ObservableListMultipleItemsEventHandler<T>(IObservableList<T> list, IList<T> items, int index);
 
 public delegate void ObservableListSingleItemEventHandler<T>(IObservableList<T> list, T item, int oldIndex, int newIndex);

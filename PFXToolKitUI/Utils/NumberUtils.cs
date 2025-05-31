@@ -81,8 +81,8 @@ public static class NumberUtils {
         char[] dstBuffer = new char[(srcBuffer.Length << 1) + (join.HasValue ? (srcBuffer.Length - 1) : 0)];
         for (int i = 0, j = 0, ichLast = dstBuffer.Length - 2, incr = join.HasValue ? 3 : 2; i < srcBuffer.Length; i++, j += incr) {
             byte b = srcBuffer[i];
-            dstBuffer[j + 0] = HEX_CHARS[b & 0xF];
-            dstBuffer[j + 1] = HEX_CHARS[(b >> 4) & 0xF];
+            dstBuffer[j + 0] = HEX_CHARS[(b >> 4) & 0xF];
+            dstBuffer[j + 1] = HEX_CHARS[b & 0xF];
             if (j != ichLast && join.HasValue)
                 dstBuffer[j + 2] = join.Value;
         }

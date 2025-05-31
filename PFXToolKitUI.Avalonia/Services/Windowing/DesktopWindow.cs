@@ -36,12 +36,12 @@ namespace PFXToolKitUI.Avalonia.Services.Windowing;
 /// </summary>
 public class DesktopWindow : WindowEx, ITopLevel {
     /// <summary>
-    /// Gets whether the window is actually open or not
+    /// Gets whether the window is actually open or not. False when not opened or <see cref="IsClosed"/> is true
     /// </summary>
     public bool IsOpen { get; private set; }
 
     /// <summary>
-    /// Gets whether the window has closed after being opened
+    /// Gets whether the window has closed after being opened. False when <see cref="IsOpen"/> is true
     /// </summary>
     public bool IsClosed { get; private set; }
 

@@ -76,7 +76,12 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     /// </summary>
     /// <param name="parameter">The parameter passed to this command</param>
     public sealed override async void Execute(object? parameter) {
-        await this.ExecuteAsync(parameter);
+        try {
+            await this.ExecuteAsync(parameter);
+        }
+        catch (Exception e) {
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+        }
     }
 
     // The 2 functions below have almost the same copied code in order to give a slightly cleaner
@@ -93,15 +98,29 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     // Slight optimisation by not using async for ExecuteAsync, so that a state machine isn't needed
     public async Task ExecuteAsync(object? parameter) {
         if (Interlocked.CompareExchange(ref this.isRunningState, 1, 0) == 0) {
+            bool completedBeforeAwait = false;
             try {
-                this.RaiseCanExecuteChanged();
-                await this.ExecuteCoreAsync(parameter);
+                Task task = this.ExecuteCoreAsync(parameter);
+                if (!(completedBeforeAwait = task.IsCompleted)) {
+                    // Only raise the CanExecuteChanged event when we've entered true async 
+                    this.RaiseCanExecuteChanged();
+                    await task;
+                }
+            }
+            catch (OperationCanceledException) {
+                // ignored
+            }
+            catch (Exception e) {
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
             }
             finally {
                 this.isRunningState = 0;
             }
 
-            this.RaiseCanExecuteChanged();
+            // completedBeforeAwait is false even on exception or cancellation, so unless
+            // the task immediately completes, we always raise the event.
+            if (!completedBeforeAwait)
+                this.RaiseCanExecuteChanged();
         }
     }
 

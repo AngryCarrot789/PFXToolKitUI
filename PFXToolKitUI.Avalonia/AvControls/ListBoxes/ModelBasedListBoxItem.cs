@@ -75,7 +75,7 @@ public abstract class ModelBasedListBoxItem<TModel> : BaseModelBasedListBoxItem 
         foreach (IBinder<TModel> binder in binders) {
             this.modelBinderList.Add(binder);
             if (this.Model != null)
-                binder.AttachModel(this.Model!);
+                binder.AttachModel(this.Model);
         }
     }
 
@@ -84,7 +84,7 @@ public abstract class ModelBasedListBoxItem<TModel> : BaseModelBasedListBoxItem 
             return false;
         }
 
-        if (this.Model != null && binder.HasModel && binder.Model == this.Model) {
+        if (this.Model != null && binder.HasModel && ReferenceEquals(binder.Model, this.Model)) {
             binder.DetachModel();
         }
 

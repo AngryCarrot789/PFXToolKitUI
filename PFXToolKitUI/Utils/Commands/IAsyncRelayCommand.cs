@@ -21,7 +21,7 @@ namespace PFXToolKitUI.Utils.Commands;
 
 public interface IAsyncRelayCommand : IRelayCommand {
     /// <summary>
-    /// Gets whether or not this command is currently executing a task
+    /// Gets whether this command is currently executing a task
     /// </summary>
     bool IsRunning { get; }
 

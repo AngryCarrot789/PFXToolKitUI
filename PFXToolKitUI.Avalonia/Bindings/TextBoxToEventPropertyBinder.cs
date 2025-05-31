@@ -20,6 +20,7 @@
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.Utils;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 
@@ -55,7 +56,7 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
         this.getText = getText;
         this.updateModel = updateModel;
     }
-    
+
     protected override void UpdateModelOverride() {
     }
 
@@ -100,7 +101,22 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
 
     private void OnKeyDown(object? sender, KeyEventArgs e) {
         if (e.Key == Key.Escape) {
+            TextBox tb = (TextBox) sender!;
+
+            // When the user clicks escape, we want to temporarily disable lost focus handling and move focus elsewhere.
+            // This is to prevent infinite loops of dialogs being shown saying the value is incorrect format or whatever.
+            // User inputs bad value, dialog shows, user closes dialog and the text box is re-focused,
+            // user clicks away to do something else, lost focus is called and shows the dialog again, and it loops
+            
+            tb.LostFocus -= this.OnLostFocus;
             this.UpdateControl();
+
+            VisualTreeUtils.TryMoveFocusUpwards(tb);
+
+            ApplicationPFX.Instance.Dispatcher.Invoke(() => tb.LostFocus += this.OnLostFocus, DispatchPriority.Loaded);
+
+            // invoke callback to allow user code to maybe reverse some changes
+            // this.OnEscapePressed();
         }
         else if (e.Key == Key.Enter) {
             if (!this.isHandlingChangeModel) {
@@ -117,7 +133,7 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
             if (this.isHandlingChangeModel || !base.IsFullyAttached) {
                 return;
             }
-            
+
             TextBox control = (TextBox) this.myControl!;
             this.isHandlingChangeModel = true;
             bool oldIsEnabled = control.IsEnabled;

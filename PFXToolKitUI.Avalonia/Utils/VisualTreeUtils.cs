@@ -19,8 +19,10 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Data;
+using Avalonia.Input;
 
 namespace PFXToolKitUI.Avalonia.Utils;
 
@@ -105,5 +107,33 @@ public static class VisualTreeUtils {
     /// </summary>
     public static bool IsTemplatedItemOrDescended<T>(AvaloniaObject? obj) where T : class {
         return GetParent<T>(obj, true, false) != null;
+    }
+
+    public static AvaloniaObject? FilterFindNearestElement(AvaloniaObject source, Predicate<AvaloniaObject> filter, bool includeSource = false) {
+        for (AvaloniaObject? next = includeSource ? source : GetParent(source); next != null; next = GetParent(next)) {
+            if (filter(next)) {
+                return next;
+            }
+        }
+
+        return null;
+    }
+
+    public static InputElement? FindNearestFocusableElement(AvaloniaObject source, bool includeSource = false) {
+        return (InputElement?) FilterFindNearestElement(source, (o) => o is InputElement ie && ie.Focusable, includeSource);
+    }
+
+    public static bool TryMoveFocusUpwards(InputElement source) {
+        InputElement? nearest = FindNearestFocusableElement(source, false);
+        if (nearest != null && nearest.Focus()) {
+            return true;
+        }
+        else if (TopLevel.GetTopLevel(source) is TopLevel topLevel) {
+            // It's obsolete but it's the only thing we can try
+            topLevel.FocusManager?.ClearFocus();
+            return true;
+        }
+
+        return false;
     }
 }

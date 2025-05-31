@@ -21,6 +21,7 @@ using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.DataTransfer;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
@@ -125,7 +126,17 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
 
     private void OnKeyDown(object? sender, KeyEventArgs e) {
         if (e.Key == Key.Escape) {
+            TextBox tb = (TextBox) sender!;
+
+            tb.LostFocus -= this.OnLostFocus;
             this.UpdateControl();
+
+            VisualTreeUtils.TryMoveFocusUpwards(tb);
+
+            ApplicationPFX.Instance.Dispatcher.Invoke(() => tb.LostFocus += this.OnLostFocus, DispatchPriority.Loaded);
+
+            // invoke callback to allow user code to maybe reverse some changes
+            // this.OnEscapePressed();
         }
         else if (e.Key == Key.Enter) {
             if (!this.isHandlingChangeModel) {

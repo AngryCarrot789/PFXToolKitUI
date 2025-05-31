@@ -71,7 +71,7 @@ public abstract class Command {
         if (result == Executability.Invalid)
             return result;
 
-        return this.IsExecuting ? Executability.ValidButCannotExecute : result;
+        return !this.AllowMultipleExecutions && this.IsExecuting ? Executability.ValidButCannotExecute : result;
     }
 
     /// <summary>

@@ -32,11 +32,15 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     private readonly bool isDerivedType;
     protected int blockReentrancyCount;
 
+    public event ObservableListBeforeAddedEventHandler<T>? BeforeAdd;
+    public event ObservableListBeforeRemovedEventHandler<T>? BeforeRemove;
+    public event ObservableListReplaceEventHandler<T>? BeforeReplace;
+    public event ObservableListSingleItemEventHandler<T>? BeforeMove;
+
     public event ObservableListMultipleItemsEventHandler<T>? ItemsAdded;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? ItemReplaced;
     public event ObservableListSingleItemEventHandler<T>? ItemMoved;
-
 
     public ObservableList() : this(new List<T>()) {
     }
@@ -57,6 +61,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
 
     protected override void InsertItem(int index, T item) {
         this.CheckReentrancy();
+
+        this.BeforeAdd?.Invoke(this, item, index);
         this.myItems.Insert(index, item);
 
         // Invoke base method when derived or we have an ItemsAdded handler
@@ -70,16 +76,23 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
 
     public void InsertRange(int index, IEnumerable<T> items) {
         this.CheckReentrancy();
+        if ((uint) index > (uint) this.myItems.Count)
+            throw new ArgumentOutOfRangeException(nameof(index), index, "Index is not within the bounds of the list");
 
         // Slight risk in passing list to the ItemsAdded event in case items mutates asynchronously... meh
-        if (items is IList<T> list) {
-            this.myItems.InsertRange(index, list);
-        }
-        else {
+        if (!(items is IList<T> list)) {
             // Probably enumerator method or something along those lines, convert to list for speedy insertion
             list = items.ToList();
-            this.myItems.InsertRange(index, list);
         }
+
+        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeAdd;
+        if (beforeAdd != null) {
+            foreach (T item in list) {
+                beforeAdd(this, item, index);
+            }
+        }
+
+        this.myItems.InsertRange(index, list);
 
         if (this.isDerivedType || this.ItemsAdded != null) // Stops the event handler modifying the list
             list = list.AsReadOnly();
@@ -95,6 +108,15 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     /// <param name="items"></param>
     public void InsertSpanRange(int index, ReadOnlySpan<T> items) {
         this.CheckReentrancy();
+        if ((uint) index > (uint) this.myItems.Count)
+            throw new ArgumentOutOfRangeException(nameof(index), index, "Index is not within the bounds of the list");
+
+        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeAdd;
+        if (beforeAdd != null) {
+            foreach (T item in items) {
+                beforeAdd(this, item, index);
+            }
+        }
 
         this.myItems.InsertRange(index, items);
         if (this.isDerivedType || this.ItemsAdded != null)
@@ -104,6 +126,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected override void RemoveItem(int index) {
         this.CheckReentrancy();
         T removedItem = this[index];
+
+        this.BeforeRemove?.Invoke(this, index, 1);
         this.myItems.RemoveAt(index);
 
         // Invoke base method when derived or we have an ItemsRemoved handler
@@ -112,10 +136,20 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     }
 
     public void RemoveRange(int index, int count) {
+        if (index < 0)
+            throw new ArgumentOutOfRangeException(nameof(index), index, "Index must be non-negative");
+        if (count < 0)
+            throw new ArgumentOutOfRangeException(nameof(index), index, "Count must be non-negative");
+        if (this.myItems.Count - index < count)
+            throw new ArgumentException("The index and count exceed the range of this list");
+
         this.CheckReentrancy();
+
+        this.BeforeRemove?.Invoke(this, index, count);
         if (!this.isDerivedType && this.ItemsRemoved == null) {
             // We are not a derived type, and we have no ItemsRemoved handler,
             // so we don't need to create any pointless sub-lists
+
             this.myItems.RemoveRange(index, count);
         }
         else {
@@ -128,6 +162,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected override void SetItem(int index, T newItem) {
         this.CheckReentrancy();
         T oldItem = this[index];
+
+        this.BeforeReplace?.Invoke(this, oldItem, newItem, index);
         base.SetItem(index, newItem);
         this.OnItemReplaced(index, oldItem, newItem);
     }
@@ -137,6 +173,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected virtual void MoveItem(int oldIndex, int newIndex) {
         this.CheckReentrancy();
         T item = this[oldIndex];
+
+        this.BeforeMove?.Invoke(this, item, oldIndex, newIndex);
         base.RemoveItem(oldIndex);
         base.InsertItem(newIndex, item);
         this.OnItemMoved(oldIndex, newIndex, item);
@@ -148,6 +186,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
             return;
         }
 
+        this.BeforeRemove?.Invoke(this, 0, this.myItems.Count);
         if (!this.isDerivedType && this.ItemsRemoved == null) {
             // We are not a derived type, and we have no ItemsRemoved handler,
             // so we don't need to create any pointless sub-lists
