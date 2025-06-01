@@ -35,7 +35,7 @@ public partial class MessageBoxWindow : DesktopWindow {
         set => this.SetValue(MessageBoxDataProperty, value);
     }
     
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> captionBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TitleProperty, MessageBoxInfo.CaptionParameter);
+    private readonly IBinder<MessageBoxInfo> captionBinder = new EventPropertyBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CaptionChanged), (b) => ((MessageBoxWindow) b.Control).Title = b.Model.Caption ?? "Alert");
     
     public MessageBoxWindow() {
         this.InitializeComponent();

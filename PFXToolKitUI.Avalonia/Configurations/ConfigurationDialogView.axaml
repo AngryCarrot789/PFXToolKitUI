@@ -4,8 +4,10 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:cfg="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
              xmlns:s="clr-namespace:PFXToolKitUI.Avalonia.Services"
+             xmlns:av="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia"
              mc:Ignorable="d"
-             x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialogView">
+             x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialogView"
+             av:UIInputManager.FocusPath="Configuration">
     <DockPanel>
         <Border DockPanel.Dock="Bottom"
                 Background="{DynamicResource ABrush.Tone4.Background.Static}"

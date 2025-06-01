@@ -8,7 +8,10 @@
                     xmlns:configurations="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Configurations"
                     xmlns:themes="clr-namespace:PFXToolKitUI.Avalonia.Themes.Configurations"
                     xmlns:av="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
-                    xmlns:cb="clr-namespace:PFXToolKitUI.Avalonia.Configurations">
+                    xmlns:cb="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
+                    xmlns:messages="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages"
+                    xmlns:dd="clr-namespace:PFXToolKitUI.Configurations.Dialogs;assembly=PFXToolKitUI"
+                    xmlns:avalonia="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia">
     <ControlTheme x:Key="{x:Type pages:PropertyEditorConfigurationPageControl}" TargetType="{x:Type pages:PropertyEditorConfigurationPageControl}">
         <Setter Property="Template">
             <ControlTemplate TargetType="{x:Type pages:PropertyEditorConfigurationPageControl}">
@@ -44,6 +47,49 @@
                             </Grid>
                             <trees:ShortcutTreeView x:Name="PART_ShortcutTree" Grid.Row="1"/>
                         </Grid>
+                    </c:GroupBox>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme x:Key="{x:Type messages:PersistentDialogResultConfigPageControl}" TargetType="{x:Type messages:PersistentDialogResultConfigPageControl}">
+        <Setter Property="avalonia:UIInputManager.FocusPath" Value="Configuration/Page/DialogResults"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type messages:PersistentDialogResultConfigPageControl}">
+                <Grid Margin="0,2" RowDefinitions="Auto,5,*">
+                    <Grid Grid.Row="0">
+                        <TextBlock Padding="10" TextWrapping="Wrap">
+                            <Run Text="If any control in the timeline is focused and there's an input event, any shortcuts in this timeline area will have a chance of being executed." BaselineAlignment="Center"/>
+                        </TextBlock>
+                    </Grid>
+                    <c:GroupBox Grid.Row="2" Header="Keymap" Margin="5,0,5,5">
+                        <DataGrid x:Name="PART_DataGrid"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  CanUserResizeColumns="True"
+                                  ClipboardCopyMode="None">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn x:DataType="{x:Type dd:PersistentDialogResultViewModel}"
+                                                    Header="Dialog Name" Width="250"
+                                                    Binding="{Binding Path=DialogName, Mode=OneTime}"
+                                                    IsReadOnly="True"
+                                                    CanUserResize="True" FontFamily="{StaticResource FontOxanium}"/>
+
+                                <DataGridTextColumn x:DataType="{x:Type dd:PersistentDialogResultViewModel}"
+                                                    Header="Preferred Result" Width="150"
+                                                    Binding="{Binding Path=Button, Mode=OneWay}"
+                                                    IsReadOnly="True"
+                                                    CanUserResize="True" FontFamily="{StaticResource FontOxanium}">
+                                </DataGridTextColumn>
+
+                                <DataGridTemplateColumn Header="Is only persistent until app closes" Width="210">
+                                    <DataTemplate DataType="{x:Type dd:PersistentDialogResultViewModel}">
+                                        <CheckBox IsChecked="{Binding FuckYouAvaloniaJustFuckingWorkProperly, Mode=TwoWay}"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
                     </c:GroupBox>
                 </Grid>
             </ControlTemplate>

@@ -17,9 +17,6 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.Utils.Accessing;
-
 namespace PFXToolKitUI.Services.Messaging;
 
 public delegate void MessageBoxDataButtonsChangedEventHandler(MessageBoxInfo sender);
@@ -27,50 +24,106 @@ public delegate void MessageBoxDataButtonsChangedEventHandler(MessageBoxInfo sen
 /// <summary>
 /// A class for a basic message box class with a maximum of 3 buttons; Yes/OK, No and Cancel
 /// </summary>
-public class MessageBoxInfo : ITransferableData {
-    public static readonly DataParameterString CaptionParameter = DataParameter.Register(new DataParameterString(typeof(MessageBoxInfo), nameof(Caption), "A message here", ValueAccessors.Reflective<string?>(typeof(MessageBoxInfo), nameof(caption))));
-    public static readonly DataParameterString HeaderParameter = DataParameter.Register(new DataParameterString(typeof(MessageBoxInfo), nameof(Header), null, ValueAccessors.Reflective<string?>(typeof(MessageBoxInfo), nameof(header))));
-    public static readonly DataParameterString MessageParameter = DataParameter.Register(new DataParameterString(typeof(MessageBoxInfo), nameof(Message), "Message", ValueAccessors.Reflective<string?>(typeof(MessageBoxInfo), nameof(message))));
-    public static readonly DataParameterString YesOkTextParameter = DataParameter.Register(new DataParameterString(typeof(MessageBoxInfo), nameof(YesOkText), "OK", ValueAccessors.Reflective<string?>(typeof(MessageBoxInfo), nameof(yesOkText))));
-    public static readonly DataParameterString NoTextParameter = DataParameter.Register(new DataParameterString(typeof(MessageBoxInfo), nameof(NoText), "No", ValueAccessors.Reflective<string?>(typeof(MessageBoxInfo), nameof(noText))));
-    public static readonly DataParameterString CancelTextParameter = DataParameter.Register(new DataParameterString(typeof(MessageBoxInfo), nameof(CancelText), "Cancel", ValueAccessors.Reflective<string?>(typeof(MessageBoxInfo), nameof(cancelText))));
-
-    private string? caption = CaptionParameter.DefaultValue;
-    private string? header = HeaderParameter.DefaultValue;
-    private string? message = MessageParameter.DefaultValue;
-    private string? yesOkText = YesOkTextParameter.DefaultValue;
-    private string? noText = NoTextParameter.DefaultValue;
-    private string? cancelText = CancelTextParameter.DefaultValue;
+public class MessageBoxInfo {
+    private string? caption = "Alert";
+    private string? header = null;
+    private string? message = "Message";
+    private string? yesOkText = "OK";
+    private string? noText = "No";
+    private string? cancelText = "Cancel";
+    private string? alwaysUseThisResultText = "Always use this options";
+    private bool alwaysUseThisResult = false;
+    private bool alwaysUseThisResultUntilAppCloses = true;
     private MessageBoxButton buttons;
 
     public string? Caption {
         get => this.caption;
-        set => DataParameter.SetValueHelper(this, CaptionParameter, ref this.caption, value);
+        set {
+            if (this.caption != value) {
+                this.caption = value;
+                this.CaptionChanged?.Invoke(this);
+            }
+        }
     }
 
     public string? Header {
         get => this.header;
-        set => DataParameter.SetValueHelper(this, HeaderParameter, ref this.header, value);
+        set {
+            if (this.header != value) {
+                this.header = value;
+                this.HeaderChanged?.Invoke(this);
+            }
+        }
     }
 
     public string? Message {
         get => this.message;
-        set => DataParameter.SetValueHelper(this, MessageParameter, ref this.message, value);
+        set {
+            if (this.message != value) {
+                this.message = value;
+                this.MessageChanged?.Invoke(this);
+            }
+        }
     }
 
     public string? YesOkText {
         get => this.yesOkText;
-        set => DataParameter.SetValueHelper(this, YesOkTextParameter, ref this.yesOkText, value);
+        set {
+            if (this.yesOkText != value) {
+                this.yesOkText = value;
+                this.YesOkTextChanged?.Invoke(this);
+            }
+        }
     }
 
     public string? NoText {
         get => this.noText;
-        set => DataParameter.SetValueHelper(this, NoTextParameter, ref this.noText, value);
+        set {
+            if (this.noText != value) {
+                this.noText = value;
+                this.NoTextChanged?.Invoke(this);
+            }
+        }
     }
 
     public string? CancelText {
         get => this.cancelText;
-        set => DataParameter.SetValueHelper(this, CancelTextParameter, ref this.cancelText, value);
+        set {
+            if (this.cancelText != value) {
+                this.cancelText = value;
+                this.CancelTextChanged?.Invoke(this);
+            }
+        }
+    }
+
+    public string? AlwaysUseThisResultText {
+        get => this.alwaysUseThisResultText;
+        set {
+            if (this.alwaysUseThisResultText != value) {
+                this.alwaysUseThisResultText = value;
+                this.AlwaysUseThisResultTextChanged?.Invoke(this);
+            }
+        }
+    }
+
+    public bool AlwaysUseThisResult {
+        get => this.alwaysUseThisResult;
+        set {
+            if (this.alwaysUseThisResult != value) {
+                this.alwaysUseThisResult = value;
+                this.AlwaysUseThisResultChanged?.Invoke(this);
+            }
+        }
+    }
+
+    public bool AlwaysUseThisResultUntilAppCloses {
+        get => this.alwaysUseThisResultUntilAppCloses;
+        set {
+            if (this.alwaysUseThisResultUntilAppCloses != value) {
+                this.alwaysUseThisResultUntilAppCloses = value;
+                this.AlwaysUseThisResultUntilAppClosesChanged?.Invoke(this);
+            }
+        }
     }
 
     /// <summary>
@@ -79,13 +132,19 @@ public class MessageBoxInfo : ITransferableData {
     public MessageBoxButton Buttons {
         get => this.buttons;
         set {
-            if (this.buttons == value)
-                return;
-
-            this.buttons = value;
-            this.ButtonsChanged?.Invoke(this);
+            if (this.buttons != value) {
+                this.buttons = value;
+                this.ButtonsChanged?.Invoke(this);
+            }
         }
     }
+
+
+    /// <summary>
+    /// Gets or sets the name of this dialog. This is used to maintain the message box result when the user checked
+    /// the "Always use this option" box (and if they didn't check "Only until app closes", will also be saved to the config)
+    /// </summary>
+    public string? PersistentDialogName { get; init; }
 
     /// <summary>
     /// Gets or sets the type of button to automatically focus in the UI. Default is none
@@ -93,11 +152,17 @@ public class MessageBoxInfo : ITransferableData {
     public MessageBoxResult DefaultButton { get; init; }
 
     public event MessageBoxDataButtonsChangedEventHandler? ButtonsChanged;
-
-    public TransferableData TransferableData { get; }
+    public event MessageBoxDataButtonsChangedEventHandler? CaptionChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? HeaderChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? MessageChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? YesOkTextChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? NoTextChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? CancelTextChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? AlwaysUseThisResultTextChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? AlwaysUseThisResultChanged;
+    public event MessageBoxDataButtonsChangedEventHandler? AlwaysUseThisResultUntilAppClosesChanged;
 
     public MessageBoxInfo() {
-        this.TransferableData = new TransferableData(this);
     }
 
     public MessageBoxInfo(string? message) : this() {
@@ -121,16 +186,16 @@ public class MessageBoxInfo : ITransferableData {
             case MessageBoxButton.OKCancel:
                 this.YesOkText = "OK";
                 this.CancelText = "Cancel";
-            break;
+                break;
             case MessageBoxButton.YesNoCancel:
                 this.YesOkText = "Yes";
                 this.NoText = "No";
                 this.CancelText = "Cancel";
-            break;
+                break;
             case MessageBoxButton.YesNo:
                 this.YesOkText = "Yes";
                 this.NoText = "No";
-            break;
+                break;
             default: throw new ArgumentOutOfRangeException();
         }
     }

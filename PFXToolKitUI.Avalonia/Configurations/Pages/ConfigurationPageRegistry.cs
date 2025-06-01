@@ -17,10 +17,12 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Avalonia.Services.Messages;
 using PFXToolKitUI.Avalonia.Shortcuts.Configurations;
 using PFXToolKitUI.Avalonia.Themes.Configurations;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Configurations;
+using PFXToolKitUI.Configurations.Dialogs;
 using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Themes.Configurations;
 
@@ -33,6 +35,7 @@ public static class ConfigurationPageRegistry {
         Registry = new ModelControlRegistry<ConfigurationPage, BaseConfigurationPageControl>();
         Registry.RegisterType<PropertyEditorConfigurationPage>(() => new PropertyEditorConfigurationPageControl());
         Registry.RegisterType<ShortcutEditorConfigurationPage>(() => new ShortcutEditorConfigurationPageControl());
+        Registry.RegisterType<PersistentDialogResultConfigurationPage>(() => new PersistentDialogResultConfigPageControl());
         Registry.RegisterType<ThemeConfigurationPage>(() => new ThemeConfigurationPageControl());
     }
 }

@@ -33,8 +33,9 @@ public interface IMessageDialogService {
     /// <param name="message">The main message content</param>
     /// <param name="buttons">The buttons to show</param>
     /// <param name="defaultButton"></param>
+    /// <param name="persistentDialogName"></param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None);
+    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null);
 
     /// <summary>
     /// Shows a dialog message
@@ -43,8 +44,10 @@ public interface IMessageDialogService {
     /// <param name="header">A message presented in bold above the message, a less concise caption but still short</param>
     /// <param name="message">The main message content</param>
     /// <param name="buttons">The buttons to show</param>
+    /// <param name="defaultButton"></param>
+    /// <param name="persistentDialogName"></param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None);
+    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null);
 
     /// <summary>
     /// Shows a message box dialog that is dynamically customisable; 3 buttons, caption, header and message

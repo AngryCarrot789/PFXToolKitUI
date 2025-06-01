@@ -3,6 +3,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:trees="clr-namespace:PFXToolKitUI.Avalonia.Configurations.Trees"
+             xmlns:av="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationPanelControl">
     <Panel>
@@ -11,14 +12,17 @@
                 <TextBox Text="Search (WIP)..." Margin="5" BorderThickness="0"
                          Padding="5,2" VerticalContentAlignment="Center" Foreground="{DynamicResource ABrush.Foreground.Deeper}"/>
             </Grid>
-            <trees:ConfigurationTreeView x:Name="PART_ConfigurationTree" BorderThickness="0" Background="{DynamicResource ABrush.Tone5.Background.Static}"
+            <trees:ConfigurationTreeView x:Name="PART_ConfigurationTree" 
+                                         Background="{DynamicResource ABrush.Tone5.Background.Static}"
+                                         BorderThickness="0" 
                                          Grid.Row="2" Grid.Column="0"/>
 
             <Grid Grid.Row="0" Grid.Column="2" Background="{DynamicResource ABrush.Tone5.Background.Static}">
                 <TextBlock x:Name="PART_NavigationPathTextBlock" VerticalAlignment="Center" Padding="5,2" FontSize="14"/>
             </Grid>
 
-            <Grid Grid.Row="2" Grid.Column="2" Background="{DynamicResource ABrush.Tone3.Background.Static}">
+            <Grid Grid.Row="2" Grid.Column="2" Background="{DynamicResource ABrush.Tone3.Background.Static}"
+                  av:UIInputManager.FocusPath="Configuration/Page">
                 <ContentControl x:Name="PART_PagePresenter"/>
             </Grid>
 

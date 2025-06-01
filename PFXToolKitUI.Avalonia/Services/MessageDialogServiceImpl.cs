@@ -19,20 +19,22 @@
 
 using PFXToolKitUI.Avalonia.Services.Messages.Windows;
 using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
+using PFXToolKitUI.Services.Messaging.Configurations;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class MessageDialogServiceImpl : IMessageDialogService {
-    public async Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, message) { Buttons = buttons, DefaultButton = defaultButton };
+    public async Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+        MessageBoxInfo info = new MessageBoxInfo(caption, message) { Buttons = buttons, DefaultButton = defaultButton, PersistentDialogName = persistentDialogName };
         info.SetDefaultButtonText();
         return await this.ShowMessage(info);
     }
 
-    public async Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, header, message) { Buttons = buttons, DefaultButton = defaultButton };
+    public async Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+        MessageBoxInfo info = new MessageBoxInfo(caption, header, message) { Buttons = buttons, DefaultButton = defaultButton, PersistentDialogName = persistentDialogName };
         info.SetDefaultButtonText();
         return await this.ShowMessage(info);
     }
@@ -47,14 +49,45 @@ public class MessageDialogServiceImpl : IMessageDialogService {
         }
     }
 
+    private static bool IsPersistentButtonValidFor(MessageBoxResult button, MessageBoxButton buttons) {
+        switch (button) {
+            case MessageBoxResult.None:   return false;
+            case MessageBoxResult.OK:     return buttons == MessageBoxButton.OK || buttons == MessageBoxButton.OKCancel;
+            case MessageBoxResult.Cancel: return buttons == MessageBoxButton.OKCancel || buttons == MessageBoxButton.YesNoCancel;
+            case MessageBoxResult.Yes:
+            case MessageBoxResult.No:
+                return buttons == MessageBoxButton.YesNoCancel || buttons == MessageBoxButton.YesNo;
+            default: throw new ArgumentOutOfRangeException(nameof(button), button, null);
+        }
+    }
+
     private static async Task<MessageBoxResult> ShowMessageMainThread(MessageBoxInfo info) {
         Validate.NotNull(info);
+        if (!string.IsNullOrWhiteSpace(info.PersistentDialogName)) {
+            PersistentDialogResult persistent = PersistentDialogResult.GetInstance(info.PersistentDialogName);
+            if (persistent.Button is MessageBoxResult result) {
+                if (IsPersistentButtonValidFor(result, info.Buttons)) {
+                    return result;
+                }
+
+                // Someone tinkered with the config file maybe
+                persistent.SetButton(null);
+                AppLogger.Instance.WriteLine("Warning: PersistentDialogResult's button is not valid for the message box.");
+                AppLogger.Instance.WriteLine($"BTN = {result}, Buttons = {info.Buttons}, DialogName = {info.PersistentDialogName}");
+            }
+        }
+
         if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {
             MessageBoxWindow window = new MessageBoxWindow() { MessageBoxData = info };
             MessageBoxResult? result = await system.Register(window).ShowDialog<MessageBoxResult?>(activeWindow);
             window.MessageBoxData = null;
 
-            return result ?? MessageBoxResult.None;
+            MessageBoxResult trueResult = result ?? MessageBoxResult.None;
+            if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult) {
+                PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(trueResult, info.AlwaysUseThisResultUntilAppCloses);
+            }
+
+            return trueResult;
         }
         else {
             Console.WriteLine("Warning: no message box library available");

@@ -20,6 +20,7 @@
 using System.Diagnostics;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Configurations.Commands;
+using PFXToolKitUI.Configurations.Dialogs;
 using PFXToolKitUI.Configurations.Shortcuts.Commands;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Persistence;
@@ -27,6 +28,7 @@ using PFXToolKitUI.Plugins;
 using PFXToolKitUI.Plugins.Exceptions;
 using PFXToolKitUI.Services;
 using PFXToolKitUI.Services.Messaging;
+using PFXToolKitUI.Services.Messaging.Configurations;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Themes.Commands;
@@ -275,6 +277,7 @@ public abstract class ApplicationPFX : IServiceable {
         manager.Register("commands.config.themeconfig.CollapseThemeConfigTree", new CollapseThemeConfigTreeCommand());
         manager.Register("commands.config.themeconfig.CreateInheritedCopy", new CreateThemeCommand(false));
         manager.Register("commands.config.themeconfig.CreateCompleteCopy", new CreateThemeCommand(true));
+        manager.Register("commands.config.dialogs.DeleteSelectedDialogResultEntriesCommand", new DeleteSelectedDialogResultEntriesCommand());
     }
 
     /// <summary>
@@ -307,7 +310,7 @@ public abstract class ApplicationPFX : IServiceable {
     /// Registers the application configurations
     /// </summary>
     protected virtual void RegisterConfigurations() {
-
+        this.PersistentStorageManager.Register(new PersistentDialogResultConfiguration(), "dialogs", "preferred-options");
     }
 
     /// <summary>

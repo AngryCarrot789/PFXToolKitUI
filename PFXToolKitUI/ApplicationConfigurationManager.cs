@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.Configurations;
+using PFXToolKitUI.Configurations.Dialogs;
 using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Themes;
@@ -40,6 +41,10 @@ public class ApplicationConfigurationManager : ConfigurationManager {
 
         this.RootEntry.AddEntry(new ConfigurationEntry() {
             DisplayName = "Themes", Id = "config.themes", Page = ThemeManager.Instance.ThemeConfigurationPage
+        });
+        
+        this.RootEntry.AddEntry(new ConfigurationEntry() {
+            DisplayName = "Dialog Options", Id = "config.dialog-options", Page = new PersistentDialogResultConfigurationPage()
         });
     }
 }

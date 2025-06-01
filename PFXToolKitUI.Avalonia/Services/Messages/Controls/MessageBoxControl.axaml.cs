@@ -35,11 +35,14 @@ public partial class MessageBoxControl : UserControl {
         set => this.SetValue(MessageBoxDataProperty, value);
     }
 
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> headerBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TextBlock.TextProperty, MessageBoxInfo.HeaderParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> messageBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(TextBlock.TextProperty, MessageBoxInfo.MessageParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> yesOkTextBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(ContentProperty, MessageBoxInfo.YesOkTextParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> noTextBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(ContentProperty, MessageBoxInfo.NoTextParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<MessageBoxInfo> cancelTextBinder = new AvaloniaPropertyToDataParameterBinder<MessageBoxInfo>(ContentProperty, MessageBoxInfo.CancelTextParameter);
+    private readonly IBinder<MessageBoxInfo> headerBinder = new EventPropertyBinder<MessageBoxInfo>(nameof(MessageBoxInfo.HeaderChanged), (b) => ((TextBlock) b.Control).Text = b.Model.Header);
+    private readonly IBinder<MessageBoxInfo> messageBinder = new EventPropertyBinder<MessageBoxInfo>(nameof(MessageBoxInfo.MessageChanged), (b) => ((TextBox) b.Control).Text = b.Model.Message);
+    private readonly IBinder<MessageBoxInfo> yesOkTextBinder = new EventPropertyBinder<MessageBoxInfo>(nameof(MessageBoxInfo.YesOkTextChanged), (b) => ((Button) b.Control).Content = b.Model.YesOkText);
+    private readonly IBinder<MessageBoxInfo> noTextBinder = new EventPropertyBinder<MessageBoxInfo>(nameof(MessageBoxInfo.NoTextChanged), (b) => ((Button) b.Control).Content = b.Model.NoText);
+    private readonly IBinder<MessageBoxInfo> cancelTextBinder = new EventPropertyBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CancelTextChanged), (b) => ((Button) b.Control).Content = b.Model.CancelText);
+    private readonly IBinder<MessageBoxInfo> autrTextBinder = new EventPropertyBinder<MessageBoxInfo>(nameof(MessageBoxInfo.AlwaysUseThisResultTextChanged), (b) => ((CheckBox) b.Control).Content = b.Model.AlwaysUseThisResultText);
+    private readonly IBinder<MessageBoxInfo> autrBinder = new AvaloniaPropertyToEventPropertyBinder<MessageBoxInfo>(CheckBox.IsCheckedProperty, nameof(MessageBoxInfo.AlwaysUseThisResultChanged), (b) => ((CheckBox) b.Control).IsChecked = b.Model.AlwaysUseThisResult, (b) => b.Model.AlwaysUseThisResult = ((CheckBox) b.Control).IsChecked == true);
+    private readonly IBinder<MessageBoxInfo> autrUntilCloseBinder = new AvaloniaPropertyToEventPropertyBinder<MessageBoxInfo>(CheckBox.IsCheckedProperty, nameof(MessageBoxInfo.AlwaysUseThisResultUntilAppClosesChanged), (b) => ((CheckBox) b.Control).IsChecked = b.Model.AlwaysUseThisResultUntilAppCloses, (b) => b.Model.AlwaysUseThisResultUntilAppCloses = ((CheckBox) b.Control).IsChecked == true);
 
     public MessageBoxControl() {
         this.InitializeComponent();
@@ -48,6 +51,9 @@ public partial class MessageBoxControl : UserControl {
         this.yesOkTextBinder.AttachControl(this.PART_YesOkButton);
         this.noTextBinder.AttachControl(this.PART_NoButton);
         this.cancelTextBinder.AttachControl(this.PART_CancelButton);
+        this.autrTextBinder.AttachControl(this.PART_AlwaysUseThisResult);
+        this.autrBinder.AttachControl(this.PART_AlwaysUseThisResult);
+        this.autrUntilCloseBinder.AttachControl(this.PART_AUTR_UntilAppCloses);
         this.PART_Header.PropertyChanged += this.OnHeaderTextBlockPropertyChanged;
 
         this.PART_YesOkButton.Click += this.OnConfirmButtonClicked;
@@ -115,10 +121,15 @@ public partial class MessageBoxControl : UserControl {
     }
 
     private void OnMessageBoxDataChanged(MessageBoxInfo? oldData, MessageBoxInfo? newData) {
-        if (oldData != null)
+        if (oldData != null) {
             oldData.ButtonsChanged -= this.OnActiveButtonsChanged;
-        if (newData != null)
+            oldData.AlwaysUseThisResultChanged -= this.UpdateAlwaysUseThisResultUntilAppCloses;
+        }
+
+        if (newData != null) {
             newData.ButtonsChanged += this.OnActiveButtonsChanged;
+            newData.AlwaysUseThisResultChanged += this.UpdateAlwaysUseThisResultUntilAppCloses;
+        }
 
         // Create this first just in case there's a problem with no registrations
         this.headerBinder.SwitchModel(newData);
@@ -126,6 +137,16 @@ public partial class MessageBoxControl : UserControl {
         this.yesOkTextBinder.SwitchModel(newData);
         this.noTextBinder.SwitchModel(newData);
         this.cancelTextBinder.SwitchModel(newData);
+        this.autrTextBinder.SwitchModel(newData);
+        this.autrBinder.SwitchModel(newData);
+        this.autrUntilCloseBinder.SwitchModel(newData);
+
+        if (newData != null)
+            this.UpdateAlwaysUseThisResultUntilAppCloses(newData);
+
+        // Set visible when data is null, for debugging
+        this.PART_AUTRPanel.IsVisible = newData == null || !string.IsNullOrWhiteSpace(newData.PersistentDialogName);
+        
         this.UpdateVisibleButtons();
         if (newData != null) {
             Dispatcher.UIThread.InvokeAsync(() => {
@@ -135,18 +156,22 @@ public partial class MessageBoxControl : UserControl {
                     case MessageBoxResult.OK:
                         if (this.PART_YesOkButton.IsVisible)
                             this.PART_YesOkButton.Focus();
-                    break;
+                        break;
                     case MessageBoxResult.Cancel:
                         if (this.PART_CancelButton.IsVisible)
                             this.PART_CancelButton.Focus();
-                    break;
+                        break;
                     case MessageBoxResult.No:
                         if (this.PART_NoButton.IsVisible)
                             this.PART_NoButton.Focus();
-                    break;
+                        break;
                 }
             }, DispatcherPriority.Loaded);
         }
+    }
+
+    private void UpdateAlwaysUseThisResultUntilAppCloses(MessageBoxInfo sender) {
+        this.PART_AUTR_UntilAppCloses.IsEnabled = sender.AlwaysUseThisResult;
     }
 
     private void OnActiveButtonsChanged(MessageBoxInfo sender) {
@@ -167,22 +192,22 @@ public partial class MessageBoxControl : UserControl {
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = false;
                 this.PART_CancelButton.IsVisible = false;
-            break;
+                break;
             case MessageBoxButton.OKCancel:
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = false;
                 this.PART_CancelButton.IsVisible = true;
-            break;
+                break;
             case MessageBoxButton.YesNoCancel:
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = true;
                 this.PART_CancelButton.IsVisible = true;
-            break;
+                break;
             case MessageBoxButton.YesNo:
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = true;
                 this.PART_CancelButton.IsVisible = false;
-            break;
+                break;
             default: throw new ArgumentOutOfRangeException();
         }
     }
