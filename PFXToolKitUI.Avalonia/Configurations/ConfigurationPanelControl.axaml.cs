@@ -35,14 +35,14 @@ public delegate void ConfigurationPanelEditorActiveContextChangedEventHandler(Co
 public partial class ConfigurationPanelControl : UserControl {
     public static readonly StyledProperty<ConfigurationManager?> ConfigurationManagerProperty = AvaloniaProperty.Register<ConfigurationPanelControl, ConfigurationManager?>(nameof(ConfigurationManager));
 
+    private ConfigurationEntry? connectedEntry;
+    private ConfigurationContext? activeContext;
+    private readonly Dictionary<Type, BaseConfigurationPageControl> pageControlCache = new Dictionary<Type, BaseConfigurationPageControl>();
+    
     public ConfigurationManager? ConfigurationManager {
         get => this.GetValue(ConfigurationManagerProperty);
         set => this.SetValue(ConfigurationManagerProperty, value);
     }
-
-    private ConfigurationEntry? connectedEntry;
-    private readonly ModelControlDictionary<ConfigurationManager, ConfigurationTreeViewItem> itemMap;
-    private ConfigurationContext? activeContext;
 
     public ConfigurationContext? ActiveContext {
         get => this.activeContext;
@@ -62,7 +62,6 @@ public partial class ConfigurationPanelControl : UserControl {
 
     public ConfigurationPanelControl() {
         this.InitializeComponent();
-        this.itemMap = new ModelControlDictionary<ConfigurationManager, ConfigurationTreeViewItem>();
         this.PART_ConfigurationTree.SelectionMode = SelectionMode.Single;
         this.PART_ConfigurationTree.SelectionChanged += this.OnTreeSelectionChanged;
     }
@@ -100,7 +99,10 @@ public partial class ConfigurationPanelControl : UserControl {
 
             if (page != null) {
                 this.DisconnectPage();
-                BaseConfigurationPageControl control = ConfigurationPageRegistry.Registry.NewInstance(page, false);
+                
+                if (!this.pageControlCache.TryGetValue(page.GetType(), out BaseConfigurationPageControl? control))
+                    control = ConfigurationPageRegistry.Registry.NewInstance(page, false);
+                
                 this.ConnectPage(page, control);
                 this.connectedEntry = item.Entry;
                 this.UpdateNavigationHeading();
@@ -178,6 +180,7 @@ public partial class ConfigurationPanelControl : UserControl {
 
     private void DisconnectPage() {
         if (this.PART_PagePresenter.Content is BaseConfigurationPageControl page) {
+            this.pageControlCache[page.Page!.GetType()] = page;
             page.Disconnect();
         }
 
@@ -207,7 +210,7 @@ public partial class ConfigurationPanelControl : UserControl {
         }
         catch (Exception ex) {
             await IMessageDialogService.Instance.ShowMessage("Error", "Error unloading settings properties. The editor will now crash", ex.ToString());
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw ex);
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw ex, DispatchPriority.Send);
         }
 
         this.ActiveContext?.OnDestroyed();
@@ -221,7 +224,7 @@ public partial class ConfigurationPanelControl : UserControl {
             }
             catch (Exception ex) {
                 await IMessageDialogService.Instance.ShowMessage("Error", "Error loading settings properties. The editor will now crash", ex.ToString());
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw ex);
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw ex, DispatchPriority.Send);
             }
 
             this.ActiveContext!.OnCreated();

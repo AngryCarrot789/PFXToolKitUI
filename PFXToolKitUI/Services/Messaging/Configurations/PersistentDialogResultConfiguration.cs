@@ -41,7 +41,7 @@ public class PersistentDialogResultConfiguration : PersistentConfiguration {
 
     static PersistentDialogResultConfiguration() {
         PersistentButtonResultsProperty.DescriptionLines.Add("'preferredbutton' is the result of a message box without it even being shown.");
-        PersistentButtonResultsProperty.DescriptionLines.Add("It can be 'OK', 'OKCancel', 'YesNoCancel' or 'YesNo' (case insensitive)");
+        PersistentButtonResultsProperty.DescriptionLines.Add("It can be 'OK', 'Cancel', 'Yes' or 'No' (case insensitive)");
     }
 
     protected internal override void OnLoaded() {
@@ -72,7 +72,9 @@ public class PersistentDialogResultConfiguration : PersistentConfiguration {
             foreach (XmlElement dialog in element.GetElementsByTagName("Dialog").OfType<XmlElement>()) {
                 string name = dialog.GetAttribute("name");
                 string btn = dialog.GetAttribute("preferredbutton");
-                list[name] = Enum.Parse<MessageBoxResult>(btn, ignoreCase:true);
+                if (Enum.TryParse(btn, ignoreCase: true, out MessageBoxResult result) && result != MessageBoxResult.None) {
+                    list[name] = result;
+                }
             }
 
             return list;
@@ -91,6 +93,7 @@ public class PersistentDialogResultConfiguration : PersistentConfiguration {
             return; // do not save when already removed
         }
 
+        this.MarkModified();
         if (save)
             this.StorageManager.SaveArea(this);
     }

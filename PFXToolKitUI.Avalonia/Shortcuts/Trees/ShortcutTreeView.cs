@@ -65,6 +65,8 @@ public class ShortcutTreeView : TreeView, IShortcutTreeOrNode, IShortcutTreeElem
         if (oldEntry != null) {
             for (int i = this.Items.Count - 1; i >= 0; i--)
                 this.RemoveNodeInternal(i);
+            
+            this.GroupCounter = this.InputStateCounter = 0;
         }
 
         if (newEntry != null) {

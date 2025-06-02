@@ -130,7 +130,7 @@ public abstract class Command {
             // }
 
             if (Debugger.IsAttached) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
             }
             else {
                 try {

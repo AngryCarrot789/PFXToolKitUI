@@ -69,6 +69,12 @@ public abstract class PersistentConfiguration {
         RuntimeHelpers.RunClassConstructor(this.GetType().TypeHandle);
     }
 
+    /// <summary>
+    /// Marks the config as modified. Usually this is called automatically when a <see cref="PersistentProperty"/>'s value changes,
+    /// but if the property is for example a list or dictionary, and you add/remove entries, call this method so that the changes get saved.
+    /// </summary>
+    public void MarkModified() => this.internalIsModified = true;
+
     public IEnumerable<PersistentProperty> GetProperties() {
         return PersistentProperty.GetProperties(this.GetType(), true);
     }

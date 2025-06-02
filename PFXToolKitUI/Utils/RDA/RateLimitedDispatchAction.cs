@@ -172,7 +172,7 @@ public abstract class RateLimitedDispatchActionBase {
 
             if (exception != null) {
                 // post error to application, causing it to crash.
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw exception);
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw exception, DispatchPriority.Send);
                 return;
             }
 

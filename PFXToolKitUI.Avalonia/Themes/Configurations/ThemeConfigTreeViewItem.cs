@@ -125,9 +125,10 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
     public virtual void OnRemoving() {
         int count = this.Items.Count;
-        for (int i = count - 1; i >= 0; i--) {
+        for (int i = count - 1; i >= 0; i--)
             this.RemoveNodeInternal(i);
-        }
+        
+        this.GroupCounter = 0;
     }
 
     public virtual void OnRemoved() {

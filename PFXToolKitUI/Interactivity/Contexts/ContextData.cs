@@ -124,6 +124,16 @@ public class ContextData : IRandomAccessContextData {
                 myMap[entry.Key] = entry.Value;
             } while (enumerator.MoveNext());
         }
+        else if (!(ctx is EmptyContext)) {
+            using IEnumerator<KeyValuePair<string, object>> enumerator = ctx.Entries.GetEnumerator();
+            if (enumerator.MoveNext()) {
+                Dictionary<string, object> myMap = this.map ??= new Dictionary<string, object>();
+                do {
+                    KeyValuePair<string, object> entry = enumerator.Current;
+                    myMap[entry.Key] = entry.Value;
+                } while (enumerator.MoveNext());
+            }
+        }
 
         return this;
     }

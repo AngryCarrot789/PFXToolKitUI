@@ -63,6 +63,8 @@ public class ThemeConfigTreeView : TreeView, IThemeConfigEntryTreeOrNode, ITheme
         if (oldPage != null) {
             for (int i = this.Items.Count - 1; i >= 0; i--)
                 this.RemoveNodeInternal(i);
+            
+            this.GroupCounter = 0;
         }
 
         if (newPage != null) {
@@ -128,7 +130,7 @@ public class ThemeConfigTreeView : TreeView, IThemeConfigEntryTreeOrNode, ITheme
     }
 
     public void PushCachedItem(ThemeConfigTreeViewItem item) {
-        if (this.itemCache.Count < 128) {
+        if (this.itemCache.Count < 256) {
             this.itemCache.Push(item);
         }
     }

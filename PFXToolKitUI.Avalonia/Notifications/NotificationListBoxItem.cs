@@ -24,6 +24,7 @@ using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Media;
 using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
@@ -229,7 +230,12 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         private readonly EventPropertyBinder<NotificationCommand> textBinder = new EventPropertyBinder<NotificationCommand>(nameof(NotificationCommand.TextChanged), (b) => ((NotificationHyperlinkButton) b.Control).Content = b.Model.Text);
         private readonly EventPropertyBinder<NotificationCommand> toolTipBinder = new EventPropertyBinder<NotificationCommand>(nameof(NotificationCommand.ToolTipChanged), (b) => {
             if (!string.IsNullOrEmpty(b.Model.ToolTip)) {
-                ToolTip.SetTip((NotificationHyperlinkButton) b.Control, b.Model.ToolTip);
+                TextBlock tb = new TextBlock {
+                    Text = b.Model.ToolTip,
+                    TextDecorations = []
+                };
+
+                ToolTip.SetTip((NotificationHyperlinkButton) b.Control, tb);
             }
             else {
                 b.Control.ClearValue(ToolTip.TipProperty);

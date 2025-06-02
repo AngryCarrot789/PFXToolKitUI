@@ -159,6 +159,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
             this.RemoveNodeInternal(i);
         }
 
+        this.GroupCounter = this.InputStateCounter = 0;
         if (this.Entry is ShortcutEntry shortcut) {
             shortcut.ShortcutChanged -= this.OnEntryShortcutChanged;
             this.PART_InputStrokeList!.Children.Clear();

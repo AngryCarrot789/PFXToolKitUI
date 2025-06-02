@@ -80,7 +80,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
             await this.ExecuteAsync(parameter);
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
         }
     }
 
@@ -111,7 +111,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
                 // ignored
             }
             catch (Exception e) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
             }
             finally {
                 this.isRunningState = 0;

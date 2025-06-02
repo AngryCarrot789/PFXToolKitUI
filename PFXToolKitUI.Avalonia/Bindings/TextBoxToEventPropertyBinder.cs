@@ -145,7 +145,7 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
                 await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => BugFix.TextBox_FocusSelectAll(control));
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
         }
         finally {
             this.isHandlingChangeModel = false;

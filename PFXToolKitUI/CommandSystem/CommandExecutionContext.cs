@@ -58,7 +58,7 @@ public class CommandExecutionContext {
             await this.CommandManager.Execute(this.CommandId, this.Command, this.ContextData, this.IsUserInitiated);
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
         }
 
         if (this.onCompleted != null) {
@@ -75,7 +75,7 @@ public class CommandExecutionContext {
             this.onCompleted = null;
 
             if (list.TryGetException(out Exception? exception)) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw exception);
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw exception, DispatchPriority.Send);
             }
         }
     }

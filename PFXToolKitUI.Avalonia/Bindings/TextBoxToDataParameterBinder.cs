@@ -165,7 +165,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             }
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
             return;
         }
         finally {
@@ -180,7 +180,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             this.UpdateControl();
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e);
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
         }
     }
 }
