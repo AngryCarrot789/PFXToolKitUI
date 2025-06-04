@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using Avalonia;
+using Avalonia.Collections;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
@@ -74,7 +75,15 @@ public class DataManager {
         Visual.VisualParentProperty.Changed.AddClassHandler<Visual, Visual?>(OnVisualParentChanged);
     }
 
-    private static void OnVisualParentChanged(Visual sender, AvaloniaPropertyChangedEventArgs<Visual?> e) => InvalidateInheritedContext(sender);
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void OnVisualParentChanged(Visual sender, AvaloniaPropertyChangedEventArgs<Visual?> e) {
+        if (sender.IsAttachedToVisualTree()) {
+            InvalidateInheritedContext(sender);
+        }
+        // else {
+        //     Debug.WriteLine($"Skipped InvalidateInheritedContext for {sender} (not attached to VT)");
+        // }
+    }
 
     /// <summary>
     /// Adds a handler for <see cref="InheritedContextChangedEvent"/> to the given target
@@ -109,6 +118,7 @@ public class DataManager {
     /// </para>
     /// </summary>
     /// <param name="element">The element to invalidate the inherited context data of, along with its visual tree</param>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void InvalidateInheritedContext(AvaloniaObject element) {
         if (totalSuspensionCount > 0 && GetSuspendedInvalidationCount(element) > 0) {
             return;
@@ -133,6 +143,7 @@ public class DataManager {
     /// </para>
     /// </summary>
     /// <param name="element">The element to raise the event for, along with its visual tree</param>
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void RaiseInheritedContextChanged(AvaloniaObject element) {
         RaiseEventRecursive(element, new RoutedEventArgs(InheritedContextChangedEvent, element));
         // Debug.WriteLine($"Context invalidated: {element.GetType().Name}");
@@ -278,17 +289,21 @@ public class DataManager {
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void InvalidateInheritedContextAndChildren(AvaloniaObject obj) {
+        // Debug.WriteLine($"InvalidateInheritedContext for {obj}");
+        
         // SetValue is around 2x faster than ClearValue, and either way, ClearValue isn't
         // very useful here since WPF inheritance isn't used, and the value will most
         // likely be re-calculated very near in the future possibly via dispatcher on background priority
 
         // Checking there is a value before setting generally improves runtime performance, since SetValue is fairly intensive
-        if (obj.GetValue(InheritedContextDataProperty) != null)
+        if (obj.GetValue((AvaloniaProperty) InheritedContextDataProperty) != null)
             obj.SetValue(InheritedContextDataProperty, null);
 
-        if (obj is Visual visual)
-            foreach (Visual child in visual.GetVisualChildren())
+        if (obj is Visual) {
+            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(((Visual) obj).GetVisualChildren());
+            foreach (Visual child in list)
                 InvalidateInheritedContextAndChildren(child);
+        }
     }
 
     // Minimize stack usage as much as possible by using 'as' cast
@@ -296,9 +311,11 @@ public class DataManager {
     private static void RaiseEventRecursive(AvaloniaObject target, RoutedEventArgs args) {
         (target as IInputElement)?.RaiseEvent(args);
 
-        if (target is Visual visual)
-            foreach (Visual child in visual.GetVisualChildren())
+        if (target is Visual) {
+            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(((Visual) target).GetVisualChildren());
+            foreach (Visual child in list)
                 RaiseEventRecursive(child, args);
+        }
     }
 
     // Not sure if this will work as well as the above...

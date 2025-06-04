@@ -23,7 +23,7 @@ public abstract class MultiChangeToken : IDisposable {
     public readonly IControlContextData Context;
     private bool disposed;
 
-    public MultiChangeToken(IControlContextData context) {
+    protected MultiChangeToken(IControlContextData context) {
         this.Context = context;
     }
 

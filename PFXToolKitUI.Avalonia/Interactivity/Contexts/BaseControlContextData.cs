@@ -68,7 +68,7 @@ public abstract class BaseControlContextData : IControlContextData {
             return this.Remove(key);
         }
         else if (this.batchCounter > 0) {
-            (this.myBatchModifications ??= new List<ModificationEntry>()).Add(new ModificationEntry(key, value));
+            (this.myBatchModifications ??= []).Add(new ModificationEntry(key, value));
         }
         else if (this.myData == null || !this.myData.TryGetValue(key, out object? existing) || !ReferenceEquals(existing, value)) {
             (this.myData ??= new Dictionary<string, object>())[key] = value;
@@ -80,7 +80,7 @@ public abstract class BaseControlContextData : IControlContextData {
 
     public IControlContextData Remove(string key) {
         if (this.batchCounter > 0) {
-            (this.myBatchModifications ??= new List<ModificationEntry>()).Add(new ModificationEntry(key));
+            (this.myBatchModifications ??= []).Add(new ModificationEntry(key));
         }
         else if (this.myData != null && this.myData.Remove(key)) {
             DataManager.InvalidateInheritedContext(this.Owner);
