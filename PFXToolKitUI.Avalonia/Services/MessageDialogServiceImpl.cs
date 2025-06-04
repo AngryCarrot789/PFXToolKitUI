@@ -41,12 +41,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
     public async Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
         Validate.NotNull(info);
-        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
-            return await ShowMessageMainThread(info);
-        }
-        else {
-            return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
-        }
+        return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
     }
 
     private static bool IsPersistentButtonValidFor(MessageBoxResult button, MessageBoxButton buttons) {
@@ -77,17 +72,24 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             }
         }
 
-        if (WindowingSystem.TryGetInstance(out WindowingSystem? system) && system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {
-            MessageBoxWindow window = new MessageBoxWindow() { MessageBoxData = info };
-            MessageBoxResult? result = await system.Register(window).ShowDialog<MessageBoxResult?>(activeWindow);
-            window.MessageBoxData = null;
+        if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
+            if (system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {
+                MessageBoxWindow window = new MessageBoxWindow() { MessageBoxData = info };
+                MessageBoxResult? result = await system.Register(window).ShowDialog<MessageBoxResult?>(activeWindow);
+                window.MessageBoxData = null;
 
-            MessageBoxResult trueResult = result ?? MessageBoxResult.None;
-            if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult) {
-                PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(trueResult, info.AlwaysUseThisResultUntilAppCloses);
+                MessageBoxResult trueResult = result ?? MessageBoxResult.None;
+                if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult) {
+                    PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(trueResult, info.AlwaysUseThisResultUntilAppCloses);
+                }
+
+                return trueResult;
             }
-
-            return trueResult;
+            else {
+                Console.WriteLine("Warning: no active window available to show MessageBox");
+                Console.WriteLine($"[{info.Caption}] {info.Header}");
+                Console.WriteLine($"  {info.Message}");
+            }
         }
         else {
             Console.WriteLine("Warning: no message box library available");
