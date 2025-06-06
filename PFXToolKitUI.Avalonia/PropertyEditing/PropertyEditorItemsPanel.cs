@@ -67,7 +67,7 @@ public class PropertyEditorItemsPanel : StackPanel {
     }
 
     public void InsertItem(BasePropertyEditorObject item, int index) {
-        Validate.NotNull(item);
+        ArgumentNullException.ThrowIfNull(item);
         PropertyEditorControl? editor = this.OwnerGroup?.PropertyEditor;
         if (editor == null)
             throw new InvalidOperationException("Cannot insert items while our owner group's editor is null");

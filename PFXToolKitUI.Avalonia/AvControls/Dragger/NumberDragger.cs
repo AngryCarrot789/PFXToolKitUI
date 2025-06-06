@@ -36,7 +36,7 @@ public class InvalidInputEnteredEventArgs : RoutedEventArgs {
     public string Input { get; }
 
     public InvalidInputEnteredEventArgs(string input, NumberDragger dragger) : base(NumberDragger.InvalidInputEnteredEvent, dragger) {
-        Validate.NotNull(input);
+        ArgumentNullException.ThrowIfNull(input);
         this.Input = input;
     }
 }

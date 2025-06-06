@@ -44,8 +44,8 @@ public class ThemeConfigEntry : IThemeTreeEntry, ITransferableData {
     public TransferableData TransferableData { get; }
 
     public ThemeConfigEntry(string displayName, string themeKey) {
-        Validate.NotNullOrWhiteSpaces(displayName);
-        Validate.NotNullOrWhiteSpaces(themeKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(themeKey);
         if (displayName.Contains('/'))
             throw new ArgumentException("Display name cannot contain a forward slash");
 

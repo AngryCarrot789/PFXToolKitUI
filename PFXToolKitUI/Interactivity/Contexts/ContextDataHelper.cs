@@ -23,7 +23,7 @@ namespace PFXToolKitUI.Interactivity.Contexts;
 
 public static class ContextDataHelper {
     public static bool ContainsKey(this IContextData data, DataKey key) {
-        Validate.NotNull(key, nameof(key));
+        ArgumentNullException.ThrowIfNull(key, nameof(key));
         return data.ContainsKey(key.Id);
     }
 

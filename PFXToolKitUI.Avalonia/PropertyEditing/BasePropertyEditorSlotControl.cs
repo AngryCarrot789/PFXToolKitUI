@@ -90,7 +90,7 @@ public abstract class BasePropertyEditorSlotControl : TemplatedControl {
     }
 
     public static BasePropertyEditorSlotControl NewOrCachedContentInstance(PropertyEditorSlot slot) {
-        Validate.NotNull(slot);
+        ArgumentNullException.ThrowIfNull(slot);
         return Registry.NewInstance(slot);
     }
 

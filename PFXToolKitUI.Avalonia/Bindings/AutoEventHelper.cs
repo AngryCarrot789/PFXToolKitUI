@@ -30,7 +30,7 @@ public readonly struct AutoEventHelper {
     public readonly Delegate HandlerDelegate;
 
     public AutoEventHelper(string eventName, Type modelType, Action callback) {
-        Validate.NotNull(eventName);
+        ArgumentNullException.ThrowIfNull(eventName);
 
         EventInfo? info = modelType.GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);
         if (info == null)

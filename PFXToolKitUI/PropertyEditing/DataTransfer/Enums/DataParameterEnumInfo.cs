@@ -69,7 +69,7 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
     }
 
     private DataParameterEnumInfo(IEnumerable<TEnum> allowedEnumValues, IReadOnlyDictionary<TEnum, string> enumToTextMap) {
-        Validate.NotNull(enumToTextMap);
+        ArgumentNullException.ThrowIfNull(enumToTextMap);
 
         this.AllowedEnumList = allowedEnumValues.Select(x => (x, enumToTextMap.TryGetValue(x, out string? value) ? value : x.ToString())).ToList().AsReadOnly();
 

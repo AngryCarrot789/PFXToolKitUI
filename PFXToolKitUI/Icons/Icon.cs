@@ -29,7 +29,7 @@ public abstract class Icon {
     public string Name { get; }
 
     protected Icon(string name) {
-        Validate.NotNullOrWhiteSpaces(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
         this.Name = name;
     }
 

@@ -47,8 +47,8 @@ public abstract class DataKey {
     }
 
     protected static void RegisterInternal(string id, DataKey key) {
-        Validate.NotNullOrWhiteSpaces(id);
-        Validate.NotNull(key);
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(key);
         lock (Registry) {
             if (!Registry.TryAdd(id, key))
                 throw new InvalidOperationException("ID already in use: " + id);
@@ -94,7 +94,7 @@ public sealed class DataKey<T> : DataKey {
     public Executability GetExecutabilityForPresence(IContextData contextData) => this.IsPresent(contextData) ? Executability.Valid : Executability.Invalid;
 
     public bool TryGetContext(IContextData context, [NotNullWhen(true)] out T? value) {
-        Validate.NotNull(context);
+        ArgumentNullException.ThrowIfNull(context);
         if (context.TryGetContext(this.Id, out object? obj)) {
             value = obj is T t ? t : throw new Exception($"Context contained an invalid value for this key: type mismatch ({typeof(T)} != {obj.GetType()})");
             return true;

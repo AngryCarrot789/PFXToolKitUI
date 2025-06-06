@@ -58,8 +58,8 @@ public class ThemeConfigEntryGroup : IThemeTreeEntry {
     }
 
     public ThemeConfigEntry CreateEntry(string name, string themeKey) {
-        Validate.NotNullOrWhiteSpaces(name);
-        Validate.NotNullOrWhiteSpaces(themeKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(themeKey);
         if (this.map.ContainsKey(name)) {
             throw new InvalidOperationException($"Entry already exists with the name '{name}'");
         }

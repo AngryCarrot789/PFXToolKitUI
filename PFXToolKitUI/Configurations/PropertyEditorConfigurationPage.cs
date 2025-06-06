@@ -35,7 +35,7 @@ public abstract class PropertyEditorConfigurationPage : ConfigurationPage, ITran
     }
 
     public PropertyEditorConfigurationPage(PropertyEditor propertyEditor) {
-        Validate.NotNull(propertyEditor);
+        ArgumentNullException.ThrowIfNull(propertyEditor);
         this.TransferableData = new TransferableData(this);
         this.PropertyEditor = propertyEditor;
     }

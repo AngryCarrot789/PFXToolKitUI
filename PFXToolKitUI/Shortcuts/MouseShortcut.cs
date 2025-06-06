@@ -59,7 +59,7 @@ public class MouseShortcut : IMouseShortcut {
     }
 
     public MouseShortcut(List<MouseStroke> mouseStrokes) {
-        Validate.NotNull(mouseStrokes);
+        ArgumentNullException.ThrowIfNull(mouseStrokes);
         this.mouseStrokes = mouseStrokes;
     }
 

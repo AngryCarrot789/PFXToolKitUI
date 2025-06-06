@@ -43,7 +43,7 @@ public sealed class PersistentStorageManager {
     public bool IsSaveStackActive => this.saveStackCount > 0;
 
     public PersistentStorageManager(string storageDirectory) {
-        Validate.NotNullOrWhiteSpaces(storageDirectory);
+        ArgumentException.ThrowIfNullOrWhiteSpace(storageDirectory);
 
         this.allConfigs = new List<PersistentConfiguration>();
         this.myAreas = new Dictionary<string, Dictionary<string, PersistentConfiguration>>();
@@ -93,9 +93,10 @@ public sealed class PersistentStorageManager {
     public void Register<T>(T config, string? area, string name) where T : PersistentConfiguration => this.Register(typeof(T), config, area, name);
 
     private void Register(Type type, PersistentConfiguration config, string? area, string name) {
-        Validate.NotNull(config);
-        Validate.NotNullOrWhiteSpaces(area ??= "application");
-        Validate.NotNullOrWhiteSpaces(name);
+        area ??= "application";
+        ArgumentNullException.ThrowIfNull(config);
+        ArgumentException.ThrowIfNullOrWhiteSpace(area);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
 
         if (area.Contains("..")) {
             throw new InvalidOperationException("storage path cannot contain '..'");

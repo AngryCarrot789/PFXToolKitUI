@@ -62,7 +62,7 @@ public class ConfigurationEntry {
                 throw new InvalidOperationException("Id cannot be changed once the parent is set");
             }
 
-            Validate.NotNullOrWhiteSpaces(value);
+            ArgumentException.ThrowIfNullOrWhiteSpace(value);
             if (value.Contains('/') || value.Contains('\\'))
                 throw new InvalidOperationException("Id cannot contain a forward or back slash character");
 

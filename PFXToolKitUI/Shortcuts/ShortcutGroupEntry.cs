@@ -337,7 +337,7 @@ public sealed class ShortcutGroupEntry : IKeyMapEntry {
     }
 
     private void ValidateNameNotInUse(string? name) {
-        Validate.NotNull(name);
+        ArgumentNullException.ThrowIfNull(name);
         if (this.mapToItem.ContainsKey(name)) {
             string path = this.FullPath != null ? StringUtils.Join(this.FullPath, name, SeparatorChar) : name;
             throw new Exception($"Group or shortcut already exists with name: '{path}'");

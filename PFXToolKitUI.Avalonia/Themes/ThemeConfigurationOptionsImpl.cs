@@ -99,8 +99,8 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
         public readonly string basedOn;
 
         public ThemeOptions(string themeName, string basedOn) {
-            Validate.NotNullOrWhiteSpaces(themeName);
-            Validate.NotNullOrWhiteSpaces(basedOn);
+            ArgumentException.ThrowIfNullOrWhiteSpace(themeName);
+            ArgumentException.ThrowIfNullOrWhiteSpace(basedOn);
 
             this.themeName = themeName;
             this.basedOn = basedOn;

@@ -39,9 +39,9 @@ public class CommandExecutionContext {
     public bool IsUserInitiated { get; }
 
     public CommandExecutionContext(string commandId, Command command, CommandManager manager, IContextData context, bool isUserInitiated) {
-        Validate.NotNullOrWhiteSpaces(commandId);
-        Validate.NotNull(command);
-        Validate.NotNull(manager);
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
+        ArgumentNullException.ThrowIfNull(command);
+        ArgumentNullException.ThrowIfNull(manager);
         this.CommandManager = manager;
         this.Command = command;
         this.CommandId = commandId;

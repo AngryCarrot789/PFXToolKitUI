@@ -176,8 +176,8 @@ public sealed class RapidDispatchActionEx : RapidDispatchActionExBase, IDispatch
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs a non-async callback
     /// </summary>
     public static RapidDispatchActionEx ForSync(Action callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 
         return new RapidDispatchActionEx(dispatcher, () => {
             callback();
@@ -198,8 +198,8 @@ public sealed class RapidDispatchActionEx : RapidDispatchActionExBase, IDispatch
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs an async callback
     /// </summary>
     public static RapidDispatchActionEx ForAsync(Func<Task> callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 
         return new RapidDispatchActionEx(dispatcher, callback, priority, debugId);
     }
@@ -235,8 +235,8 @@ public sealed class RapidDispatchActionEx<T> : RapidDispatchActionExBase, IDispa
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs a non-async callback
     /// </summary>
     public static RapidDispatchActionEx<T> ForSync(Action<T> callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 
         return new RapidDispatchActionEx<T>(dispatcher, (t) => {
             callback(t);
@@ -255,8 +255,8 @@ public sealed class RapidDispatchActionEx<T> : RapidDispatchActionExBase, IDispa
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs an async callback
     /// </summary>
     public static RapidDispatchActionEx<T> ForAsync(Func<T, Task> callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 
         return new RapidDispatchActionEx<T>(dispatcher, callback, priority, debugId);
     }

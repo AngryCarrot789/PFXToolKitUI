@@ -40,7 +40,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
     }
 
     public async Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
-        Validate.NotNull(info);
+        ArgumentNullException.ThrowIfNull(info);
         return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
     }
 
@@ -57,7 +57,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
     }
 
     private static async Task<MessageBoxResult> ShowMessageMainThread(MessageBoxInfo info) {
-        Validate.NotNull(info);
+        ArgumentNullException.ThrowIfNull(info);
         if (!string.IsNullOrWhiteSpace(info.PersistentDialogName)) {
             PersistentDialogResult persistent = PersistentDialogResult.GetInstance(info.PersistentDialogName);
             if (persistent.Button is MessageBoxResult result) {

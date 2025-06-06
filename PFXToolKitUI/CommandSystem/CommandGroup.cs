@@ -36,7 +36,7 @@ public class CommandGroup : Command {
     private CommandGroup(List<string> commands) => this.commands = commands;
 
     public CommandGroup AddCommand(string commandId) {
-        Validate.NotNullOrWhiteSpaces(commandId, nameof(commandId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
 
         if (this.commands.Contains(commandId))
             return this;
@@ -46,7 +46,7 @@ public class CommandGroup : Command {
     }
 
     public CommandGroup AddCommands(params string[] cmds) {
-        Validate.NotNull(cmds, nameof(cmds));
+        ArgumentNullException.ThrowIfNull(cmds, nameof(cmds));
         foreach (string cmdId in cmds)
             if (string.IsNullOrWhiteSpace(cmdId))
                 throw new ArgumentException("One of the command ids was null, empty or whitespaces");
@@ -70,7 +70,7 @@ public class CommandGroup : Command {
     }
 
     public bool RemoveCommand(string commandId) {
-        Validate.NotNullOrWhiteSpaces(commandId, nameof(commandId));
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         return this.commands.Remove(commandId);
     }
 

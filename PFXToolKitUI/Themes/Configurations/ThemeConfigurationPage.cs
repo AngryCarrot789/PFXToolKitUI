@@ -84,8 +84,8 @@ public class ThemeConfigurationPage : ConfigurationPage {
     /// <param name="themeKey">The theme key</param>
     /// <param name="description">An optional description of what this theme key is used for</param>
     public ThemeConfigEntry AssignMapping(string fullPath, string themeKey, string? description = null) {
-        Validate.NotNullOrWhiteSpaces(fullPath);
-        Validate.NotNullOrWhiteSpaces(themeKey);
+        ArgumentException.ThrowIfNullOrWhiteSpace(fullPath);
+        ArgumentException.ThrowIfNullOrWhiteSpace(themeKey);
         ApplicationPFX.Instance.EnsureBeforePhase(ApplicationStartupPhase.Running);
 
         ThemeConfigEntryGroup parent = this.Root;
@@ -197,8 +197,8 @@ public class ThemeConfigurationPage : ConfigurationPage {
     }
 
     public bool ReverseChangeFor(Theme theme, string themeKey) {
-        Validate.NotNull(theme);
-        Validate.NotNullOrWhiteSpaces(themeKey);
+        ArgumentNullException.ThrowIfNull(theme);
+        ArgumentException.ThrowIfNullOrWhiteSpace(themeKey);
 
         if (this.originalBrushes != null && this.originalBrushes.Remove(themeKey, out ISavedThemeEntry? entry)) {
             this.ThemeEntryModified?.Invoke(this, themeKey, false);
@@ -210,8 +210,8 @@ public class ThemeConfigurationPage : ConfigurationPage {
     }
 
     public bool HasThemeKeyChanged(Theme theme, string themeKey) {
-        Validate.NotNull(theme);
-        Validate.NotNullOrWhiteSpaces(themeKey);
+        ArgumentNullException.ThrowIfNull(theme);
+        ArgumentException.ThrowIfNullOrWhiteSpace(themeKey);
         return this.originalBrushes != null && this.originalBrushes.ContainsKey(themeKey);
     }
 

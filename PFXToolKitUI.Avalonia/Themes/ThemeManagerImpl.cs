@@ -96,8 +96,8 @@ public class ThemeManagerImpl : ThemeManager {
     }
 
     public override Theme RegisterTheme(string name, Theme basedOn, bool copyAllKeys = false) {
-        Validate.NotNullOrWhiteSpaces(name);
-        Validate.NotNull(basedOn);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(basedOn);
         if (this.GetTheme(name) != null) {
             throw new InvalidOperationException($"Theme already exists with the name '{name}'");
         }

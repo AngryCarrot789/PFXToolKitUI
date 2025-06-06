@@ -209,7 +209,7 @@ public partial class UserInputDialogView : UserControl {
     /// <param name="info">The input info</param>
     /// <returns>A task to await the dialog close result</returns>
     public static async Task<bool?> ShowDialogAsync(UserInputInfo info) {
-        Validate.NotNull(info);
+        ArgumentNullException.ThrowIfNull(info);
         
         if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
             if (!system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {

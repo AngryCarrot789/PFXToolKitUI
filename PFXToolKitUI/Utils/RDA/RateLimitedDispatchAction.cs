@@ -230,22 +230,22 @@ public abstract class RateLimitedDispatchActionBase {
     public static RateLimitedDispatchAction<T> ForDispatcherSync<T>(Action<T> callback, TimeSpan minInterval, IDispatcher dispatcher) where T : class => ForDispatcherSync(callback, minInterval, dispatcher, DispatchPriority.Send);
 
     public static RateLimitedDispatchAction ForDispatcherSync(Action callback, TimeSpan minInterval, IDispatcher dispatcher, DispatchPriority priority) {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
         // No need to use async, since we can just directly access the DispatcherOperation's task,
         // which will become completed after the callback returns
         return new RateLimitedDispatchAction(() => dispatcher.InvokeAsync(callback, priority), minInterval);
     }
 
     public static RateLimitedDispatchAction<T> ForDispatcherSync<T>(Action<T> callback, TimeSpan minInterval, IDispatcher dispatcher, DispatchPriority priority) where T : class {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
         return new RateLimitedDispatchAction<T>((t) => dispatcher.InvokeAsync(() => callback(t), priority), minInterval);
     }
 
     public static RateLimitedDispatchAction ForDispatcherAsync(Func<Task> callback, TimeSpan minInterval, IDispatcher dispatcher, DispatchPriority priority) {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
         return new RateLimitedDispatchAction(async () => {
             try {
                 await dispatcher.InvokeAsync(callback, priority);
@@ -257,8 +257,8 @@ public abstract class RateLimitedDispatchActionBase {
     }
 
     public static RateLimitedDispatchAction<T> ForDispatcherAsync<T>(Func<T, Task> callback, TimeSpan minInterval, IDispatcher dispatcher, DispatchPriority priority) where T : class {
-        Validate.NotNull(callback, nameof(callback));
-        Validate.NotNull(dispatcher, nameof(dispatcher));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
         return new RateLimitedDispatchAction<T>(async (t) => {
             try {
                 await dispatcher.InvokeAsync(() => callback(t), priority);
@@ -291,7 +291,7 @@ public sealed class RateLimitedDispatchAction : RateLimitedDispatchActionBase, I
     }
 
     public RateLimitedDispatchAction(Func<Task> callback, TimeSpan minimumInterval) : base(minimumInterval) {
-        Validate.NotNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
         this.callback = callback;
     }
 
@@ -320,7 +320,7 @@ public sealed class RateLimitedDispatchAction<T> : RateLimitedDispatchActionBase
     }
 
     public RateLimitedDispatchAction(Func<T, Task> callback, TimeSpan minimumInterval) : base(minimumInterval) {
-        Validate.NotNull(callback, nameof(callback));
+        ArgumentNullException.ThrowIfNull(callback, nameof(callback));
         this.callback = callback;
     }
 

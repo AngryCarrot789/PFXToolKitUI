@@ -65,7 +65,7 @@ public class KeyboardShortcut : IKeyboardShortcut {
     }
 
     public KeyboardShortcut(List<KeyStroke> keyStrokes) {
-        Validate.NotNull(keyStrokes);
+        ArgumentNullException.ThrowIfNull(keyStrokes);
         this.keyStrokes = keyStrokes;
     }
 

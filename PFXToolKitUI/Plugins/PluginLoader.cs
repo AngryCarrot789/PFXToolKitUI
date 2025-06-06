@@ -48,7 +48,7 @@ public sealed class PluginLoader {
     /// </summary>
     /// <param name="descriptor">the descriptor</param>
     public void AddCorePlugin(Type pluginType) {
-        Validate.NotNull(pluginType);
+        ArgumentNullException.ThrowIfNull(pluginType);
         if (!typeof(Plugin).IsAssignableFrom(pluginType))
             throw new ArgumentException($"Plugin type does not derive from {nameof(Plugin)}: {pluginType}");
 

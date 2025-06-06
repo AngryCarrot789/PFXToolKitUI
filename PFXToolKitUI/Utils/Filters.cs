@@ -92,7 +92,7 @@ public class FileFilter {
     public IReadOnlyList<string>? AppleUniformTypeIdentifiers { get; init; }
 
     public FileFilter(string? name) {
-        Validate.NotNullOrWhiteSpaces(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
         this.Name = name;
     }
 
@@ -144,7 +144,7 @@ public class FileFilterBuilder {
     private readonly string name;
 
     public FileFilterBuilder(string name) {
-        Validate.NotNullOrWhiteSpaces(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
         this.name = name;
     }
 

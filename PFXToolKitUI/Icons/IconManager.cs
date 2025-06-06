@@ -36,7 +36,7 @@ public abstract class IconManager {
     }
 
     protected void ValidateName(string name) {
-        Validate.NotNullOrWhiteSpaces(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
         if (this.nameToIcon.ContainsKey(name))
             throw new InvalidOperationException("Icon name already in use: '" + name + "'");
     }
@@ -48,7 +48,7 @@ public abstract class IconManager {
     }
 
     public bool IconExists(string name) {
-        Validate.NotNullOrWhiteSpaces(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
         return this.GetIconFromName(name) != null;
     }
 
@@ -58,7 +58,7 @@ public abstract class IconManager {
     /// <param name="name">The name of the icon</param>
     /// <returns>The icon key, if found</returns>
     public virtual Icon? GetIconFromName(string name) {
-        Validate.NotNullOrWhiteSpaces(name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
         return this.nameToIcon.GetValueOrDefault(name);
     }
 
@@ -94,7 +94,7 @@ public abstract class IconManager {
     /// <param name="key">The icon key</param>
     protected void AddIcon(string name, Icon key) {
         this.ValidateName(name);
-        Validate.NotNull(key);
+        ArgumentNullException.ThrowIfNull(key);
 
         this.nameToIcon.Add(name, key);
     }

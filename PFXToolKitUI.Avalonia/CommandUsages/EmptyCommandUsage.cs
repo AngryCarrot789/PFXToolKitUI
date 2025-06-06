@@ -29,7 +29,7 @@ public class EmptyCommandUsage : ICommandUsage {
     public Icon? Icon { get; set; }
 
     public EmptyCommandUsage(string commandId) {
-        Validate.NotNullOrWhiteSpaces(commandId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         this.CommandId = commandId;
     }
 

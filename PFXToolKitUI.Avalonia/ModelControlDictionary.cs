@@ -41,8 +41,8 @@ public class ModelControlDictionary<TModel, TControl> : IModelControlDictionary<
     }
 
     public void AddMapping(TModel model, TControl control) {
-        Validate.NotNull(model);
-        Validate.NotNull(control);
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(control);
 
         if (this.controlToModel == null) {
             this.modelToControl = new Dictionary<TModel, TControl>();
@@ -60,8 +60,8 @@ public class ModelControlDictionary<TModel, TControl> : IModelControlDictionary<
     }
 
     private void CheckMappingInternal(TModel model, TControl control) {
-        Validate.NotNull(model);
-        Validate.NotNull(control);
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(control);
         if (this.controlToModel == null)
             throw new InvalidOperationException("Attempt to remove control that was never added (internal collections are empty)");
 
@@ -95,14 +95,14 @@ public class ModelControlDictionary<TModel, TControl> : IModelControlDictionary<
     public TModel GetModel(TControl control) => this.TryGetModel(control, out TModel? model) ? model : throw new InvalidOperationException("Control not added");
 
     public bool TryGetControl(TModel model, [NotNullWhen(true)] out TControl? control) {
-        Validate.NotNull(model);
+        ArgumentNullException.ThrowIfNull(model);
         if (this.modelToControl == null)
             return (control = null) != null; // sexy one liner ;)
         return this.modelToControl.TryGetValue(model, out control);
     }
 
     public bool TryGetModel(TControl control, [NotNullWhen(true)] out TModel? model) {
-        Validate.NotNull(control);
+        ArgumentNullException.ThrowIfNull(control);
         return this.controlToModel == null ? (model = null) != null : this.controlToModel.TryGetValue(control, out model);
     }
 }

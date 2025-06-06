@@ -33,7 +33,7 @@ public class DynamicContextGroup : IContextGroup {
     private readonly DynamicGenerateContextFunction generate;
 
     public DynamicContextGroup(DynamicGenerateContextFunction generate) {
-        Validate.NotNull(generate);
+        ArgumentNullException.ThrowIfNull(generate);
         this.generate = generate;
     }
 

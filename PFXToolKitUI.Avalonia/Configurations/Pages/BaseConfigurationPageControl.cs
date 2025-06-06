@@ -30,7 +30,7 @@ public class BaseConfigurationPageControl : TemplatedControl {
     public ConfigurationPage? Page { get; private set; }
 
     public void Connect(ConfigurationPage page) {
-        Validate.NotNull(page);
+        ArgumentNullException.ThrowIfNull(page);
         if (this.Page != null)
             throw new InvalidOperationException("Already connected");
 

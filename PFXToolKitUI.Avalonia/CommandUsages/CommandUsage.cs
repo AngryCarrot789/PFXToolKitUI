@@ -69,7 +69,7 @@ public abstract class CommandUsage : ICommandUsage {
     public event CommandUsageIconChangedEventHandler? IconChanged;
 
     protected CommandUsage(string commandId) {
-        Validate.NotNullOrWhiteSpaces(commandId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         this.CommandId = commandId;
     }
 

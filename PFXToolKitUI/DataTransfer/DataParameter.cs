@@ -82,8 +82,8 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     public event DataParameterValueChangedEventHandler? ValueChanged;
 
     protected DataParameter(Type ownerType, string name) {
-        Validate.NotNull(ownerType);
-        Validate.NotNullOrWhiteSpaces(name);
+        ArgumentNullException.ThrowIfNull(ownerType);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
         this.OwnerType = ownerType;
         this.Name = name;
     }

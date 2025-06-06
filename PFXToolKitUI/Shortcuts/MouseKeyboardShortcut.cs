@@ -62,7 +62,7 @@ public class MouseKeyboardShortcut : IMouseShortcut, IKeyboardShortcut {
     }
 
     public MouseKeyboardShortcut(List<IInputStroke> inputStrokes) {
-        Validate.NotNull(inputStrokes);
+        ArgumentNullException.ThrowIfNull(inputStrokes);
         this.inputStrokes = inputStrokes;
     }
 

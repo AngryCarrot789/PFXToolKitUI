@@ -100,7 +100,7 @@ public abstract class BaseContextEntry : IContextObject {
     }
 
     public BaseContextEntry(string displayName, string? description = null, Icon? icon = null) {
-        Validate.NotNullOrWhiteSpaces(displayName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
         this.displayName = displayName;
         this.description = description;
         this.icon = icon;
