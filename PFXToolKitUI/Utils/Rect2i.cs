@@ -101,7 +101,7 @@ public readonly struct Rect2i : IEqualityComparer<Rect2i>, IEquatable<Rect2i>, I
 
     public bool Equals(Rect2i other) => this == other;
 
-    public override bool Equals(object obj) => obj is Rect2i res && res == this;
+    public override bool Equals(object? obj) => obj is Rect2i res && res == this;
 
     public override int GetHashCode() => unchecked((this.Width * 397) ^ this.Height);
 

@@ -30,7 +30,7 @@ public class CommandIdToGestureConverter : IValueConverter {
 
     public string NoSuchActionText { get; set; } = null;
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is string id) {
             return CommandIdToGesture(id, this.NoSuchActionText, out string gesture) ? gesture : AvaloniaProperty.UnsetValue;
         }
@@ -38,7 +38,7 @@ public class CommandIdToGestureConverter : IValueConverter {
         throw new Exception("Value is not a string");
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) {
         throw new NotImplementedException();
     }
 

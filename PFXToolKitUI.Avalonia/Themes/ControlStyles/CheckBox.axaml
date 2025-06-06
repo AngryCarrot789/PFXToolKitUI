@@ -7,7 +7,7 @@
     </Design.PreviewWith>
     <ControlTheme x:Key="{x:Type CheckBox}" TargetType="{x:Type CheckBox}">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OptionMark.Static.Border}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CheckBox.Static.Border}"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="4,0,0,0"/>
@@ -20,7 +20,7 @@
                             Width="13"
                             Height="13"
                             VerticalAlignment="Center"
-                            Background="{DynamicResource OptionMark.Static.Background}"
+                            Background="{DynamicResource CheckBox.Static.Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{TemplateBinding CornerRadius}">
@@ -31,7 +31,7 @@
                                   HorizontalAlignment="Center"
                                   VerticalAlignment="Center"
                                   Data="M 1145.607177734375,430 C1145.607177734375,430 1141.449951171875,435.0772705078125 1141.449951171875,435.0772705078125 1141.449951171875,435.0772705078125 1139.232177734375,433.0999755859375 1139.232177734375,433.0999755859375 1139.232177734375,433.0999755859375 1138,434.5538330078125 1138,434.5538330078125 1138,434.5538330078125 1141.482177734375,438 1141.482177734375,438 1141.482177734375,438 1141.96875,437.9375 1141.96875,437.9375 1141.96875,437.9375 1147,431.34619140625 1147,431.34619140625 1147,431.34619140625 1145.607177734375,430 1145.607177734375,430 z"
-                                  Fill="{DynamicResource OptionMark.Static.Glyph}"
+                                  Fill="{DynamicResource CheckBox.Static.Glyph}"
                                   FlowDirection="LeftToRight"
                                   Stretch="Uniform"/>
                             <Rectangle x:Name="indeterminateMark"
@@ -39,7 +39,7 @@
                                        Height="8"
                                        HorizontalAlignment="Center"
                                        VerticalAlignment="Center"
-                                       Fill="{DynamicResource OptionMark.Static.Glyph}"
+                                       Fill="{DynamicResource CheckBox.Static.Glyph}"
                                        Stretch="Uniform"/>
                         </Panel>
                     </Border>
@@ -57,8 +57,8 @@
             </ControlTemplate>
         </Setter>
         <Style Selector="^:pointerover /template/ Border#border">
-            <Setter Property="Background" Value="{DynamicResource OptionMark.MouseOver.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource OptionMark.MouseOver.Border}"/>
+            <Setter Property="Background" Value="{DynamicResource CheckBox.MouseOver.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CheckBox.MouseOver.Border}"/>
         </Style>
         <Style Selector="^ /template/ Path#checkMark">
             <Setter Property="IsVisible" Value="False"/>
@@ -73,8 +73,8 @@
             <Setter Property="IsVisible" Value="True"/>
         </Style>
         <Style Selector="^:disabled /template/ Border#border">
-            <Setter Property="Background" Value="{DynamicResource OptionMark.Disabled.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource OptionMark.Disabled.Border}"/>
+            <Setter Property="Background" Value="{DynamicResource CheckBox.Disabled.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CheckBox.Disabled.Border}"/>
         </Style>
     </ControlTheme>
 </ResourceDictionary>

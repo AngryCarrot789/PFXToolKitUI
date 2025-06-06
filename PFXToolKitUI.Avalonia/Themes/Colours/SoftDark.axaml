@@ -197,7 +197,6 @@
     <SolidColorBrush x:Key="ABrush.Tone8.Border.Selected.Inactive" Color="{StaticResource ABrush.Tone8.Border.Selected.Inactive.Color}"/>
     <SolidColorBrush x:Key="ABrush.Tone8.Border.Disabled" Color="{StaticResource ABrush.Tone8.Border.Disabled.Color}"/>
 
-    <!-- FramePFX Specific -->
-    <SolidColorBrush x:Key="ABrush.PFX.Editor.StatusBar.Background" Color="{StaticResource ABrush.Tone6.Background.Static.Color}"/>
+    <SolidColorBrush x:Key="ABrush.PFX.StatusBar.Background" Color="{StaticResource ABrush.Tone6.Background.Static.Color}"/>
     <SolidColorBrush x:Key="ABrush.PFX.PropertyEditor.Separator.MouseOverBrush" Color="{DynamicResource ABrush.AccentTone2.Border.Static.Color}"/>
 </ResourceDictionary>

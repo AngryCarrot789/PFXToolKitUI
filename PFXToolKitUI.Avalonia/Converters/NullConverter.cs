@@ -27,11 +27,11 @@ public class NullConverter : IValueConverter {
     public object NullValue { get; set; }
     public object NonNullValue { get; set; }
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         return value == null ? this.NullValue : this.NonNullValue;
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object ConvertBack(object value, Type targetType, object? parameter, CultureInfo culture) {
         throw new NotImplementedException();
     }
 }

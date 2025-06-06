@@ -43,7 +43,7 @@ public class BoolConverter : IValueConverter {
         this.NonBoolValue = AvaloniaProperty.UnsetValue;
     }
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is bool boolean) {
             return boolean ? this.TrueValue : this.FalseValue;
         }
@@ -58,7 +58,7 @@ public class BoolConverter : IValueConverter {
         }
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object ConvertBack(object value, Type targetType, object? parameter, CultureInfo culture) {
         if (Equals(value, this.TrueValue)) {
             return true;
         }

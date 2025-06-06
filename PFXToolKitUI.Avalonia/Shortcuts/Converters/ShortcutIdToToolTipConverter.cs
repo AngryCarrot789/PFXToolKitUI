@@ -27,7 +27,7 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 public class ShortcutIdToToolTipConverter : IValueConverter {
     public static ShortcutIdToToolTipConverter Instance { get; } = new ShortcutIdToToolTipConverter();
 
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is string path) {
             return ShortcutIdToTooltip(path, null, out string gesture) ? gesture : AvaloniaProperty.UnsetValue;
         }
@@ -35,7 +35,7 @@ public class ShortcutIdToToolTipConverter : IValueConverter {
         throw new Exception("Value is not a shortcut string");
     }
 
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) {
+    public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) {
         throw new NotImplementedException();
     }
 

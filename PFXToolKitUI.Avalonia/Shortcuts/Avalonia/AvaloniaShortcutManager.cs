@@ -112,14 +112,14 @@ public sealed class AvaloniaShortcutManager : ShortcutManager {
         BroadcastShortcutActivity("No such shortcut for next key stroke: " + stroke);
     }
 
-    protected override void OnNoSuchShortcutForMouseStroke(ShortcutInputProcessor inputProcessor, string group, MouseStroke stroke) {
+    protected override void OnNoSuchShortcutForMouseStroke(ShortcutInputProcessor inputProcessor, string? group, MouseStroke stroke) {
         base.OnNoSuchShortcutForMouseStroke(inputProcessor, group, stroke);
         if (Debugger.IsAttached) {
             BroadcastShortcutActivity("No such shortcut for mouse stroke: " + stroke + " in group: " + group);
         }
     }
 
-    protected override void OnNoSuchShortcutForKeyStroke(ShortcutInputProcessor inputProcessor, string group, KeyStroke stroke) {
+    protected override void OnNoSuchShortcutForKeyStroke(ShortcutInputProcessor inputProcessor, string? group, KeyStroke stroke) {
         base.OnNoSuchShortcutForKeyStroke(inputProcessor, group, stroke);
         if (stroke.IsKeyDown && Debugger.IsAttached) {
             BroadcastShortcutActivity("No such shortcut for key stroke: " + stroke + " in group: " + group);

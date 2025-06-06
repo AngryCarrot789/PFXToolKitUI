@@ -31,7 +31,7 @@ public class StringJoiner {
         this.delimiter = delimiter;
     }
 
-    public void Append(string value) {
+    public void Append(string? value) {
         if (this.hasFirst) {
             this.sb.Append(this.delimiter);
         }

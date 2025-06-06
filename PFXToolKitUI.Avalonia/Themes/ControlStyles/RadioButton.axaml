@@ -7,7 +7,7 @@
     </Design.PreviewWith>
     <ControlTheme x:Key="{x:Type RadioButton}" TargetType="{x:Type RadioButton}">
         <Setter Property="Background" Value="Transparent"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource OptionMark.Static.Border}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource CheckBox.Static.Border}"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
         <Setter Property="BorderThickness" Value="{DynamicResource ThemeBorderThickness}"/>
         <Setter Property="Template">
@@ -16,7 +16,7 @@
                     <Ellipse Grid.Column="0" x:Name="PART_Ellipse"
                              Width="13" Height="13"
                              VerticalAlignment="Center"
-                             Fill="{DynamicResource OptionMark.Static.Background}"
+                             Fill="{DynamicResource CheckBox.Static.Background}"
                              Stroke="{TemplateBinding BorderBrush}"
                              StrokeThickness="1"/>
                     <Ellipse Grid.Column="0" x:Name="checkMark"
@@ -43,11 +43,11 @@
             </ControlTemplate>
         </Setter>
         <Style Selector="^:pointerover /template/ Ellipse#PART_Ellipse">
-            <Setter Property="Fill" Value="{DynamicResource OptionMark.MouseOver.Background}"/>
-            <Setter Property="Stroke" Value="{DynamicResource OptionMark.MouseOver.Border}"/>
+            <Setter Property="Fill" Value="{DynamicResource CheckBox.MouseOver.Background}"/>
+            <Setter Property="Stroke" Value="{DynamicResource CheckBox.MouseOver.Border}"/>
         </Style>
         <Style Selector="^ /template/ Ellipse#checkMark">
-            <Setter Property="Fill" Value="{DynamicResource OptionMark.Static.Glyph}"/>
+            <Setter Property="Fill" Value="{DynamicResource CheckBox.Static.Glyph}"/>
             <Setter Property="IsVisible" Value="False"/>
         </Style>
         <Style Selector="^ /template/ Ellipse#indeterminateMark">
@@ -60,8 +60,8 @@
             <Setter Property="IsVisible" Value="True"/>
         </Style>
         <Style Selector="^:disabled /template/ Border#PART_Ellipse">
-            <Setter Property="Background" Value="{DynamicResource OptionMark.Disabled.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource OptionMark.Disabled.Border}"/>
+            <Setter Property="Background" Value="{DynamicResource CheckBox.Disabled.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource CheckBox.Disabled.Border}"/>
         </Style>
     </ControlTheme>
 </ResourceDictionary>

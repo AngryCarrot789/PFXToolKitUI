@@ -85,7 +85,7 @@ public sealed class Filter {
         return this.sb.ToString().GetHashCode();
     }
 
-    public override bool Equals(object obj) {
+    public override bool Equals(object? obj) {
         return obj is Filter filter && this.sb.Equals(filter.sb);
     }
 }

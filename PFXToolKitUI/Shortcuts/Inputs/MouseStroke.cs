@@ -86,9 +86,9 @@ public readonly struct MouseStroke : IInputStroke, IEquatable<MouseStroke> {
     /// </summary>
     /// <param name="stroke">The stroke to compare</param>
     /// <returns>The current instance and the given stroke are "equal/match"</returns>
-    public bool Equals(IInputStroke stroke) => stroke is MouseStroke other && this.Equals(other);
+    public bool Equals(IInputStroke? stroke) => stroke is MouseStroke other && this.Equals(other);
 
-    public override bool Equals(object obj) => obj is MouseStroke other && this.Equals(other);
+    public override bool Equals(object? obj) => obj is MouseStroke other && this.Equals(other);
 
     public bool Equals(MouseStroke other) {
         return this.EqualsExceptRelease(other) && this.IsRelease == other.IsRelease;
