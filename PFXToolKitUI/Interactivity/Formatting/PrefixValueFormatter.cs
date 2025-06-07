@@ -28,10 +28,10 @@ public class PrefixValueFormatter : BaseSimpleValueFormatter {
     public string? Prefix {
         get => this.prefix;
         set {
-            if (this.prefix == value)
-                return;
-            this.prefix = value;
-            this.OnInvalidateFormat();
+            if (this.prefix != value) {
+                this.prefix = value;
+                this.OnInvalidateFormat();
+            }
         }
     }
 

@@ -24,14 +24,14 @@ namespace PFXToolKitUI.Utils;
 /// </summary>
 public enum RoundingMode {
     /// <summary>
-    /// Does nothing. This may not be valid in all cases, meaning this value may default to <see cref="Cast"/>
+    /// Does nothing. This may not be valid in all cases, meaning this value may default to <see cref="Truncate"/>
     /// </summary>
     None,
 
     /// <summary>
     /// Casts the decimal number to an integer number. May not result in the desired effect with negative numbers
     /// </summary>
-    Cast,
+    Truncate,
 
     /// <summary>
     /// Floors the decimal number then casts to an integer number

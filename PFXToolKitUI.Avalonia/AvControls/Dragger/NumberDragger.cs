@@ -160,16 +160,15 @@ public class NumberDragger : RangeBase {
     public bool IsEditing {
         get => this.isEditing;
         set {
-            if (this.isEditing == value)
-                return;
-
-            this.isEditing = value;
-            this.flagHasSpecialPropertyChangedWhileEditing = false;
-            this.UpdateTextControlVisibility();
-            this.UpdateTextBlockAndBox();
-            this.RaisePropertyChanged(IsEditingProperty, !value, value);
-            if (value && this.PART_TextBox != null) {
-                BugFix.TextBox_FocusSelectAll(this.PART_TextBox);
+            if (this.isEditing != value) {
+                this.isEditing = value;
+                this.flagHasSpecialPropertyChangedWhileEditing = false;
+                this.UpdateTextControlVisibility();
+                this.UpdateTextBlockAndBox();
+                this.RaisePropertyChanged(IsEditingProperty, !value, value);
+                if (value && this.PART_TextBox != null) {
+                    BugFix.TextBox_FocusSelectAll(this.PART_TextBox);
+                }
             }
         }
     }

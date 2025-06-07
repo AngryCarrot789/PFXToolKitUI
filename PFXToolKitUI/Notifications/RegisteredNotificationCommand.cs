@@ -19,6 +19,7 @@
 
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Notifications;
 
@@ -30,12 +31,7 @@ public class RegisteredNotificationCommand : NotificationCommand {
 
     public string? CommandId {
         get => this.commandId;
-        set {
-            if (this.commandId != value) {
-                this.commandId = value;
-                this.CommandIdChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.commandId, value, this, static t => t.CommandIdChanged?.Invoke(t));
     }
 
     public event NotificationCommandEventHandler? CommandIdChanged;

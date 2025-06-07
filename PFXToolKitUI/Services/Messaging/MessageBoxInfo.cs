@@ -17,6 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.Services.Messaging;
 
 public delegate void MessageBoxDataButtonsChangedEventHandler(MessageBoxInfo sender);
@@ -38,92 +40,47 @@ public class MessageBoxInfo {
 
     public string? Caption {
         get => this.caption;
-        set {
-            if (this.caption != value) {
-                this.caption = value;
-                this.CaptionChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
     }
 
     public string? Header {
         get => this.header;
-        set {
-            if (this.header != value) {
-                this.header = value;
-                this.HeaderChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.header, value, this, static t => t.HeaderChanged?.Invoke(t));
     }
 
     public string? Message {
         get => this.message;
-        set {
-            if (this.message != value) {
-                this.message = value;
-                this.MessageChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.message, value, this, static t => t.MessageChanged?.Invoke(t));
     }
 
     public string? YesOkText {
         get => this.yesOkText;
-        set {
-            if (this.yesOkText != value) {
-                this.yesOkText = value;
-                this.YesOkTextChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.yesOkText, value, this, static t => t.YesOkTextChanged?.Invoke(t));
     }
 
     public string? NoText {
         get => this.noText;
-        set {
-            if (this.noText != value) {
-                this.noText = value;
-                this.NoTextChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.noText, value, this, static t => t.NoTextChanged?.Invoke(t));
     }
 
     public string? CancelText {
         get => this.cancelText;
-        set {
-            if (this.cancelText != value) {
-                this.cancelText = value;
-                this.CancelTextChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.cancelText, value, this, static t => t.CancelTextChanged?.Invoke(t));
     }
 
     public string? AlwaysUseThisResultText {
         get => this.alwaysUseThisResultText;
-        set {
-            if (this.alwaysUseThisResultText != value) {
-                this.alwaysUseThisResultText = value;
-                this.AlwaysUseThisResultTextChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.alwaysUseThisResultText, value, this, static t => t.AlwaysUseThisResultTextChanged?.Invoke(t));
     }
 
     public bool AlwaysUseThisResult {
         get => this.alwaysUseThisResult;
-        set {
-            if (this.alwaysUseThisResult != value) {
-                this.alwaysUseThisResult = value;
-                this.AlwaysUseThisResultChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.alwaysUseThisResult, value, this, static t => t.AlwaysUseThisResultChanged?.Invoke(t));
     }
 
     public bool AlwaysUseThisResultUntilAppCloses {
         get => this.alwaysUseThisResultUntilAppCloses;
-        set {
-            if (this.alwaysUseThisResultUntilAppCloses != value) {
-                this.alwaysUseThisResultUntilAppCloses = value;
-                this.AlwaysUseThisResultUntilAppClosesChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.alwaysUseThisResultUntilAppCloses, value, this, static t => t.AlwaysUseThisResultUntilAppClosesChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -131,12 +88,7 @@ public class MessageBoxInfo {
     /// </summary>
     public MessageBoxButton Buttons {
         get => this.buttons;
-        set {
-            if (this.buttons != value) {
-                this.buttons = value;
-                this.ButtonsChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.buttons, value, this, static t => t.ButtonsChanged?.Invoke(t));
     }
 
 

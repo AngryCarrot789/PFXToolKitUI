@@ -62,12 +62,11 @@ public abstract class BaseSimpleValueFormatter : IValueFormatter {
         get => this.nonEditingRoundedPlaces;
         set {
             value = Math.Max(value, 0);
-            if (this.nonEditingRoundedPlaces == value)
-                return;
-
-            this.nonEditingRoundedPlaces = value;
-            this.tempNonEditingRoundedPlacesFormat = null;
-            this.InvalidateFormat?.Invoke(this, EventArgs.Empty);
+            if (this.nonEditingRoundedPlaces != value) {
+                this.nonEditingRoundedPlaces = value;
+                this.tempNonEditingRoundedPlacesFormat = null;
+                this.InvalidateFormat?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 
@@ -75,12 +74,11 @@ public abstract class BaseSimpleValueFormatter : IValueFormatter {
         get => this.editingRoundedPlaces;
         set {
             value = Math.Max(value, 0);
-            if (this.editingRoundedPlaces == value)
-                return;
-
-            this.editingRoundedPlaces = value;
-            this.tempEditingRoundedPlacesFormat = null;
-            this.InvalidateFormat?.Invoke(this, EventArgs.Empty);
+            if (this.editingRoundedPlaces != value) {
+                this.editingRoundedPlaces = value;
+                this.tempEditingRoundedPlacesFormat = null;
+                this.InvalidateFormat?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 

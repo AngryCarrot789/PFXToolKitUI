@@ -252,10 +252,10 @@ public static class Maths {
         return max < min ? (min - max) : (max - min);
     }
 
-    public static int Round(float value, RoundingMode mode = RoundingMode.Cast) {
+    public static int Round(float value, RoundingMode mode = RoundingMode.Truncate) {
         switch (mode) {
             case RoundingMode.None:
-            case RoundingMode.Cast:
+            case RoundingMode.Truncate:
                 return (int) value;
             case RoundingMode.Floor: return (int) Math.Floor(value);
             case RoundingMode.Ceil:  return (int) Math.Ceiling(value);
@@ -264,10 +264,10 @@ public static class Maths {
         }
     }
 
-    public static int Round(double value, RoundingMode mode = RoundingMode.Cast) {
+    public static int Round(double value, RoundingMode mode = RoundingMode.Truncate) {
         switch (mode) {
             case RoundingMode.None:
-            case RoundingMode.Cast:
+            case RoundingMode.Truncate:
                 return (int) value;
             case RoundingMode.Floor: return (int) Math.Floor(value);
             case RoundingMode.Ceil:  return (int) Math.Ceiling(value);
@@ -276,10 +276,10 @@ public static class Maths {
         }
     }
 
-    public static int Round(decimal value, RoundingMode mode = RoundingMode.Cast) {
+    public static int Round(decimal value, RoundingMode mode = RoundingMode.Truncate) {
         switch (mode) {
             case RoundingMode.None:
-            case RoundingMode.Cast:
+            case RoundingMode.Truncate:
                 return (int) value;
             case RoundingMode.Floor: return (int) Math.Floor(value);
             case RoundingMode.Ceil:  return (int) Math.Ceiling(value);
@@ -288,10 +288,10 @@ public static class Maths {
         }
     }
 
-    public static long RoundLong(double value, RoundingMode mode = RoundingMode.Cast) {
+    public static long RoundLong(double value, RoundingMode mode = RoundingMode.Truncate) {
         switch (mode) {
             case RoundingMode.None:
-            case RoundingMode.Cast:
+            case RoundingMode.Truncate:
                 return (long) value;
             case RoundingMode.Floor: return (long) Math.Floor(value);
             case RoundingMode.Ceil:  return (long) Math.Ceiling(value);

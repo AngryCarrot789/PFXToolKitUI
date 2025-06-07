@@ -42,12 +42,7 @@ public abstract class DataParameterPropertyEditorSlot : PropertyEditorSlot {
 
     public string DisplayName {
         get => this.displayName;
-        set {
-            if (this.displayName == value)
-                return;
-            this.displayName = value;
-            this.DisplayNameChanged?.Invoke(this);
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.displayName, value, this, static t => t.DisplayNameChanged?.Invoke(t));
     }
 
     public bool IsEditable {
@@ -76,13 +71,12 @@ public abstract class DataParameterPropertyEditorSlot : PropertyEditorSlot {
     public bool HasMultipleValues {
         get => this.hasMultipleValues;
         protected set {
-            if (this.hasMultipleValues == value)
-                return;
-
-            if (value)
-                this.HasProcessedMultipleValuesSinceSetup = false;
-            this.hasMultipleValues = value;
-            this.HasMultipleValuesChanged?.Invoke(this);
+            if (this.hasMultipleValues != value) {
+                if (value)
+                    this.HasProcessedMultipleValuesSinceSetup = false;
+                this.hasMultipleValues = value;
+                this.HasMultipleValuesChanged?.Invoke(this);
+            }
         }
     }
 
@@ -92,13 +86,7 @@ public abstract class DataParameterPropertyEditorSlot : PropertyEditorSlot {
     /// </summary>
     public bool HasProcessedMultipleValuesSinceSetup {
         get => this.hasProcessedMultipleValuesSinceSetup;
-        set {
-            if (this.hasProcessedMultipleValuesSinceSetup == value)
-                return;
-
-            this.hasProcessedMultipleValuesSinceSetup = value;
-            this.HasProcessedMultipleValuesChanged?.Invoke(this);
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.hasProcessedMultipleValuesSinceSetup, value, this, static t => t.HasProcessedMultipleValuesChanged?.Invoke(t));
     }
 
     public override bool IsSelectable => true;

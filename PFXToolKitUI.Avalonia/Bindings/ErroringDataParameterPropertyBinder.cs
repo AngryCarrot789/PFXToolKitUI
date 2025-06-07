@@ -35,11 +35,10 @@ public class ErroringDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaP
     public bool HasError {
         get => this.hasError;
         set {
-            if (this.hasError == value)
-                return;
-
-            this.hasError = value;
-            this.IsErrorChanged?.Invoke(this, EventArgs.Empty);
+            if (this.hasError != value) {
+                this.hasError = value;
+                this.IsErrorChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 

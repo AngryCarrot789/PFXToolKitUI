@@ -17,6 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.AdvancedMenuService;
 
 public delegate void GroupCaptionEntryEventHandler(CaptionEntry sender);
@@ -32,12 +34,7 @@ public class CaptionEntry : IContextObject {
     /// </summary>
     public string? Text {
         get => this.text;
-        set {
-            if (this.text != value) {
-                this.text = value;
-                this.TextChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => t.TextChanged?.Invoke(t));
     }
 
     public event GroupCaptionEntryEventHandler? TextChanged;

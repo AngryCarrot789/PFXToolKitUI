@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls;assembly=PFXToolKitUI.Avalonia">
+                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls;assembly=PFXToolKitUI.Avalonia"
+                    xmlns:converters="clr-namespace:PFXToolKitUI.Avalonia.Themes.Converters">
     <ControlTheme x:Key="{x:Type Window}" TargetType="{x:Type Window}">
         <Setter Property="Background" Value="{DynamicResource Window.Static.Background}"/>
         <Setter Property="TransparencyBackgroundFallback" Value="White"/>
@@ -162,8 +163,14 @@
                                         </Button>
                                     </StackPanel>
                                     <DockPanel Background="Transparent" Margin="0,0,5,0" HorizontalAlignment="Stretch" IsHitTestVisible="False">
-                                        <Image Source="{TemplateBinding Icon}"
-                                               HorizontalAlignment="Left" VerticalAlignment="Top" Margin="4,4,0,0" Height="24"/>
+                                        <Image x:Name="PART_IconImage" 
+                                               Source="{TemplateBinding Icon, Converter={x:Static converters:IconImageConverter.Instance}}"
+                                               IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
+                                               Margin="5,0,0,0" Height="16" Width="16"
+                                               VerticalAlignment="Center" 
+                                               Stretch="UniformToFill"
+                                               RenderOptions.BitmapInterpolationMode="None" 
+                                               DockPanel.Dock="Left"/>
                                         <TextBlock FontSize="13" Margin="5,3,0,3" TextAlignment="{TemplateBinding TitleBarTextAlignment}"
                                                    VerticalAlignment="Center" HorizontalAlignment="Stretch" TextWrapping="NoWrap"
                                                    Foreground="{TemplateBinding Foreground}"

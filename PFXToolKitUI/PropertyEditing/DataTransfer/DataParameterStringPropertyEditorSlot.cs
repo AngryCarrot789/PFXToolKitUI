@@ -50,11 +50,7 @@ public class DataParameterStringPropertyEditorSlot : DataParameterPropertyEditor
             if (value < 0 && value != -1)
                 throw new ArgumentOutOfRangeException(nameof(value), "Value must be -1 or greater than zero");
 
-            if (this.anticipatedLineCount == value)
-                return;
-
-            this.anticipatedLineCount = value;
-            this.AnticipatedLineCountChanged?.Invoke(this);
+            PropertyHelper.SetAndRaiseINE(ref this.anticipatedLineCount, value, this, static t => t.AnticipatedLineCountChanged?.Invoke(t));
         }
     }
 

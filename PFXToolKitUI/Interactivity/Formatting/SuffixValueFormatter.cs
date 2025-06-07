@@ -34,10 +34,10 @@ public class SuffixValueFormatter : BaseSimpleValueFormatter {
     public string? Suffix {
         get => this.suffix;
         set {
-            if (this.suffix == value)
-                return;
-            this.suffix = value;
-            this.OnInvalidateFormat();
+            if (this.suffix != value) {
+                this.suffix = value;
+                this.OnInvalidateFormat();
+            }
         }
     }
 

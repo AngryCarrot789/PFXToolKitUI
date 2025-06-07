@@ -46,12 +46,7 @@ public abstract class BaseContextEntry : IContextObject {
     /// </summary>
     public string? DisplayName {
         get => this.displayName;
-        set {
-            if (this.displayName != value) {
-                this.displayName = value;
-                this.DisplayNameChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.displayName, value, this, static t => t.DisplayNameChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -59,12 +54,7 @@ public abstract class BaseContextEntry : IContextObject {
     /// </summary>
     public string? Description {
         get => this.description;
-        set {
-            if (this.description != value) {
-                this.description = value;
-                this.DescriptionChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.description, value, this, static t => t.DescriptionChanged?.Invoke(t));
     }
 
     /// <summary>

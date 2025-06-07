@@ -37,13 +37,12 @@ public class AutoMemoryValueFormatter : BaseSimpleValueFormatter {
     public MemoryFormatType SourceFormat {
         get => this.sourceFormat;
         set {
-            if (this.sourceFormat == value)
-                return;
-
-            MemoryValueFormatter.ValidateMemoryFormat(value);
-            this.sourceFormat = value;
-            this.SourceFormatChanged?.Invoke(this);
-            this.OnInvalidateFormat();
+            if (this.sourceFormat != value) {
+                MemoryValueFormatter.ValidateMemoryFormat(value);
+                this.sourceFormat = value;
+                this.SourceFormatChanged?.Invoke(this);
+                this.OnInvalidateFormat();
+            }
         }
     }
 

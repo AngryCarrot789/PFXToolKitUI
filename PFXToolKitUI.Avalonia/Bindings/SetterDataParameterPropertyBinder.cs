@@ -37,11 +37,10 @@ public class SetterDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaPro
     public bool HasError {
         get => this.hasError;
         private set {
-            if (this.hasError == value)
-                return;
-
-            this.hasError = value;
-            this.HasErrorChanged?.Invoke(this, EventArgs.Empty);
+            if (this.hasError != value) {
+                this.hasError = value;
+                this.HasErrorChanged?.Invoke(this, EventArgs.Empty);
+            }
         }
     }
 

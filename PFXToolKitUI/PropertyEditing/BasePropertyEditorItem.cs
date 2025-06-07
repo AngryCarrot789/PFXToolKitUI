@@ -17,6 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.PropertyEditing;
 
 public delegate void BasePropertyEditorItemEventHandler(BasePropertyEditorItem sender);
@@ -32,12 +34,7 @@ public abstract class BasePropertyEditorItem : BasePropertyEditorObject {
     /// </summary>
     public bool IsCurrentlyApplicable {
         get => this.isCurrentlyApplicable;
-        protected set {
-            if (this.isCurrentlyApplicable == value)
-                return;
-            this.isCurrentlyApplicable = value;
-            this.IsCurrentlyApplicableChanged?.Invoke(this);
-        }
+        protected set => PropertyHelper.SetAndRaiseINE(ref this.isCurrentlyApplicable, value, this, static t => t.IsCurrentlyApplicableChanged?.Invoke(t));
     }
 
     /// <summary>

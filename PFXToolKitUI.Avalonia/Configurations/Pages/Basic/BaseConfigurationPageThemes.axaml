@@ -96,6 +96,10 @@
         </Setter>
     </ControlTheme>
 
+    <Design.PreviewWith>
+        <themes:ThemeConfigurationPageControl/>
+    </Design.PreviewWith>
+
     <ControlTheme x:Key="{x:Type themes:ThemeConfigurationPageControl}" TargetType="{x:Type themes:ThemeConfigurationPageControl}">
         <Setter Property="Template">
             <ControlTemplate TargetType="{x:Type themes:ThemeConfigurationPageControl}">
@@ -111,38 +115,48 @@
                         </TextBlock>
                     </StackPanel>
                     <c:GroupBox x:Name="PART_GroupBox" Grid.Row="2" Header="Theme Name Here" Margin="5,0,5,5">
-                        <Grid Margin="0" RowDefinitions="Auto,*,36">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
-                                <StackPanel Orientation="Horizontal" Grid.Column="0" Spacing="2">
-                                    <Button BorderThickness="0" Content="Expand All" cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.ExpandThemeConfigTree"/>
-                                    <Button BorderThickness="0" Content="Collapse All" cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CollapseThemeConfigTree"/>
-                                    <Separator Theme="{StaticResource VerticalSeparatorTheme}"/>
-                                    <Button BorderThickness="0" Content="Create Inherited Copy" cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CreateInheritedCopy"
-                                            ToolTip.Tip="Creates a new theme that is based on (inheriting from) the current theme"/>
-                                    <Button BorderThickness="0" Content="Create Clone" cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CreateCompleteCopy">
-                                        <ToolTip.Tip>
-                                            <TextBlock>
-                                                <Run Text="Creates a complete copy of the current theme"/>
-                                                <LineBreak/>
-                                                <Run Text="If the current theme is based on another theme, then the new theme still inherits from that theme"/>
-                                                <LineBreak/>
-                                                <LineBreak/>
-                                                <Run Text="This basically just copies all theme entries from the current theme"/>
-                                            </TextBlock>
-                                        </ToolTip.Tip>
-                                    </Button>
-                                </StackPanel>
-                                <StackPanel Orientation="Horizontal" Grid.Column="2">
-                                    <TextBox Width="200" Text="Search..."/>
-                                </StackPanel>
-                            </Grid>
-                            <themes:ThemeConfigTreeView x:Name="PART_ThemeConfigTree" Grid.Row="1"/>
-                            <Grid ColumnDefinitions="80,5,*,5,Auto,5,80" RowDefinitions="Auto,*" Grid.Row="2" x:Name="PART_SelectedItemGrid" Margin="4">
+                        <Grid Margin="0">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="20"/>
+                                <RowDefinition MinHeight="20"/>
+                                <RowDefinition Height="32"/>
+                            </Grid.RowDefinitions>
+                            <Border Grid.Row="0" BorderBrush="{DynamicResource ABrush.Tone6.Border.Static}" BorderThickness="0,0,0,1">
+                                <Grid ColumnDefinitions="Auto,*,Auto">
+                                    <StackPanel Orientation="Horizontal" Grid.Column="0" Spacing="0">
+                                        <Button BorderThickness="0" Content="Expand All" Padding="5,0"
+                                                cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.ExpandThemeConfigTree"/>
+                                        <Separator Theme="{StaticResource VerticalSeparatorTheme}" Margin="0"/>
+                                        <Button BorderThickness="0" Content="Collapse All" Padding="5,0"
+                                                cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CollapseThemeConfigTree"/>
+                                        <Separator Theme="{StaticResource VerticalSeparatorTheme}" Margin="0"/>
+                                        <Button BorderThickness="0" Content="Create Inherited Copy" cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CreateInheritedCopy" Padding="5,0"
+                                                ToolTip.Tip="Creates a new theme that is based on (inheriting from) the current theme"/>
+                                        <Separator Theme="{StaticResource VerticalSeparatorTheme}" Margin="0"/>
+                                        <Button BorderThickness="0" Content="Create Clone" Padding="5,0"
+                                                cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CreateCompleteCopy">
+                                            <ToolTip.Tip>
+                                                <TextBlock>
+                                                    <Run Text="Creates a complete copy of the current theme"/>
+                                                    <LineBreak/>
+                                                    <Run Text="If the current theme is based on another theme, then the new theme still inherits from that theme"/>
+                                                    <LineBreak/>
+                                                    <LineBreak/>
+                                                    <Run Text="This basically just copies all theme entries from the current theme"/>
+                                                </TextBlock>
+                                            </ToolTip.Tip>
+                                        </Button>
+                                        <Separator Theme="{StaticResource VerticalSeparatorTheme}" Margin="0"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                            <themes:ThemeConfigTreeView x:Name="PART_ThemeConfigTree" Grid.Row="1" BorderThickness="0"/>
+                            <Grid ColumnDefinitions="70,1,*,3,24,8,60" RowDefinitions="Auto,*" Grid.Row="2" x:Name="PART_SelectedItemGrid" Margin="2">
                                 <TextBlock Grid.Column="0" Grid.Row="0" Text="Theme Key" VerticalAlignment="Center" Padding="5,1"/>
-                                <TextBox Grid.Column="2" Grid.Row="0" x:Name="PART_ThemeKeyTextBox" VerticalAlignment="Center" IsReadOnly="True" Padding="3,5"
+                                <TextBox Grid.Column="2" Grid.Row="0" x:Name="PART_ThemeKeyTextBox" VerticalAlignment="Stretch" IsReadOnly="True" Padding="4,3"
                                          ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Hidden"/>
                                 <av:IconButton x:Name="PART_ResetButton" Grid.Column="4" ToolTip.Tip="Reset this brush to the value before you changed it"
-                                               Width="28" Height="28" Icon="{x:Static cb:ConfigurationButtons.ResetIcon}"/>
+                                               IconMaxHeight="24" IconMaxWidth="24" Icon="{x:Static cb:ConfigurationButtons.ResetIcon}"/>
                                 <ColorPicker Grid.Column="6" Grid.RowSpan="2" x:Name="PART_ColorPicker"
                                              HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
                             </Grid>

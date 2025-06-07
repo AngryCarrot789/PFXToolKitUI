@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Notifications;
 
@@ -30,22 +31,12 @@ public abstract class NotificationCommand {
 
     public string? Text {
         get => this.text;
-        set {
-            if (this.text != value) {
-                this.text = value;
-                this.TextChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => t.TextChanged?.Invoke(t));
     }
 
     public string? ToolTip {
         get => this.tooltip;
-        set {
-            if (this.tooltip != value) {
-                this.tooltip = value;
-                this.ToolTipChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.tooltip, value, this, static t => t.ToolTipChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -54,11 +45,7 @@ public abstract class NotificationCommand {
     public Notification? Notification {
         get => this.notification;
         internal set {
-            if (this.notification != value) {
-                this.notification = value;
-                this.NotificationChanged?.Invoke(this);
-            }
-
+            PropertyHelper.SetAndRaiseINE(ref this.notification, value, this, static t => t.NotificationChanged?.Invoke(t));
             if (value != null) {
                 if (!ReferenceEquals(this.ContextData, value.ContextData)) {
                     this.ContextData = value.ContextData;

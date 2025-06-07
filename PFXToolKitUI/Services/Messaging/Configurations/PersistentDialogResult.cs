@@ -17,6 +17,8 @@
 // along with MemEngine360. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.Services.Messaging.Configurations;
 
 public delegate void PersistentDialogResultEventHandler(PersistentDialogResult sender);
@@ -37,12 +39,7 @@ public class PersistentDialogResult {
     /// </summary>
     public MessageBoxResult? Button {
         get => this.button;
-        private set {
-            if (this.button != value) {
-                this.button = value;
-                this.ButtonChanged?.Invoke(this);
-            }
-        }
+        private set => PropertyHelper.SetAndRaiseINE(ref this.button, value, this, static t => t.ButtonChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -51,12 +48,7 @@ public class PersistentDialogResult {
     /// </summary>
     public bool IsPersistentOnlyUntilAppCloses {
         get => this.isPersistentOnlyUntilAppCloses;
-        set {
-            if (this.isPersistentOnlyUntilAppCloses != value) {
-                this.isPersistentOnlyUntilAppCloses = value;
-                this.IsPersistentOnlyUntilAppClosesChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.isPersistentOnlyUntilAppCloses, value, this, static t => t.IsPersistentOnlyUntilAppClosesChanged?.Invoke(t));
     }
 
     public event PersistentDialogResultEventHandler? ButtonChanged;

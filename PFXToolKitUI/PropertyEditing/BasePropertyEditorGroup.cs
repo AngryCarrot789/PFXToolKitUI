@@ -41,12 +41,7 @@ public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
     /// </summary>
     public string DisplayName {
         get => this.displayName;
-        set {
-            if (this.displayName == value)
-                return;
-            this.displayName = value;
-            this.DisplayNameChanged?.Invoke(this);
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.displayName, value, this, static t => t.DisplayNameChanged?.Invoke(t));
     }
 
     /// <summary>

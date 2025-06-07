@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
@@ -47,13 +48,7 @@ public class ContextRegistry {
     /// </summary>
     public string? Caption {
         get => this.caption;
-        set {
-            if (this.caption == value)
-                return;
-
-            this.caption = value;
-            this.CaptionChanged?.Invoke(this);
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
     }
 
     public bool IsOpened { get; private set; }

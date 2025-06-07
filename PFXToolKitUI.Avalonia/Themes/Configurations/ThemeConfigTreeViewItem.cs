@@ -17,8 +17,12 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.CompilerServices;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
+using Avalonia.Controls.Primitives;
+using Avalonia.Controls.Shapes;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -26,6 +30,8 @@ using Avalonia.Media.Immutable;
 using PFXToolKitUI.Avalonia.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.Themes.BrushFactories;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Configurations;
@@ -33,6 +39,13 @@ using PFXToolKitUI.Themes.Configurations;
 namespace PFXToolKitUI.Avalonia.Themes.Configurations;
 
 public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNode {
+    public static readonly StyledProperty<bool> IsNonGroupProperty = AvaloniaProperty.Register<ThemeConfigTreeViewItem, bool>(nameof(IsNonGroup));
+
+    public bool IsNonGroup {
+        get => this.GetValue(IsNonGroupProperty);
+        set => this.SetValue(IsNonGroupProperty, value);
+    }
+
     public ThemeConfigTreeView? ThemeConfigTree { get; private set; }
 
     public ThemeConfigTreeViewItem? ParentNode { get; private set; }
@@ -43,16 +56,37 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
     private bool wasSetVisibleWithoutEntry;
 
+    private Rectangle? PART_ThemeColourPreview;
+    private DynamicAvaloniaColourBrush? myDynamicBrush;
+    private IDisposable? myDynamicBrushSubscription;
+    private IBrush? myCurrentDynamicBrush;
+
     public ThemeConfigTreeViewItem() {
+    }
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
+        base.OnApplyTemplate(e);
+        this.PART_ThemeColourPreview = e.NameScope.GetTemplateChild<Rectangle>(nameof(this.PART_ThemeColourPreview));
+        this.PART_ThemeColourPreview.Fill = this.myCurrentDynamicBrush;
     }
 
     protected override void OnIsReallyVisibleChanged() {
         base.OnIsReallyVisibleChanged();
+
         if (this.Entry != null) {
             this.GenerateHeader();
         }
         else {
             this.wasSetVisibleWithoutEntry = true;
+        }
+
+        this.UpdateSubscription();
+    }
+
+    private void OnDynamicBrushChanged(IBrush? obj) {
+        this.myCurrentDynamicBrush = obj;
+        if (this.PART_ThemeColourPreview != null) {
+            this.PART_ThemeColourPreview.Fill = this.myCurrentDynamicBrush;
         }
     }
 
@@ -67,10 +101,11 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
     }
 
     private void GenerateHeader() {
-        if (this.Entry is ThemeConfigEntry shortcut) {
+        if (this.Entry is ThemeConfigEntry entry) {
+            this.IsNonGroup = true;
             // theme should not really be null
             Theme? theme = this.ThemeConfigTree?.ThemeConfigurationPage?.TargetTheme;
-            if (theme == null || theme.IsThemeKeyValid(shortcut.ThemeKey)) {
+            if (theme == null || theme.IsThemeKeyValid(entry.ThemeKey)) {
                 this.Header = this.Entry!.DisplayName;
             }
             else {
@@ -89,6 +124,24 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         }
         else {
             this.Header = this.Entry!.DisplayName;
+            this.IsNonGroup = false;
+        }
+    }
+
+    private void UpdateSubscription() {
+        if (this.IsReallyVisible) {
+            if (this.myDynamicBrush != null) {
+                if (this.myDynamicBrushSubscription != null) {
+                    this.myDynamicBrushSubscription.Dispose();
+                    this.myDynamicBrushSubscription = null;
+                }
+
+                this.myDynamicBrushSubscription = this.myDynamicBrush.Subscribe(this.OnDynamicBrushChanged);
+            }
+        }
+        else {
+            this.myDynamicBrushSubscription?.Dispose();
+            this.myDynamicBrushSubscription = null;
         }
     }
 
@@ -115,11 +168,13 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
         if (this.Entry is ThemeConfigEntry configEntry && !string.IsNullOrWhiteSpace(configEntry.ThemeKey)) {
             ToolTip.SetTip(this, configEntry.Description);
+            this.myDynamicBrush = (DynamicAvaloniaColourBrush) BrushManager.Instance.GetDynamicThemeBrush(configEntry.ThemeKey);
         }
 
         if (this.wasSetVisibleWithoutEntry) {
             this.wasSetVisibleWithoutEntry = false;
             this.GenerateHeader();
+            this.UpdateSubscription();
         }
     }
 
@@ -127,8 +182,15 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         int count = this.Items.Count;
         for (int i = count - 1; i >= 0; i--)
             this.RemoveNodeInternal(i);
-        
+
         this.GroupCounter = 0;
+
+        if (this.PART_ThemeColourPreview != null) {
+            this.PART_ThemeColourPreview.Fill = null;
+        }
+
+        this.myDynamicBrushSubscription?.Dispose();
+        this.myDynamicBrush = null;
     }
 
     public virtual void OnRemoved() {

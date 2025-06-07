@@ -94,7 +94,7 @@ public class ThemeConfigurationPage : ConfigurationPage {
             if (i == j)
                 throw new ArgumentException("Full path contained a double forward slash");
 
-            parent = parent.GetOrCreateGroupByName(fullPath.JSubstring(j, i));
+            parent = parent.GetOrCreateGroupByName(fullPath.Substring(j, i - j));
             j = i + 1;
         }
 

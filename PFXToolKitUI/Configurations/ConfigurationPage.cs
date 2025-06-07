@@ -17,6 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.Configurations;
 
 public delegate void ConfigurationPageEventHandler(ConfigurationPage sender);
@@ -44,12 +46,7 @@ public abstract class ConfigurationPage {
     /// </summary>
     public bool IsModified {
         get => this.isModified;
-        set {
-            if (this.isModified != value) {
-                this.isModified = value;
-                this.IsModifiedChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.isModified, value, this, static t => t.IsModifiedChanged?.Invoke(t));
     }
 
 

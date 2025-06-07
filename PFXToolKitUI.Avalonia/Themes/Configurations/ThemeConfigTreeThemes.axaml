@@ -43,7 +43,7 @@
         <Setter Property="Margin" Value="0"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Template">
-            <ControlTemplate>
+            <ControlTemplate TargetType="{x:Type trees:ThemeConfigTreeViewItem}">
                 <Panel>
                     <StackPanel>
                         <Border x:Name="SelectionBorder"
@@ -71,7 +71,7 @@
                                        Margin="{TemplateBinding Padding}"
                                        Focusable="False">
                                     <StackPanel Orientation="Horizontal" Spacing="3">
-                                        <ContentPresenter x:Name="PART_IconPresenter" IsVisible="False"/>
+                                        <Rectangle x:Name="PART_ThemeColourPreview" IsVisible="False" Width="18"/>
                                         <Panel VerticalAlignment="Center">
                                             <ContentPresenter Content="{TemplateBinding Header}"
                                                               ContentTemplate="{TemplateBinding HeaderTemplate}"
@@ -96,6 +96,9 @@
 
         <Style Selector="^ /template/ ContentPresenter#PART_HeaderPresenter">
             <Setter Property="Padding" Value="2"/>
+        </Style>
+        <Style Selector="^[IsNonGroup=true] /template/ Rectangle#PART_ThemeColourPreview">
+            <Setter Property="IsVisible" Value="True"/>
         </Style>
         <Style Selector="^:selected /template/ Border#SelectionBorder">
             <Setter Property="Background" Value="{DynamicResource TreeViewItem.Selected.Background}"/>

@@ -18,6 +18,7 @@
 //
 
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Notifications;
@@ -39,12 +40,7 @@ public abstract class Notification {
     /// </summary>
     public string? Caption {
         get => this.caption;
-        set {
-            if (this.caption != value) {
-                this.caption = value;
-                this.CaptionChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -57,12 +53,7 @@ public abstract class Notification {
     /// </summary>
     public bool CanAutoHide {
         get => this.canAutoHide;
-        set {
-            if (this.canAutoHide != value) {
-                this.canAutoHide = value;
-                this.CanAutoHideChanged?.Invoke(this);
-            }
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.canAutoHide, value, this, static t => t.CanAutoHideChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -71,12 +62,7 @@ public abstract class Notification {
     /// </summary>
     public bool IsAutoHideActive {
         get => this.isAutoHideActive;
-        private set {
-            if (this.isAutoHideActive != value) {
-                this.isAutoHideActive = value;
-                this.IsAutoHideActiveChanged?.Invoke(this);
-            }
-        }
+        private set => PropertyHelper.SetAndRaiseINE(ref this.isAutoHideActive, value, this, static t => t.IsAutoHideActiveChanged?.Invoke(t));
     }
 
     /// <summary>

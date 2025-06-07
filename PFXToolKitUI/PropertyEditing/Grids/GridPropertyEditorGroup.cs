@@ -17,6 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.PropertyEditing.Grids;
 
 public delegate void GridPropertyEditorGroupEventHandler(GridPropertyEditorGroup sender);
@@ -28,24 +30,12 @@ public class GridPropertyEditorGroup : SimplePropertyEditorGroup {
 
     public List<GridColumnDefinition> Columns {
         get => this.columns;
-        set {
-            if (this.columns == value)
-                return;
-
-            this.columns = value;
-            this.ColumnsChanged?.Invoke(this);
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.columns, value, this, static t => t.ColumnsChanged?.Invoke(t));
     }
 
     public List<GridRowDefinition> Rows {
         get => this.rows;
-        set {
-            if (this.rows == value)
-                return;
-
-            this.rows = value;
-            this.RowsChanged?.Invoke(this);
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.rows, value, this, static t => t.RowsChanged?.Invoke(t));
     }
 
     public event GridPropertyEditorGroupEventHandler? ColumnsChanged;
