@@ -31,9 +31,9 @@ using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.Utils;
-using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Configurations;
+using PFXToolKitUI.Themes.Contexts;
 
 namespace PFXToolKitUI.Avalonia.Themes.Configurations;
 
@@ -55,6 +55,7 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
     private bool wasSetVisibleWithoutEntry;
 
+    private Ellipse? PART_IsInheritedIndicator;
     private Rectangle? PART_ThemeColourPreview;
     private DynamicAvaloniaColourBrush? myDynamicBrush;
     private IDisposable? myDynamicBrushSubscription;
@@ -65,6 +66,7 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
+        this.PART_IsInheritedIndicator = e.NameScope.GetTemplateChild<Ellipse>(nameof(this.PART_IsInheritedIndicator));
         this.PART_ThemeColourPreview = e.NameScope.GetTemplateChild<Rectangle>(nameof(this.PART_ThemeColourPreview));
         this.PART_ThemeColourPreview.Fill = this.myCurrentDynamicBrush;
     }
@@ -91,7 +93,7 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
-        AdvancedContextMenu.SetContextRegistry(this, ShortcutContextRegistry.Registry);
+        AdvancedContextMenu.SetContextRegistry(this, ThemeContextRegistry.Registry);
     }
 
     protected override void OnUnloaded(RoutedEventArgs e) {
@@ -146,10 +148,10 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
     #region Model Connection
 
-    public virtual void OnAdding(ThemeConfigTreeView tree, ThemeConfigTreeViewItem? parentNode, IThemeTreeEntry resource) {
+    public virtual void OnAdding(ThemeConfigTreeView tree, ThemeConfigTreeViewItem? parentNode, IThemeTreeEntry entry) {
         this.ThemeConfigTree = tree;
         this.ParentNode = parentNode;
-        this.Entry = resource;
+        this.Entry = entry;
     }
 
     public virtual void OnAdded() {
@@ -165,15 +167,37 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
             }
         }
 
-        if (this.Entry is ThemeConfigEntry configEntry && !string.IsNullOrWhiteSpace(configEntry.ThemeKey)) {
-            ToolTip.SetTip(this, configEntry.Description);
-            this.myDynamicBrush = (DynamicAvaloniaColourBrush) BrushManager.Instance.GetDynamicThemeBrush(configEntry.ThemeKey);
+        if (this.Entry is ThemeConfigEntry configEntry) {
+            if (!string.IsNullOrWhiteSpace(configEntry.ThemeKey)) {
+                ToolTip.SetTip(this, configEntry.Description);
+                this.myDynamicBrush = (DynamicAvaloniaColourBrush) BrushManager.Instance.GetDynamicThemeBrush(configEntry.ThemeKey);
+            }
+
+            configEntry.InheritedFromKeyChanged += this.OnInheritedFromKeyChanged;
+            this.UpdateIsInheritedIndicator();
         }
 
         if (this.wasSetVisibleWithoutEntry) {
             this.wasSetVisibleWithoutEntry = false;
             this.GenerateHeader();
             this.UpdateSubscription();
+        }
+
+        DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeTreeEntryKey, this.Entry!);
+    }
+
+    private void OnInheritedFromKeyChanged(ThemeConfigEntry sender) {
+        this.UpdateIsInheritedIndicator();
+    }
+
+    private void UpdateIsInheritedIndicator() {
+        if (this.PART_IsInheritedIndicator == null || !(this.Entry is ThemeConfigEntry entry)) {
+            return;
+        }
+        
+        this.PART_IsInheritedIndicator.IsVisible = entry.InheritedFromKey != null;
+        if (entry.InheritedFromKey != null) {
+            this.PART_IsInheritedIndicator.Fill = new ImmutableSolidColorBrush(entry.InheritanceDepth == 0 ? Colors.DodgerBlue : Colors.Yellow);
         }
     }
 
@@ -190,13 +214,16 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
         this.myDynamicBrushSubscription?.Dispose();
         this.myDynamicBrush = null;
+        
+        if (this.Entry is ThemeConfigEntry entry)
+            entry.InheritedFromKeyChanged -= this.OnInheritedFromKeyChanged;
     }
 
     public virtual void OnRemoved() {
         this.ThemeConfigTree = null;
         this.ParentNode = null;
         this.Entry = null;
-        DataManager.ClearContextData(this);
+        DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeTreeEntryKey, null);
     }
 
     #endregion

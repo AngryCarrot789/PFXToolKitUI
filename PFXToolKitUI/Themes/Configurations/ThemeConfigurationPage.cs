@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Utils;
 
@@ -32,7 +33,9 @@ public delegate void ThemeConfigurationPageEventHandler(ThemeConfigurationPage s
 /// A folder/entry hierarchy for a theme for 
 /// </summary>
 public class ThemeConfigurationPage : ConfigurationPage {
+    private readonly Dictionary<string, ThemeConfigEntry> themeKeyToEntryMap;
     private Dictionary<string, ISavedThemeEntry>? originalBrushes;
+    private Dictionary<string, string?>? originalInheritance;
     private Theme? targetTheme;
 
     /// <summary>
@@ -52,12 +55,14 @@ public class ThemeConfigurationPage : ConfigurationPage {
                 return;
             }
 
-            if (this.originalBrushes != null && this.originalBrushes.Count > 0) {
+            if (this.originalBrushes != null && this.originalBrushes.Count > 0)
                 throw new InvalidOperationException("un-applied changes");
-            }
+            if (this.originalInheritance != null && this.originalInheritance.Count > 0)
+                throw new InvalidOperationException("un-applied changes");
 
             this.targetTheme = value;
             this.TargetThemeChanged?.Invoke(this, oldTargetTheme, value);
+            this.UpdateInheritedKeys();
         }
     }
 
@@ -75,6 +80,11 @@ public class ThemeConfigurationPage : ConfigurationPage {
 
     public ThemeConfigurationPage() {
         this.Root = new ThemeConfigEntryGroup("<root>");
+        this.themeKeyToEntryMap = new Dictionary<string, ThemeConfigEntry>();
+    }
+    
+    internal void UpdateInheritedKeys() {
+        this.Root.UpdateInheritedKeys(this.targetTheme);
     }
 
     /// <summary>
@@ -87,6 +97,9 @@ public class ThemeConfigurationPage : ConfigurationPage {
         ArgumentException.ThrowIfNullOrWhiteSpace(fullPath);
         ArgumentException.ThrowIfNullOrWhiteSpace(themeKey);
         ApplicationPFX.Instance.EnsureBeforePhase(ApplicationStartupPhase.Running);
+        if (this.themeKeyToEntryMap.ContainsKey(themeKey)) {
+            throw new InvalidOperationException("Theme key already added: " + themeKey);
+        }
 
         ThemeConfigEntryGroup parent = this.Root;
         int i, j = 0; // i = index, j = last index
@@ -102,7 +115,12 @@ public class ThemeConfigurationPage : ConfigurationPage {
         if (!string.IsNullOrWhiteSpace(description))
             entry.Description = description;
 
+        this.themeKeyToEntryMap[themeKey] = entry;
         return entry;
+    }
+
+    public bool TryGetThemeEntryFromThemeKey(string themeKey, [NotNullWhen(true)] out ThemeConfigEntry? entry) {
+        return this.themeKeyToEntryMap.TryGetValue(themeKey, out entry);
     }
 
     public void OnChangingThemeColour(string themeKey) {
@@ -119,6 +137,17 @@ public class ThemeConfigurationPage : ConfigurationPage {
 
         this.originalBrushes.Add(themeKey, this.targetTheme.SaveThemeEntry(themeKey));
         this.ThemeEntryModified?.Invoke(this, themeKey, true);
+    }
+    
+    public void OnChangedInheritance(ThemeConfigEntry currentTce, string? oldInheritFrom, string? newInheritFrom) {
+        if (this.originalInheritance == null) {
+            this.originalInheritance = new Dictionary<string, string?>();
+        }
+        else if (this.originalInheritance.ContainsKey(currentTce.ThemeKey)) {
+            return; // maintain first value
+        }
+        
+        this.originalInheritance.Add(currentTce.ThemeKey, oldInheritFrom);
     }
 
     protected override ValueTask OnContextCreated(ConfigurationContext context) {
@@ -149,6 +178,7 @@ public class ThemeConfigurationPage : ConfigurationPage {
 
     public override ValueTask Apply(List<ApplyChangesFailureEntry>? errors) {
         this.ClearOriginalBrushesInternal();
+        this.originalInheritance = null;
 
         ThemeConfigurationOptions options = ThemeConfigurationOptions.Instance;
         options.SaveThemesToModels(ThemeManager.Instance);
@@ -180,6 +210,16 @@ public class ThemeConfigurationPage : ConfigurationPage {
 
             this.ClearOriginalBrushesInternal();
         }
+
+        if (this.originalInheritance != null && this.originalInheritance.Count > 0) {
+            foreach (KeyValuePair<string, string?> entry in this.originalInheritance) {
+                string? latestInheritFrom = revert.GetInheritedBy(entry.Key, out _);
+                apply.SetInheritance(entry.Key, latestInheritFrom);
+                revert.SetInheritance(entry.Key, entry.Value);
+            }
+
+            this.originalInheritance = null;
+        }
     }
 
     public void ReverseChanges(Theme? target) {
@@ -193,6 +233,14 @@ public class ThemeConfigurationPage : ConfigurationPage {
             }
 
             this.ClearOriginalBrushesInternal();
+        }
+        
+        if (this.originalInheritance != null && this.originalInheritance.Count > 0) {
+            foreach (KeyValuePair<string, string?> entry in this.originalInheritance) {
+                target.SetInheritance(entry.Key, entry.Value);
+            }
+
+            this.originalInheritance = null;
         }
     }
 

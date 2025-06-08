@@ -71,6 +71,19 @@
                                        Margin="{TemplateBinding Padding}"
                                        Focusable="False">
                                     <StackPanel Orientation="Horizontal" Spacing="3">
+                                        <Ellipse Width="7" Height="7" Fill="DodgerBlue"
+                                                 Stroke="Black" StrokeThickness="1"
+                                                 x:Name="PART_IsInheritedIndicator" IsVisible="False">
+                                            <ToolTip.Tip>
+                                                <TextBlock>
+                                                    <Run Text="This indicator means we're inherited from another key"/>
+                                                    <LineBreak/>
+                                                    <Run Text="Light blue means the current theme has defined the inheritance"/>
+                                                    <LineBreak/>
+                                                    <Run Text="Yellow means a base theme has defined the inheritance, however, you can still override it, and then it becomes light blue."/>
+                                                </TextBlock>
+                                            </ToolTip.Tip>
+                                        </Ellipse>
                                         <Rectangle x:Name="PART_ThemeColourPreview" IsVisible="False" Width="18"/>
                                         <Panel VerticalAlignment="Center">
                                             <ContentPresenter Content="{TemplateBinding Header}"

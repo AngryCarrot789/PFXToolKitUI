@@ -19,8 +19,10 @@
 
 using System.Reflection;
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Rendering;
 using Avalonia.VisualTree;
+using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Avalonia;
 
@@ -34,7 +36,7 @@ public static class AvUtils {
     public static void OnApplicationInitialised() {
         Locator = (AvaloniaLocator) GetProperty<AvaloniaLocator, IAvaloniaDependencyResolver>(null, "Current", true)!;
         GetServiceMethod = typeof(AvaloniaLocator).GetMethod("GetService", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(Type)], null) ?? throw new Exception("Could not find GetService method");
-        
+
         // Test that the above code works
         GetService(typeof(object));
     }
@@ -92,5 +94,69 @@ public static class AvUtils {
 
         PixelPoint screen = root.PointToScreen(point);
         return relativeTo.PointToClient(screen);
+    }
+
+    public static ResourceDictionaryMultiChangeToken BeginMultiChange(ResourceDictionary resourceDictionary) {
+        return new ResourceDictionaryMultiChangeToken(resourceDictionary);
+    }
+
+    public class ResourceDictionaryMultiChangeToken : IDisposable {
+        private static readonly MethodInfo? RaiseResourcesChangedMethod;
+        private static readonly PropertyInfo? InnerProperty;
+
+        private readonly Dictionary<object, object?>? dict_map;
+        private Dictionary<object, object?>? map;
+        private HashSet<object>? removedKeys;
+
+        public ResourceDictionary Dictionary { get; }
+
+        public object? this[object key] {
+            get => this.map != null ? this.map[key] : throw new KeyNotFoundException("Key not present in the dictionary");
+            set => (this.map ??= new Dictionary<object, object?>())[key] = value;
+        }
+
+        internal ResourceDictionaryMultiChangeToken(ResourceDictionary dictionary) {
+            this.Dictionary = dictionary;
+            this.dict_map = (Dictionary<object, object?>?) InnerProperty?.GetValue(dictionary);
+        }
+
+        static ResourceDictionaryMultiChangeToken() {
+            RaiseResourcesChangedMethod = typeof(ResourceProvider).GetMethod("RaiseResourcesChanged", BindingFlags.Instance | BindingFlags.NonPublic);
+            InnerProperty = typeof(ResourceDictionary).GetProperty("Inner", BindingFlags.Instance | BindingFlags.NonPublic);
+        }
+
+        public void Remove(object key) {
+            (this.removedKeys ??= []).Add(key);
+        }
+
+        public void Dispose() {
+            // Fallback to slow version -- need to update for new avalonia versions
+            if (this.dict_map == null || RaiseResourcesChangedMethod == null) {
+                AppLogger.Instance.WriteLine("Warning: internal ResourceDictionary API changed. Cannot fast change");
+                if (this.removedKeys != null)
+                    foreach (object key in this.removedKeys)
+                        this.Dictionary.Remove(key);
+                if (this.map != null)
+                    foreach (KeyValuePair<object, object?> entry in this.map)
+                        this.Dictionary[entry.Key] = entry.Value;
+            }
+            else {
+                bool anyChanges = false;
+                if (this.map?.Count > 0) {
+                    anyChanges = true;
+                    foreach (KeyValuePair<object, object> entry in this.map)
+                        this.dict_map[entry.Key] = entry.Value;
+                }
+
+                if (this.removedKeys?.Count > 0) {
+                    anyChanges = true;
+                    foreach (object key in this.removedKeys)
+                        this.dict_map.Remove(key);
+                }
+
+                if (anyChanges)
+                    RaiseResourcesChangedMethod.Invoke(this.Dictionary, []);
+            }
+        }
     }
 }

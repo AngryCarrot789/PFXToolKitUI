@@ -119,7 +119,7 @@
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="20"/>
                                 <RowDefinition MinHeight="20"/>
-                                <RowDefinition Height="32"/>
+                                <RowDefinition Height="Auto"/>
                             </Grid.RowDefinitions>
                             <Border Grid.Row="0" BorderBrush="{DynamicResource ABrush.Tone6.Border.Static}" BorderThickness="0,0,0,1">
                                 <Grid ColumnDefinitions="Auto,*,Auto">
@@ -151,14 +151,38 @@
                                 </Grid>
                             </Border>
                             <themes:ThemeConfigTreeView x:Name="PART_ThemeConfigTree" Grid.Row="1" BorderThickness="0"/>
-                            <Grid ColumnDefinitions="70,1,*,3,24,8,60" RowDefinitions="Auto,*" Grid.Row="2" x:Name="PART_SelectedItemGrid" Margin="2">
-                                <TextBlock Grid.Column="0" Grid.Row="0" Text="Theme Key" VerticalAlignment="Center" Padding="5,1"/>
-                                <TextBox Grid.Column="2" Grid.Row="0" x:Name="PART_ThemeKeyTextBox" VerticalAlignment="Stretch" IsReadOnly="True" Padding="4,3"
-                                         ScrollViewer.VerticalScrollBarVisibility="Disabled" ScrollViewer.HorizontalScrollBarVisibility="Hidden"/>
-                                <av:IconButton x:Name="PART_ResetButton" Grid.Column="4" ToolTip.Tip="Reset this brush to the value before you changed it"
-                                               IconMaxHeight="24" IconMaxWidth="24" Icon="{x:Static cb:ConfigurationButtons.ResetIcon}"/>
-                                <ColorPicker Grid.Column="6" Grid.RowSpan="2" x:Name="PART_ColorPicker"
-                                             HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                            <Grid ColumnDefinitions="80,1,*,3,24,8,60" RowDefinitions="24,3,24" Grid.Row="2" x:Name="PART_SelectedItemGrid" Margin="2">
+                                <TextBlock Grid.Column="0" Grid.Row="0" VerticalAlignment="Center" Padding="4,2" Text="Theme Key"/>
+                                <TextBlock Grid.Column="0" Grid.Row="2" VerticalAlignment="Center" Padding="4,2" Text="Inherit from"/>
+
+                                <TextBox Grid.Column="2" Grid.Row="0"
+                                         x:Name="PART_ThemeKeyTextBox"
+                                         VerticalAlignment="Stretch" IsReadOnly="True" Padding="4,3"
+                                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Hidden"/>
+                                
+                                <Grid ColumnDefinitions="*,3,Auto,3,Auto" Grid.Column="2" Grid.Row="2" Grid.ColumnSpan="3">
+                                    <TextBox x:Name="PART_InheritedFromTextBox"
+                                             Grid.Row="0"
+                                             VerticalAlignment="Stretch" Padding="4,3"
+                                             ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Hidden"
+                                             Watermark="Not Inherited"/>
+                                    <Button x:Name="PART_SetInheritedFromKeyButton"
+                                            Content="Set" Grid.Column="2" Padding="6,2"
+                                            ToolTip.Tip="Sets the ThemeKey that this inherits from"/>
+                                    <Button x:Name="PART_NavigateToInheritedKeyButton"
+                                            Content="Navigate" Grid.Column="4" Padding="4,2"
+                                            ToolTip.Tip="Navigate to the theme key"/>
+                                </Grid>
+
+                                <av:IconButton x:Name="PART_ResetButton"
+                                               Grid.Row="0" Grid.Column="4"
+                                               IconMaxHeight="24" IconMaxWidth="24"
+                                               Icon="{x:Static cb:ConfigurationButtons.ResetIcon}"
+                                               ToolTip.Tip="Reset this brush to the value before you changed it"/>
+
+                                <ColorPicker Grid.Column="6" Grid.Row="0" Grid.RowSpan="2" x:Name="PART_ColorPicker" Margin="0,0,5,0"/>
                             </Grid>
                         </Grid>
                     </c:GroupBox>

@@ -62,6 +62,10 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
                     options.brushes[key] = brush.ToImmutable();
                 }
             }
+            
+            foreach (KeyValuePair<string, string> entry in theme.InheritanceEntries) {
+                options.inheritance[entry.Key] = entry.Value;
+            }
 
             list.Add(options);
         }
@@ -85,6 +89,8 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
                 foreach (KeyValuePair<string, IImmutableBrush> pair in options.brushes) {
                     ((ThemeManagerImpl.ThemeImpl) theme).SetBrushInternal(pair.Key, pair.Value);
                 }
+                
+                ((ThemeManagerImpl.ThemeImpl) theme).SetInheritanceFromMap(options.inheritance);
             }
         }
     }
@@ -94,6 +100,7 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
     /// </summary>
     public class ThemeOptions {
         public readonly Dictionary<string, IImmutableBrush> brushes;
+        public readonly Dictionary<string, string?> inheritance;
         public readonly string themeName;
         public readonly string basedOn;
 
@@ -104,6 +111,7 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
             this.themeName = themeName;
             this.basedOn = basedOn;
             this.brushes = new Dictionary<string, IImmutableBrush>();
+            this.inheritance = new Dictionary<string, string?>();
         }
     }
 
@@ -122,18 +130,34 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
                     brush.SetAttribute("name", pair.Key);
                     BrushSerializer.Instance.Serialize(pair.Value, document, brush);
                 }
+                
+                foreach (KeyValuePair<string, string?> pair in option.inheritance) {
+                    XmlElement inherit = (XmlElement) theme.AppendChild(document.CreateElement("Inherit"))!;
+                    inherit.SetAttribute("themeKey", pair.Key);
+                    inherit.SetAttribute("inheritFrom", pair.Value ?? "");
+                }
             }
 
             return true;
         }
 
-        public List<ThemeOptions>? Deserialize(XmlElement element) {
-            List<ThemeOptions> list = new List<ThemeOptions>();
+        public List<ThemeOptions> Deserialize(XmlElement element) {
+            List<ThemeOptions> list = new List<ThemeOptions>(4);
             foreach (XmlElement theme in element.GetElementsByTagName("Theme").OfType<XmlElement>()) {
                 ThemeOptions options = new ThemeOptions(theme.GetAttribute("name"), theme.GetAttribute("basedOn"));
                 foreach (XmlElement brush in theme.GetElementsByTagName("Brush").OfType<XmlElement>()) {
                     IImmutableBrush theBrush = BrushSerializer.Instance.Deserialize(brush);
                     options.brushes[brush.GetAttribute("name")] = theBrush;
+                }
+                
+                foreach (XmlElement brush in theme.GetElementsByTagName("Inherit").OfType<XmlElement>()) {
+                    string themeKey = brush.GetAttribute("themeKey");
+                    string? inheritFrom = brush.HasAttribute("inheritFrom") ? brush.GetAttribute("inheritFrom") : null;
+                    if (string.IsNullOrWhiteSpace(inheritFrom)) {
+                        inheritFrom = null;
+                    }
+
+                    options.inheritance[themeKey] = inheritFrom;
                 }
 
                 list.Add(options);

@@ -17,10 +17,13 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Collections;
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Themes;
+
+public delegate void ThemeManagerActiveThemeChangedEventHandler(ThemeManager manager, Theme oldTheme, Theme newTheme);
 
 public abstract class ThemeManager {
     public static ThemeManager Instance => ApplicationPFX.Instance.ServiceManager.GetService<ThemeManager>();
@@ -36,6 +39,12 @@ public abstract class ThemeManager {
     public abstract Theme ActiveTheme { get; }
 
     public ThemeConfigurationPage ThemeConfigurationPage { get; }
+    
+    /// <summary>
+    /// An event fired when the active theme changes. This is not fired when the initial
+    /// active theme is set up, which happens after application startup
+    /// </summary>
+    public event ThemeManagerActiveThemeChangedEventHandler? ActiveThemeChanged;
 
     protected ThemeManager() {
         ThemeConfigurationPage p = this.ThemeConfigurationPage = new ThemeConfigurationPage();
@@ -130,220 +139,225 @@ public abstract class ThemeManager {
         p.AssignMapping("Base/Panels/Tone8 Background (Disabled)", "ABrush.Tone8.Background.Disabled");
         p.AssignMapping("Base/Panels/Tone8 Border (Disabled)", "ABrush.Tone8.Border.Disabled");
         
-        p.AssignMapping("Controls/PanelBorderBrush",                                  "PanelBorderBrush",                                       "");
-        p.AssignMapping("Controls/PanelBackground0",                                  "PanelBackground0",                                       "");
-        p.AssignMapping("Controls/PanelBackground1",                                  "PanelBackground1",                                       "");
-        p.AssignMapping("Controls/PanelBackground2",                                  "PanelBackground2",                                       "");
-        p.AssignMapping("Controls/PanelBackground3",                                  "PanelBackground3",                                       "");
-        p.AssignMapping("Controls/PanelBackground4",                                  "PanelBackground4",                                       "");
-        p.AssignMapping("Controls/Button/Background",                                 "Button.Static.Background",                               "");
-        p.AssignMapping("Controls/Button/Border",                                     "Button.Static.Border",                                   "");
-        p.AssignMapping("Controls/Button/Background (MouseOver)",                     "Button.MouseOver.Background",                            "");
-        p.AssignMapping("Controls/Button/Border (MouseOver)",                         "Button.MouseOver.Border",                                "");
-        p.AssignMapping("Controls/Button/Background (Pressed)",                       "Button.Pressed.Background",                              "");
-        p.AssignMapping("Controls/Button/Border (Pressed)",                           "Button.Pressed.Border",                                  "");
-        p.AssignMapping("Controls/Button/Background (Disabled)",                      "Button.Disabled.Background",                             "");
-        p.AssignMapping("Controls/Button/Border (Disabled)",                          "Button.Disabled.Border",                                 "");
-        p.AssignMapping("Controls/Button/Foreground",                                 "Button.Static.Foreground",                               "");
-        p.AssignMapping("Controls/Button/Foreground (Disabled)",                      "Button.Disabled.Foreground",                             "");
-        p.AssignMapping("Controls/Button/Background (Defaulted)",                     "Button.Defaulted.Background",                            "");
-        p.AssignMapping("Controls/Button/Border (Defaulted)",                         "Button.Defaulted.Border",                                "");
-        p.AssignMapping("Controls/ButtonSpinner/Border (Error)",                      "ButtonSpinner.Error.Border",                             "");
-        p.AssignMapping("Controls/ToggleButton/Background (IsChecked)",               "ToggleButton.IsChecked.Background",                      "");
-        p.AssignMapping("Controls/ToggleButton/Border (IsChecked)",                   "ToggleButton.IsChecked.Border",                          "");
-        p.AssignMapping("Controls/ToggleButton/Background (Pressed + IsChecked)",     "ToggleButton.Pressed.IsChecked.Background",              "");
-        p.AssignMapping("Controls/ToggleButton/Border (Pressed + IsChecked)",         "ToggleButton.Pressed.IsChecked.Border",                  "");
-        p.AssignMapping("Controls/ToggleButton/Background (MouseOver + IsChecked)",   "ToggleButton.MouseOver.IsChecked.Background",            "");
-        p.AssignMapping("Controls/ToggleButton/Border (MouseOver + IsChecked)",       "ToggleButton.MouseOver.IsChecked.Border",                "");
-        p.AssignMapping("Controls/ComboBox/Background",                               "ComboBox.Static.Background",                             "");
-        p.AssignMapping("Controls/ComboBox/Border",                                   "ComboBox.Static.Border",                                 "");
-        p.AssignMapping("Controls/ComboBox/Foreground",                               "ComboBox.Static.Foreground",                             "");
-        p.AssignMapping("Controls/ComboBox/Background (Editable)",                    "ComboBox.Static.Editable.Background",                    "");
-        p.AssignMapping("Controls/ComboBox/Border (Editable)",                        "ComboBox.Static.Editable.Border",                        "");
-        p.AssignMapping("Controls/ComboBox/Button Background (Editable)",             "ComboBox.Static.Editable.Button.Background",             "");
-        p.AssignMapping("Controls/ComboBox/Button Border (Editable)",                 "ComboBox.Static.Editable.Button.Border",                 "");
-        p.AssignMapping("Controls/ComboBox/Button Background",                        "ComboBox.Button.Static.Background",                      "");
-        p.AssignMapping("Controls/ComboBox/Button Border",                            "ComboBox.Button.Static.Border",                          "");
-        p.AssignMapping("Controls/ComboBox/Glyph (MouseOver)",                        "ComboBox.MouseOver.Glyph",                               "");
-        p.AssignMapping("Controls/ComboBox/Background (MouseOver)",                   "ComboBox.MouseOver.Background",                          "");
-        p.AssignMapping("Controls/ComboBox/Border (MouseOver)",                       "ComboBox.MouseOver.Border",                              "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Background (MouseOver)",        "ComboBox.MouseOver.Editable.Background",                 "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Border",                        "ComboBox.MouseOver.Editable.Border",                     "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Button Background (MouseOver)", "ComboBox.MouseOver.Editable.Button.Background",          "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Button Border (MouseOver)",     "ComboBox.MouseOver.Editable.Button.Border",              "");
-        p.AssignMapping("Controls/ComboBox/Glyph (Pressed)",                          "ComboBox.Pressed.Glyph",                                 "");
-        p.AssignMapping("Controls/ComboBox/Background (Pressed)",                     "ComboBox.Pressed.Background",                            "");
-        p.AssignMapping("Controls/ComboBox/Border (Pressed)",                         "ComboBox.Pressed.Border",                                "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Background (Pressed)",          "ComboBox.Pressed.Editable.Background",                   "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Border (Pressed)",              "ComboBox.Pressed.Editable.Border",                       "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Button Background (Pressed)",   "ComboBox.Pressed.Editable.Button.Background",            "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Button Border (Pressed)",       "ComboBox.Pressed.Editable.Button.Border",                "");
-        p.AssignMapping("Controls/ComboBox/Glyph (Disabled)",                         "ComboBox.Disabled.Glyph",                                "");
-        p.AssignMapping("Controls/ComboBox/Background (Disabled)",                    "ComboBox.Disabled.Background",                           "");
-        p.AssignMapping("Controls/ComboBox/Border (Disabled)",                        "ComboBox.Disabled.Border",                               "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Background (Disabled)",         "ComboBox.Disabled.Editable.Background",                  "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Border (Disabled)",             "ComboBox.Disabled.Editable.Border",                      "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Button Background (Disabled)",  "ComboBox.Disabled.Editable.Button.Background",           "");
-        p.AssignMapping("Controls/ComboBox/(Editable) Button Border (Disabled)",      "ComboBox.Disabled.Editable.Button.Border",               "");
-        p.AssignMapping("Controls/ComboBox/Glyph",                                    "ComboBox.Static.Glyph",                                  "");
-        p.AssignMapping("Controls/ComboBoxItem/Background (Hover)",                   "ComboBoxItem.ItemView.Hover.Background",                 "");
-        p.AssignMapping("Controls/ComboBoxItem/Border (Hover)",                       "ComboBoxItem.ItemView.Hover.Border",                     "");
-        p.AssignMapping("Controls/ComboBoxItem/Background (Selected)",                "ComboBoxItem.ItemView.Selected.Background",              "");
-        p.AssignMapping("Controls/ComboBoxItem/Border (Selected)",                    "ComboBoxItem.ItemView.Selected.Border",                  "");
-        p.AssignMapping("Controls/ComboBoxItem/Background (Selected + Hover)",        "ComboBoxItem.ItemView.SelectedHover.Background",         "");
-        p.AssignMapping("Controls/ComboBoxItem/Border (Selected + Hover)",            "ComboBoxItem.ItemView.SelectedHover.Border",             "");
-        p.AssignMapping("Controls/ComboBoxItem/Background (Selected + Not Focused)",  "ComboBoxItem.ItemView.SelectedNoFocus.Background",       "");
-        p.AssignMapping("Controls/ComboBoxItem/Border (Selected + Not Focused)",      "ComboBoxItem.ItemView.SelectedNoFocus.Border",           "");
-        p.AssignMapping("Controls/ComboBoxItem/Border (Focus)",                       "ComboBoxItem.ItemView.Focus.Border",                     "");
-        p.AssignMapping("Controls/ComboBoxItem/Background (HoverFocus)",              "ComboBoxItem.ItemView.HoverFocus.Background",            "");
-        p.AssignMapping("Controls/ComboBoxItem/Border (HoverFocus)",                  "ComboBoxItem.ItemView.HoverFocus.Border",                "");
-        p.AssignMapping("Controls/TextBox/Background",                                "TextBox.Static.Background",                              "");
-        p.AssignMapping("Controls/TextBox/Border",                                    "TextBox.Static.Border",                                  "");
-        p.AssignMapping("Controls/TextBox/Border (MouseOver)",                        "TextBox.MouseOver.Border",                               "");
-        p.AssignMapping("Controls/TextBox/Border (Focus)",                            "TextBox.Focus.Border",                                   "");
-        p.AssignMapping("Controls/TextBox/Selection (Inactive)",                      "TextBox.Selection.Inactive",                             "");
-        p.AssignMapping("Controls/TextBox/Selection",                                 "TextBox.Selection",                                      "");
-        p.AssignMapping("Controls/TextBox/Border (Error)",                            "TextBox.Error.Border",                                   "");
-        p.AssignMapping("Controls/ListBox/Background",                                "ListBox.Static.Background",                              "");
-        p.AssignMapping("Controls/ListBox/Border",                                    "ListBox.Static.Border",                                  "");
-        p.AssignMapping("Controls/ListBox/Background (Disabled)",                     "ListBox.Disabled.Background",                            "");
-        p.AssignMapping("Controls/ListBox/Border (Disabled)",                         "ListBox.Disabled.Border",                                "");
-        p.AssignMapping("Controls/ListBoxItem/Background (MouseOver)",                "Item.MouseOver.Background",                              "");
-        p.AssignMapping("Controls/ListBoxItem/Border (MouseOver)",                    "Item.MouseOver.Border",                                  "");
-        p.AssignMapping("Controls/ListBoxItem/Background (SelectedInactive)",         "Item.SelectedInactive.Background",                       "");
-        p.AssignMapping("Controls/ListBoxItem/Border (SelectedInactive)",             "Item.SelectedInactive.Border",                           "");
-        p.AssignMapping("Controls/ListBoxItem/Background (SelectedActive)",           "Item.SelectedActive.Background",                         "");
-        p.AssignMapping("Controls/ListBoxItem/Border (SelectedActive)",               "Item.SelectedActive.Border",                             "");
-        p.AssignMapping("Controls/CheckBox/Background",                               "CheckBox.Static.Background",                             "");
-        p.AssignMapping("Controls/CheckBox/Border",                                   "CheckBox.Static.Border",                                 "");
-        p.AssignMapping("Controls/CheckBox/Background (MouseOver)",                   "CheckBox.MouseOver.Background",                          "");
-        p.AssignMapping("Controls/CheckBox/Border (MouseOver)",                       "CheckBox.MouseOver.Border",                              "");
-        p.AssignMapping("Controls/CheckBox/Background (Disabled)",                    "CheckBox.Disabled.Background",                           "");
-        p.AssignMapping("Controls/CheckBox/Border (Disabled)",                        "CheckBox.Disabled.Border",                               "");
-        p.AssignMapping("Controls/CheckBox/Background (Pressed)",                     "CheckBox.Pressed.Background",                            "");
-        p.AssignMapping("Controls/CheckBox/Border (Pressed)",                         "CheckBox.Pressed.Border",                                "");
-        p.AssignMapping("Controls/CheckBox/Glyph",                                    "CheckBox.Static.Glyph",                                  "");
-        p.AssignMapping("Controls/CheckBox/Glyph (Pressed)",                          "CheckBox.Pressed.Glyph",                                 "");
-        p.AssignMapping("Controls/CheckBox/Glyph (MouseOver)",                        "CheckBox.MouseOver.Glyph",                               "");
-        p.AssignMapping("Controls/CheckBox/Glyph (Disabled)",                         "CheckBox.Disabled.Glyph",                                "");
-        p.AssignMapping("Controls/RadioButton/Background",                            "RadioButton.Static.Background",                          "");
-        p.AssignMapping("Controls/RadioButton/Border",                                "RadioButton.Static.Border",                              "");
-        p.AssignMapping("Controls/RadioButton/Background (MouseOver)",                "RadioButton.MouseOver.Background",                       "");
-        p.AssignMapping("Controls/RadioButton/Border (MouseOver)",                    "RadioButton.MouseOver.Border",                           "");
-        p.AssignMapping("Controls/RadioButton/Background (Pressed)",                  "RadioButton.Pressed.Background",                         "");
-        p.AssignMapping("Controls/RadioButton/Border (Pressed)",                      "RadioButton.Pressed.Border",                             "");
-        p.AssignMapping("Controls/RadioButton/Background (Disabled)",                 "RadioButton.Disabled.Background",                        "");
-        p.AssignMapping("Controls/RadioButton/Border (Disabled)",                     "RadioButton.Disabled.Border",                            "");
-        p.AssignMapping("Controls/RadioButton/Glyph",                                 "RadioButton.Static.Glyph",                               "");
-        p.AssignMapping("Controls/RadioButton/Glyph (MouseOver)",                     "RadioButton.MouseOver.Glyph",                            "");
-        p.AssignMapping("Controls/RadioButton/Glyph (Pressed)",                       "RadioButton.Pressed.Glyph",                              "");
-        p.AssignMapping("Controls/RadioButton/Glyph (Disabled)",                      "RadioButton.Disabled.Glyph",                             "");
-        p.AssignMapping("Controls/ScrollBar/Background",                              "ScrollBar.Static.Background",                            "");
-        p.AssignMapping("Controls/ScrollBar/Border",                                  "ScrollBar.Static.Border",                                "");
-        p.AssignMapping("Controls/ScrollBarButton/Background",                        "ScrollBarButton.Static.Background",                      "");
-        p.AssignMapping("Controls/ScrollBarButton/Border",                            "ScrollBarButton.Static.Border",                          "");
-        p.AssignMapping("Controls/ScrollBar/Glyph (Pressed)",                         "ScrollBar.Pressed.Glyph",                                "");
-        p.AssignMapping("Controls/ScrollBar/Glyph (MouseOver)",                       "ScrollBar.MouseOver.Glyph",                              "");
-        p.AssignMapping("Controls/ScrollBar/Glyph (Disabled)",                        "ScrollBar.Disabled.Glyph",                               "");
-        p.AssignMapping("Controls/ScrollBar/Glyph",                                   "ScrollBar.Static.Glyph",                                 "");
-        p.AssignMapping("Controls/ScrollBarSink/Background (MouseOver)",              "ScrollBarSink.MouseOver.Background",                     "");
-        p.AssignMapping("Controls/ScrollBar/Background (MouseOver)",                  "ScrollBar.MouseOver.Background",                         "");
-        p.AssignMapping("Controls/ScrollBar/Border (MouseOver)",                      "ScrollBar.MouseOver.Border",                             "");
-        p.AssignMapping("Controls/ScrollBar/Background (Pressed)",                    "ScrollBar.Pressed.Background",                           "");
-        p.AssignMapping("Controls/ScrollBar/Border (Pressed)",                        "ScrollBar.Pressed.Border",                               "");
-        p.AssignMapping("Controls/ScrollBar/Background (Disabled)",                   "ScrollBar.Disabled.Background",                          "");
-        p.AssignMapping("Controls/ScrollBar/Border (Disabled)",                       "ScrollBar.Disabled.Border",                              "");
-        p.AssignMapping("Controls/ScrollBar/Thumb (MouseOver)",                       "ScrollBar.MouseOver.Thumb",                              "");
-        p.AssignMapping("Controls/ScrollBar/Thumb (Pressed)",                         "ScrollBar.Pressed.Thumb",                                "");
-        p.AssignMapping("Controls/ScrollBar/Thumb",                                   "ScrollBar.Static.Thumb",                                 "");
-        p.AssignMapping("Controls/TabItem/Background (Selected)",                     "TabItem.Selected.Background",                            "");
-        p.AssignMapping("Controls/TabItem/Border (Selected)",                         "TabItem.Selected.Border",                                "");
-        p.AssignMapping("Controls/TabItem/Background",                                "TabItem.Static.Background",                              "");
-        p.AssignMapping("Controls/TabItem/Border",                                    "TabItem.Static.Border",                                  "");
-        p.AssignMapping("Controls/TabItem/Background (MouseOver)",                    "TabItem.MouseOver.Background",                           "");
-        p.AssignMapping("Controls/TabItem/Border (MouseOver)",                        "TabItem.MouseOver.Border",                               "");
-        p.AssignMapping("Controls/TabItem/Background (Disabled)",                     "TabItem.Disabled.Background",                            "");
-        p.AssignMapping("Controls/TabItem/Border (Disabled)",                         "TabItem.Disabled.Border",                                "");
-        p.AssignMapping("Controls/Expander/Circle Fill (MouseOver)",                  "Expander.MouseOver.Circle.Fill",                         "");
-        p.AssignMapping("Controls/Expander/Circle Stroke (MouseOver)",                "Expander.MouseOver.Circle.Stroke",                       "");
-        p.AssignMapping("Controls/Expander/Circle Fill (Pressed)",                    "Expander.Pressed.Circle.Fill",                           "");
-        p.AssignMapping("Controls/Expander/Circle Stroke (Pressed)",                  "Expander.Pressed.Circle.Stroke",                         "");
-        p.AssignMapping("Controls/Expander/Circle Fill (Disabled)",                   "Expander.Disabled.Circle.Fill",                          "");
-        p.AssignMapping("Controls/Expander/Circle Stroke (Disabled)",                 "Expander.Disabled.Circle.Stroke",                        "");
-        p.AssignMapping("Controls/Expander/Circle Fill",                              "Expander.Static.Circle.Fill",                            "");
-        p.AssignMapping("Controls/Expander/Circle Stroke",                            "Expander.Static.Circle.Stroke",                          "");
-        p.AssignMapping("Controls/Expander/Arrow Stroke",                             "Expander.Static.Arrow.Stroke",                           "");
-        p.AssignMapping("Controls/Expander/Arrow Stroke (MouseOver)",                 "Expander.MouseOver.Arrow.Stroke",                        "");
-        p.AssignMapping("Controls/Expander/Arrow Stroke (Pressed)",                   "Expander.Pressed.Arrow.Stroke",                          "");
-        p.AssignMapping("Controls/Expander/Arrow Stroke (Disabled)",                  "Expander.Disabled.Arrow.Stroke",                         "");
-        p.AssignMapping("Controls/GridSplitter/Background",                           "GridSplitter.Static.Background",                         "");
-        p.AssignMapping("Controls/GroupBox/Background",                               "GroupBox.Static.Background",                             "");
-        p.AssignMapping("Controls/GroupBox/Border",                                   "GroupBox.Static.Border",                                 "");
-        p.AssignMapping("Controls/GroupBox/Header Background",                        "GroupBox.Header.Static.Background",                      "");
-        p.AssignMapping("Controls/GroupBox/Header Border",                            "GroupBox.Header.Static.Border",                          "");
-        p.AssignMapping("Controls/GroupBox/Header Foreground",                        "GroupBox.Header.Foreground",                             "");
-        p.AssignMapping("Controls/GroupBox/Header Background (Disabled)",             "GroupBox.Header.Background.Disabled",                    "");
-        p.AssignMapping("Controls/GroupBox/Header Border (Disabled)",                 "GroupBox.Header.Static.Border.Disabled",                 "");
-        p.AssignMapping("Controls/GroupBox/Header Foreground (Disabled)",             "GroupBox.Header.Foreground.Disabled",                    "");
-        p.AssignMapping("Controls/Menu/Background",                                   "Menu.Static.Background",                                 "");
-        p.AssignMapping("Controls/MenuItem/Background",                               "MenuItem.Static.Background",                             "");
-        p.AssignMapping("Controls/MenuItem/IconBar Background",                       "MenuItem.IconBar.Static.Background",                     "");
-        p.AssignMapping("Controls/MenuItem/IconBar Border",                           "MenuItem.IconBar.Static.Border",                         "");
-        p.AssignMapping("Controls/MenuItem/Square Background",                        "MenuItem.Square.Static.Background",                      "");
-        p.AssignMapping("Controls/MenuItem/Square Border",                            "MenuItem.Square.Static.Border",                          "");
-        p.AssignMapping("Controls/MenuItem/Background (MouseOver)",                   "MenuItem.MouseOver.Background",                          "");
-        p.AssignMapping("Controls/MenuItem/Border (MouseOver)",                       "MenuItem.MouseOver.Border",                              "");
-        p.AssignMapping("Controls/MenuItem/Background (Disabled)",                    "MenuItem.Disabled.Background",                           "");
-        p.AssignMapping("Controls/Popup/Background",                                  "Popup.Static.Background",                                "");
-        p.AssignMapping("Controls/Popup/Border",                                      "Popup.Static.Border",                                    "");
-        p.AssignMapping("Controls/Popup/Foreground",                                  "Popup.Static.Foreground",                                "");
-        p.AssignMapping("Controls/Popup/Background (Disabled)",                       "Popup.Disabled.Background",                              "");
-        p.AssignMapping("Controls/Popup/Border (Disabled)",                           "Popup.Disabled.Border",                                  "");
-        p.AssignMapping("Controls/Popup/Foreground (Disabled)",                       "Popup.Disabled.Foreground",                              "");
-        p.AssignMapping("Controls/MenuItem/Glyph",                                    "MenuItem.Static.Glyph",                                  "");
-        p.AssignMapping("Controls/MenuItem/Glyph (Disabled)",                         "MenuItem.Disabled.Glyph",                                "");
-        p.AssignMapping("Controls/SliderThumb/Background (MouseOver)",                "SliderThumb.MouseOver.Background",                       "");
-        p.AssignMapping("Controls/SliderThumb/Border (MouseOver)",                    "SliderThumb.MouseOver.Border",                           "");
-        p.AssignMapping("Controls/SliderThumb/Background (Pressed)",                  "SliderThumb.Pressed.Background",                         "");
-        p.AssignMapping("Controls/SliderThumb/Border (Pressed)",                      "SliderThumb.Pressed.Border",                             "");
-        p.AssignMapping("Controls/SliderThumb/Background (Disabled)",                 "SliderThumb.Disabled.Background",                        "");
-        p.AssignMapping("Controls/SliderThumb/Border (Disabled)",                     "SliderThumb.Disabled.Border",                            "");
-        p.AssignMapping("Controls/SliderThumb/Background",                            "SliderThumb.Static.Background",                          "");
-        p.AssignMapping("Controls/SliderThumb/Border",                                "SliderThumb.Static.Border",                              "");
-        p.AssignMapping("Controls/SliderThumb/Background (Track)",                    "SliderThumb.Track.Background",                           "");
-        p.AssignMapping("Controls/SliderThumb/Border (Track)",                        "SliderThumb.Track.Border",                               "");
-        p.AssignMapping("Controls/SliderThumb/Foreground",                            "SliderThumb.Static.Foreground",                          "");
-        p.AssignMapping("Controls/SliderThumb/Progress Background (Track)",           "SliderThumb.Track.Progress.Background",                  "");
-        p.AssignMapping("Controls/SliderThumb/Progress Border (Track)",               "SliderThumb.Track.Progress.Border",                      "");
-        p.AssignMapping("Controls/ProgressBar/Progress",                              "ProgressBar.Progress",                                   "");
-        p.AssignMapping("Controls/ProgressBar/Background",                            "ProgressBar.Background",                                 "");
-        p.AssignMapping("Controls/ProgressBar/Border",                                "ProgressBar.Border",                                     "");
-        p.AssignMapping("Controls/TreeView/Background",                               "TreeView.Static.Background",                             "");
-        p.AssignMapping("Controls/TreeView/Border",                                   "TreeView.Static.Border",                                 "");
-        p.AssignMapping("Controls/TreeView/Background (Disabled)",                    "TreeView.Disabled.Background",                           "");
-        p.AssignMapping("Controls/TreeView/Border (Disabled)",                        "TreeView.Disabled.Border",                               "");
-        p.AssignMapping("Controls/TreeViewItem/Background",                           "TreeViewItem.Static.Background",                         "");
-        p.AssignMapping("Controls/TreeViewItem/Border",                               "TreeViewItem.Static.Border",                             "");
-        p.AssignMapping("Controls/TreeViewItem/Background (Selected)",                "TreeViewItem.Selected.Background",                       "");
-        p.AssignMapping("Controls/TreeViewItem/Border (Selected)",                    "TreeViewItem.Selected.Border",                           "");
-        p.AssignMapping("Controls/TreeViewItem/Inactive Background (Selected)",       "TreeViewItem.Selected.Inactive.Background",              "");
-        p.AssignMapping("Controls/TreeViewItem/Inactive Border (Selected)",           "TreeViewItem.Selected.Inactive.Border",                  "");
-        p.AssignMapping("Controls/TreeViewItem/MouseOver Background",                 "TreeViewItem.MouseOver.Background",                      "");
-        p.AssignMapping("Controls/TreeViewItem/MouseOver Border",                     "TreeViewItem.MouseOver.Border",                          "");
-        p.AssignMapping("Controls/TreeViewItem/MouseDown Background",                 "TreeViewItem.MouseDown.Background",                      "");
-        p.AssignMapping("Controls/TreeViewItem/MouseDown Border",                     "TreeViewItem.MouseDown.Border",                          "");
-        p.AssignMapping("Controls/Window/Background",                                 "Window.Static.Background",                               "");
-        p.AssignMapping("Controls/Window/Border",                                     "Window.Static.Border",                                   "");
-        p.AssignMapping("Controls/Window/Foreground",                                 "Window.Static.Foreground",                               "");
-        p.AssignMapping("Controls/Window/Title Background",                           "Window.Static.Title.Background",                         "");
+        p.AssignMapping("Controls/PanelBorderBrush",                                  "PanelBorderBrush");
+        p.AssignMapping("Controls/PanelBackground0",                                  "PanelBackground0");
+        p.AssignMapping("Controls/PanelBackground1",                                  "PanelBackground1");
+        p.AssignMapping("Controls/PanelBackground2",                                  "PanelBackground2");
+        p.AssignMapping("Controls/PanelBackground3",                                  "PanelBackground3");
+        p.AssignMapping("Controls/PanelBackground4",                                  "PanelBackground4");
+        p.AssignMapping("Controls/Button/Background",                                 "Button.Static.Background");
+        p.AssignMapping("Controls/Button/Border",                                     "Button.Static.Border");
+        p.AssignMapping("Controls/Button/Background (MouseOver)",                     "Button.MouseOver.Background");
+        p.AssignMapping("Controls/Button/Border (MouseOver)",                         "Button.MouseOver.Border");
+        p.AssignMapping("Controls/Button/Background (Pressed)",                       "Button.Pressed.Background");
+        p.AssignMapping("Controls/Button/Border (Pressed)",                           "Button.Pressed.Border");
+        p.AssignMapping("Controls/Button/Background (Disabled)",                      "Button.Disabled.Background");
+        p.AssignMapping("Controls/Button/Border (Disabled)",                          "Button.Disabled.Border");
+        p.AssignMapping("Controls/Button/Foreground",                                 "Button.Static.Foreground");
+        p.AssignMapping("Controls/Button/Foreground (Disabled)",                      "Button.Disabled.Foreground");
+        p.AssignMapping("Controls/Button/Background (Defaulted)",                     "Button.Defaulted.Background");
+        p.AssignMapping("Controls/Button/Border (Defaulted)",                         "Button.Defaulted.Border");
+        p.AssignMapping("Controls/ButtonSpinner/Border (Error)",                      "ButtonSpinner.Error.Border");
+        p.AssignMapping("Controls/ToggleButton/Background (IsChecked)",               "ToggleButton.IsChecked.Background");
+        p.AssignMapping("Controls/ToggleButton/Border (IsChecked)",                   "ToggleButton.IsChecked.Border");
+        p.AssignMapping("Controls/ToggleButton/Background (Pressed + IsChecked)",     "ToggleButton.Pressed.IsChecked.Background");
+        p.AssignMapping("Controls/ToggleButton/Border (Pressed + IsChecked)",         "ToggleButton.Pressed.IsChecked.Border");
+        p.AssignMapping("Controls/ToggleButton/Background (MouseOver + IsChecked)",   "ToggleButton.MouseOver.IsChecked.Background");
+        p.AssignMapping("Controls/ToggleButton/Border (MouseOver + IsChecked)",       "ToggleButton.MouseOver.IsChecked.Border");
+        p.AssignMapping("Controls/ComboBox/Background",                               "ComboBox.Static.Background");
+        p.AssignMapping("Controls/ComboBox/Border",                                   "ComboBox.Static.Border");
+        p.AssignMapping("Controls/ComboBox/Foreground",                               "ComboBox.Static.Foreground");
+        p.AssignMapping("Controls/ComboBox/Background (Editable)",                    "ComboBox.Static.Editable.Background");
+        p.AssignMapping("Controls/ComboBox/Border (Editable)",                        "ComboBox.Static.Editable.Border");
+        p.AssignMapping("Controls/ComboBox/Button Background (Editable)",             "ComboBox.Static.Editable.Button.Background");
+        p.AssignMapping("Controls/ComboBox/Button Border (Editable)",                 "ComboBox.Static.Editable.Button.Border");
+        p.AssignMapping("Controls/ComboBox/Button Background",                        "ComboBox.Button.Static.Background");
+        p.AssignMapping("Controls/ComboBox/Button Border",                            "ComboBox.Button.Static.Border");
+        p.AssignMapping("Controls/ComboBox/Glyph (MouseOver)",                        "ComboBox.MouseOver.Glyph");
+        p.AssignMapping("Controls/ComboBox/Background (MouseOver)",                   "ComboBox.MouseOver.Background");
+        p.AssignMapping("Controls/ComboBox/Border (MouseOver)",                       "ComboBox.MouseOver.Border");
+        p.AssignMapping("Controls/ComboBox/(Editable) Background (MouseOver)",        "ComboBox.MouseOver.Editable.Background");
+        p.AssignMapping("Controls/ComboBox/(Editable) Border",                        "ComboBox.MouseOver.Editable.Border");
+        p.AssignMapping("Controls/ComboBox/(Editable) Button Background (MouseOver)", "ComboBox.MouseOver.Editable.Button.Background");
+        p.AssignMapping("Controls/ComboBox/(Editable) Button Border (MouseOver)",     "ComboBox.MouseOver.Editable.Button.Border");
+        p.AssignMapping("Controls/ComboBox/Glyph (Pressed)",                          "ComboBox.Pressed.Glyph");
+        p.AssignMapping("Controls/ComboBox/Background (Pressed)",                     "ComboBox.Pressed.Background");
+        p.AssignMapping("Controls/ComboBox/Border (Pressed)",                         "ComboBox.Pressed.Border");
+        p.AssignMapping("Controls/ComboBox/(Editable) Background (Pressed)",          "ComboBox.Pressed.Editable.Background");
+        p.AssignMapping("Controls/ComboBox/(Editable) Border (Pressed)",              "ComboBox.Pressed.Editable.Border");
+        p.AssignMapping("Controls/ComboBox/(Editable) Button Background (Pressed)",   "ComboBox.Pressed.Editable.Button.Background");
+        p.AssignMapping("Controls/ComboBox/(Editable) Button Border (Pressed)",       "ComboBox.Pressed.Editable.Button.Border");
+        p.AssignMapping("Controls/ComboBox/Glyph (Disabled)",                         "ComboBox.Disabled.Glyph");
+        p.AssignMapping("Controls/ComboBox/Background (Disabled)",                    "ComboBox.Disabled.Background");
+        p.AssignMapping("Controls/ComboBox/Border (Disabled)",                        "ComboBox.Disabled.Border");
+        p.AssignMapping("Controls/ComboBox/(Editable) Background (Disabled)",         "ComboBox.Disabled.Editable.Background");
+        p.AssignMapping("Controls/ComboBox/(Editable) Border (Disabled)",             "ComboBox.Disabled.Editable.Border");
+        p.AssignMapping("Controls/ComboBox/(Editable) Button Background (Disabled)",  "ComboBox.Disabled.Editable.Button.Background");
+        p.AssignMapping("Controls/ComboBox/(Editable) Button Border (Disabled)",      "ComboBox.Disabled.Editable.Button.Border");
+        p.AssignMapping("Controls/ComboBox/Glyph",                                    "ComboBox.Static.Glyph");
+        p.AssignMapping("Controls/ComboBoxItem/Background (Hover)",                   "ComboBoxItem.ItemView.Hover.Background");
+        p.AssignMapping("Controls/ComboBoxItem/Border (Hover)",                       "ComboBoxItem.ItemView.Hover.Border");
+        p.AssignMapping("Controls/ComboBoxItem/Background (Selected)",                "ComboBoxItem.ItemView.Selected.Background");
+        p.AssignMapping("Controls/ComboBoxItem/Border (Selected)",                    "ComboBoxItem.ItemView.Selected.Border");
+        p.AssignMapping("Controls/ComboBoxItem/Background (Selected + Hover)",        "ComboBoxItem.ItemView.SelectedHover.Background");
+        p.AssignMapping("Controls/ComboBoxItem/Border (Selected + Hover)",            "ComboBoxItem.ItemView.SelectedHover.Border");
+        p.AssignMapping("Controls/ComboBoxItem/Background (Selected + Not Focused)",  "ComboBoxItem.ItemView.SelectedNoFocus.Background");
+        p.AssignMapping("Controls/ComboBoxItem/Border (Selected + Not Focused)",      "ComboBoxItem.ItemView.SelectedNoFocus.Border");
+        p.AssignMapping("Controls/ComboBoxItem/Border (Focus)",                       "ComboBoxItem.ItemView.Focus.Border");
+        p.AssignMapping("Controls/ComboBoxItem/Background (HoverFocus)",              "ComboBoxItem.ItemView.HoverFocus.Background");
+        p.AssignMapping("Controls/ComboBoxItem/Border (HoverFocus)",                  "ComboBoxItem.ItemView.HoverFocus.Border");
+        p.AssignMapping("Controls/TextBox/Background",                                "TextBox.Static.Background");
+        p.AssignMapping("Controls/TextBox/Border",                                    "TextBox.Static.Border");
+        p.AssignMapping("Controls/TextBox/Border (MouseOver)",                        "TextBox.MouseOver.Border");
+        p.AssignMapping("Controls/TextBox/Border (Focus)",                            "TextBox.Focus.Border");
+        p.AssignMapping("Controls/TextBox/Selection (Inactive)",                      "TextBox.Selection.Inactive");
+        p.AssignMapping("Controls/TextBox/Selection",                                 "TextBox.Selection");
+        p.AssignMapping("Controls/TextBox/Border (Error)",                            "TextBox.Error.Border");
+        p.AssignMapping("Controls/ListBox/Background",                                "ListBox.Static.Background");
+        p.AssignMapping("Controls/ListBox/Border",                                    "ListBox.Static.Border");
+        p.AssignMapping("Controls/ListBox/Background (Disabled)",                     "ListBox.Disabled.Background");
+        p.AssignMapping("Controls/ListBox/Border (Disabled)",                         "ListBox.Disabled.Border");
+        p.AssignMapping("Controls/ListBoxItem/Background (MouseOver)",                "Item.MouseOver.Background");
+        p.AssignMapping("Controls/ListBoxItem/Border (MouseOver)",                    "Item.MouseOver.Border");
+        p.AssignMapping("Controls/ListBoxItem/Background (SelectedInactive)",         "Item.SelectedInactive.Background");
+        p.AssignMapping("Controls/ListBoxItem/Border (SelectedInactive)",             "Item.SelectedInactive.Border");
+        p.AssignMapping("Controls/ListBoxItem/Background (SelectedActive)",           "Item.SelectedActive.Background");
+        p.AssignMapping("Controls/ListBoxItem/Border (SelectedActive)",               "Item.SelectedActive.Border");
+        p.AssignMapping("Controls/CheckBox/Background",                               "CheckBox.Static.Background");
+        p.AssignMapping("Controls/CheckBox/Border",                                   "CheckBox.Static.Border");
+        p.AssignMapping("Controls/CheckBox/Background (MouseOver)",                   "CheckBox.MouseOver.Background");
+        p.AssignMapping("Controls/CheckBox/Border (MouseOver)",                       "CheckBox.MouseOver.Border");
+        p.AssignMapping("Controls/CheckBox/Background (Disabled)",                    "CheckBox.Disabled.Background");
+        p.AssignMapping("Controls/CheckBox/Border (Disabled)",                        "CheckBox.Disabled.Border");
+        p.AssignMapping("Controls/CheckBox/Background (Pressed)",                     "CheckBox.Pressed.Background");
+        p.AssignMapping("Controls/CheckBox/Border (Pressed)",                         "CheckBox.Pressed.Border");
+        p.AssignMapping("Controls/CheckBox/Glyph",                                    "CheckBox.Static.Glyph");
+        p.AssignMapping("Controls/CheckBox/Glyph (Pressed)",                          "CheckBox.Pressed.Glyph");
+        p.AssignMapping("Controls/CheckBox/Glyph (MouseOver)",                        "CheckBox.MouseOver.Glyph");
+        p.AssignMapping("Controls/CheckBox/Glyph (Disabled)",                         "CheckBox.Disabled.Glyph");
+        p.AssignMapping("Controls/RadioButton/Background",                            "RadioButton.Static.Background");
+        p.AssignMapping("Controls/RadioButton/Border",                                "RadioButton.Static.Border");
+        p.AssignMapping("Controls/RadioButton/Background (MouseOver)",                "RadioButton.MouseOver.Background");
+        p.AssignMapping("Controls/RadioButton/Border (MouseOver)",                    "RadioButton.MouseOver.Border");
+        p.AssignMapping("Controls/RadioButton/Background (Pressed)",                  "RadioButton.Pressed.Background");
+        p.AssignMapping("Controls/RadioButton/Border (Pressed)",                      "RadioButton.Pressed.Border");
+        p.AssignMapping("Controls/RadioButton/Background (Disabled)",                 "RadioButton.Disabled.Background");
+        p.AssignMapping("Controls/RadioButton/Border (Disabled)",                     "RadioButton.Disabled.Border");
+        p.AssignMapping("Controls/RadioButton/Glyph",                                 "RadioButton.Static.Glyph");
+        p.AssignMapping("Controls/RadioButton/Glyph (MouseOver)",                     "RadioButton.MouseOver.Glyph");
+        p.AssignMapping("Controls/RadioButton/Glyph (Pressed)",                       "RadioButton.Pressed.Glyph");
+        p.AssignMapping("Controls/RadioButton/Glyph (Disabled)",                      "RadioButton.Disabled.Glyph");
+        p.AssignMapping("Controls/ScrollBar/Background",                              "ScrollBar.Static.Background");
+        p.AssignMapping("Controls/ScrollBar/Border",                                  "ScrollBar.Static.Border");
+        p.AssignMapping("Controls/ScrollBarButton/Background",                        "ScrollBarButton.Static.Background");
+        p.AssignMapping("Controls/ScrollBarButton/Border",                            "ScrollBarButton.Static.Border");
+        p.AssignMapping("Controls/ScrollBar/Glyph (Pressed)",                         "ScrollBar.Pressed.Glyph");
+        p.AssignMapping("Controls/ScrollBar/Glyph (MouseOver)",                       "ScrollBar.MouseOver.Glyph");
+        p.AssignMapping("Controls/ScrollBar/Glyph (Disabled)",                        "ScrollBar.Disabled.Glyph");
+        p.AssignMapping("Controls/ScrollBar/Glyph",                                   "ScrollBar.Static.Glyph");
+        p.AssignMapping("Controls/ScrollBarSink/Background (MouseOver)",              "ScrollBarSink.MouseOver.Background");
+        p.AssignMapping("Controls/ScrollBar/Background (MouseOver)",                  "ScrollBar.MouseOver.Background");
+        p.AssignMapping("Controls/ScrollBar/Border (MouseOver)",                      "ScrollBar.MouseOver.Border");
+        p.AssignMapping("Controls/ScrollBar/Background (Pressed)",                    "ScrollBar.Pressed.Background");
+        p.AssignMapping("Controls/ScrollBar/Border (Pressed)",                        "ScrollBar.Pressed.Border");
+        p.AssignMapping("Controls/ScrollBar/Background (Disabled)",                   "ScrollBar.Disabled.Background");
+        p.AssignMapping("Controls/ScrollBar/Border (Disabled)",                       "ScrollBar.Disabled.Border");
+        p.AssignMapping("Controls/ScrollBar/Thumb (MouseOver)",                       "ScrollBar.MouseOver.Thumb");
+        p.AssignMapping("Controls/ScrollBar/Thumb (Pressed)",                         "ScrollBar.Pressed.Thumb");
+        p.AssignMapping("Controls/ScrollBar/Thumb",                                   "ScrollBar.Static.Thumb");
+        p.AssignMapping("Controls/TabItem/Background (Selected)",                     "TabItem.Selected.Background");
+        p.AssignMapping("Controls/TabItem/Border (Selected)",                         "TabItem.Selected.Border");
+        p.AssignMapping("Controls/TabItem/Background",                                "TabItem.Static.Background");
+        p.AssignMapping("Controls/TabItem/Border",                                    "TabItem.Static.Border");
+        p.AssignMapping("Controls/TabItem/Background (MouseOver)",                    "TabItem.MouseOver.Background");
+        p.AssignMapping("Controls/TabItem/Border (MouseOver)",                        "TabItem.MouseOver.Border");
+        p.AssignMapping("Controls/TabItem/Background (Disabled)",                     "TabItem.Disabled.Background");
+        p.AssignMapping("Controls/TabItem/Border (Disabled)",                         "TabItem.Disabled.Border");
+        p.AssignMapping("Controls/Expander/Circle Fill (MouseOver)",                  "Expander.MouseOver.Circle.Fill");
+        p.AssignMapping("Controls/Expander/Circle Stroke (MouseOver)",                "Expander.MouseOver.Circle.Stroke");
+        p.AssignMapping("Controls/Expander/Circle Fill (Pressed)",                    "Expander.Pressed.Circle.Fill");
+        p.AssignMapping("Controls/Expander/Circle Stroke (Pressed)",                  "Expander.Pressed.Circle.Stroke");
+        p.AssignMapping("Controls/Expander/Circle Fill (Disabled)",                   "Expander.Disabled.Circle.Fill");
+        p.AssignMapping("Controls/Expander/Circle Stroke (Disabled)",                 "Expander.Disabled.Circle.Stroke");
+        p.AssignMapping("Controls/Expander/Circle Fill",                              "Expander.Static.Circle.Fill");
+        p.AssignMapping("Controls/Expander/Circle Stroke",                            "Expander.Static.Circle.Stroke");
+        p.AssignMapping("Controls/Expander/Arrow Stroke",                             "Expander.Static.Arrow.Stroke");
+        p.AssignMapping("Controls/Expander/Arrow Stroke (MouseOver)",                 "Expander.MouseOver.Arrow.Stroke");
+        p.AssignMapping("Controls/Expander/Arrow Stroke (Pressed)",                   "Expander.Pressed.Arrow.Stroke");
+        p.AssignMapping("Controls/Expander/Arrow Stroke (Disabled)",                  "Expander.Disabled.Arrow.Stroke");
+        p.AssignMapping("Controls/GridSplitter/Background",                           "GridSplitter.Static.Background");
+        p.AssignMapping("Controls/GroupBox/Background",                               "GroupBox.Static.Background");
+        p.AssignMapping("Controls/GroupBox/Border",                                   "GroupBox.Static.Border");
+        p.AssignMapping("Controls/GroupBox/Header Background",                        "GroupBox.Header.Static.Background");
+        p.AssignMapping("Controls/GroupBox/Header Border",                            "GroupBox.Header.Static.Border");
+        p.AssignMapping("Controls/GroupBox/Header Foreground",                        "GroupBox.Header.Foreground");
+        p.AssignMapping("Controls/GroupBox/Header Background (Disabled)",             "GroupBox.Header.Background.Disabled");
+        p.AssignMapping("Controls/GroupBox/Header Border (Disabled)",                 "GroupBox.Header.Static.Border.Disabled");
+        p.AssignMapping("Controls/GroupBox/Header Foreground (Disabled)",             "GroupBox.Header.Foreground.Disabled");
+        p.AssignMapping("Controls/Menu/Background",                                   "Menu.Static.Background");
+        p.AssignMapping("Controls/MenuItem/Background",                               "MenuItem.Static.Background");
+        p.AssignMapping("Controls/MenuItem/IconBar Background",                       "MenuItem.IconBar.Static.Background");
+        p.AssignMapping("Controls/MenuItem/IconBar Border",                           "MenuItem.IconBar.Static.Border");
+        p.AssignMapping("Controls/MenuItem/Square Background",                        "MenuItem.Square.Static.Background");
+        p.AssignMapping("Controls/MenuItem/Square Border",                            "MenuItem.Square.Static.Border");
+        p.AssignMapping("Controls/MenuItem/Background (MouseOver)",                   "MenuItem.MouseOver.Background");
+        p.AssignMapping("Controls/MenuItem/Border (MouseOver)",                       "MenuItem.MouseOver.Border");
+        p.AssignMapping("Controls/MenuItem/Background (Disabled)",                    "MenuItem.Disabled.Background");
+        p.AssignMapping("Controls/Popup/Background",                                  "Popup.Static.Background");
+        p.AssignMapping("Controls/Popup/Border",                                      "Popup.Static.Border");
+        p.AssignMapping("Controls/Popup/Foreground",                                  "Popup.Static.Foreground");
+        p.AssignMapping("Controls/Popup/Background (Disabled)",                       "Popup.Disabled.Background");
+        p.AssignMapping("Controls/Popup/Border (Disabled)",                           "Popup.Disabled.Border");
+        p.AssignMapping("Controls/Popup/Foreground (Disabled)",                       "Popup.Disabled.Foreground");
+        p.AssignMapping("Controls/MenuItem/Glyph",                                    "MenuItem.Static.Glyph");
+        p.AssignMapping("Controls/MenuItem/Glyph (Disabled)",                         "MenuItem.Disabled.Glyph");
+        p.AssignMapping("Controls/SliderThumb/Background (MouseOver)",                "SliderThumb.MouseOver.Background");
+        p.AssignMapping("Controls/SliderThumb/Border (MouseOver)",                    "SliderThumb.MouseOver.Border");
+        p.AssignMapping("Controls/SliderThumb/Background (Pressed)",                  "SliderThumb.Pressed.Background");
+        p.AssignMapping("Controls/SliderThumb/Border (Pressed)",                      "SliderThumb.Pressed.Border");
+        p.AssignMapping("Controls/SliderThumb/Background (Disabled)",                 "SliderThumb.Disabled.Background");
+        p.AssignMapping("Controls/SliderThumb/Border (Disabled)",                     "SliderThumb.Disabled.Border");
+        p.AssignMapping("Controls/SliderThumb/Background",                            "SliderThumb.Static.Background");
+        p.AssignMapping("Controls/SliderThumb/Border",                                "SliderThumb.Static.Border");
+        p.AssignMapping("Controls/SliderThumb/Background (Track)",                    "SliderThumb.Track.Background");
+        p.AssignMapping("Controls/SliderThumb/Border (Track)",                        "SliderThumb.Track.Border");
+        p.AssignMapping("Controls/SliderThumb/Foreground",                            "SliderThumb.Static.Foreground");
+        p.AssignMapping("Controls/SliderThumb/Progress Background (Track)",           "SliderThumb.Track.Progress.Background");
+        p.AssignMapping("Controls/SliderThumb/Progress Border (Track)",               "SliderThumb.Track.Progress.Border");
+        p.AssignMapping("Controls/ProgressBar/Progress",                              "ProgressBar.Progress");
+        p.AssignMapping("Controls/ProgressBar/Background",                            "ProgressBar.Background");
+        p.AssignMapping("Controls/ProgressBar/Border",                                "ProgressBar.Border");
+        p.AssignMapping("Controls/TreeView/Background",                               "TreeView.Static.Background");
+        p.AssignMapping("Controls/TreeView/Border",                                   "TreeView.Static.Border");
+        p.AssignMapping("Controls/TreeView/Background (Disabled)",                    "TreeView.Disabled.Background");
+        p.AssignMapping("Controls/TreeView/Border (Disabled)",                        "TreeView.Disabled.Border");
+        p.AssignMapping("Controls/TreeViewItem/Background",                           "TreeViewItem.Static.Background");
+        p.AssignMapping("Controls/TreeViewItem/Border",                               "TreeViewItem.Static.Border");
+        p.AssignMapping("Controls/TreeViewItem/Background (Selected)",                "TreeViewItem.Selected.Background");
+        p.AssignMapping("Controls/TreeViewItem/Border (Selected)",                    "TreeViewItem.Selected.Border");
+        p.AssignMapping("Controls/TreeViewItem/Inactive Background (Selected)",       "TreeViewItem.Selected.Inactive.Background");
+        p.AssignMapping("Controls/TreeViewItem/Inactive Border (Selected)",           "TreeViewItem.Selected.Inactive.Border");
+        p.AssignMapping("Controls/TreeViewItem/MouseOver Background",                 "TreeViewItem.MouseOver.Background");
+        p.AssignMapping("Controls/TreeViewItem/MouseOver Border",                     "TreeViewItem.MouseOver.Border");
+        p.AssignMapping("Controls/TreeViewItem/MouseDown Background",                 "TreeViewItem.MouseDown.Background");
+        p.AssignMapping("Controls/TreeViewItem/MouseDown Border",                     "TreeViewItem.MouseDown.Border");
+        p.AssignMapping("Controls/Window/Background",                                 "Window.Static.Background");
+        p.AssignMapping("Controls/Window/Border",                                     "Window.Static.Border");
+        p.AssignMapping("Controls/Window/Foreground",                                 "Window.Static.Foreground");
+        p.AssignMapping("Controls/Window/Title Background",                           "Window.Static.Title.Background");
     }
 
     /// <summary>
     /// Sets the current application theme
     /// </summary>
-    /// <param name="themeName"></param>
+    /// <param name="theme">The theme to be set as the active theme</param>
     public abstract void SetTheme(Theme theme);
 
+    /// <summary>
+    /// Gets a theme by its name. Theme names are case-insensitive (compared with <see cref="StringComparison.OrdinalIgnoreCase"/>)
+    /// </summary>
+    /// <param name="name">The theme name</param>
+    /// <returns>The found theme, or null</returns>
     public Theme? GetTheme(string name) {
         return this.Themes.FirstOrDefault(x => x.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
     }
@@ -355,5 +369,23 @@ public abstract class ThemeManager {
     /// <param name="basedOn">A theme whose colours are copied into the new one</param>
     /// <param name="copyAllKeys">True to copy all keys to create effectively a complete clone</param>
     /// <returns>The new theme</returns>
+    /// <exception cref="ArgumentException">Theme name is null or whitespaces</exception>
+    /// <exception cref="ArgumentNullException">Based on theme is null</exception>
+    /// <exception cref="InvalidOperationException">Theme already exists with the name</exception>
     public abstract Theme RegisterTheme(string name, Theme basedOn, bool copyAllKeys = false);
+
+    /// <summary>
+    /// Returns a collection of themes that are built in themes. See <see cref="Theme.IsBuiltIn"/> for more info
+    /// </summary>
+    /// <returns></returns>
+    public virtual IEnumerable<Theme> GetBuiltInThemes() => this.Themes.Where(x => x.IsBuiltIn);
+
+    /// <summary>
+    /// Raises the <see cref="ActiveThemeChanged"/> event
+    /// </summary>
+    protected void RaiseActiveThemeChanged(Theme oldTheme, Theme newTheme) {
+        ArgumentNullException.ThrowIfNull(oldTheme);
+        ArgumentNullException.ThrowIfNull(newTheme);
+        this.ActiveThemeChanged?.Invoke(this, oldTheme, newTheme);
+    } 
 }

@@ -48,8 +48,14 @@ public abstract class Theme {
     public abstract IEnumerable<string> ThemeKeys { get; }
 
     /// <summary>
-    /// Returns true if this is a built-in theme, which cannot be
-    /// modified by the user and is not serialized to the disk
+    /// Gets the inheritance entries. This maps a theme key to the key it wants to inherit from (themeKey->inheritFrom).
+    /// This is the reverse of what <see cref="CollectKeysInheritedBy"/> provides
+    /// </summary>
+    public abstract IEnumerable<KeyValuePair<string, string>> InheritanceEntries { get; }
+
+    /// <summary>
+    /// Returns true if this is a built-in theme, which is not saved at runtime since the
+    /// resource dictionary is loaded from an AXAML file.
     /// </summary>
     public bool IsBuiltIn { get; }
 
@@ -81,6 +87,36 @@ public abstract class Theme {
     /// <param name="allowInherited">True to allow searching this and parent themes, False to only allow searching this theme</param>
     /// <returns>See above</returns>
     public abstract bool IsThemeKeyValid(string themeKey, bool allowInherited = true);
+
+    /// <summary>
+    /// Sets or removes the theme colour as inherited from the given inherited key
+    /// </summary>
+    /// <param name="themeKey"></param>
+    /// <param name="inheritFromKey"></param>
+    public abstract void SetInheritance(string themeKey, string? inheritFromKey);
+    
+    /// <summary>
+    /// Bulk operation for <see cref="SetInheritance(string,string?)"/> since that can be expensive
+    /// when modifying built in themes or densely modified themes in general
+    /// </summary>
+    /// <param name="entries"></param>
+    public abstract void SetInheritance(IEnumerable<KeyValuePair<string, string?>> entries);
+    
+    /// <summary>
+    /// Gets the key that the given key inherits the colour value from
+    /// </summary>
+    /// <param name="key">The key to search for</param>
+    /// <param name="depth">The base theme depth the inheritance is. -1 when we return null</param>
+    /// <returns></returns>
+    public abstract string? GetInheritedBy(string key, out int depth);
+
+    /// <summary>
+    /// Collects all theme keys that inherit from the given key, optionally supports scanning the based on themes too
+    /// </summary>
+    /// <param name="inheritFrom">The key that other keys inherit from</param>
+    /// <param name="keys">The sink set</param>
+    /// <param name="includeBasedOnThemes">True to include base themes too</param>
+    public abstract void CollectKeysInheritedBy(string inheritFrom, HashSet<string> keys, bool includeBasedOnThemes = true);
 
     /// <summary>
     /// Creates a saved theme entry that stores the current state of the colour

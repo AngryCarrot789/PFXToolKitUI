@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Themes.Configurations;
@@ -68,5 +69,21 @@ public class ThemeConfigEntryGroup : IThemeTreeEntry {
         this.entries.Add(newEntry);
         this.map[name] = newEntry;
         return newEntry;
+    }
+
+    internal void UpdateInheritedKeys(Theme? theme) {
+        foreach (ThemeConfigEntryGroup group in this.groups) {
+            group.UpdateInheritedKeys(theme);
+        }
+
+        foreach (ThemeConfigEntry entry in this.entries) {
+            if (theme != null) {
+                string? key = theme.GetInheritedBy(entry.ThemeKey, out int depth);
+                entry.SetInheritedFromKey(key, key == null ? 0 : depth);
+            }
+            else {
+                entry.SetInheritedFromKey(null, 0);
+            }
+        }
     }
 }

@@ -32,6 +32,7 @@ using PFXToolKitUI.Services.Messaging.Configurations;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Themes.Commands;
+using PFXToolKitUI.Themes.Contexts;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI;
@@ -271,6 +272,7 @@ public abstract class ApplicationPFX : IServiceable {
         // Config managers
         manager.Register("commands.shortcuts.AddKeyStrokeToShortcut", new AddKeyStrokeToShortcutUsingDialogCommand());
         manager.Register("commands.shortcuts.AddMouseStrokeToShortcut", new AddMouseStrokeToShortcutUsingDialogCommand());
+        manager.Register("commands.themes.ShowKeysInheritingFromThemeCommand", new ShowKeysInheritingFromThemeCommand());
         manager.Register("commands.config.keymap.ExpandShortcutTree", new ExpandShortcutTreeCommand());
         manager.Register("commands.config.keymap.CollapseShortcutTree", new CollapseShortcutTreeCommand());
         manager.Register("commands.config.themeconfig.ExpandThemeConfigTree", new ExpandThemeConfigTreeCommand());

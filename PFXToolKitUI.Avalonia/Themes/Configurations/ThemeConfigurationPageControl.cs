@@ -29,6 +29,7 @@ using PFXToolKitUI.Avalonia.Themes.Controls;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Configurations;
+using PFXToolKitUI.Themes.Contexts;
 using SkiaSharp;
 using IThemeConfigurationTreeElement = PFXToolKitUI.Configurations.UI.IThemeConfigurationTreeElement;
 
@@ -46,10 +47,16 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
     private TextBlock? PART_WarnEditingBuiltInTheme;
     private Button? PART_ResetButton;
 
+    private TextBox? PART_InheritedFromTextBox;
+    private Button? PART_SetInheritedFromKeyButton;
+    private Button? PART_NavigateToInheritedKeyButton;
+
     private bool ignoreSpectrumColourChange;
     private string? activeThemeKey;
     private DynamicAvaloniaColourBrush? myActiveBrush;
     private IDisposable? disposeMyActiveBrush;
+    private bool isExpandingSubTree;
+    private ThemeConfigEntry? currentTCE;
 
     public ThemeConfigurationPageControl() {
     }
@@ -63,11 +70,71 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
         this.PART_ColorPicker = e.NameScope.GetTemplateChild<ColorPicker>("PART_ColorPicker");
         this.PART_GroupBox = e.NameScope.GetTemplateChild<GroupBox>("PART_GroupBox");
         this.PART_ResetButton = e.NameScope.GetTemplateChild<Button>("PART_ResetButton");
+        this.PART_InheritedFromTextBox = e.NameScope.GetTemplateChild<TextBox>("PART_InheritedFromTextBox");
+        this.PART_SetInheritedFromKeyButton = e.NameScope.GetTemplateChild<Button>("PART_SetInheritedFromKeyButton");
+        this.PART_NavigateToInheritedKeyButton = e.NameScope.GetTemplateChild<Button>("PART_NavigateToInheritedKeyButton");
         DataManager.GetContextData(this).Set(IThemeConfigurationTreeElement.TreeElementKey, this.PART_ThemeConfigTree);
 
         this.PART_ThemeConfigTree.SelectionChanged += this.OnSelectionChanged;
         this.PART_ColorPicker.ColorChanged += this.OnColourChanged;
         this.PART_ResetButton.Click += this.ResetValueClick;
+        this.PART_SetInheritedFromKeyButton.Click += this.PART_SetInheritedFromKeyButtonOnClick;
+        this.PART_NavigateToInheritedKeyButton.Click += this.PART_InheritedFromHyperlinkOnClick;
+        this.PART_InheritedFromTextBox.TextChanged += this.PART_InheritedFromTextBoxOnTextChanged;
+        
+        this.UpdateCanSetInheritedKeyButton();
+    }
+
+    private void PART_InheritedFromTextBoxOnTextChanged(object? sender, TextChangedEventArgs e) {
+        this.UpdateCanSetInheritedKeyButton();
+    }
+
+    private void PART_SetInheritedFromKeyButtonOnClick(object? sender, RoutedEventArgs e) {
+        Theme? currentTheme;
+        if (this.currentTCE == null || (currentTheme = this.Page!.TargetTheme) == null) {
+            return;
+        }
+
+        string? newKey = this.PART_InheritedFromTextBox!.Text;
+        if (string.IsNullOrWhiteSpace(newKey)) {
+            newKey = null;
+        }
+
+        this.PART_InheritedFromTextBox!.Text = newKey;
+        BugFix.TextBox_UpdateSelection(this.PART_InheritedFromTextBox);
+
+        string? oldKey = this.currentTCE.InheritedFromKey;
+        
+        // we're setting the inheritance directly on the theme the entry is representing, so 0 depth is what we want
+        currentTheme.SetInheritance(this.currentTCE.ThemeKey, newKey);
+        this.currentTCE.SetInheritedFromKey(newKey, 0);
+        this.Page!.OnChangedInheritance(this.currentTCE, oldKey, newKey);
+    }
+
+    private void PART_InheritedFromHyperlinkOnClick(object? sender, RoutedEventArgs e) {
+        if (this.isExpandingSubTree || this.currentTCE == null) {
+            return;
+        }
+
+        string? inheritedKey = this.currentTCE.InheritedFromKey;
+        if (!string.IsNullOrEmpty(inheritedKey) && this.Page!.TryGetThemeEntryFromThemeKey(inheritedKey, out ThemeConfigEntry? dstEntry)) {
+            ThemeConfigTreeViewItem dstTreeItem = this.PART_ThemeConfigTree!.ItemMap.GetControl(dstEntry);
+            List<ThemeConfigTreeViewItem> list = new List<ThemeConfigTreeViewItem>();
+            for (ThemeConfigTreeViewItem? node = dstTreeItem.ParentNode; node != null && !node.IsExpanded; node = node.ParentNode)
+                list.Add(node);
+
+            this.isExpandingSubTree = true;
+            try {
+                for (int i = list.Count - 1; i >= 0; i--)
+                    ApplicationPFX.Instance.Dispatcher.Invoke(() => list[i].IsExpanded = true, DispatchPriority.Loaded);
+
+                this.PART_ThemeConfigTree.SelectedItem = dstTreeItem;
+                this.PART_ThemeConfigTree.ScrollIntoView(dstTreeItem);
+            }
+            finally {
+                this.isExpandingSubTree = false;
+            }
+        }
     }
 
     private void UpdateCanResetValue() {
@@ -148,10 +215,30 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
     }
 
     private void OnSelectionChanged(object? sender, SelectionChangedEventArgs e) {
+        if (this.currentTCE != null) {
+            this.currentTCE.InheritedFromKeyChanged -= this.OnInheritedFromKeyChanged;
+            this.currentTCE = null;
+        }
+
         if (this.PART_ThemeConfigTree!.SelectedItem is ThemeConfigTreeViewItem item) {
             if (item.Entry is ThemeConfigEntry configEntry) {
+                this.currentTCE = configEntry;
+                this.currentTCE.InheritedFromKeyChanged += this.OnInheritedFromKeyChanged;
+
                 this.PART_ThemeKeyTextBox!.Text = configEntry.ThemeKey;
                 this.PART_ThemeKeyTextBox.IsEnabled = true;
+
+                string? inheritedKey = configEntry.InheritedFromKey;
+                if (!string.IsNullOrEmpty(inheritedKey)) {
+                    this.PART_NavigateToInheritedKeyButton!.IsEnabled = true;
+                    this.PART_InheritedFromTextBox!.Text = inheritedKey;
+                }
+                else {
+                    this.PART_NavigateToInheritedKeyButton!.IsEnabled = false;
+                    this.PART_InheritedFromTextBox!.Text = null;
+                }
+
+                BugFix.TextBox_UpdateSelection(this.PART_InheritedFromTextBox);
                 this.PART_ColorPicker!.IsEnabled = true;
                 this.SetActiveThemeKey(configEntry.ThemeKey);
             }
@@ -162,6 +249,7 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
                 this.SetActiveThemeKey(null);
             }
 
+            BugFix.TextBox_UpdateSelection(this.PART_ThemeKeyTextBox);
             this.PART_SelectedItemGrid!.IsEnabled = true;
         }
         else {
@@ -172,6 +260,10 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
 
         this.colourBinding?.Dispose();
         this.colourBinding = null;
+    }
+
+    private void OnInheritedFromKeyChanged(ThemeConfigEntry sender) {
+        this.UpdateCanSetInheritedKeyButton();
     }
 
     private void SetActiveThemeKey(string? themeKey) {
@@ -205,6 +297,8 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
         this.Page!.ModifiedThemeEntriesCleared += this.OnThemeModifiedThemeEntriesCleared;
         this.UpdateGroupBoxAndWarningMessage();
         this.UpdateCanResetValue();
+        this.UpdateCanSetInheritedKeyButton();
+        DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeConfigurationPageKey, this.Page!);
     }
 
     public override void OnDisconnected() {
@@ -213,5 +307,32 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
         this.Page!.TargetThemeChanged -= this.OnTargetThemeChanged;
         this.Page!.ThemeEntryModified -= this.OnThemeEntryModified;
         this.Page!.ModifiedThemeEntriesCleared -= this.OnThemeModifiedThemeEntriesCleared;
+        DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeConfigurationPageKey, null);
+    }
+
+    private void UpdateCanSetInheritedKeyButton() {
+        if (this.PART_SetInheritedFromKeyButton == null) {
+            return;
+        }
+
+        if (this.currentTCE == null) {
+            this.PART_SetInheritedFromKeyButton.IsEnabled = false;
+            return;
+        }
+        
+        Theme? theme;
+        ThemeConfigurationPage? page = this.Page;
+        if (page == null || (theme = page.TargetTheme) == null) {
+            this.PART_SetInheritedFromKeyButton.IsEnabled = false;
+        }
+        else {
+            string? themeKey = this.PART_InheritedFromTextBox!.Text;
+            if (string.IsNullOrWhiteSpace(themeKey)) {
+                this.PART_SetInheritedFromKeyButton.IsEnabled = this.currentTCE!.InheritedFromKey != null;
+            }
+            else {
+                this.PART_SetInheritedFromKeyButton.IsEnabled = theme.IsThemeKeyValid(themeKey);
+            }
+        }
     }
 }

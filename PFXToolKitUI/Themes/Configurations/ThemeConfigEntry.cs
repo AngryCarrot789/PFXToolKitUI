@@ -18,9 +18,10 @@
 // 
 
 using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Themes.Configurations;
+
+public delegate void ThemeConfigEntryEventHandler(ThemeConfigEntry sender);
 
 /// <summary>
 /// An entry for a colour in a theme
@@ -40,9 +41,27 @@ public class ThemeConfigEntry : IThemeTreeEntry, ITransferableData {
     /// Gets a description of what the <see cref="ThemeKey"/> is used for
     /// </summary>
     public string? Description { get; internal set; }
+    
+    /// <summary>
+    /// Gets the depth that our <see cref="InheritedFromKey"/> is
+    /// </summary>
+    public int InheritanceDepth { get; private set; }
+
+    /// <summary>
+    /// Gets the key that this theme entry inherits from. Can only be null or a non-empty and non-whitespace-containing string.
+    /// <para>
+    /// Do not set this property, it should only be set by internal utilities
+    /// </para>
+    /// </summary>
+    public string? InheritedFromKey { get; set; }
 
     public TransferableData TransferableData { get; }
 
+    /// <summary>
+    /// Raised when <see cref="InheritedFromKey"/> changes. This is only fired internally
+    /// </summary>
+    public event ThemeConfigEntryEventHandler? InheritedFromKeyChanged;
+    
     public ThemeConfigEntry(string displayName, string themeKey) {
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
         ArgumentException.ThrowIfNullOrWhiteSpace(themeKey);
@@ -52,5 +71,18 @@ public class ThemeConfigEntry : IThemeTreeEntry, ITransferableData {
         this.TransferableData = new TransferableData(this);
         this.ThemeKey = themeKey;
         this.DisplayName = displayName;
+    }
+
+    public void SetInheritedFromKey(string? inheritFrom, int depth) {
+        if (string.IsNullOrWhiteSpace(inheritFrom))
+            inheritFrom = null;
+        if (this.InheritanceDepth == depth && EqualityComparer<string?>.Default.Equals(this.InheritedFromKey, inheritFrom))
+            return;
+        if (inheritFrom == null && depth != 0)
+            throw new ArgumentException("Expected depth to be 0 when inheritFrom value is empty");
+
+        this.InheritedFromKey = inheritFrom;
+        this.InheritanceDepth = depth;
+        this.InheritedFromKeyChanged?.Invoke(this);
     }
 }
