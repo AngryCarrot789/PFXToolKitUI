@@ -20,6 +20,9 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Platform;
+using PFXToolKitUI.Logging;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services.Windowing;
 
@@ -35,7 +38,7 @@ public abstract class WindowingSystem {
     public static bool TryGetInstance([NotNullWhen(true)] out WindowingSystem? system) {
         return ApplicationPFX.Instance.ServiceManager.TryGetService(out system);
     }
-    
+
     /// <summary>
     /// Registers the window with this windowing system. The window cannot be open.
     /// It is automatically unregistered when the window closes
@@ -61,21 +64,42 @@ public sealed class WindowingSystemImpl : WindowingSystem {
     private readonly IDesktopService desktop;
     private readonly List<DesktopWindow> mainWindowable;
     private readonly List<DesktopWindow> openWindows;
+    private readonly Uri? defaultIconUri;
     private DesktopWindow? lastActivated;
+    private WindowIcon? defaultIcon;
+    private bool failedToLoadDefaultIcon;
 
-    public WindowingSystemImpl() {
+    public WindowingSystemImpl(Uri? defaultIconUri = null) {
         this.desktop = ApplicationPFX.Instance.ServiceManager.GetService<IDesktopService>();
         this.mainWindowable = new List<DesktopWindow>();
         this.openWindows = new List<DesktopWindow>();
+        this.defaultIconUri = defaultIconUri;
     }
-    
+
+    private WindowIcon? GetDefaultWindowIcon() {
+        if (this.defaultIcon != null || this.failedToLoadDefaultIcon || this.defaultIconUri == null) {
+            return this.defaultIcon;
+        }
+
+        try {
+            using Stream stream = AssetLoader.Open(this.defaultIconUri);
+            return this.defaultIcon = new WindowIcon(stream);
+        }
+        catch (Exception e) {
+            // ignored
+            this.failedToLoadDefaultIcon = true;
+            AppLogger.Instance.WriteLine("Failed to load default icon: " + e.GetToString());
+            return null;
+        }
+    }
+
     private void OnWindowOpened(object? sender, EventArgs e) {
         DesktopWindow window = (DesktopWindow) sender!;
         this.openWindows.Add(window);
         this.lastActivated = window;
         window.Activated += this.OnWindowActivated;
         window.Deactivated += this.OnWindowDeactivated;
-        
+
         // Try find suitable main window or update main window if current one is not mainwindowable
         IClassicDesktopStyleApplicationLifetime lifetime = this.desktop.ApplicationLifetime;
         if (lifetime.MainWindow is DesktopWindow impl && impl.IsOpen && this.mainWindowable.Contains(impl)) {
@@ -113,13 +137,12 @@ public sealed class WindowingSystemImpl : WindowingSystem {
             lifetime.MainWindow.Activate();
         }
     }
-    
+
     private void OnWindowActivated(object? sender, EventArgs e) {
         this.lastActivated = (DesktopWindow) sender!;
     }
-    
+
     private void OnWindowDeactivated(object? sender, EventArgs e) {
-        
     }
 
     public override DesktopWindow Register(DesktopWindow window, bool isMainWindowable = false) {
@@ -129,13 +152,14 @@ public sealed class WindowingSystemImpl : WindowingSystem {
             this.mainWindowable.Add(window);
         }
 
+        window.Icon ??= this.GetDefaultWindowIcon();
         return window;
     }
 
     public override bool TryGetActiveWindow([NotNullWhen(true)] out DesktopWindow? window) {
         // Get last activated, or find the first that is activated
         window = this.lastActivated ?? this.openWindows.FirstOrDefault(x => x.IsActive);
-        
+
         if (this.desktop.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime classic) {
             // No windows are activated. App is completely unfocused. So find the main window
             window ??= classic.MainWindow as DesktopWindow;
