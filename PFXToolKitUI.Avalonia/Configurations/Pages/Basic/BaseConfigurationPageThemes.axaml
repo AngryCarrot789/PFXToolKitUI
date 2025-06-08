@@ -106,7 +106,9 @@
                 <Grid Margin="0,2" RowDefinitions="Auto,5,*">
                     <StackPanel Grid.Row="0" Spacing="10" Margin="10">
                         <TextBlock TextWrapping="Wrap">
-                            <Run Text="The theme configuration tree groups the UI's theme elements" BaselineAlignment="Center"/>
+                            <Run Text="This is the theme configuration tree. All theme entries contain a ThemeKey and InheritedFromKey, as well as a colour value" BaselineAlignment="Center"/>
+                            <LineBreak/>
+                            <Run Text="An entry may inherit its colour from another entry. You do this by entering a ThemeKey into the 'Inherit From' field and clicking Set." BaselineAlignment="Center"/>
                         </TextBlock>
                         <TextBlock x:Name="PART_WarnEditingBuiltInTheme" TextWrapping="Wrap" TextDecorations="Underline">
                             <Run Text="Warning! The current theme is a built-in theme. Changes to built-in themes are not saved across restarts." BaselineAlignment="Center" Foreground="{DynamicResource ABrush.Foreground.Disabled}"/>
