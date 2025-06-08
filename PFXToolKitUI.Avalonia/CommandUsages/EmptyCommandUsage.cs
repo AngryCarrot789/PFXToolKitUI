@@ -20,7 +20,6 @@
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.CommandUsages;
 

@@ -17,6 +17,8 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace PFXToolKitUI.Utils;
 
 /// <summary>
@@ -77,6 +79,7 @@ public static class ArrayUtils {
     /// <param name="array"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
+    [return: NotNullIfNotNull(nameof(array))]
     public static unsafe T[]? CloneArrayUnsafe<T>(this T[]? array) where T : unmanaged {
         if (array == null)
             return null;
@@ -96,6 +99,7 @@ public static class ArrayUtils {
         return values;
     }
 
+    [return: NotNullIfNotNull(nameof(array))]
     public static T[]? CloneArrayMax<T>(this T[]? array) => array != null ? CloneArrayMax(array, array.Length) : null;
 
     public static T[] CloneArrayMax<T>(this T[] array, int count) {

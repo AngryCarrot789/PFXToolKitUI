@@ -22,7 +22,6 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using PFXToolKitUI.PropertyEditing;
 using PFXToolKitUI.PropertyEditing.Grids;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.PropertyEditing;
 

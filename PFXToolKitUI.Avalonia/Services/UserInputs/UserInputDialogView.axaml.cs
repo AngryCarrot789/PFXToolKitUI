@@ -31,7 +31,6 @@ using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.UserInputs;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services.UserInputs;
 

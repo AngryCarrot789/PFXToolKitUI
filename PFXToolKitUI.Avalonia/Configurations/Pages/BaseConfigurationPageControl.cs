@@ -19,7 +19,6 @@
 
 using Avalonia.Controls.Primitives;
 using PFXToolKitUI.Configurations;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Configurations.Pages;
 

@@ -24,7 +24,6 @@ using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
-using Avalonia.Media;
 using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;

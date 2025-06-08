@@ -26,7 +26,6 @@ using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
-using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using SkiaSharp;
 

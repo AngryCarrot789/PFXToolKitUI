@@ -22,7 +22,6 @@ using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.Messaging.Configurations;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services;
 

@@ -28,7 +28,6 @@ using PFXToolKitUI.PropertyEditing.Core;
 using PFXToolKitUI.PropertyEditing.DataTransfer;
 using PFXToolKitUI.PropertyEditing.DataTransfer.Automatic;
 using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.PropertyEditing;
 

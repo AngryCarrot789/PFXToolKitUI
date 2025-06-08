@@ -23,7 +23,6 @@ using Avalonia.Media.Immutable;
 using PFXToolKitUI.Persistence;
 using PFXToolKitUI.Persistence.Serialisation;
 using PFXToolKitUI.Themes;
-using PFXToolKitUI.Utils;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Themes;
