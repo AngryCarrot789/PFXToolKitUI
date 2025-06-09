@@ -375,7 +375,8 @@ public abstract class ThemeManager {
     public abstract Theme RegisterTheme(string name, Theme basedOn, bool copyAllKeys = false);
 
     /// <summary>
-    /// Returns a collection of themes that are built in themes. See <see cref="Theme.IsBuiltIn"/> for more info
+    /// Returns a collection of themes that are built in themes. See <see cref="Theme.IsBuiltIn"/> for more info.
+    /// This is just a convenience method for iterating <see cref="Themes"/> and filtering built in ones
     /// </summary>
     /// <returns></returns>
     public virtual IEnumerable<Theme> GetBuiltInThemes() => this.Themes.Where(x => x.IsBuiltIn);

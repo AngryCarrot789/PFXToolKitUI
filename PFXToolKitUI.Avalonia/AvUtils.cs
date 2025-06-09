@@ -96,11 +96,11 @@ public static class AvUtils {
         return relativeTo.PointToClient(screen);
     }
 
-    public static ResourceDictionaryMultiChangeToken BeginMultiChange(ResourceDictionary resourceDictionary) {
-        return new ResourceDictionaryMultiChangeToken(resourceDictionary);
+    public static RDMultiChange BeginMultiChange(ResourceDictionary resourceDictionary) {
+        return new RDMultiChange(resourceDictionary);
     }
 
-    public class ResourceDictionaryMultiChangeToken : IDisposable {
+    public sealed class RDMultiChange : IDisposable {
         private static readonly MethodInfo? RaiseResourcesChangedMethod;
         private static readonly PropertyInfo? InnerProperty;
 
@@ -111,16 +111,21 @@ public static class AvUtils {
         public ResourceDictionary Dictionary { get; }
 
         public object? this[object key] {
-            get => this.map != null ? this.map[key] : throw new KeyNotFoundException("Key not present in the dictionary");
+            get {
+                if (this.map == null)
+                    return null;
+                this.map.TryGetValue(key, out object? value); // same behaviour as ResourceDictionary
+                return value;
+            }
             set => (this.map ??= new Dictionary<object, object?>())[key] = value;
         }
 
-        internal ResourceDictionaryMultiChangeToken(ResourceDictionary dictionary) {
+        internal RDMultiChange(ResourceDictionary dictionary) {
             this.Dictionary = dictionary;
             this.dict_map = (Dictionary<object, object?>?) InnerProperty?.GetValue(dictionary);
         }
 
-        static ResourceDictionaryMultiChangeToken() {
+        static RDMultiChange() {
             RaiseResourcesChangedMethod = typeof(ResourceProvider).GetMethod("RaiseResourcesChanged", BindingFlags.Instance | BindingFlags.NonPublic);
             InnerProperty = typeof(ResourceDictionary).GetProperty("Inner", BindingFlags.Instance | BindingFlags.NonPublic);
         }
@@ -144,7 +149,7 @@ public static class AvUtils {
                 bool anyChanges = false;
                 if (this.map?.Count > 0) {
                     anyChanges = true;
-                    foreach (KeyValuePair<object, object> entry in this.map)
+                    foreach (KeyValuePair<object, object?> entry in this.map)
                         this.dict_map[entry.Key] = entry.Value;
                 }
 

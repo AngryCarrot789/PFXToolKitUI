@@ -84,7 +84,7 @@ public class ThemeManagerImpl : ThemeManager {
 
         foreach (KeyValuePair<ThemeVariant, IThemeVariantProvider> entry in this.ThemeDictionaries) {
             string? themeName = entry.Key.Key.ToString();
-            if (themeName == null) {
+            if (string.IsNullOrWhiteSpace(themeName)) {
                 continue;
             }
 
@@ -125,9 +125,7 @@ public class ThemeManagerImpl : ThemeManager {
         return newTheme;
     }
 
-    public override IEnumerable<Theme> GetBuiltInThemes() {
-        return this.builtInThemes;
-    }
+    public override IEnumerable<Theme> GetBuiltInThemes() => this.builtInThemes;
 
     public static bool TryFindBrushInApplicationResources(string themeKey, [NotNullWhen(true)] out IBrush? brush) {
         if (themeKey.EndsWith(ThemeImpl.ColourSuffix)) {
@@ -158,14 +156,18 @@ public class ThemeManagerImpl : ThemeManager {
         return false;
     }
 
-    public class ThemeImpl : Theme {
+    public sealed class ThemeImpl : Theme {
         public const string ColourSuffix = ".Color";
 
         private readonly HashSet<string> registeredBrushKeys;
+        private readonly ThemeVariant? variantNotInherited;
         private List<ThemeImpl>? derivedList;
 
         private readonly Dictionary<string, HashSet<string>> inheritMap_inheritFrom2themeKey; // map "inheritFrom" to the keys that we need to refresh.
         private readonly Dictionary<string, string> inheritMap_themeKey2inheritFrom; // map the key to update when "inheritFrom" changes.
+        
+        // a cached version of inheritMap_inheritFrom2themeKey that is built from the very root to the top derived.
+        // this is needed to figure out a full list of theme keys to update when the key's value changes
         private Dictionary<string, HashSet<string>>? cachedInheritMap_InheritFrom2dstKey;
 
         private Dictionary<string, HashSet<string>> GeneratedInheritanceMap {
@@ -177,10 +179,13 @@ public class ThemeManagerImpl : ThemeManager {
                 List<ThemeImpl> list = this.GetInheritance();
                 for (int i = list.Count - 1; i >= 0; i--) { // iterate root base to top derived
                     foreach (KeyValuePair<string, HashSet<string>> entry in list[i].inheritMap_inheritFrom2themeKey) {
-                        if (!map.TryGetValue(entry.Key, out HashSet<string>? set))
-                            map[entry.Key] = set = new HashSet<string>();
-                        foreach (string key in entry.Value)
-                            set.Add(key);
+                        if (!map.TryGetValue(entry.Key, out HashSet<string>? set)) {
+                            map[entry.Key] = new HashSet<string>(entry.Value);
+                        }
+                        else {
+                            foreach (string key in entry.Value)
+                                set.Add(key);
+                        }
                     }
                 }
 
@@ -210,6 +215,7 @@ public class ThemeManagerImpl : ThemeManager {
             this.BasedOn = basedOn;
             this.ThemeManager = manager;
             this.Variant = new ThemeVariant(name, basedOn?.Variant);
+            this.variantNotInherited = new ThemeVariant(name, null);
             this.Resources = resources;
             this.registeredBrushKeys = new HashSet<string>(32);
             this.inheritMap_inheritFrom2themeKey = new Dictionary<string, HashSet<string>>();
@@ -231,6 +237,7 @@ public class ThemeManagerImpl : ThemeManager {
                 colourKey = key;
                 brushKey = key.Substring(0, key.Length - ColourSuffix.Length);
                 AppLogger.Instance.WriteLine("Attempt to set theme colour using '.Color' suffix. This should not be done");
+                Debugger.Break();
             }
             else {
                 colourKey = key + ColourSuffix;
@@ -239,7 +246,7 @@ public class ThemeManagerImpl : ThemeManager {
         }
 
         public void CopyKeysFrom(ThemeImpl theme) {
-            using AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources);
+            using AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources);
             foreach (string key in theme.registeredBrushKeys) {
                 if (theme.Resources.TryGetResource(key, null, out object? brush)) {
                     // assert brush is IBrush
@@ -263,7 +270,7 @@ public class ThemeManagerImpl : ThemeManager {
             object avColourBoxed = avColour;
 
             this.registeredBrushKeys.Add(brushKey);
-            using AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources);
+            using AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources);
             change[colourKey] = avColourBoxed;
             change[brushKey] = avBrush;
             this.UpdateResourcesFromLatestInheritanceMap(change, colourKey, avColourBoxed, brushKey, avBrush);
@@ -275,7 +282,7 @@ public class ThemeManagerImpl : ThemeManager {
 
             this.registeredBrushKeys.Add(brushKey);
 
-            using AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources);
+            using AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources);
 
             if (brush is ConstantAvaloniaColourBrush i) {
                 object boxedColour = i.Brush.Color;
@@ -301,7 +308,7 @@ public class ThemeManagerImpl : ThemeManager {
         public void SetBrushInternal(string themeKey, IImmutableBrush brush) {
             GetKeys(themeKey, out string brushKey, out string colourKey);
 
-            using AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources);
+            using AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources);
 
             this.registeredBrushKeys.Add(brushKey);
             if (brush is ISolidColorBrush scb) {
@@ -335,7 +342,7 @@ public class ThemeManagerImpl : ThemeManager {
         public bool TryFindObjectInHierarchy<T>(string themeKey, [MaybeNullWhen(false)] out T val, bool canSearchHierarchy = true) {
             for (ThemeImpl? theme = this; canSearchHierarchy && theme != null; theme = theme.BasedOn) {
                 // We create a new ThemeVariant without a parent because we don't need to scan theme dictionaries
-                if (theme.Resources.TryGetResource(themeKey, new ThemeVariant(theme.Name, null), out object? value)) {
+                if (theme.Resources.TryGetResource(themeKey, theme.variantNotInherited, out object? value)) {
                     if (value is T t) {
                         val = t;
                         return true;
@@ -351,7 +358,7 @@ public class ThemeManagerImpl : ThemeManager {
             return this.TryFindObjectInHierarchy<object>(themeKey, out _, allowInherited);
         }
 
-        private void UpdateResourcesFromLatestInheritanceMap(AvUtils.ResourceDictionaryMultiChangeToken change, string? colourKey, object? colour, string? brushKey, IBrush? brush) {
+        private void UpdateResourcesFromLatestInheritanceMap(AvUtils.RDMultiChange change, string? colourKey, object? colour, string? brushKey, IBrush? brush) {
             HashSet<string>? dstKeys;
             if (colourKey != null) {
                 if (this.GeneratedInheritanceMap.TryGetValue(colourKey, out dstKeys)) {
@@ -386,7 +393,7 @@ public class ThemeManagerImpl : ThemeManager {
             }
 
             this.InvalidateDerivedInheritMaps(true);
-            using (AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources)) {
+            using (AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources)) {
                 foreach (KeyValuePair<string, string?> entry in entryList) {
                     string themeKey = entry.Key;
                     string? inheritFromKey = entry.Value;
@@ -417,7 +424,7 @@ public class ThemeManagerImpl : ThemeManager {
                 }
             }
 
-            using (AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources)) {
+            using (AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources)) {
                 foreach (KeyValuePair<string, string?> entry in entryList) {
                     string themeKey = entry.Key;
                     string? inheritFromKey = entry.Value;
@@ -455,7 +462,7 @@ public class ThemeManagerImpl : ThemeManager {
                     }
 
                     // Remove local entries of the resources
-                    using AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources);
+                    using AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources);
                     change.Remove(inheritedBrushKey);
                     change.Remove(inheritedColourKey);
                     this.InvalidateDerivedInheritMaps(true);
@@ -475,7 +482,7 @@ public class ThemeManagerImpl : ThemeManager {
                 this.inheritMap_themeKey2inheritFrom.TryAdd(brushKey, inheritedBrushKey);
                 this.TryFindBrushInHierarchy(inheritedBrushKey, out IBrush? foundBrush);
                 object? colour = this.TryFindColourInHierarchy(inheritedColourKey, out Color foundColour) ? foundColour : null;
-                using AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources);
+                using AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources);
                 if (foundBrush != null || colour != null) {
                     if (foundBrush != null)
                         change[brushKey] = foundBrush;
@@ -505,7 +512,7 @@ public class ThemeManagerImpl : ThemeManager {
             depth = result.Item2;
             return result.Item1;
         }
-        
+
         public (string?, int) GetInheritedByImpl(string key, int depth) {
             if (this.inheritMap_themeKey2inheritFrom.TryGetValue(key, out string? inheritedKey)) {
                 return (inheritedKey, depth);
@@ -536,7 +543,7 @@ public class ThemeManagerImpl : ThemeManager {
             SavedThemeEntryImpl impl = (SavedThemeEntryImpl) entry;
             GetKeys(themeKey, out string brushKey, out string colourKey);
 
-            using AvUtils.ResourceDictionaryMultiChangeToken change = AvUtils.BeginMultiChange(this.Resources);
+            using AvUtils.RDMultiChange change = AvUtils.BeginMultiChange(this.Resources);
             if (impl.Colour.HasValue) {
                 object obj = impl.Colour.Value;
                 change[colourKey] = obj;

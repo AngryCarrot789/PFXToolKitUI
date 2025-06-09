@@ -42,7 +42,7 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
 
     static ThemeConfigurationOptionsImpl() {
         ThemesProperty.DescriptionLines.Add("WARNING! THEME ORDERING IS ESSENTIAL!");
-        ThemesProperty.DescriptionLines.Add("A 'basedOn' theme must exist before being used");
+        ThemesProperty.DescriptionLines.Add("A 'basedOn' theme must exist before being used. 'Dark' and 'Light' will always exist");
     }
 
     protected override void OnLoaded() {

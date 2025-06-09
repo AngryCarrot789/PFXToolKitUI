@@ -77,19 +77,19 @@ public class StaticAvaloniaColourBrush : AvaloniaColourBrush, IStaticColourBrush
 }
 
 public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicColourBrush {
+    private int usageCounter;
+    private List<Action<IBrush?>>? handlers;
+    
     public string ThemeKey { get; }
-
-    /// <summary>
-    /// Gets the fully resolved brush
-    /// </summary>
-    public IBrush? CurrentBrush { get; private set; }
 
     public override IBrush? Brush => this.CurrentBrush;
 
     public int ReferenceCount => this.usageCounter;
-
-    private int usageCounter;
-    private List<Action<IBrush?>>? handlers;
+    
+    /// <summary>
+    /// Gets the fully resolved brush
+    /// </summary>
+    public IBrush? CurrentBrush { get; private set; }
 
     public event DynamicColourBrushChangedEventHandler? BrushChanged;
 

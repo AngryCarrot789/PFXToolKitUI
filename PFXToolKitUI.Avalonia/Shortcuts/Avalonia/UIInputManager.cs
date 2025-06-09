@@ -233,6 +233,8 @@ public class UIInputManager {
             return;
         }
 
+        string? oldFocusPath = Instance.FocusedPath, newFocusPath;
+        
         WeakReference? last = topLevel.GetValue(LastFocusedElementProperty);
         if (last == null)
             topLevel.SetValue(LastFocusedElementProperty, last = new WeakReference(null));
@@ -240,10 +242,11 @@ public class UIInputManager {
         WeakReference? curr = topLevel.GetValue(CurrentFocusedElementProperty);
         if (curr == null)
             topLevel.SetValue(CurrentFocusedElementProperty, curr = new WeakReference(null));
-
+        
         object? lastTarget = curr.Target; 
         last.Target = lastTarget;
         if (lost) {
+            newFocusPath = null;
             curr.Target = null;
             string msg = "";
             if (!ReferenceEquals(lastTarget, element)) {
@@ -256,18 +259,17 @@ public class UIInputManager {
             curr.Target = element;
             string msg = "";
             if (lastTarget != null) {
-                msg = $" (error: lastTarget still valid '{lastTarget.GetType().Name}')";
+                msg = $" (ERROR: lastTarget still valid '{lastTarget.GetType().Name}')";
             }
-            
-            Debug.WriteLine($"Focus GAINED: null -> '{curr.Target?.GetType().Name ?? "null"}'{msg}");
+
+            newFocusPath = GetFocusPath(element);
+            Debug.WriteLine($"Focus GAINED: null -> '{curr.Target?.GetType().Name ?? "null"}{(newFocusPath != null ? $" (FPath: {newFocusPath})" : "")}'{msg}");
         }
 
-        string? oldPath = Instance.FocusedPath;
-        string? newPath = lost ? null : GetFocusPath(element);
-        if (oldPath != newPath) {
-            Instance.FocusedPath = newPath;
-            OnFocusedPathChanged?.Invoke(oldPath, newPath, false);
-            UpdateCurrentlyFocusedObject(element, newPath);
+        if (oldFocusPath != newFocusPath) {
+            Instance.FocusedPath = newFocusPath;
+            OnFocusedPathChanged?.Invoke(oldFocusPath, newFocusPath, false);
+            UpdateCurrentlyFocusedObject(element, newFocusPath);
         }
     }
 

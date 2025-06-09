@@ -53,10 +53,10 @@ public class ShowKeysInheritingFromThemeCommand : Command {
         HashSet<string> keys = new HashSet<string>(16);
         page.TargetTheme.CollectKeysInheritedBy(cfgEntry.ThemeKey, keys);
         if (keys.Count > 0) {
-            await IMessageDialogService.Instance.ShowMessage("Keys", $"Theme keys that inherit from '{cfgEntry.ThemeKey}'", string.Join(Environment.NewLine, keys));
+            await IMessageDialogService.Instance.ShowMessage("Keys", $"Theme keys that inherit from '{cfgEntry.ThemeKey}'", string.Join(Environment.NewLine, keys), defaultButton:MessageBoxResult.OK);
         }
         else {
-            await IMessageDialogService.Instance.ShowMessage("No keys", $"No keys inherit from '{cfgEntry.ThemeKey}'");
+            await IMessageDialogService.Instance.ShowMessage("No keys", $"No keys inherit from '{cfgEntry.ThemeKey}'", defaultButton:MessageBoxResult.OK);
         }
     }
 }

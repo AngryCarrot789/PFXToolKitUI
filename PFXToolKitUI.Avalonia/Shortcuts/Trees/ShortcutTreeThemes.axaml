@@ -16,7 +16,7 @@
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="0"/>
-        <Setter Property="avalonia:UIInputManager.FocusPath" Value="Application/ConfigurationWindow/ConfigurationTree"/>
+        <Setter Property="avalonia:UIInputManager.FocusPath" Value="Configuration/Page/ShortcutsTree"/>
         <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto"/>
         <Setter Property="ScrollViewer.IsScrollChainingEnabled" Value="True"/>
@@ -45,7 +45,7 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone4.Border.Static}"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
-        <Setter Property="avalonia:UIInputManager.FocusPath" Value="Application/ConfigurationWindow/ConfigurationTree/TreeItem"/>
+        <Setter Property="avalonia:UIInputManager.FocusPath" Value="Configuration/Page/ShortcutsTree/TreeItem"/>
         <Setter Property="BorderThickness" Value="0,0,0,1"/>
         <Setter Property="Margin" Value="0"/>
         <Setter Property="Padding" Value="0"/>

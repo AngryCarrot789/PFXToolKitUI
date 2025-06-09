@@ -29,36 +29,32 @@ using RelativeUnit = Avalonia.RelativeUnit;
 namespace PFXToolKitUI.Avalonia.Themes.BrushFactories;
 
 public class BrushManagerImpl : BrushManager {
-    private Dictionary<string, DynamicAvaloniaColourBrush>? cachedBrushes;
+    private Dictionary<string, DynamicAvaloniaColourBrush>? dynamicBrushes;
 
     public override ConstantAvaloniaColourBrush CreateConstant(SKColor colour) {
         // Not really any point to caching an immutable brush
         return new ConstantAvaloniaColourBrush(colour);
     }
-
+    
     public override ILinearGradientColourBrush CreateConstantLinearGradient(IReadOnlyList<GradientStop> gradientStops, double opacity = 1, RelativePoint? transformOrigin = null, GradientSpreadMethod spreadMethod = GradientSpreadMethod.Pad, RelativePoint? startPoint = null, RelativePoint? endPoint = null) {
-        return new ConstantAvaloniaLinearGradientBrush(new ImmutableLinearGradientBrush(gradientStops.Select(x => new ImmutableGradientStop(x.Offset, new Color(x.Color.Alpha, x.Color.Red, x.Color.Green, x.Color.Blue))).ToList(), opacity, null, Cast(transformOrigin), (global::Avalonia.Media.GradientSpreadMethod) spreadMethod, Cast(startPoint), Cast(endPoint)));
-        
-        static global::Avalonia.RelativePoint Cast(RelativePoint? rp) => rp is RelativePoint rp1 ? new global::Avalonia.RelativePoint(rp1.Point.X, rp1.Point.Y, (RelativeUnit) rp1.Unit) : default;
+        return new ConstantAvaloniaLinearGradientBrush(new ImmutableLinearGradientBrush(gradientStops.Select(x => new ImmutableGradientStop(x.Offset, new Color(x.Color.Alpha, x.Color.Red, x.Color.Green, x.Color.Blue))).ToList(), opacity, null, CastRP(transformOrigin), (global::Avalonia.Media.GradientSpreadMethod) spreadMethod, CastRP(startPoint), CastRP(endPoint)));
     }
     
     public override IRadialGradientColourBrush CreateConstantRadialGradient(IReadOnlyList<GradientStop> gradientStops, double opacity = 1, RelativePoint? transformOrigin = null, GradientSpreadMethod spreadMethod = GradientSpreadMethod.Pad, RelativePoint? center = null, RelativePoint? gradientOrigin = null, double radius = 0.5) {
-        return new ConstantAvaloniaRadialGradientBrush(new ImmutableRadialGradientBrush(gradientStops.Select(x => new ImmutableGradientStop(x.Offset, new Color(x.Color.Alpha, x.Color.Red, x.Color.Green, x.Color.Blue))).ToList(), opacity, null, Cast(transformOrigin), (global::Avalonia.Media.GradientSpreadMethod) spreadMethod, Cast(center), Cast(gradientOrigin), radius));
-        
-        static global::Avalonia.RelativePoint Cast(RelativePoint? rp) => rp is RelativePoint rp1 ? new global::Avalonia.RelativePoint(rp1.Point.X, rp1.Point.Y, (RelativeUnit) rp1.Unit) : default;
+        return new ConstantAvaloniaRadialGradientBrush(new ImmutableRadialGradientBrush(gradientStops.Select(x => new ImmutableGradientStop(x.Offset, new Color(x.Color.Alpha, x.Color.Red, x.Color.Green, x.Color.Blue))).ToList(), opacity, null, CastRP(transformOrigin), (global::Avalonia.Media.GradientSpreadMethod) spreadMethod, CastRP(center), CastRP(gradientOrigin), radius));
     }
 
     public override DynamicAvaloniaColourBrush GetDynamicThemeBrush(string themeKey) {
-        if (this.cachedBrushes == null) {
-            this.cachedBrushes = new Dictionary<string, DynamicAvaloniaColourBrush>();
+        if (this.dynamicBrushes == null) {
+            this.dynamicBrushes = new Dictionary<string, DynamicAvaloniaColourBrush>();
         }
-        else if (this.cachedBrushes.TryGetValue(themeKey, out DynamicAvaloniaColourBrush? existingBrush)) {
+        else if (this.dynamicBrushes.TryGetValue(themeKey, out DynamicAvaloniaColourBrush? existingBrush)) {
             return existingBrush;
         }
 
         // Since these brushes can be quite expensive to listen for changes, we want to try and always cache them
         DynamicAvaloniaColourBrush brush = new DynamicAvaloniaColourBrush(themeKey);
-        this.cachedBrushes[themeKey] = brush;
+        this.dynamicBrushes[themeKey] = brush;
         return brush;
     }
 
@@ -69,4 +65,6 @@ public class BrushManagerImpl : BrushManager {
 
         return new StaticAvaloniaColourBrush(themeKey, null);
     }
+    
+    private static global::Avalonia.RelativePoint CastRP(RelativePoint? rp) => rp is RelativePoint rp1 ? new global::Avalonia.RelativePoint(rp1.Point.X, rp1.Point.Y, (RelativeUnit) rp1.Unit) : default;
 }
