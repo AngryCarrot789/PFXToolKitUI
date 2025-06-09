@@ -34,6 +34,7 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Themes.Contexts;
+using PFXToolKitUI.Utils.Destroying;
 
 namespace PFXToolKitUI.Avalonia.Themes.Configurations;
 
@@ -82,6 +83,11 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         }
 
         this.UpdateSubscription();
+        this.UpdateIsInheritedIndicator();
+        
+        if (this.PART_ThemeColourPreview != null) {
+            this.PART_ThemeColourPreview.Fill = this.IsReallyVisible ? this.myCurrentDynamicBrush : null;
+        }
     }
 
     private void OnDynamicBrushChanged(IBrush? obj) {
@@ -132,17 +138,12 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
     private void UpdateSubscription() {
         if (this.IsReallyVisible) {
             if (this.myDynamicBrush != null) {
-                if (this.myDynamicBrushSubscription != null) {
-                    this.myDynamicBrushSubscription.Dispose();
-                    this.myDynamicBrushSubscription = null;
-                }
-
+                DisposableUtils.Dispose(ref this.myDynamicBrushSubscription);
                 this.myDynamicBrushSubscription = this.myDynamicBrush.Subscribe(this.OnDynamicBrushChanged);
             }
         }
         else {
-            this.myDynamicBrushSubscription?.Dispose();
-            this.myDynamicBrushSubscription = null;
+            DisposableUtils.Dispose(ref this.myDynamicBrushSubscription);
         }
     }
 
@@ -174,13 +175,16 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
             }
 
             configEntry.InheritedFromKeyChanged += this.OnInheritedFromKeyChanged;
-            this.UpdateIsInheritedIndicator();
         }
 
+        this.UpdateIsInheritedIndicator();
         if (this.wasSetVisibleWithoutEntry) {
             this.wasSetVisibleWithoutEntry = false;
             this.GenerateHeader();
             this.UpdateSubscription();
+            if (this.PART_ThemeColourPreview != null) {
+                this.PART_ThemeColourPreview.Fill = this.myCurrentDynamicBrush;
+            }
         }
 
         DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeTreeEntryKey, this.Entry!);
@@ -191,13 +195,18 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
     }
 
     private void UpdateIsInheritedIndicator() {
-        if (this.PART_IsInheritedIndicator == null || !(this.Entry is ThemeConfigEntry entry)) {
+        if (this.PART_IsInheritedIndicator == null) {
             return;
         }
-        
-        this.PART_IsInheritedIndicator.IsVisible = entry.InheritedFromKey != null;
-        if (entry.InheritedFromKey != null) {
-            this.PART_IsInheritedIndicator.Fill = new ImmutableSolidColorBrush(entry.InheritanceDepth == 0 ? Colors.DodgerBlue : Colors.Yellow);
+
+        if (this.Entry is ThemeConfigEntry entry) {
+            this.PART_IsInheritedIndicator.IsVisible = entry.InheritedFromKey != null;
+            if (entry.InheritedFromKey != null) {
+                this.PART_IsInheritedIndicator.Fill = new ImmutableSolidColorBrush(entry.InheritanceDepth == 0 ? Colors.DodgerBlue : Colors.Yellow);
+            }
+        }
+        else {
+            this.PART_IsInheritedIndicator.IsVisible = false;
         }
     }
 
@@ -212,9 +221,9 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
             this.PART_ThemeColourPreview.Fill = null;
         }
 
-        this.myDynamicBrushSubscription?.Dispose();
+        DisposableUtils.Dispose(ref this.myDynamicBrushSubscription);
         this.myDynamicBrush = null;
-        
+
         if (this.Entry is ThemeConfigEntry entry)
             entry.InheritedFromKeyChanged -= this.OnInheritedFromKeyChanged;
     }
