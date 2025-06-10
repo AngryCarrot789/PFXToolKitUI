@@ -38,7 +38,7 @@ public class LambdaStartupManager : IStartupManager {
         this.action = asyncActionWithArgs;
     }
 
-    public async Task OnApplicationStartupWithArgs(string[] args) {
+    public async Task OnApplicationStartupWithArgs(IApplicationStartupProgress progress, string[] args) {
         switch (this.action) {
             case Action<string[]> a:
                 a(args);

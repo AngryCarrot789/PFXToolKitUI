@@ -28,6 +28,7 @@ public interface IStartupManager {
     /// This method takes the command line arguments which may contain a file path if
     /// the app was opened via a file. It will not include application .exe path
     /// </summary>
+    /// <param name="progress"></param>
     /// <param name="args">Command line args, excluding app exe</param>
-    Task OnApplicationStartupWithArgs(string[] args);
+    Task OnApplicationStartupWithArgs(IApplicationStartupProgress progress, string[] args);
 }

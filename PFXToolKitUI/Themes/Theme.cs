@@ -91,15 +91,15 @@ public abstract class Theme {
     /// <summary>
     /// Sets or removes the theme colour as inherited from the given inherited key
     /// </summary>
-    /// <param name="themeKey"></param>
-    /// <param name="inheritFromKey"></param>
+    /// <param name="themeKey">The key to update the inheritance of</param>
+    /// <param name="inheritFromKey">The new inheritance source, or null, to remove inheritance</param>
     public abstract void SetInheritance(string themeKey, string? inheritFromKey);
     
     /// <summary>
     /// Bulk operation for <see cref="SetInheritance(string,string?)"/> since that can be expensive
     /// when modifying built in themes or densely modified themes in general
     /// </summary>
-    /// <param name="entries"></param>
+    /// <param name="entries">The entries. A null value means we remove inheritance</param>
     public abstract void SetInheritance(IEnumerable<KeyValuePair<string, string?>> entries);
     
     /// <summary>

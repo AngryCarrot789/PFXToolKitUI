@@ -31,6 +31,7 @@ public abstract class Notification {
     private string? caption;
     private bool canAutoHide = true;
     private bool isAutoHideActive;
+    private bool flagRestartAutoHide;
     private CancellationTokenSource? ctsAutoHide;
     private IContextData? ctxData;
     private TimeSpan autoHideDelay = TimeSpan.FromSeconds(5);
@@ -74,14 +75,14 @@ public abstract class Notification {
         set {
             if (this.isAutoHideActive)
                 throw new InvalidOperationException("Cannot change while auto-hide is currently active");
-            
+
             if (this.autoHideDelay != value) {
-                long totalMilliseconds = (long)value.TotalMilliseconds;
+                long totalMilliseconds = (long) value.TotalMilliseconds;
                 if (totalMilliseconds < 0)
                     throw new ArgumentOutOfRangeException(nameof(value), "Value cannot represent negative time");
                 if (totalMilliseconds > 0xFFFFFFFE)
                     throw new ArgumentOutOfRangeException(nameof(value), "Value is too large");
-                
+
                 this.autoHideDelay = value;
                 this.AutoHideDelayChanged?.Invoke(this);
             }
@@ -106,7 +107,7 @@ public abstract class Notification {
             }
         }
     }
-    
+
     public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
 
     public ObservableList<NotificationCommand> Commands { get; }
@@ -156,12 +157,16 @@ public abstract class Notification {
                 if (!this.ctsAutoHide.IsCancellationRequested) {
                     this.Close();
                 }
-                
+
                 this.ctsAutoHide.Cancel();
                 this.ctsAutoHide.Dispose();
                 this.ctsAutoHide = null;
                 this.IsAutoHideActive = false;
-            });
+                if (this.flagRestartAutoHide) {
+                    this.flagRestartAutoHide = false;
+                    this.StartAutoHide();
+                }
+            }, token: CancellationToken.None);
         });
     }
 
@@ -183,15 +188,24 @@ public abstract class Notification {
     /// </summary>
     /// <param name="notificationManager">The notification manager to add ourself to</param>
     public void Open(NotificationManager notificationManager) {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
         ArgumentNullException.ThrowIfNull(notificationManager);
         if (!ReferenceEquals(this.NotificationManager, notificationManager)) {
             this.NotificationManager?.RemoveNotification(this);
             notificationManager.AddNotification(this);
+            this.StartAutoHide();
+        }
+        else if (this.IsAutoHideActive && !this.flagRestartAutoHide) {
+            this.flagRestartAutoHide = true;
+            this.CancelAutoHide();
         }
     }
-    
+
     /// <summary>
     /// Closes this notification, removing it from the <see cref="NotificationManager"/>
     /// </summary>
-    public void Close() => this.NotificationManager?.RemoveNotification(this);
+    public void Close() {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        this.NotificationManager?.RemoveNotification(this);
+    }
 }

@@ -330,7 +330,7 @@ public abstract class ApplicationPFX : IServiceable {
     /// <param name="envArgs">Command line arguments, typically passed to the startup manager</param>
     protected virtual Task OnApplicationRunning(IApplicationStartupProgress progress, string[] envArgs) {
         if (Instance.ServiceManager.TryGetService(out IStartupManager? service)) {
-            return service.OnApplicationStartupWithArgs(envArgs.Length > 1 ? envArgs.Skip(1).ToArray() : Array.Empty<string>());
+            return service.OnApplicationStartupWithArgs(progress, envArgs.Length > 1 ? envArgs.Skip(1).ToArray() : Array.Empty<string>());
         }
         else {
             return IMessageDialogService.Instance.ShowMessage("Information", "Hey! No IStartupManager service registered. Define and Register one to do stuff!");

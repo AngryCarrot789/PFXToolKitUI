@@ -1,17 +1,18 @@
-<ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:converters="clr-namespace:PFXToolKitUI.Avalonia.Converters;assembly=PFXToolKitUI.Avalonia">
+<ResourceDictionary xmlns="https://github.com/avaloniaui" 
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- This file contains brushes used by the base Dark and Light themes -->
+    <!-- This file contains general-purpose brushes used by our control themes -->
     
     <!-- 
         ##### NOTE ON StaticResource USAGE ##### 
-        We use the ThemeManager's inheritance system rather than use DynamicResource so that
-        we can provide visual feedback and user customisation for inheriting values.
+        We use the ThemeManager's inheritance system to automatically update the keys when the values change
+        (as in, 'PanelBorderBrush' is updated when 'ABrush.Tone1.Border.Static' changes).
+        Therefore, there's no reason to use dynamic resource.
         
-        But specifically it's because StaticResource will give slightly faster app startup
+        We set the Color anyway so that it makes designing UIs easier, since 
+        the ThemeManager may not load properly in the designer runtime
         
-        See ThemeImpl.LoadKeysFromDictionary, and all the calls to SetInheritance
+        See ThemeManagerImpl.SetupGeneralMappingsAndInheritance
     -->
     
     <SolidColorBrush x:Key="PanelBorderBrush"                                 Color="{StaticResource ABrush.Tone1.Border.Static.Color}"/>
@@ -97,25 +98,25 @@
     <SolidColorBrush x:Key="ListBox.Static.Border"                            Color="{StaticResource ABrush.Tone4.Border.Static.Color}"/>
     <SolidColorBrush x:Key="ListBox.Disabled.Background"                      Color="{StaticResource ABrush.Tone4.Background.Disabled.Color}"/>
     <SolidColorBrush x:Key="ListBox.Disabled.Border"                          Color="{StaticResource ABrush.Tone4.Border.Disabled.Color}"/>
-    <SolidColorBrush x:Key="Item.MouseOver.Background"                        Color="{StaticResource ABrush.Tone5.Background.MouseOver.Color}"/>
-    <SolidColorBrush x:Key="Item.MouseOver.Border"                            Color="{StaticResource ABrush.Tone5.Border.MouseOver.Color}"/>
-    <SolidColorBrush x:Key="Item.SelectedInactive.Background"                 Color="{StaticResource ABrush.Tone5.Background.Selected.Inactive.Color}"/>
-    <SolidColorBrush x:Key="Item.SelectedInactive.Border"                     Color="{StaticResource ABrush.Tone5.Border.Selected.Inactive.Color}"/>
-    <SolidColorBrush x:Key="Item.SelectedActive.Background"                   Color="{StaticResource ABrush.Tone5.Background.Selected.Color}"/>
-    <SolidColorBrush x:Key="Item.SelectedActive.Border"                       Color="{StaticResource ABrush.Tone5.Border.Selected.Color}"/>
+    <SolidColorBrush x:Key="ListBoxItem.MouseOver.Background"                 Color="{StaticResource ABrush.Tone5.Background.MouseOver.Color}"/>
+    <SolidColorBrush x:Key="ListBoxItem.MouseOver.Border"                     Color="{StaticResource ABrush.Tone5.Border.MouseOver.Color}"/>
+    <SolidColorBrush x:Key="ListBoxItem.SelectedInactive.Background"          Color="{StaticResource ABrush.Tone5.Background.Selected.Inactive.Color}"/>
+    <SolidColorBrush x:Key="ListBoxItem.SelectedInactive.Border"              Color="{StaticResource ABrush.Tone5.Border.Selected.Inactive.Color}"/>
+    <SolidColorBrush x:Key="ListBoxItem.SelectedActive.Background"            Color="{StaticResource ABrush.Tone5.Background.Selected.Color}"/>
+    <SolidColorBrush x:Key="ListBoxItem.SelectedActive.Border"                Color="{StaticResource ABrush.Tone5.Border.Selected.Color}"/>
 
-    <SolidColorBrush x:Key="CheckBox.Static.Background"                     Color="{StaticResource ABrush.Tone5.Background.Static.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Static.Border"                         Color="{StaticResource ABrush.Tone5.Border.Static.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.MouseOver.Background"                  Color="{StaticResource ABrush.Tone5.Background.MouseOver.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.MouseOver.Border"                      Color="{StaticResource ABrush.Tone5.Border.MouseOver.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Disabled.Background"                   Color="{StaticResource ABrush.Tone5.Background.Disabled.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Disabled.Border"                       Color="{StaticResource ABrush.Tone5.Border.Disabled.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Pressed.Background"                    Color="{StaticResource ABrush.Tone5.Background.MouseDown.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Pressed.Border"                        Color="{StaticResource ABrush.Tone5.Border.MouseDown.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Static.Glyph"                          Color="{StaticResource ABrush.Glyph.Static.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Pressed.Glyph"                         Color="{StaticResource ABrush.Glyph.MouseDown.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.MouseOver.Glyph"                       Color="{StaticResource ABrush.Glyph.MouseOver.Color}"/>
-    <SolidColorBrush x:Key="CheckBox.Disabled.Glyph"                        Color="{StaticResource ABrush.Glyph.Disabled.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Static.Background"                       Color="{StaticResource ABrush.Tone5.Background.Static.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Static.Border"                           Color="{StaticResource ABrush.Tone5.Border.Static.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.MouseOver.Background"                    Color="{StaticResource ABrush.Tone5.Background.MouseOver.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.MouseOver.Border"                        Color="{StaticResource ABrush.Tone5.Border.MouseOver.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Disabled.Background"                     Color="{StaticResource ABrush.Tone5.Background.Disabled.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Disabled.Border"                         Color="{StaticResource ABrush.Tone5.Border.Disabled.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Pressed.Background"                      Color="{StaticResource ABrush.Tone5.Background.MouseDown.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Pressed.Border"                          Color="{StaticResource ABrush.Tone5.Border.MouseDown.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Static.Glyph"                            Color="{StaticResource ABrush.Glyph.Static.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Pressed.Glyph"                           Color="{StaticResource ABrush.Glyph.MouseDown.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.MouseOver.Glyph"                         Color="{StaticResource ABrush.Glyph.MouseOver.Color}"/>
+    <SolidColorBrush x:Key="CheckBox.Disabled.Glyph"                          Color="{StaticResource ABrush.Glyph.Disabled.Color}"/>
     
     <SolidColorBrush x:Key="RadioButton.Static.Background"                    Color="{StaticResource ABrush.Tone5.Background.Static.Color}"/>
     <SolidColorBrush x:Key="RadioButton.Static.Border"                        Color="{StaticResource ABrush.Tone5.Border.Static.Color}"/>
@@ -130,7 +131,7 @@
     <SolidColorBrush x:Key="RadioButton.Pressed.Glyph"                        Color="{StaticResource ABrush.Glyph.MouseDown.Color}"/>
     <SolidColorBrush x:Key="RadioButton.Disabled.Glyph"                       Color="{StaticResource ABrush.Glyph.Disabled.Color}"/>
 
-        <SolidColorBrush x:Key="ScrollBar.Static.Background"                      Color="{StaticResource ABrush.Tone5.Background.Static.Color}"/>
+    <SolidColorBrush x:Key="ScrollBar.Static.Background"                      Color="{StaticResource ABrush.Tone5.Background.Static.Color}"/>
     <SolidColorBrush x:Key="ScrollBar.Static.Border"                          Color="{StaticResource ABrush.Tone5.Border.Static.Color}"/>
     <SolidColorBrush x:Key="ScrollBarButton.Static.Background"                Color="{StaticResource ABrush.Tone6.Background.Static.Color}"/>
     <SolidColorBrush x:Key="ScrollBarButton.Static.Border"                    Color="{StaticResource ABrush.Tone5.Border.Static.Color}"/>

@@ -68,6 +68,7 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
     /// <param name="control"></param>
     public void SetDragSourceControl(Control control) {
         ArgumentNullException.ThrowIfNull(control);
+        this.dragInitiator.Cursor = Cursor.Default;
         this.UnhookDragEvents(this.dragInitiator);
         this.HookDragEvents(this.dragInitiator = control);
     }
@@ -97,10 +98,22 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
     }
 
     private void OnDragSourcePointerMoved(object? sender, PointerEventArgs e) {
+        if (this.dragInitiator != this) {
+            this.dragInitiator.Cursor = Cursor.Default;
+        }
+
         if (e.Handled) {
             return;
         }
 
+        bool canDrag = this.ListBox?.CanEffectivelyDragItemPosition == true;
+        if (!canDrag) {
+            this.initiatedDragPointer = null;
+            if (this.dragInitiator != this) {
+                this.dragInitiator.Cursor = new Cursor(StandardCursorType.No);
+            }
+        }
+        
         PointerPoint point = e.GetCurrentPoint(this);
         Point mPos = e.GetPosition(this);
 
@@ -115,17 +128,14 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
         }
 
         this.lastMovePosAbs = mPosAbs;
-        if (!point.Properties.IsLeftButtonPressed || this.initiatedDragPointer == null) {
-            return;
-        }
-
-        if (this.ListBox?.CanEffectivelyDragItemPosition != true) {
+        if (!canDrag || !point.Properties.IsLeftButtonPressed || this.initiatedDragPointer == null) {
+            this.initiatedDragPointer = null;
             return;
         }
 
         Vector mPosDiffRel = mPos - this.leftClickPos;
         if (hasMovedY && !this.isMovingBetweenTracks && Math.Abs(mPosDiffRel.Y) >= 1.0d) {
-            List<BaseModelBasedListBoxItem> items = this.ListBox.Items.Cast<BaseModelBasedListBoxItem>().ToList();
+            List<BaseModelBasedListBoxItem> items = this.ListBox!.Items.Cast<BaseModelBasedListBoxItem>().ToList();
             int srcIdx = items.IndexOf(this);
             foreach (BaseModelBasedListBoxItem item in items) {
                 if (item != this) {

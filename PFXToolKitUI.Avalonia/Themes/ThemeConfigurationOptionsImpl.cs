@@ -90,7 +90,8 @@ public class ThemeConfigurationOptionsImpl : ThemeConfigurationOptions {
                     ((ThemeManagerImpl.ThemeImpl) theme).SetBrushInternal(pair.Key, pair.Value);
                 }
                 
-                ((ThemeManagerImpl.ThemeImpl) theme).SetInheritanceFromMap(options.inheritance);
+                // TODO: clear all inheritance for when we support reloading configs
+                ((ThemeManagerImpl.ThemeImpl) theme).SetInheritance(options.inheritance);
             }
         }
     }

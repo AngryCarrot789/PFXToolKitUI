@@ -41,18 +41,18 @@
             </ControlTemplate>
         </Setter>
         <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource Item.MouseOver.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Item.MouseOver.Border}"/>
+            <Setter Property="Background" Value="{DynamicResource ListBoxItem.MouseOver.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ListBoxItem.MouseOver.Border}"/>
         </Style>
 
         <Style Selector="^:selected[IsFocused=False] /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource Item.SelectedInactive.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Item.SelectedInactive.Border}"/>
+            <Setter Property="Background" Value="{DynamicResource ListBoxItem.SelectedInactive.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ListBoxItem.SelectedInactive.Border}"/>
         </Style>
 
         <Style Selector="^:selected[IsFocused=True] /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource Item.SelectedActive.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource Item.SelectedActive.Border}"/>
+            <Setter Property="Background" Value="{DynamicResource ListBoxItem.SelectedActive.Background}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource ListBoxItem.SelectedActive.Border}"/>
         </Style>
     </ControlTheme>
     <ControlTheme x:Key="{x:Type local:ActivityListControl}" TargetType="{x:Type local:ActivityListControl}">
