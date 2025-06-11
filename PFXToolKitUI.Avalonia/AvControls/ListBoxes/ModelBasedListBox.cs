@@ -45,6 +45,8 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
         set => this.SelectedItem = value != null ? this.itemMap.GetControl(value) : null;
     }
 
+    public TModel this[int index] => ((ModelBasedListBoxItem<TModel>) this.Items[index]!).Model!;
+
     /// <summary>
     /// Gets the size of our item cache. When zero, caching is disabled
     /// </summary>

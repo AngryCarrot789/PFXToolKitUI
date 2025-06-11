@@ -191,6 +191,18 @@ public static class CollectionUtils {
         }
     }
 
+    public static void MoveItemInArray<T>(T[] array, int oldIndex, int newIndex) {
+        if (newIndex < 0 || newIndex >= array.Length)
+            throw new IndexOutOfRangeException($"{nameof(newIndex)} is not within range: {(newIndex < 0 ? "less than zero" : "greater than list length")} ({newIndex})");
+        List<T> list = array.ToList();
+        T removedItem = list[oldIndex];
+        list.RemoveAt(oldIndex);
+        list.Insert(newIndex, removedItem);
+        for (int i = 0; i < list.Count; i++) {
+            array[i] = list[i];
+        }
+    }
+    
     public static void MoveItem<T>(this IList<T> list, int oldIndex, int newIndex) {
         if (newIndex < 0 || newIndex >= list.Count)
             throw new IndexOutOfRangeException($"{nameof(newIndex)} is not within range: {(newIndex < 0 ? "less than zero" : "greater than list length")} ({newIndex})");

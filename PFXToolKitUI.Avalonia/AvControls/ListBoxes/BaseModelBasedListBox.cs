@@ -40,10 +40,9 @@ public class BaseModelBasedListBox : ListBox {
     }
 
     /// <summary>
-    /// Indicates whether calling <see cref="MoveItemIndex"/> will actually do anything. By default, it
-    /// invokes <see cref="MoveItemHandler"/> therefore this property checks if the handler is non-null.
+    /// Indicates whether calling <see cref="MoveItemIndex"/> will actually do anything.
     /// <para>
-    /// If a custom implementation of <see cref="MoveItemIndex"/> is used, this property should be overridden
+    /// If <see cref="MoveItemIndex"/> is overridden, this property should be overridden
     /// </para>
     /// </summary>
     protected virtual bool CanDragItemPositionCore => false;

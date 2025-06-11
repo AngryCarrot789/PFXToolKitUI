@@ -152,6 +152,7 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
                         e.Pointer.Capture(null);
                         this.ListBox.MoveItemIndex(srcIdx, dstIdx);
                         e.Handled = true;
+                        break;
                     }
                 }
             }
