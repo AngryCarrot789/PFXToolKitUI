@@ -19,7 +19,6 @@
 
 using System.Collections.ObjectModel;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
@@ -62,8 +61,8 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
 
     private DataParameterEnumInfo(IEnumerable<TEnum> allowedEnumValues) {
         this.AllowedEnumList = allowedEnumValues.Select(x => (x, x.ToString())).ToList().AsReadOnly();
-        this.EnumToText = new Dictionary<TEnum, string>(this.AllowedEnumList.Select(x => new KeyValuePair<TEnum, string>(x.Item1, x.Item2)));
-        this.TextToEnum = new Dictionary<string, TEnum>(this.AllowedEnumList.Select(x => new KeyValuePair<string, TEnum>(x.Item2, x.Item1)));
+        this.EnumToText = CreateDictionary(this.AllowedEnumList.Select(x => new KeyValuePair<TEnum, string>(x.Item1, x.Item2)));
+        this.TextToEnum = CreateDictionary(this.AllowedEnumList.Select(x => new KeyValuePair<string, TEnum>(x.Item2, x.Item1)));
         this.EnumList = this.AllowedEnumList.Select(x => x.Item1).ToList().AsReadOnly();
         this.TextList = this.AllowedEnumList.Select(x => x.Item2).ToList().AsReadOnly();
     }
@@ -74,14 +73,14 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
         this.AllowedEnumList = allowedEnumValues.Select(x => (x, enumToTextMap.TryGetValue(x, out string? value) ? value : x.ToString())).ToList().AsReadOnly();
 
         // Generate missing translations
-        Dictionary<TEnum, string> fullEnumToTextMap = new Dictionary<TEnum, string>(enumToTextMap);
+        Dictionary<TEnum, string> fullEnumToTextMap = CreateDictionary(enumToTextMap);
         foreach ((TEnum theEnum, string theName) t in this.AllowedEnumList) {
             if (!fullEnumToTextMap.ContainsKey(t.theEnum))
                 fullEnumToTextMap[t.theEnum] = t.theName;
         }
 
         this.EnumToText = fullEnumToTextMap.AsReadOnly();
-        this.TextToEnum = new Dictionary<string, TEnum>(this.EnumToText.Select(x => new KeyValuePair<string, TEnum>(x.Value, x.Key)));
+        this.TextToEnum = CreateDictionary(this.EnumToText.Select(x => new KeyValuePair<string, TEnum>(x.Value, x.Key)));
         this.EnumList = this.AllowedEnumList.Select(x => x.Item1).ToList().AsReadOnly();
         this.TextList = this.AllowedEnumList.Select(x => x.Item2).ToList().AsReadOnly();
     }
@@ -99,13 +98,13 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
             Type type = Enum.GetUnderlyingType(typeof(TEnum));
             if (type == typeof(byte) || type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong)) {
                 TEnum value = EnumValues[0];
-                ulong val64 = Unsafe.As<TEnum, ulong>(ref value);
+                ulong val64 = EnumUtils.GetUnsignedValue(value, type);
                 
                 TEnum eMin = value, eMax = value;
                 ulong iMin = val64, iMax = val64;
                 for (int i = 1; i < EnumValues.Count; i++) {
                     value = EnumValues[i];
-                    val64 = Unsafe.As<TEnum, ulong>(ref value);
+                    val64 = EnumUtils.GetUnsignedValue(value, type);
                     if (val64 < iMin) {
                         iMin = val64;
                         eMin = value;
@@ -123,13 +122,13 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
                 // Apparently float and double types are technically supported but not compilable
                 Debug.Assert(type == typeof(sbyte) || type == typeof(short) || type == typeof(int) || type == typeof(long));
                 TEnum value = EnumValues[0];
-                long val64 = Unsafe.As<TEnum, long>(ref value);
+                long val64 = EnumUtils.GetSignedValue(value, type);
                 
                 TEnum eMin = value, eMax = value;
                 long iMin = val64, iMax = val64;
                 for (int i = 1; i < EnumValues.Count; i++) {
                     value = EnumValues[i];
-                    val64 = Unsafe.As<TEnum, long>(ref value);
+                    val64 = EnumUtils.GetSignedValue(value, type);
                     if (val64 < iMin) {
                         iMin = val64;
                         eMin = value;
@@ -175,5 +174,14 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
     /// <param name="allowedEnumValues">The allowed enums</param>
     public static DataParameterEnumInfo<TEnum> FromAllowed(IEnumerable<TEnum> allowedEnumValues, IReadOnlyDictionary<TEnum, string> enumToTextMap) {
         return new DataParameterEnumInfo<TEnum>(allowedEnumValues.Distinct(), enumToTextMap);
+    }
+    
+    // We cannot use the constructor because some enum values may use multiple names for the same
+    // values, so instead, we add the last encountered enum
+    private static Dictionary<TKey, TValue> CreateDictionary<TKey, TValue>(IEnumerable<KeyValuePair<TKey, TValue>> source) where TKey : notnull {
+        Dictionary<TKey, TValue> dict = new Dictionary<TKey, TValue>();
+        foreach (KeyValuePair<TKey,TValue> kvp in source)
+            dict[kvp.Key] = kvp.Value;
+        return dict;
     }
 }

@@ -19,7 +19,6 @@
 
 using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.PropertyEditing;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Configurations;
 

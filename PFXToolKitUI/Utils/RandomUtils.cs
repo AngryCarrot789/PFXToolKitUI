@@ -48,9 +48,9 @@ public static class RandomUtils {
         }
     }
 
-    public static unsafe void RandomLetters(Random random, char* ptr, int offset, int count) {
-        for (int i = 0; i < count; i++) {
-            ptr[offset + i] = (char) random.Next('a', 'z' + 1);
+    public static void RandomLetters(Random random, Span<char> ptr) {
+        for (int i = 0; i < ptr.Length; i++) {
+            ptr[i] = (char) random.Next('a', 'z' + 1);
         }
     }
 

@@ -165,10 +165,10 @@ public static class TextIncrement {
     /// <returns>True if the <see cref="accept"/> predicate accepted the output string before the loop counter reached 0</returns>
     public static unsafe bool GetRandomDisplayName(Predicate<string> accept, string src, int srcIndex, out string output, int length = 20, int loop = 32) {
         Random random = new Random();
-        char* chars = stackalloc char[length];
+        Span<char> chars = stackalloc char[length];
         while (loop > 0) {
-            RandomUtils.RandomLetters(random, chars, 0, length);
-            output = StringUtils.InjectOrUseChars(src, srcIndex, chars, length);
+            RandomUtils.RandomLetters(random, chars);
+            output = StringUtils.InjectOrUseChars(src, srcIndex, chars);
             if (accept(output)) {
                 return true;
             }
@@ -206,9 +206,6 @@ public static class TextIncrement {
         if (GetIncrementableString(accept, filePath, out output, incrementCounter))
             return true;
 
-        // what the ass. last resort
-        if (fileName == null)
-            fileName = filePath!;
         return GetRandomDisplayName(accept, fileName + "_", fileName.Length + 1, out output, 16, 128);
     }
 }

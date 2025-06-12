@@ -38,4 +38,28 @@ public static class EnumUtils {
             throw new ArgumentOutOfRangeException(paramName ?? nameof(value), value, $"Enum value is out of range. Must be between {DataParameterEnumInfo<T>.MinValue} and {DataParameterEnumInfo<T>.MaxValue}");
         }
     }
+
+    public static long GetSignedValue<TEnum>(TEnum value, Type underlyingType) where TEnum : struct, Enum {
+        if (underlyingType == typeof(sbyte))
+            return Unsafe.As<TEnum, sbyte>(ref value);
+        if (underlyingType == typeof(short))
+            return Unsafe.As<TEnum, short>(ref value);
+        if (underlyingType == typeof(int))
+            return Unsafe.As<TEnum, int>(ref value);
+        if (underlyingType == typeof(long))
+            return Unsafe.As<TEnum, long>(ref value);
+        throw new ArgumentOutOfRangeException(nameof(value));
+    }
+    
+    public static ulong GetUnsignedValue<TEnum>(TEnum value, Type underlyingType) where TEnum : struct, Enum {
+        if (underlyingType == typeof(byte))
+            return Unsafe.As<TEnum, byte>(ref value);
+        if (underlyingType == typeof(ushort))
+            return Unsafe.As<TEnum, ushort>(ref value);
+        if (underlyingType == typeof(uint))
+            return Unsafe.As<TEnum, uint>(ref value);
+        if (underlyingType == typeof(ulong))
+            return Unsafe.As<TEnum, ulong>(ref value);
+        throw new ArgumentOutOfRangeException(nameof(value));
+    }
 }

@@ -18,7 +18,6 @@
 // 
 
 using System.Runtime.CompilerServices;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Icons;
 

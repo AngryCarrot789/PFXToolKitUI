@@ -17,7 +17,6 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Collections;
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Utils.Collections.Observable;
 

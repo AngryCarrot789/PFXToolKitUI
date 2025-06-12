@@ -254,16 +254,16 @@ public static class StringUtils {
         return index == -1 ? str : str.Substring(index + 1);
     }
 
-    public static unsafe string InjectOrUseChars(string src, int srcIndex, char* arg, int argc) {
+    public static string InjectOrUseChars(string? src, int srcIndex, Span<char> arg) {
         if (src == null) {
-            return new string(arg, 0, argc);
+            return new string(arg);
         }
         else {
-            char[] chars = new char[src.Length + argc];
+            char[] chars = new char[src.Length + arg.Length];
             src.CopyTo(0, chars, 0, srcIndex);
-            for (int i = 0; i < argc; i++)
+            for (int i = 0; i < arg.Length; i++)
                 chars[srcIndex + i] = arg[i];
-            int j = srcIndex + argc;
+            int j = srcIndex + arg.Length;
             src.CopyTo(srcIndex, chars, j, chars.Length - j);
             return new string(chars);
         }

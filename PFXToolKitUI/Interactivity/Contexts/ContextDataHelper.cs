@@ -17,8 +17,6 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
-
 namespace PFXToolKitUI.Interactivity.Contexts;
 
 public static class ContextDataHelper {

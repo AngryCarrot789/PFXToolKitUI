@@ -19,7 +19,6 @@
 
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Configurations;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Themes.Configurations;
 

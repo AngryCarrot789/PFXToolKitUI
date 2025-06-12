@@ -19,7 +19,6 @@
 
 using PFXToolKitUI.Shortcuts.Inputs;
 using PFXToolKitUI.Shortcuts.Usage;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Shortcuts;
 
