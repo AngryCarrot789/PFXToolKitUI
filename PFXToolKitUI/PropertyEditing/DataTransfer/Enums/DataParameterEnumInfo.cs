@@ -96,7 +96,7 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
             MinValue = MaxValue = DefaultValue;
         }
         else {
-            Type type = Enum.GetUnderlyingType(typeof(TEnum)).GetEnumUnderlyingType();
+            Type type = Enum.GetUnderlyingType(typeof(TEnum));
             if (type == typeof(byte) || type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong)) {
                 TEnum value = EnumValues[0];
                 ulong val64 = Unsafe.As<TEnum, ulong>(ref value);
