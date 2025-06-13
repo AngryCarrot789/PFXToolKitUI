@@ -26,11 +26,11 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}">
                     <DockPanel>
-                        <Grid ColumnDefinitions="Auto,*" DockPanel.Dock="Top">
+                        <Grid x:Name="PART_Grid" ColumnDefinitions="Auto,*" DockPanel.Dock="Top">
                             <ItemsPresenter Grid.Column="0"
                                             x:Name="PART_ItemsPresenter"
                                             ItemsPanel="{TemplateBinding ItemsPanel}"/>
-                            <Border Grid.Column="1"
+                            <Border x:Name="PART_Border" Grid.Column="1"
                                     Background="{TemplateBinding Background}"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="0,0,0,1"/>
@@ -45,31 +45,37 @@
                 </Border>
             </ControlTemplate>
         </Setter>
-        <Style Selector="^[TabStripPlacement=Top]">
-        </Style>
-        <Style Selector="^[TabStripPlacement=Top] /template/ ItemsPresenter#PART_ItemsPresenter">
+        <Style Selector="^[TabStripPlacement=Top] /template/ Grid#PART_Grid">
             <Setter Property="DockPanel.Dock" Value="Top"/>
         </Style>
-        <Style Selector="^[TabStripPlacement=Bottom] /template/ ItemsPresenter#PART_ItemsPresenter">
+        <Style Selector="^[TabStripPlacement=Bottom] /template/ Grid#PART_Grid">
             <Setter Property="DockPanel.Dock" Value="Bottom"/>
         </Style>
-        <Style Selector="^[TabStripPlacement=Bottom]">
-        </Style>
-        <Style Selector="^[TabStripPlacement=Left] /template/ ItemsPresenter#PART_ItemsPresenter">
+        <Style Selector="^[TabStripPlacement=Left] /template/ Grid#PART_Grid">
             <Setter Property="DockPanel.Dock" Value="Left"/>
         </Style>
+        <Style Selector="^[TabStripPlacement=Right] /template/ Grid#PART_Grid">
+            <Setter Property="DockPanel.Dock" Value="Right"/>
+        </Style>
+        
+        <Style Selector="^[TabStripPlacement=Top] /template/ Border#PART_Border">
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+        </Style>
+        <Style Selector="^[TabStripPlacement=Bottom] /template/ Border#PART_Border">
+            <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        </Style>
+        <Style Selector="^[TabStripPlacement=Left] /template/ Border#PART_Border">
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        <Style Selector="^[TabStripPlacement=Right] /template/ Border#PART_Border">
+            <Setter Property="BorderThickness" Value="0"/>
+        </Style>
+        
         <Style Selector="^[TabStripPlacement=Left] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
             <Setter Property="Orientation" Value="Vertical"/>
         </Style>
-        <Style Selector="^[TabStripPlacement=Left]">
-        </Style>
-        <Style Selector="^[TabStripPlacement=Right] /template/ ItemsPresenter#PART_ItemsPresenter">
-            <Setter Property="DockPanel.Dock" Value="Right"/>
-        </Style>
         <Style Selector="^[TabStripPlacement=Right] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
             <Setter Property="Orientation" Value="Vertical"/>
-        </Style>
-        <Style Selector="^[TabStripPlacement=Right]">
         </Style>
     </ControlTheme>
 </ResourceDictionary>
