@@ -40,15 +40,16 @@ public static class TextIncrement {
         }
     }
 
-    public static string GetNextText(IEnumerable<string> inputs, string text, bool canAcceptInitialInput = true) {
-        if (string.IsNullOrEmpty(text)) {
-            return text;
+    public static string GetNextText(IEnumerable<string> inputs, string input, bool canAcceptInitialInput = true) {
+        if (string.IsNullOrEmpty(input)) {
+            return canAcceptInitialInput ? input : " (1)";
         }
 
         HashSet<string> available = new HashSet<string>(inputs);
-        if (!GetIncrementableString((x) => x != null && !available.Contains(x), text, out string? output, canAcceptInitialInput: canAcceptInitialInput))
-            output = text;
-        return output!;
+        if (!GetIncrementableString((x) => !available.Contains(x), input, out string? output, canAcceptInitialInput: canAcceptInitialInput))
+            output = input; // wtf? 1.8 sextillion or something attempts and we failed?
+        
+        return output;
     }
 
     public static bool GetNumbered(string? input, out string? left, out long number) {
