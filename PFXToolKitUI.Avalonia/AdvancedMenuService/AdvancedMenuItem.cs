@@ -58,14 +58,14 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
-        BaseContextEntry.OnUserAdded(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
+        BaseContextEntry.InternalOnBecomeVisible(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
         AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
         Dispatcher.UIThread.InvokeAsync(() => AdvancedMenuService.NormaliseSeparators(this), DispatcherPriority.Loaded);
     }
 
     protected override void OnUnloaded(RoutedEventArgs e) {
         base.OnUnloaded(e);
-        BaseContextEntry.OnUserRemoved(this.Entry!);
+        BaseContextEntry.InternalOnBecomeHidden(this.Entry!);
         AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
     }
 

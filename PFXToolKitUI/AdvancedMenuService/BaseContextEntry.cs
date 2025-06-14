@@ -28,6 +28,8 @@ public delegate void BaseContextEntryEventHandler(BaseContextEntry sender);
 
 public delegate void BaseContextEntryIconChangedEventHandler(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon);
 
+public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseContextEntry sender, IContextData? oldCapturedContext, IContextData? newCapturedContext);
+
 /// <summary>
 /// The base class for a menu item model. Contains standard properties like display name, tooltip description and an icon.
 /// <para>
@@ -40,6 +42,7 @@ public abstract class BaseContextEntry : IContextObject {
     private string? displayName, description;
     private Icon? icon;
     private bool isInUse;
+    private IContextData? capturedContext;
 
     /// <summary>
     /// Gets or sets the header of the menu item
@@ -70,22 +73,30 @@ public abstract class BaseContextEntry : IContextObject {
             }
         }
     }
-    
+
     /// <summary>
-    /// Gets the current captured context from the UI menu item. This is null when the menu item is not visible onscreen
+    /// Gets the current captured context from the UI menu item. This changes when the entry's visibility on screen changes or
+    /// the captured context data, of the context menu this entry exists in, changes.
+    /// <para>
+    /// Note, objects from the context should ideally only be used for state observation
+    /// </para>
     /// </summary>
-    public IContextData? CapturedContext { get; private set; }
+    public IContextData? CapturedContext {
+        get => this.capturedContext;
+        set => PropertyHelper.SetAndRaiseINE(ref this.capturedContext, value, this, static (t, o, n) => t.CapturedContextChanged?.Invoke(t, o, n));
+    }
 
     public event BaseContextEntryEventHandler? DisplayNameChanged;
     public event BaseContextEntryEventHandler? DescriptionChanged;
     public event BaseContextEntryIconChangedEventHandler? IconChanged;
+    public event BaseContextEntryCapturedContextChangedEventHandler? CapturedContextChanged;
 
     /// <summary>
     /// Fired when the executability of this entry as a command has changed. This
     /// is listened to by the UI to update the enabled and visibility states
     /// </summary>
     public event BaseContextEntryEventHandler? CanExecuteChanged;
-    
+
     public BaseContextEntry() {
     }
 
@@ -95,21 +106,13 @@ public abstract class BaseContextEntry : IContextObject {
         this.description = description;
         this.icon = icon;
     }
-    
+
     /// <summary>
     /// Raises the <see cref="CanExecuteChanged"/> event 
     /// </summary>
     public void RaiseCanExecuteChanged() => this.CanExecuteChanged?.Invoke(this);
 
-    /// <summary>
-    /// Invoked when <see cref="CapturedContext"/> changes. Note that this is only called when the UI menu item's visibility
-    /// changes. Therefore, objects from the context should not be used for anything except observing the states of
-    /// </summary>
-    protected virtual void OnContextChanged() {
-        
-    }
-
-    public static void OnUserAdded(BaseContextEntry entry, IContextData capturedContext) {
+    public static void InternalOnBecomeVisible(BaseContextEntry entry, IContextData capturedContext) {
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentNullException.ThrowIfNull(capturedContext);
         if (entry.isInUse)
@@ -117,20 +120,18 @@ public abstract class BaseContextEntry : IContextObject {
 
         entry.isInUse = true;
         entry.CapturedContext = capturedContext;
-        entry.OnContextChanged();
-        
+
         Debug.WriteLine($"[ADVANCEDMENUSYSTEM] ENTRY VISIBLE - {entry.GetType().Name} (\"{entry.displayName}\")");
     }
 
-    public static void OnUserRemoved(BaseContextEntry entry) {
+    public static void InternalOnBecomeHidden(BaseContextEntry entry) {
         ArgumentNullException.ThrowIfNull(entry);
         if (!entry.isInUse)
             throw new InvalidOperationException("Context not in use");
 
         entry.isInUse = false;
         entry.CapturedContext = null;
-        entry.OnContextChanged();
-        
+
         Debug.WriteLine($"[ADVANCEDMENUSYSTEM] ENTRY HIDDEN - {entry.GetType().Name} (\"{entry.displayName}\")");
     }
 }
