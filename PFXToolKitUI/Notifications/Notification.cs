@@ -130,7 +130,7 @@ public abstract class Notification {
 
     protected Notification() {
         this.Commands = new ObservableList<NotificationCommand>();
-        this.Commands.BeforeAdd += (list, item, index) => {
+        this.Commands.BeforeItemAdded += (list, index, item) => {
             if (item.Notification != null)
                 throw new InvalidOperationException("Command already exists in another notification");
         };

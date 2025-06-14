@@ -19,21 +19,42 @@
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
 
-public delegate void ObservableListBeforeAddedEventHandler<T>(IObservableList<T> list, T item, int index);
+public delegate void ObservableListBeforeAddedEventHandler<T>(IObservableList<T> list, int index, T item);
 
 public delegate void ObservableListBeforeRemovedEventHandler<T>(IObservableList<T> list, int index, int count);
 
-public delegate void ObservableListMultipleItemsEventHandler<T>(IObservableList<T> list, IList<T> items, int index);
+public delegate void ObservableListMultipleItemsEventHandler<T>(IObservableList<T> list, int index, IList<T> items);
 
-public delegate void ObservableListSingleItemEventHandler<T>(IObservableList<T> list, T item, int oldIndex, int newIndex);
+public delegate void ObservableListSingleItemEventHandler<T>(IObservableList<T> list, int oldIndex, int newIndex, T item);
 
-public delegate void ObservableListReplaceEventHandler<T>(IObservableList<T> list, T oldItem, T newItem, int index);
+public delegate void ObservableListReplaceEventHandler<T>(IObservableList<T> list, int index, T oldItem, T newItem);
 
 /// <summary>
 /// A list implementation that invokes a series of events when the collection changes
 /// </summary>
 /// <typeparam name="T"></typeparam>
 public interface IObservableList<T> : IList<T> {
+    /// <summary>
+    /// An event fired when an item is about to be added. This is fired multiple times but before any item is added
+    /// when adding multiple items. This can be used for pre-checks and throwing an exception when those checks fail.
+    /// </summary>
+    public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
+    
+    /// <summary>
+    /// An event fired when an item is about to be removed.
+    /// </summary>
+    public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
+    
+    /// <summary>
+    /// An event fired when an item is about to be replaced by another item
+    /// </summary>
+    public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
+    
+    /// <summary>
+    /// An event fired when an item is about to be moved from one index to another
+    /// </summary>
+    public event ObservableListSingleItemEventHandler<T>? BeforeItemMoved;
+    
     /// <summary>
     /// An event fired when one or more items are inserted into the list.
     /// <para>

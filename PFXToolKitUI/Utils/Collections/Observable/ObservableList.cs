@@ -32,10 +32,10 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     private readonly bool isDerivedType;
     protected int blockReentrancyCount;
 
-    public event ObservableListBeforeAddedEventHandler<T>? BeforeAdd;
-    public event ObservableListBeforeRemovedEventHandler<T>? BeforeRemove;
-    public event ObservableListReplaceEventHandler<T>? BeforeReplace;
-    public event ObservableListSingleItemEventHandler<T>? BeforeMove;
+    public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
+    public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
+    public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
+    public event ObservableListSingleItemEventHandler<T>? BeforeItemMoved;
 
     public event ObservableListMultipleItemsEventHandler<T>? ItemsAdded;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsRemoved;
@@ -62,7 +62,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected override void InsertItem(int index, T item) {
         this.CheckReentrancy();
 
-        this.BeforeAdd?.Invoke(this, item, index);
+        this.BeforeItemAdded?.Invoke(this, index, item);
         this.myItems.Insert(index, item);
 
         // Invoke base method when derived or we have an ItemsAdded handler
@@ -85,10 +85,10 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
             list = items.ToList();
         }
 
-        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeAdd;
+        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeItemAdded;
         if (beforeAdd != null) {
             foreach (T item in list) {
-                beforeAdd(this, item, index);
+                beforeAdd(this, index, item);
             }
         }
 
@@ -111,10 +111,10 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         if ((uint) index > (uint) this.myItems.Count)
             throw new ArgumentOutOfRangeException(nameof(index), index, "Index is not within the bounds of the list");
 
-        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeAdd;
+        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeItemAdded;
         if (beforeAdd != null) {
             foreach (T item in items) {
-                beforeAdd(this, item, index);
+                beforeAdd(this, index, item);
             }
         }
 
@@ -127,7 +127,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         this.CheckReentrancy();
         T removedItem = this[index];
 
-        this.BeforeRemove?.Invoke(this, index, 1);
+        this.BeforeItemsRemoved?.Invoke(this, index, 1);
         this.myItems.RemoveAt(index);
 
         // Invoke base method when derived or we have an ItemsRemoved handler
@@ -145,7 +145,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
 
         this.CheckReentrancy();
 
-        this.BeforeRemove?.Invoke(this, index, count);
+        this.BeforeItemsRemoved?.Invoke(this, index, count);
         if (!this.isDerivedType && this.ItemsRemoved == null) {
             // We are not a derived type, and we have no ItemsRemoved handler,
             // so we don't need to create any pointless sub-lists
@@ -163,7 +163,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         this.CheckReentrancy();
         T oldItem = this[index];
 
-        this.BeforeReplace?.Invoke(this, oldItem, newItem, index);
+        this.BeforeItemReplace?.Invoke(this, index, oldItem, newItem);
         base.SetItem(index, newItem);
         this.OnItemReplaced(index, oldItem, newItem);
     }
@@ -174,7 +174,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         this.CheckReentrancy();
         T item = this[oldIndex];
 
-        this.BeforeMove?.Invoke(this, item, oldIndex, newIndex);
+        this.BeforeItemMoved?.Invoke(this, oldIndex, newIndex, item);
         base.RemoveItem(oldIndex);
         base.InsertItem(newIndex, item);
         this.OnItemMoved(oldIndex, newIndex, item);
@@ -186,7 +186,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
             return;
         }
 
-        this.BeforeRemove?.Invoke(this, 0, this.myItems.Count);
+        this.BeforeItemsRemoved?.Invoke(this, 0, this.myItems.Count);
         if (!this.isDerivedType && this.ItemsRemoved == null) {
             // We are not a derived type, and we have no ItemsRemoved handler,
             // so we don't need to create any pointless sub-lists
@@ -202,7 +202,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected virtual void OnItemsAdded(int index, IList<T> items) {
         try {
             this.blockReentrancyCount++;
-            this.ItemsAdded?.Invoke(this, items, index);
+            this.ItemsAdded?.Invoke(this, index, items);
         }
         finally {
             this.blockReentrancyCount--;
@@ -212,7 +212,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected virtual void OnItemsRemoved(int index, IList<T> items) {
         try {
             this.blockReentrancyCount++;
-            this.ItemsRemoved?.Invoke(this, items, index);
+            this.ItemsRemoved?.Invoke(this, index, items);
         }
         finally {
             this.blockReentrancyCount--;
@@ -222,7 +222,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected virtual void OnItemReplaced(int index, T oldItem, T newItem) {
         try {
             this.blockReentrancyCount++;
-            this.ItemReplaced?.Invoke(this, oldItem, newItem, index);
+            this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
         }
         finally {
             this.blockReentrancyCount--;
@@ -232,7 +232,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     protected virtual void OnItemMoved(int oldIndex, int newIndex, T item) {
         try {
             this.blockReentrancyCount++;
-            this.ItemMoved?.Invoke(this, item, oldIndex, newIndex);
+            this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
         }
         finally {
             this.blockReentrancyCount--;

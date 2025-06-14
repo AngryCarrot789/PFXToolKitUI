@@ -104,24 +104,24 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
         }
     }
 
-    private void OnItemsAdded(IObservableList<TModel> list, IList<TModel> items, int index) {
+    private void OnItemsAdded(IObservableList<TModel> list, int index, IList<TModel> items) {
         foreach (TModel model in items) {
             this.InsertModel(index++, model);
         }
     }
 
-    private void OnItemsRemoved(IObservableList<TModel> list, IList<TModel> items, int index) {
+    private void OnItemsRemoved(IObservableList<TModel> list, int index, IList<TModel> items) {
         for (int i = index + items.Count - 1; i >= index; i--) {
             this.RemoveModelAt(i);
         }
     }
 
-    private void OnItemReplaced(IObservableList<TModel> list, TModel oldItem, TModel newItem, int index) {
+    private void OnItemReplaced(IObservableList<TModel> list, int index, TModel oldItem, TModel newItem) {
         this.RemoveModelAt(index);
         this.InsertModel(index, newItem);
     }
 
-    private void OnItemMoved(IObservableList<TModel> list, TModel item, int oldIdx, int newIdx) {
+    private void OnItemMoved(IObservableList<TModel> list, int oldIdx, int newIdx, TModel item) {
         this.MoveModel(oldIdx, newIdx);
     }
 

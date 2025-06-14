@@ -70,7 +70,7 @@ public sealed class ObservableItemProcessorSimple<T> : IDisposable {
         this.OnItemRemoved = itemRemoved;
     }
 
-    private void OnItemsAdded(IObservableList<T> observableList, IList<T> items, int index) {
+    private void OnItemsAdded(IObservableList<T> observableList, int index, IList<T> items) {
         Action<T>? handler = this.OnItemAdded;
         if (handler == null)
             return;
@@ -79,7 +79,7 @@ public sealed class ObservableItemProcessorSimple<T> : IDisposable {
             handler(item);
     }
 
-    private void OnItemsRemoved(IObservableList<T> observableList, IList<T> items, int index) {
+    private void OnItemsRemoved(IObservableList<T> observableList, int index, IList<T> items) {
         Action<T>? handler = this.OnItemRemoved;
         if (handler == null)
             return;
@@ -88,7 +88,7 @@ public sealed class ObservableItemProcessorSimple<T> : IDisposable {
             handler(item);
     }
 
-    private void OnItemReplaced(IObservableList<T> observableList, T olditem, T newitem, int index) {
+    private void OnItemReplaced(IObservableList<T> observableList, int index, T olditem, T newitem) {
         this.OnItemRemoved?.Invoke(olditem);
         this.OnItemAdded?.Invoke(newitem);
     }
@@ -121,7 +121,7 @@ public sealed class ObservableItemProcessorIndexing<T> : IDisposable {
         this.OnItemMoved = itemMoved;
     }
 
-    private void ItemsAdded(IObservableList<T> observableList, IList<T> items, int index) {
+    private void ItemsAdded(IObservableList<T> observableList, int index, IList<T> items) {
         ObservableItemProcessorItemEventHandler<T>? handler = this.OnItemAdded;
         if (handler == null)
             return;
@@ -131,7 +131,7 @@ public sealed class ObservableItemProcessorIndexing<T> : IDisposable {
             handler(this, ++i, item);
     }
 
-    private void ItemsRemoved(IObservableList<T> observableList, IList<T> items, int index) {
+    private void ItemsRemoved(IObservableList<T> observableList, int index, IList<T> items) {
         ObservableItemProcessorItemEventHandler<T>? handler = this.OnItemRemoved;
         if (handler == null)
             return;
@@ -152,12 +152,12 @@ public sealed class ObservableItemProcessorIndexing<T> : IDisposable {
         }
     }
 
-    private void ItemReplaced(IObservableList<T> observableList, T oldItem, T newItem, int index) {
+    private void ItemReplaced(IObservableList<T> observableList, int index, T oldItem, T newItem) {
         this.OnItemRemoved?.Invoke(this, index, oldItem);
         this.OnItemAdded?.Invoke(this, index, newItem);
     }
 
-    private void ItemMoved(IObservableList<T> observableList, T item, int oldIndex, int newIndex) {
+    private void ItemMoved(IObservableList<T> observableList, int oldIndex, int newIndex, T item) {
         this.OnItemMoved?.Invoke(this, oldIndex, newIndex, item);
     }
 

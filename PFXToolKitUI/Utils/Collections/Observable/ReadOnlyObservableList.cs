@@ -26,23 +26,39 @@ namespace PFXToolKitUI.Utils.Collections.Observable;
 /// </summary>
 /// <typeparam name="T">The type of value we store</typeparam>
 public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<T> {
+    public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
+    public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
+    public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
+    public event ObservableListSingleItemEventHandler<T>? BeforeItemMoved;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsAdded;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? ItemReplaced;
     public event ObservableListSingleItemEventHandler<T>? ItemMoved;
 
     public ReadOnlyObservableList(IObservableList<T> list) : base(list) {
+        list.BeforeItemAdded += this.ListOnBeforeItemAdded;
+        list.BeforeItemsRemoved += this.ListOnBeforeItemsRemoved;
+        list.BeforeItemReplace += this.ListOnBeforeItemReplace;
+        list.BeforeItemMoved += this.ListOnBeforeItemMoved;
         list.ItemsAdded += this.ListOnItemsAdded;
         list.ItemsRemoved += this.ListOnItemsRemoved;
         list.ItemReplaced += this.ListOnItemReplaced;
         list.ItemMoved += this.ListOnItemMoved;
     }
 
-    private void ListOnItemsAdded(IObservableList<T> list, IList<T> items, int index) => this.ItemsAdded?.Invoke(this, items, index);
+    private void ListOnBeforeItemAdded(IObservableList<T> list, int index, T item) => this.BeforeItemAdded?.Invoke(this, index, item);
 
-    private void ListOnItemsRemoved(IObservableList<T> list, IList<T> items, int index) => this.ItemsRemoved?.Invoke(this, items, index);
+    private void ListOnBeforeItemsRemoved(IObservableList<T> list, int index, int count) => this.BeforeItemsRemoved?.Invoke(this, index, count);
 
-    private void ListOnItemReplaced(IObservableList<T> list, T oldItem, T newItem, int index) => this.ItemReplaced?.Invoke(this, oldItem, newItem, index);
+    private void ListOnBeforeItemReplace(IObservableList<T> list, int index, T oldItem, T newItem) => this.BeforeItemReplace?.Invoke(this, index, oldItem, newItem);
 
-    private void ListOnItemMoved(IObservableList<T> list, T item, int oldIndex, int newIndex) => this.ItemMoved?.Invoke(this, item, oldIndex, newIndex);
+    private void ListOnBeforeItemMoved(IObservableList<T> list, int oldIndex, int newIndex, T item) => this.BeforeItemMoved?.Invoke(this, oldIndex, newIndex, item);
+
+    private void ListOnItemsAdded(IObservableList<T> list, int index, IList<T> items) => this.ItemsAdded?.Invoke(this, index, items);
+
+    private void ListOnItemsRemoved(IObservableList<T> list, int index, IList<T> items) => this.ItemsRemoved?.Invoke(this, index, items);
+
+    private void ListOnItemReplaced(IObservableList<T> list, int index, T oldItem, T newItem) => this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
+
+    private void ListOnItemMoved(IObservableList<T> list, int oldIndex, int newIndex, T item) => this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
 }
