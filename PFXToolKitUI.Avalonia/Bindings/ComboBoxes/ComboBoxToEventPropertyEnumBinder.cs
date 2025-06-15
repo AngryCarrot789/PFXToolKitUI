@@ -76,6 +76,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
         this.Control.PropertyChanged += this.OnControlPropertyChanged;
         this.eventHelper.AddEventHandler(model);
 
+        this.isUpdatingControl = true;
         this.Control!.Items.Clear();
         if ((info != null ? info.AllowedEnumList.Count : ENUM_VALUES.Count) > 0) {
             foreach (TEnum enumValue in info?.EnumList ?? ENUM_VALUES) {
@@ -91,6 +92,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
             }
         }
 
+        this.isUpdatingControl = false;
         this.UpdateControl(this.getter(model));
     }
 
