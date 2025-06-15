@@ -26,29 +26,28 @@ using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 namespace PFXToolKitUI.Avalonia.Bindings.ComboBoxes;
 
 public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum {
-    private static readonly ReadOnlyCollection<TEnum> ENUM_VALUES = Enum.GetValues(typeof(TEnum)).Cast<TEnum>().ToList().AsReadOnly();
-    
+    private static readonly ReadOnlyCollection<TEnum> ENUM_VALUES = DataParameterEnumInfo<TEnum>.EnumValues;
+
     private readonly Action<object, TEnum> setter;
     private readonly Func<object, TEnum?> getter;
     private readonly AutoEventHelper eventHelper;
-    private readonly DataParameterEnumInfo<TEnum>? enumInfo;
     private bool isUpdatingControl;
+    private DataParameterEnumInfo<TEnum>? enumInfo;
 
     /// <summary>
     /// Gets or sets the connected control
     /// </summary>
     public ComboBox? Control { get; private set; }
-    
+
     /// <summary>
     /// Gets or sets the connected model
     /// </summary>
     public object? Model { get; private set; }
 
-    public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum?> getter, Action<object, TEnum> setter, DataParameterEnumInfo<TEnum>? info = null) {
+    public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum?> getter, Action<object, TEnum> setter) {
         this.eventHelper = new AutoEventHelper(eventName, modelType, this.OnModelEnumChanged);
         this.setter = setter;
         this.getter = getter;
-        this.enumInfo = info;
     }
 
     private void OnModelEnumChanged() {
@@ -64,17 +63,34 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
             this.setter(this.Model!, idx == -1 ? default : (this.enumInfo?.EnumList ?? ENUM_VALUES)[idx]);
         }
     }
-    
-    public void Attach(ComboBox comboBox, object model) {
+
+    public void Attach(ComboBox comboBox, object model, DataParameterEnumInfo<TEnum>? info = null) {
         ArgumentNullException.ThrowIfNull(comboBox);
         ArgumentNullException.ThrowIfNull(model);
         if (this.Control != null)
             throw new InvalidOperationException("Already attached");
-        
+
         this.Control = comboBox;
         this.Model = model;
+        this.enumInfo = info;
         this.Control.PropertyChanged += this.OnControlPropertyChanged;
         this.eventHelper.AddEventHandler(model);
+
+        this.Control!.Items.Clear();
+        if ((info != null ? info.AllowedEnumList.Count : ENUM_VALUES.Count) > 0) {
+            foreach (TEnum enumValue in info?.EnumList ?? ENUM_VALUES) {
+                string displayText;
+                if (info != null && info.EnumToText.TryGetValue(enumValue, out string? text)) {
+                    displayText = text;
+                }
+                else {
+                    displayText = enumValue.ToString();
+                }
+
+                this.Control.Items.Add(new ComboBoxItem() { Content = displayText, Tag = enumValue });
+            }
+        }
+
         this.UpdateControl(this.getter(model));
     }
 
@@ -86,30 +102,17 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
         this.eventHelper.RemoveEventHandler(this.Model!);
         this.Control = null;
         this.Model = null;
+        this.enumInfo = null;
     }
-    
+
     private void UpdateControl(TEnum? currentValue) {
         try {
             this.isUpdatingControl = true;
-            if (this.Control!.Items.Count == 0 && (this.enumInfo != null ? this.enumInfo.AllowedEnumList.Count : ENUM_VALUES.Count) > 0) {
-                foreach (TEnum enumValue in this.enumInfo?.EnumList ?? ENUM_VALUES) {
-                    string displayText;
-                    if (this.enumInfo != null && this.enumInfo.EnumToText.TryGetValue(enumValue, out string? text)) {
-                        displayText = text;
-                    }
-                    else {
-                        displayText = enumValue.ToString();
-                    }
-                
-                    this.Control.Items.Add(new ComboBoxItem() { Content = displayText, Tag = enumValue });
-                }
-            }
-
             if (currentValue.HasValue) {
-                this.Control.SelectedIndex = (this.enumInfo?.EnumList ?? ENUM_VALUES).IndexOf(currentValue.Value);
+                this.Control!.SelectedIndex = (this.enumInfo?.EnumList ?? ENUM_VALUES).IndexOf(currentValue.Value);
             }
             else {
-                this.Control.SelectedIndex = -1;
+                this.Control!.SelectedIndex = -1;
             }
         }
         finally {
