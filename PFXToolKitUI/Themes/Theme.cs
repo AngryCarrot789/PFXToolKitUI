@@ -99,7 +99,7 @@ public abstract class Theme {
     /// Bulk operation for <see cref="SetInheritance(string,string?)"/> since that can be expensive
     /// when modifying built in themes or densely modified themes in general
     /// </summary>
-    /// <param name="entries">The entries. A null value means we remove inheritance</param>
+    /// <param name="entries">The entries. A null <see cref="KeyValuePair{TKey,TValue}.Value"/> means we remove inheritance</param>
     public abstract void SetInheritance(IEnumerable<KeyValuePair<string, string?>> entries);
     
     /// <summary>

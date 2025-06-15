@@ -38,9 +38,12 @@ public class AvaloniaShortcutInputProcessor : ShortcutInputProcessor {
         KeyModifiers mods = ShortcutUtils.IsModifierKey(key) ? KeyModifiers.None : e.KeyModifiers;
         KeyStroke stroke = new KeyStroke((int) key, (int) mods, isRelease);
 
-        if (UIInputManager.GetIsKeyShortcutProcessingBlocked(focused))
-            if (stroke.Modifiers == 0 && !UIInputManager.GetIsKeyShortcutProcessingUnblockedWithKeyModifiers(focused))
-                return;
+        // Some controls don't want to allow processing shortcuts that have no modifier keys,
+        // e.g. a text box, if a shortcut is activated by pressing G, you can never type G into it.
+        // If there's a shortcut CTRL+C, we try to run a shortcut first, then fallback to letting the TB handle it
+        if (stroke.Modifiers == 0 && UIInputManager.GetIsKeyShortcutProcessingBlocked(focused)) {
+            return;
+        }
 
         try {
             this.isProcessingKey = true;

@@ -25,6 +25,10 @@ using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Utils;
 
+/// <summary>
+/// An async relay command that invokes a <see cref="Command"/>. This relay command does not support
+/// <see cref="Command.AllowMultipleExecutions"/>, so even if the command can run multiple times concurrently, this relay command cannot
+/// </summary>
 public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
     public AvaloniaObject Control { get; }
 
