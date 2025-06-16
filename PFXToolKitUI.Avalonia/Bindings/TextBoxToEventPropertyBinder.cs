@@ -25,6 +25,8 @@ using PFXToolKitUI.Avalonia.Utils;
 namespace PFXToolKitUI.Avalonia.Bindings;
 
 public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventPropertyBinder<TModel> where TModel : class {
+    public delegate void EscapePressedEventHandler(TextBoxToEventPropertyBinder<TModel> sender, string oldText);
+    
     private readonly Func<IBinder<TModel>, string> getText;
     private readonly Func<IBinder<TModel>, string, Task<bool>> updateModel;
     private bool isHandlingChangeModel;
@@ -42,6 +44,8 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
     /// </summary>
     public bool FocusTextBoxOnError { get; set; } = true;
 
+    public event EscapePressedEventHandler? EscapePressed;
+    
     /// <summary>
     /// Initialises the <see cref="TextBoxToEventPropertyBinder{TModel}"/> object
     /// </summary>
@@ -91,7 +95,7 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
     private void OnLostFocus(object? sender, RoutedEventArgs e) {
         if (this.CanChangeOnLostFocus) {
             if (!this.isHandlingChangeModel) {
-                this.OnHandleUpdateModel();
+                ApplicationPFX.Instance.Dispatcher.Post(this.OnHandleUpdateModel, DispatchPriority.Input);
             }
         }
         else {
@@ -109,6 +113,8 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
             // user clicks away to do something else, lost focus is called and shows the dialog again, and it loops
             
             tb.LostFocus -= this.OnLostFocus;
+
+            string oldText = tb.Text ?? "";
             this.UpdateControl();
 
             VisualTreeUtils.TryMoveFocusUpwards(tb);
@@ -116,7 +122,7 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseAvaloniaPropertyToEventP
             ApplicationPFX.Instance.Dispatcher.Invoke(() => tb.LostFocus += this.OnLostFocus, DispatchPriority.Loaded);
 
             // invoke callback to allow user code to maybe reverse some changes
-            // this.OnEscapePressed();
+            this.EscapePressed?.Invoke(this, oldText);
         }
         else if (e.Key == Key.Enter) {
             if (!this.isHandlingChangeModel) {

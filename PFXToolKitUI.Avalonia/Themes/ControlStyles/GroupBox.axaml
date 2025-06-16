@@ -120,7 +120,7 @@
                             <ContentPresenter x:Name="PART_HeaderPresenter"
                                               Background="Transparent" BorderBrush="Transparent"
                                               Content="{TemplateBinding Header}"
-                                              ContentTemplate="{Binding $parent[Expander].HeaderTemplate}"
+                                              ContentTemplate="{Binding $parent[HeaderedContentControl].HeaderTemplate}"
                                               VerticalAlignment="{TemplateBinding VerticalHeaderAlignment}"
                                               HorizontalAlignment="{TemplateBinding HorizontalHeaderAlignment}"/>
                         </Border>
@@ -128,7 +128,7 @@
                             <ContentPresenter x:Name="PART_ContentPresenter" Background="Transparent" BorderBrush="Transparent"
                                               Margin="{TemplateBinding Padding}"
                                               Content="{TemplateBinding Content}"
-                                              ContentTemplate="{Binding $parent[Expander].ContentTemplate}"/>
+                                              ContentTemplate="{Binding $parent[HeaderedContentControl].ContentTemplate}"/>
                         </Border>
                     </DockPanel>
                 </Border>

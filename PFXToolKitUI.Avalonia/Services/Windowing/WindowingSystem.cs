@@ -31,6 +31,11 @@ namespace PFXToolKitUI.Avalonia.Services.Windowing;
 /// </summary>
 public abstract class WindowingSystem {
     /// <summary>
+    /// Gets the current main window
+    /// </summary>
+    public abstract DesktopWindow? MainWindow { get; }
+
+    /// <summary>
     /// Tries to get the windowing system for the application
     /// </summary>
     /// <param name="system"></param>
@@ -62,16 +67,16 @@ public abstract class WindowingSystem {
 
 public sealed class WindowingSystemImpl : WindowingSystem {
     private readonly IDesktopService desktop;
-    private readonly List<DesktopWindow> mainWindowable;
     private readonly List<DesktopWindow> openWindows;
     private readonly Uri? defaultIconUri;
     private DesktopWindow? lastActivated;
     private WindowIcon? defaultIcon;
     private bool failedToLoadDefaultIcon;
 
+    public override DesktopWindow? MainWindow => this.desktop.ApplicationLifetime.MainWindow as DesktopWindow;
+
     public WindowingSystemImpl(Uri? defaultIconUri = null) {
         this.desktop = ApplicationPFX.Instance.ServiceManager.GetService<IDesktopService>();
-        this.mainWindowable = new List<DesktopWindow>();
         this.openWindows = new List<DesktopWindow>();
         this.defaultIconUri = defaultIconUri;
     }
@@ -99,19 +104,16 @@ public sealed class WindowingSystemImpl : WindowingSystem {
         this.lastActivated = window;
         window.Activated += this.OnWindowActivated;
         window.Deactivated += this.OnWindowDeactivated;
-
-        // Try find suitable main window or update main window if current one is not mainwindowable
-        IClassicDesktopStyleApplicationLifetime lifetime = this.desktop.ApplicationLifetime;
-        if (lifetime.MainWindow is DesktopWindow impl && impl.IsOpen && this.mainWindowable.Contains(impl)) {
-            return;
-        }
-
-        lifetime.MainWindow = this.mainWindowable.FirstOrDefault(window);
     }
 
     private void OnWindowClosed(object? sender, EventArgs e) {
         DesktopWindow window = (DesktopWindow) sender!;
-        this.mainWindowable.Remove(window);
+        bool isMainWindow = this.MainWindow == window;
+        IClassicDesktopStyleApplicationLifetime lifetime = this.desktop.ApplicationLifetime;
+        if (isMainWindow) {
+            lifetime.MainWindow = null;
+        }
+
         if (window == this.lastActivated) {
             this.lastActivated = null;
         }
@@ -119,22 +121,12 @@ public sealed class WindowingSystemImpl : WindowingSystem {
         window.Activated -= this.OnWindowActivated;
         window.Deactivated -= this.OnWindowDeactivated;
 
-        // If we closed the main window, then try to find another suitable main window.
-        // Otherwise, leave it alone to allow ShutdownMode.OnMainWindowClosed to work
-        IClassicDesktopStyleApplicationLifetime lifetime = this.desktop.ApplicationLifetime;
-        Window? mainWindow = lifetime.MainWindow;
-        if (mainWindow == window || mainWindow == null || !mainWindow.IsLoaded) {
-            if (window.Owner is DesktopWindow owner && this.mainWindowable.Contains(owner) && owner.IsOpen) {
-                lifetime.MainWindow = owner;
-            }
-            else if (this.mainWindowable.FirstOrDefault(x => x.IsOpen) is DesktopWindow found) {
-                lifetime.MainWindow = found;
-            }
-            else {
-                return;
-            }
-
-            lifetime.MainWindow.Activate();
+        ShutdownMode mode = lifetime.ShutdownMode;
+        if (isMainWindow && mode == ShutdownMode.OnMainWindowClose) {
+            ApplicationPFX.Instance.Shutdown();
+        }
+        else if (mode == ShutdownMode.OnLastWindowClose && lifetime.Windows.Count < 1) {
+            ApplicationPFX.Instance.Shutdown();
         }
     }
 
@@ -149,7 +141,10 @@ public sealed class WindowingSystemImpl : WindowingSystem {
         window.Opened += this.OnWindowOpened;
         window.Closed += this.OnWindowClosed;
         if (isMainWindowable) {
-            this.mainWindowable.Add(window);
+            DesktopWindow? myMainWindow = this.MainWindow;
+            if (myMainWindow != null && myMainWindow.IsOpen)
+                throw new InvalidOperationException("Current main window is still open. Cannot show a new window as a main window");
+            this.desktop.ApplicationLifetime.MainWindow = window;
         }
 
         window.Icon ??= this.GetDefaultWindowIcon();
@@ -160,16 +155,12 @@ public sealed class WindowingSystemImpl : WindowingSystem {
         // Get last activated, or find the first that is activated
         window = this.lastActivated ?? this.openWindows.FirstOrDefault(x => x.IsActive);
 
-        if (this.desktop.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime classic) {
-            // No windows are activated. App is completely unfocused. So find the main window
-            window ??= classic.MainWindow as DesktopWindow;
-            if (window != null && !window.IsOpen) {
-                window = null;
-            }
+        // No windows are activated. App is completely unfocused. So find the main window
+        window ??= this.MainWindow;
+        if (window != null && !window.IsOpen) {
+            window = null;
         }
 
-        // If app has no main window, which ideally should be impossible, find first mainwindowable
-        window ??= this.mainWindowable.FirstOrDefault();
         return window != null;
     }
 }

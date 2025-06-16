@@ -4,6 +4,7 @@
                  xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
                  xmlns:configurations="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
                  xmlns:w="clr-namespace:PFXToolKitUI.Avalonia.Services.Windowing"
+                 xmlns:av="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia"
                  mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
                  x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialogWindow"
                  Title="Settings"
@@ -13,5 +14,6 @@
                  FontWeight="Medium"
                  Background="{DynamicResource PanelBackground0}"
                  MinWidth="600" MinHeight="450"
-                 Width="950" Height="700">
+                 Width="950" Height="700"
+                 av:UIInputManager.FocusPath="Configuration">
 </w:DesktopWindow>

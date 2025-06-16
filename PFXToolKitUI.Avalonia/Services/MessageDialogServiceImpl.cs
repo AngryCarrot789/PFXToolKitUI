@@ -40,6 +40,10 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
     public async Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
         ArgumentNullException.ThrowIfNull(info);
+        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
+            return await ShowMessageMainThread(info);
+        }
+        
         return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
     }
 

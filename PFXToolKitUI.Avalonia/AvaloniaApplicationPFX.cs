@@ -34,6 +34,7 @@ using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.Toolbars.Toolbars;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Icons;
+using PFXToolKitUI.Logging;
 using PFXToolKitUI.Plugins;
 using PFXToolKitUI.Services;
 using PFXToolKitUI.Services.ColourPicking;
@@ -57,7 +58,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         Dispatcher avd = global::Avalonia.Threading.Dispatcher.UIThread;
         this.Dispatcher = new AvaloniaDispatcherDelegate(avd);
         
-        if (application.ApplicationLifetime is IClassicDesktopStyleApplicationLifetime e) {
+        if (application.ApplicationLifetime is IControlledApplicationLifetime e) {
             e.Exit += this.OnApplicationExit;
         }
         
@@ -65,11 +66,25 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
     }
 
     private void OnDispatcherShutDown(object? sender, EventArgs e) {
+        if (this.StartupPhase != ApplicationStartupPhase.Stopping) {
+            AppLogger.Instance.WriteLine("Application Exit event was not fired! Handling manually");
+            this.OnExiting(0);
+        }
+        
         this.StartupPhase = ApplicationStartupPhase.Stopped;
     }
     
     private void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e) {
         this.OnExiting(e.ApplicationExitCode);
+    }
+
+    public override void Shutdown() {
+        if (this.Application.ApplicationLifetime is IControlledApplicationLifetime desktop) {
+            desktop.Shutdown();
+        }
+        else {
+            base.Shutdown();
+        }
     }
 
     protected override void RegisterServices(ServiceManager manager) {

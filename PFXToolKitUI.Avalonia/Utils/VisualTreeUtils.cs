@@ -27,8 +27,8 @@ using Avalonia.Input;
 namespace PFXToolKitUI.Avalonia.Utils;
 
 public static class VisualTreeUtils {
-    public static AvaloniaObject? FindNearestInheritedPropertyDefinition<T>(AvaloniaProperty<T> property, AvaloniaObject target) {
-        for (AvaloniaObject? next = target; next != null; next = GetParent(next)) {
+    public static AvaloniaObject? FindNearestInheritedPropertyDefinition<T>(AvaloniaProperty<T> property, StyledElement? target) {
+        for (StyledElement? next = target; next != null; next = GetParent(next)) {
             Optional<T> localValue = next.GetBaseValue(property);
             if (!localValue.HasValue)
                 continue;
@@ -48,17 +48,18 @@ public static class VisualTreeUtils {
     /// logical and templated parents (in that order based on availability)
     /// </param>
     /// <returns>The parent, or null, if there was no parent available</returns>
-    public static AvaloniaObject? GetParent(AvaloniaObject? source, bool visualOnly = false) => GetParent(source as Visual, visualOnly);
+    public static AvaloniaObject? GetParent(AvaloniaObject? source, bool visualOnly = false) => GetParent(source as StyledElement, visualOnly);
 
-    public static AvaloniaObject? GetParent(Visual? source, bool visualOnly = false) {
+    public static StyledElement? GetParent(StyledElement? source, bool visualOnly = false) {
         if (source == null)
             return null;
 
         StyledElement? parent = source.Parent;
-        if (parent != null || visualOnly || !(source is TemplatedControl control))
-            return parent;
+        if (parent == null && !visualOnly && source is TemplatedControl control) {
+            return control.Parent ?? control.TemplatedParent as StyledElement;
+        }
 
-        return (Visual?) (control.Parent ?? control.TemplatedParent);
+        return parent;
     }
 
     /// <summary>

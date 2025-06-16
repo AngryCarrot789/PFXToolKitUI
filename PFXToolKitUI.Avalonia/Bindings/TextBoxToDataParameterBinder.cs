@@ -116,7 +116,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
     private void OnLostFocus(object? sender, RoutedEventArgs e) {
         if (this.CanChangeOnLostFocus) {
             if (!this.isHandlingChangeModel) {
-                this.HandleChangeModel();
+                ApplicationPFX.Instance.Dispatcher.Post(this.HandleChangeModel, DispatchPriority.Input);
             }
         }
         else {

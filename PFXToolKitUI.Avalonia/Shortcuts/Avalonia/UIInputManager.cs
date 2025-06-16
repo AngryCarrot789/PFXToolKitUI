@@ -326,13 +326,13 @@ public class UIInputManager {
         if (string.IsNullOrEmpty(newPath))
             return;
 
-        AvaloniaObject? root = VisualTreeUtils.FindNearestInheritedPropertyDefinition(FocusPathProperty, target);
+        AvaloniaObject? root = VisualTreeUtils.FindNearestInheritedPropertyDefinition(FocusPathProperty, target as StyledElement);
         if (root != null) {
             currentlyFocusedObject.Target = root;
             root.SetValue(IsFocusedProperty, true);
         }
         else {
-            Debug.WriteLine("Failed to find root control that owns the FocusPathProperty of '" + GetFocusPath(target) + "'");
+            Debug.WriteLine("Failed to find root control that owns the FocusPathProperty of '" + GetFocusPath(target) + "' on control " + target.GetType().Name);
         }
     }
 

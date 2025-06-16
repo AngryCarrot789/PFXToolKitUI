@@ -389,7 +389,7 @@ public abstract class ApplicationPFX : IServiceable {
     /// <summary>
     /// Notifies the application to shut down at some point in the future
     /// </summary>
-    public virtual void BeginShutdown() => this.Dispatcher.InvokeShutdown();
+    public virtual void Shutdown() => this.Dispatcher.InvokeShutdown();
 
     protected abstract string? GetSolutionFileName();
 
