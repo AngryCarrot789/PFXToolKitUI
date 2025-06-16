@@ -18,6 +18,7 @@
 // 
 
 using Avalonia;
+using PFXToolKitUI.Avalonia.Bindings.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 
@@ -26,17 +27,16 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// an event handler for the model which fires the <see cref="IBinder.UpdateControl"/> method
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
-public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel> where TModel : class {
-    private readonly AutoEventHelper[] autoEventHelpers;
+public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel>, IRelayEventHandler where TModel : class {
+    private readonly SenderEventRelay[] autoEventHelpers;
 
     protected BaseAvaloniaPropertyToMultiEventPropertyBinder(string eventName) : this(null, eventName) {
     }
 
     protected BaseAvaloniaPropertyToMultiEventPropertyBinder(AvaloniaProperty? property, params string[] eventNames) : base(property) {
-        Action callback = this.OnModelValueChanged;
-        this.autoEventHelpers = new AutoEventHelper[eventNames.Length];
+        this.autoEventHelpers = new SenderEventRelay[eventNames.Length];
         for (int i = 0; i < eventNames.Length; i++) {
-            this.autoEventHelpers[i] = new AutoEventHelper(eventNames[i], typeof(TModel), callback);
+            this.autoEventHelpers[i] = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventNames[i]);
         }
     }
 
@@ -47,13 +47,15 @@ public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : B
 
     protected override void OnAttached() {
         base.OnAttached();
-        foreach (AutoEventHelper aeh in this.autoEventHelpers)
-            aeh.AddEventHandler(this.myModel!);
+        foreach (SenderEventRelay aeh in this.autoEventHelpers)
+            EventRelayBinderUtils.OnAttached(this.myModel!, this, aeh);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        foreach (AutoEventHelper aeh in this.autoEventHelpers)
-            aeh.RemoveEventHandler(this.myModel!);
+        foreach (SenderEventRelay aeh in this.autoEventHelpers)
+            EventRelayBinderUtils.OnDetached(this.myModel!, this, aeh);
     }
+
+    void IRelayEventHandler.OnEventFired() => this.OnModelValueChanged();
 }

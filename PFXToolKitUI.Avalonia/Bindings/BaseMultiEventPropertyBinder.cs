@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using PFXToolKitUI.Avalonia.Bindings.Events;
 using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
@@ -26,8 +27,8 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// A base binder class which implements an event handler for the model which fires the <see cref="IBinder.UpdateControl"/> method
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
-public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel> where TModel : class {
-    private readonly AutoEventHelper[] autoEventHelpers;
+public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>, IRelayEventHandler where TModel : class {
+    private readonly SenderEventRelay[] autoEventHelpers;
     private readonly IDispatcher dispatcher;
     private volatile RapidDispatchActionEx? rdaUpdateControl;
     private volatile int rdaLock;
@@ -47,13 +48,11 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel> 
     public DispatchPriority DispatchPriority { get; init; } = DispatchPriority.Normal;
 
     protected BaseMultiEventPropertyBinder(params string[] eventNames) {
-        this.autoEventHelpers = new AutoEventHelper[eventNames.Length];
-
-        Action callback = this.OnAnyEventFired;
+        this.autoEventHelpers = new SenderEventRelay[eventNames.Length];
         for (int i = 0; i < eventNames.Length; i++) {
-            this.autoEventHelpers[i] = new AutoEventHelper(eventNames[i], typeof(TModel), callback);
+            this.autoEventHelpers[i] = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventNames[i]);
         }
-        
+
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
 
@@ -75,11 +74,11 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel> 
                         this.rdaLock = 0;
                     }
                 }
-                
+
                 this.rdaUpdateControl!.InvokeAsync();
                 return;
             }
-            
+
             Debugger.Break();
             throw new InvalidOperationException("This property binder requires the event be fired on the main thread");
         }
@@ -88,12 +87,16 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel> 
     }
 
     protected override void OnAttached() {
-        foreach (AutoEventHelper aeh in this.autoEventHelpers)
-            aeh.AddEventHandler(this.myModel!);
+        foreach (SenderEventRelay aeh in this.autoEventHelpers)
+            EventRelayBinderUtils.OnAttached(this.myModel!, this, aeh);
     }
 
     protected override void OnDetached() {
-        foreach (AutoEventHelper aeh in this.autoEventHelpers)
-            aeh.RemoveEventHandler(this.myModel!);
+        foreach (SenderEventRelay aeh in this.autoEventHelpers)
+            EventRelayBinderUtils.OnDetached(this.myModel!, this, aeh);
+    }
+
+    void IRelayEventHandler.OnEventFired() {
+        this.OnAnyEventFired();
     }
 }

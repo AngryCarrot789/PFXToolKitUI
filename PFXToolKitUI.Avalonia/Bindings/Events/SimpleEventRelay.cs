@@ -20,16 +20,16 @@
 using System.Reflection;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Bindings;
+namespace PFXToolKitUI.Avalonia.Bindings.Events;
 
 /// <summary>
 /// A struct that generates an event handler (in the form of an action) from almost any event
 /// </summary>
-public readonly struct AutoEventHelper {
+public readonly struct SimpleEventRelay {
     public readonly EventInfo EventInfo;
     public readonly Delegate HandlerDelegate;
 
-    public AutoEventHelper(string eventName, Type modelType, Action callback) {
+    public SimpleEventRelay(string eventName, Type modelType, Action callback) {
         ArgumentNullException.ThrowIfNull(eventName);
 
         EventInfo? info = modelType.GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);

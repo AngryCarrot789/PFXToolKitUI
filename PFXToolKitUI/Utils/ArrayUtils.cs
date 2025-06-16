@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PFXToolKitUI.Utils;
@@ -115,5 +116,48 @@ public static class ArrayUtils {
         for (int i = 0, count = Math.Min(array.Length, minCount); i < count; i++)
             values[i] = array[i];
         return values;
+    }
+
+    public static T[] Add<T>(T[] array, T value) {
+        T[] newArray = new T[array.Length + 1];
+        Array.Copy(array, 0, newArray, 0, array.Length);
+        newArray[array.Length] = value;
+        return newArray;
+    }
+    
+    // RemoveAt([ # # # # # ], 4)
+    //                    _
+    public static T[] RemoveAt<T>(T[] array, int index) {
+        Debug.Assert(array.Length > 0);
+        T[] newArray = new T[array.Length - 1];
+        if (index > 0)
+            Array.Copy(array, 0, newArray, 0, index);
+        if (index != newArray.Length)
+            Array.Copy(array, index + 1, newArray, index, newArray.Length - index);
+        return newArray;
+    }
+
+    public static int IndexOf_RefType<T>(T[] array, T value) where T : class {
+        for (int i = 0; i < array.Length; i++) {
+            T val = array[i];
+            if (ReferenceEquals(val, value) || Equals(val, value))
+                return i;
+        }
+
+        return -1;
+    }
+
+    public static void Main() {
+        // test array functions
+        int[] array = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+        
+        int[] newArray = RemoveAt(array, 0);
+        Debug.Assert(newArray.SequenceEqual([1, 2, 3, 4, 5, 6, 7, 8]));
+        
+        newArray = RemoveAt(newArray, newArray.Length - 1);
+        Debug.Assert(newArray.SequenceEqual([1, 2, 3, 4, 5, 6, 7]));
+        
+        newArray = RemoveAt(newArray, 3);
+        Debug.Assert(newArray.SequenceEqual([1, 2, 3, 5, 6, 7]));
     }
 }

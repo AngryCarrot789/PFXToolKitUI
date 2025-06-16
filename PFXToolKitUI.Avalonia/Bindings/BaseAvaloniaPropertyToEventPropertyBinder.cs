@@ -18,6 +18,7 @@
 // 
 
 using Avalonia;
+using PFXToolKitUI.Avalonia.Bindings.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 
@@ -26,14 +27,14 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// an event handler for the model which fires the <see cref="IBinder.UpdateControl"/> method
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
-public abstract class BaseAvaloniaPropertyToEventPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel> where TModel : class {
-    private readonly AutoEventHelper autoEventHelper;
+public abstract class BaseAvaloniaPropertyToEventPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel>, IRelayEventHandler where TModel : class {
+    private readonly SenderEventRelay eventRelay;
 
     protected BaseAvaloniaPropertyToEventPropertyBinder(string eventName) : this(null, eventName) {
     }
 
     protected BaseAvaloniaPropertyToEventPropertyBinder(AvaloniaProperty? property, string eventName) : base(property) {
-        this.autoEventHelper = new AutoEventHelper(eventName, typeof(TModel), this.OnModelValueChanged);
+        this.eventRelay = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventName);
     }
 
     /// <summary>
@@ -41,13 +42,15 @@ public abstract class BaseAvaloniaPropertyToEventPropertyBinder<TModel> : BaseAv
     /// </summary>
     protected virtual void OnModelValueChanged() => this.UpdateControl();
 
+    void IRelayEventHandler.OnEventFired() => this.OnModelValueChanged();
+    
     protected override void OnAttached() {
         base.OnAttached();
-        this.autoEventHelper.AddEventHandler(this.myModel!);
+        EventRelayBinderUtils.OnAttached(this.myModel!, this, this.eventRelay);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        this.autoEventHelper.RemoveEventHandler(this.myModel!);
+        EventRelayBinderUtils.OnDetached(this.myModel!, this, this.eventRelay);
     }
 }

@@ -17,15 +17,17 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Avalonia.Bindings.Events;
+
 namespace PFXToolKitUI.Avalonia.Bindings.Enums;
 
 /// <summary>
 /// A class which helps bind radio buttons to an enum property
 /// </summary>
-public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum : struct, Enum {
+public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum>, IRelayEventHandler where TEnum : struct, Enum {
     private readonly Action<object, TEnum> setter;
     private readonly Func<object, TEnum> getter;
-    private readonly AutoEventHelper eventHelper;
+    private readonly SenderEventRelay eventRelay;
 
     /// <summary>
     /// Gets or sets the active transferable data owner
@@ -35,10 +37,12 @@ public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum 
     public override bool IsAttached => this.Model != null;
 
     public EventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum> getter, Action<object, TEnum> setter) {
-        this.eventHelper = new AutoEventHelper(eventName, modelType, this.OnModelEnumChanged);
+        this.eventRelay = EventRelayBinderUtils.GetEventRelay(modelType, eventName);
         this.setter = setter;
         this.getter = getter;
     }
+    
+    void IRelayEventHandler.OnEventFired() => this.OnModelEnumChanged();
     
     private void OnModelEnumChanged() {
         if (this.Model == null)
@@ -52,7 +56,7 @@ public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum 
         if (this.Model != null)
             throw new InvalidOperationException("Already attached");
         
-        this.eventHelper.AddEventHandler(this.Model = model);
+        EventRelayBinderUtils.OnAttached(this.Model = model, this, this.eventRelay);
         this.UpdateControls(this.getter(model));
     }
 
@@ -60,7 +64,7 @@ public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum 
         if (this.Model == null)
             throw new InvalidOperationException("Not attached");
 
-        this.eventHelper.RemoveEventHandler(this.Model);
+        EventRelayBinderUtils.OnDetached(this.Model!, this, this.eventRelay);
         this.Model = null;
     }
 

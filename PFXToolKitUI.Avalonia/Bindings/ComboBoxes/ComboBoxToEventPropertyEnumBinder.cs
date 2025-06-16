@@ -21,16 +21,17 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using PFXToolKitUI.Avalonia.Bindings.Events;
 using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 
 namespace PFXToolKitUI.Avalonia.Bindings.ComboBoxes;
 
-public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum {
+public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where TEnum : struct, Enum {
     private static readonly ReadOnlyCollection<TEnum> ENUM_VALUES = DataParameterEnumInfo<TEnum>.EnumValues;
 
     private readonly Action<object, TEnum> setter;
     private readonly Func<object, TEnum?> getter;
-    private readonly AutoEventHelper eventHelper;
+    private readonly SenderEventRelay eventRelay;
     private bool isUpdatingControl;
     private DataParameterEnumInfo<TEnum>? enumInfo;
 
@@ -45,10 +46,12 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
     public object? Model { get; private set; }
 
     public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum?> getter, Action<object, TEnum> setter) {
-        this.eventHelper = new AutoEventHelper(eventName, modelType, this.OnModelEnumChanged);
+        this.eventRelay = EventRelayBinderUtils.GetEventRelay(modelType, eventName);
         this.setter = setter;
         this.getter = getter;
     }
+
+    void IRelayEventHandler.OnEventFired() => this.OnModelEnumChanged();
 
     private void OnModelEnumChanged() {
         if (this.Model == null)
@@ -74,7 +77,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
         this.Model = model;
         this.enumInfo = info;
         this.Control.PropertyChanged += this.OnControlPropertyChanged;
-        this.eventHelper.AddEventHandler(model);
+        EventRelayBinderUtils.OnAttached(this.Model!, this, this.eventRelay);
 
         this.isUpdatingControl = true;
         this.Control!.Items.Clear();
@@ -101,7 +104,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> where TEnum : struct, Enum
             throw new InvalidOperationException("Not attached");
 
         this.Control.PropertyChanged -= this.OnControlPropertyChanged;
-        this.eventHelper.RemoveEventHandler(this.Model!);
+        EventRelayBinderUtils.OnDetached(this.Model!, this, this.eventRelay);
         this.Control = null;
         this.Model = null;
         this.enumInfo = null;
