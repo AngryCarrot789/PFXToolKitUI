@@ -34,6 +34,9 @@ public class GroupBox : HeaderedContentControl {
     public static readonly StyledProperty<VerticalAlignment> VerticalHeaderAlignmentProperty = AvaloniaProperty.Register<GroupBox, VerticalAlignment>(nameof(VerticalHeaderAlignment), VerticalAlignment.Center);
     public static readonly StyledProperty<Thickness> HeaderPaddingProperty = AvaloniaProperty.Register<GroupBox, Thickness>(nameof(HeaderPadding));
 
+    /// <summary>
+    /// Gets or sets the background brush of the header element
+    /// </summary>
     public IBrush HeaderBrush {
         get => this.GetValue(HeaderBrushProperty);
         set => this.SetValue(HeaderBrushProperty, value);

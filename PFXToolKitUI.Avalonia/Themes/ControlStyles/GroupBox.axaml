@@ -2,24 +2,176 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls;assembly=PFXToolKitUI.Avalonia"
                     xmlns:cv="clr-namespace:PFXToolKitUI.Avalonia.Themes.Converters">
+
+    <ControlTheme x:Key="{x:Type c:GroupBox}" TargetType="{x:Type c:GroupBox}">
+        <Setter Property="Background" Value="{DynamicResource ABrush.Tone3.Background.Static}"/>
+        <Setter Property="HeaderBrush" Value="{DynamicResource GroupBox.Header.Static.Background}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GroupBox.Static.Border}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="HeaderContentGap" Value="1"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HeaderPadding" Value="5,2"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type c:GroupBox}">
+                <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
+                    <DockPanel>
+                        <!-- Using a converter for the border thickness saves having an extra border element -->
+                        <!-- in this template, which helps with performance a tiny bit -->
+                        <Border x:Name="PART_Header" Padding="{TemplateBinding HeaderPadding}"
+                                Background="{TemplateBinding HeaderBrush}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="{TemplateBinding HeaderContentGap, Converter={x:Static cv:GroupBoxGapToThicknessConverter.Instance}}"
+                                DockPanel.Dock="Top" MinHeight="27">
+                            <ContentPresenter x:Name="PART_HeaderPresenter"
+                                              Background="Transparent" BorderBrush="Transparent"
+                                              Content="{TemplateBinding Header}"
+                                              ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                              VerticalAlignment="{TemplateBinding VerticalHeaderAlignment}"
+                                              HorizontalAlignment="{TemplateBinding HorizontalHeaderAlignment}"/>
+                        </Border>
+                        <Border x:Name="PART_ContentBorder" Background="{TemplateBinding Background}">
+                            <ContentPresenter x:Name="PART_ContentPresenter" Background="Transparent" BorderBrush="Transparent"
+                                              Margin="{TemplateBinding Padding}"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                        </Border>
+                    </DockPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+    <ControlTheme x:Key="DefaultGroupBoxTheme" TargetType="{x:Type c:GroupBox}">
+        <Setter Property="Background" Value="{DynamicResource ABrush.Tone3.Background.Static}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource GroupBox.Static.Border}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="HeaderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="HeaderContentGap" Value="1"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="HorizontalHeaderAlignment" Value="Center"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="HeaderPadding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type c:GroupBox}">
+                <Grid ColumnDefinitions="6,Auto,*,6" RowDefinitions="Auto,Auto,*,6">
+                    <Border BorderBrush="Transparent"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Background="{TemplateBinding Background}"
+                            CornerRadius="0"
+                            Grid.Column="0" Grid.ColumnSpan="4"
+                            Grid.Row="1" Grid.RowSpan="3"/>
+                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="1,0,1,1"
+                            CornerRadius="0"
+                            UseLayoutRounding="True"
+                            Grid.Row="1" Grid.RowSpan="3"
+                            Grid.Column="0" Grid.ColumnSpan="4"/>
+                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            CornerRadius="0"
+                            UseLayoutRounding="True"
+                            Grid.Row="1" Grid.RowSpan="3"
+                            Grid.Column="0"/>
+                    <Border BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="0,1,0,0"
+                            CornerRadius="0"
+                            UseLayoutRounding="True"
+                            Grid.Row="1" Grid.RowSpan="3"
+                            Grid.Column="2" Grid.ColumnSpan="2"/>
+                    <Border x:Name="Header" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="3,1,3,0" Background="Transparent">
+                        <ContentPresenter x:Name="PART_HeaderPresenter"
+                                          Background="{TemplateBinding HeaderBrush}" BorderBrush="Transparent"
+                                          Margin="{TemplateBinding HeaderPadding}"
+                                          Content="{TemplateBinding Header}"
+                                          ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                          VerticalAlignment="{TemplateBinding VerticalHeaderAlignment}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalHeaderAlignment}"/>
+                    </Border>
+                    <ContentPresenter x:Name="PART_ContentPresenter"
+                                      Grid.Column="1" Grid.ColumnSpan="2"
+                                      Grid.Row="2"
+                                      Background="Transparent" BorderBrush="Transparent"
+                                      Margin="{TemplateBinding Padding}"
+                                      Content="{TemplateBinding Content}"
+                                      ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                </Grid>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
     <Design.PreviewWith>
-        <c:GroupBox Grid.Row="5" Width="250"
-                    Background="{DynamicResource PanelBackground3}"
-                    BorderBrush="{DynamicResource PanelBorderBrush}"
-                    BorderThickness="1"
-                    HorizontalHeaderAlignment="Stretch"
-                    VerticalHeaderAlignment="Stretch">
+        <c:GroupBox Width="250">
+            <c:GroupBox.Theme>
+                <ControlTheme TargetType="{x:Type c:GroupBox}">
+                    <Setter Property="Background" Value="{DynamicResource ABrush.Tone3.Background.Static}"/>
+                    <Setter Property="BorderBrush" Value="{DynamicResource GroupBox.Static.Border}"/>
+                    <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+                    <Setter Property="HeaderBrush" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="1"/>
+                    <Setter Property="HeaderContentGap" Value="1"/>
+                    <Setter Property="HorizontalContentAlignment" Value="Center"/>
+                    <Setter Property="VerticalContentAlignment" Value="Center"/>
+                    <Setter Property="HorizontalHeaderAlignment" Value="Center"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="HeaderPadding" Value="0"/>
+                    <Setter Property="Template">
+                        <ControlTemplate TargetType="{x:Type c:GroupBox}">
+                            <Grid ColumnDefinitions="6,Auto,*,6" RowDefinitions="Auto,Auto,*,6">
+                                <Border BorderBrush="Transparent"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        Background="{TemplateBinding Background}"
+                                        CornerRadius="0"
+                                        Grid.Column="0" Grid.ColumnSpan="4"
+                                        Grid.Row="1" Grid.RowSpan="3"/>
+                                <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="1,0,1,1"
+                                        CornerRadius="0"
+                                        UseLayoutRounding="True"
+                                        Grid.Row="1" Grid.RowSpan="3"
+                                        Grid.Column="0" Grid.ColumnSpan="4"/>
+                                <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="0,1,0,0"
+                                        CornerRadius="0"
+                                        UseLayoutRounding="True"
+                                        Grid.Row="1" Grid.RowSpan="3"
+                                        Grid.Column="0"/>
+                                <Border BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="0,1,0,0"
+                                        CornerRadius="0"
+                                        UseLayoutRounding="True"
+                                        Grid.Row="1" Grid.RowSpan="3"
+                                        Grid.Column="2" Grid.ColumnSpan="2"/>
+                                <Border x:Name="Header" Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="3,1,3,0" Background="Transparent">
+                                    <ContentPresenter x:Name="PART_HeaderPresenter"
+                                                      Background="{TemplateBinding HeaderBrush}" BorderBrush="Transparent"
+                                                      Margin="{TemplateBinding HeaderPadding}"
+                                                      Content="{TemplateBinding Header}"
+                                                      ContentTemplate="{TemplateBinding HeaderTemplate}"
+                                                      VerticalAlignment="{TemplateBinding VerticalHeaderAlignment}"
+                                                      HorizontalAlignment="{TemplateBinding HorizontalHeaderAlignment}"/>
+                                </Border>
+                                <ContentPresenter x:Name="PART_ContentPresenter"
+                                                  Grid.Column="1" Grid.ColumnSpan="2"
+                                                  Grid.Row="2"
+                                                  Background="Transparent" BorderBrush="Transparent"
+                                                  Margin="{TemplateBinding Padding}"
+                                                  Content="{TemplateBinding Content}"
+                                                  ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                            </Grid>
+                        </ControlTemplate>
+                    </Setter>
+                </ControlTheme>
+            </c:GroupBox.Theme>
             <c:GroupBox.Header>
                 <DockPanel HorizontalSpacing="4">
-                    <ToggleButton x:Name="PART_MemScanExpander" DockPanel.Dock="Right" Width="18" Height="18" Padding="0" VerticalAlignment="Center"
-                                  BorderThickness="0" Background="{DynamicResource ABrush.Tone7.Background.Static}"
-                                  IsChecked="True">
-                        <TextBlock Margin="0,-2,0,0"/>
-                    </ToggleButton>
                     <TextBlock Text="Memory Scanning Options" VerticalAlignment="Center"/>
                 </DockPanel>
             </c:GroupBox.Header>
-            <StackPanel IsVisible="{Binding ElementName=PART_MemScanExpander, Path=IsChecked}">
+            <StackPanel>
                 <Grid x:Name="PART_Grid_ScanOptions" ColumnDefinitions="50,5,*" RowDefinitions="20,3,20,3,20,3,20,3,20" Margin="3">
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="Start" VerticalAlignment="Center" Padding="4,0"/>
                     <TextBlock Grid.Column="0" Grid.Row="2" Text="Length" VerticalAlignment="Center" Padding="4,0"/>
@@ -94,45 +246,4 @@
             </StackPanel>
         </c:GroupBox>
     </Design.PreviewWith>
-
-    <ControlTheme x:Key="{x:Type c:GroupBox}" TargetType="{x:Type c:GroupBox}">
-        <Setter Property="Background" Value="{DynamicResource ABrush.Tone3.Background.Static}"/>
-        <Setter Property="HeaderBrush" Value="{DynamicResource GroupBox.Header.Static.Background}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource GroupBox.Static.Border}"/>
-        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
-        <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="HeaderContentGap" Value="1"/>
-        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Padding" Value="0"/>
-        <Setter Property="HeaderPadding" Value="5,2"/>
-        <Setter Property="Template">
-            <ControlTemplate TargetType="{x:Type c:GroupBox}">
-                <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}">
-                    <DockPanel>
-                        <!-- Using a converter for the border thickness saves having an extra border element -->
-                        <!-- in this template, which helps with performance a tiny bit -->
-                        <Border x:Name="PART_Header" Padding="{TemplateBinding HeaderPadding}"
-                                Background="{TemplateBinding HeaderBrush}"
-                                BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="{TemplateBinding HeaderContentGap, Converter={x:Static cv:GroupBoxGapToThicknessConverter.Instance}}"
-                                DockPanel.Dock="Top" MinHeight="27">
-                            <ContentPresenter x:Name="PART_HeaderPresenter"
-                                              Background="Transparent" BorderBrush="Transparent"
-                                              Content="{TemplateBinding Header}"
-                                              ContentTemplate="{Binding $parent[HeaderedContentControl].HeaderTemplate}"
-                                              VerticalAlignment="{TemplateBinding VerticalHeaderAlignment}"
-                                              HorizontalAlignment="{TemplateBinding HorizontalHeaderAlignment}"/>
-                        </Border>
-                        <Border x:Name="PART_ContentBorder" Background="{TemplateBinding Background}">
-                            <ContentPresenter x:Name="PART_ContentPresenter" Background="Transparent" BorderBrush="Transparent"
-                                              Margin="{TemplateBinding Padding}"
-                                              Content="{TemplateBinding Content}"
-                                              ContentTemplate="{Binding $parent[HeaderedContentControl].ContentTemplate}"/>
-                        </Border>
-                    </DockPanel>
-                </Border>
-            </ControlTemplate>
-        </Setter>
-    </ControlTheme>
 </ResourceDictionary>
