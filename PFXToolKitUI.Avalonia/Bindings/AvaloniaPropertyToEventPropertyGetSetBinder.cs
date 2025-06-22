@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// it uses a getter and setter method passed in the constructor, rather than a value accessor 
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
-public class AvaloniaPropertyToEventPropertyGetSetBinder<TModel> : BaseAvaloniaPropertyToEventPropertyBinder<TModel> where TModel : class {
+public sealed class AvaloniaPropertyToEventPropertyGetSetBinder<TModel> : BaseAvaloniaPropertyToEventPropertyBinder<TModel> where TModel : class {
     private readonly Func<IBinder<TModel>, object?>? getter;
     private readonly Action<IBinder<TModel>, object?>? setter;
 

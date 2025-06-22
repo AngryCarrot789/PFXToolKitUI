@@ -146,9 +146,10 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
             throw new InvalidOperationException($"Invalid state. IsClosed = {this.IsClosed}, IsOpen = {this.IsOpen}");
         }
 
-        base.OnClosed(e);
         this.IsOpen = false;
         this.IsClosed = true;
+        
+        base.OnClosed(e);
 
         this.WindowClosed?.Invoke(this);
     }

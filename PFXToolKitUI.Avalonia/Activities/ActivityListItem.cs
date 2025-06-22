@@ -51,10 +51,10 @@ public class ActivityListItem : TemplatedControl {
     private IconButton? PART_PlayPauseButton;
     private readonly AsyncRelayCommand pauseActivityCommand;
 
-    private readonly EventPropertyBinder<IActivityProgress> binderCaption = new EventPropertyBinder<IActivityProgress>(nameof(IActivityProgress.CaptionChanged), (b) => ((ActivityListItem) b.Control).PART_Header!.Text = b.Model.Caption);
-    private readonly EventPropertyBinder<IActivityProgress> binderText = new EventPropertyBinder<IActivityProgress>(nameof(IActivityProgress.TextChanged), (b) => ((ActivityListItem) b.Control).PART_Footer!.Text = b.Model.Text);
-    private readonly EventPropertyBinder<IActivityProgress> binderIsIndeterminate = new EventPropertyBinder<IActivityProgress>(nameof(IActivityProgress.IsIndeterminateChanged), (b) => ((ActivityListItem) b.Control).PART_ProgressBar!.IsIndeterminate = b.Model.IsIndeterminate);
-    private readonly EventPropertyBinder<CompletionState> binderCompletionValue = new EventPropertyBinder<CompletionState>(nameof(CompletionState.CompletionValueChanged), (b) => ((ActivityListItem) b.Control).PART_ProgressBar!.Value = b.Model.TotalCompletion);
+    private readonly IBinder<IActivityProgress> binderCaption = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.CaptionChanged), (b) => ((ActivityListItem) b.Control).PART_Header!.Text = b.Model.Caption);
+    private readonly IBinder<IActivityProgress> binderText = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.TextChanged), (b) => ((ActivityListItem) b.Control).PART_Footer!.Text = b.Model.Text);
+    private readonly IBinder<IActivityProgress> binderIsIndeterminate = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.IsIndeterminateChanged), (b) => ((ActivityListItem) b.Control).PART_ProgressBar!.IsIndeterminate = b.Model.IsIndeterminate);
+    private readonly IBinder<CompletionState> binderCompletionValue = new EventUpdateBinder<CompletionState>(nameof(CompletionState.CompletionValueChanged), (b) => ((ActivityListItem) b.Control).PART_ProgressBar!.Value = b.Model.TotalCompletion);
 
     public ActivityListItem() {
         this.pauseActivityCommand = new AsyncRelayCommand(async () => {

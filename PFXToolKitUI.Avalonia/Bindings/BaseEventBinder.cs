@@ -27,7 +27,7 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// A base binder class which implements an event handler for the model which fires the <see cref="IBinder.UpdateControl"/> method
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
-public abstract class BaseEventPropertyBinder<TModel> : BaseBinder<TModel>, IRelayEventHandler where TModel : class {
+public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventHandler where TModel : class {
     private readonly SenderEventRelay eventRelay;
     private readonly IDispatcher dispatcher;
     private volatile RapidDispatchActionEx? rdaUpdateControl;
@@ -47,11 +47,13 @@ public abstract class BaseEventPropertyBinder<TModel> : BaseBinder<TModel>, IRel
     /// </summary>
     public DispatchPriority DispatchPriority { get; init; } = DispatchPriority.Normal;
 
-    protected BaseEventPropertyBinder(string eventName) {
+    protected BaseEventBinder(string eventName) {
         this.eventRelay = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventName);
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
 
+    void IRelayEventHandler.OnEventFired() => this.OnModelValueChanged();
+    
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
     /// </summary>
@@ -81,8 +83,6 @@ public abstract class BaseEventPropertyBinder<TModel> : BaseBinder<TModel>, IRel
 
         this.UpdateControl();
     }
-
-    void IRelayEventHandler.OnEventFired() => this.OnModelValueChanged();
 
     protected override void OnAttached() {
         EventRelayBinderUtils.OnAttached(this.myModel!, this, this.eventRelay);

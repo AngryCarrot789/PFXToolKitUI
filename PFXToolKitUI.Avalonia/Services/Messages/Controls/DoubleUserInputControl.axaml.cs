@@ -26,11 +26,11 @@ using PFXToolKitUI.Services.UserInputs;
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
 public partial class DoubleUserInputControl : UserControl, IUserInputContent {
-    private readonly EventPropertyBinder<DoubleUserInputInfo> labelABinder = new EventPropertyBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelAChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelA));
-    private readonly EventPropertyBinder<DoubleUserInputInfo> labelBBinder = new EventPropertyBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelBChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelB));
-    private readonly AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextAChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextA), b => b.Model.TextA = b.Control.GetValue(TextBox.TextProperty) ?? "");
-    private readonly AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextBChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextB), b => b.Model.TextB = b.Control.GetValue(TextBox.TextProperty) ?? "");
-    private readonly EventPropertyBinder<DoubleUserInputInfo> footerBinder = new EventPropertyBinder<DoubleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
+    private readonly IBinder<DoubleUserInputInfo> labelABinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelAChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelA));
+    private readonly IBinder<DoubleUserInputInfo> labelBBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelBChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelB));
+    private readonly IBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextAChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextA), b => b.Model.TextA = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly IBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextBChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextB), b => b.Model.TextB = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly IBinder<DoubleUserInputInfo> footerBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
     private UserInputDialogView? myDialog;
     private DoubleUserInputInfo? myData;
 

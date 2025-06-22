@@ -25,6 +25,7 @@ namespace PFXToolKitUI;
 public interface IDispatcher {
     /// <summary>
     /// Determines whether the calling thread is the thread associated with this dispatcher
+    /// </summary>
     bool CheckAccess();
 
     /// <summary>

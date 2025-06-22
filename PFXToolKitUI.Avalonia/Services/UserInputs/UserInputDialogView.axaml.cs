@@ -62,12 +62,12 @@ public partial class UserInputDialogView : UserControl {
     /// </summary>
     public DesktopWindow? Window { get; private set; }
 
-    private readonly EventPropertyBinder<UserInputInfo> messageBinder = new EventPropertyBinder<UserInputInfo>(nameof(UserInputInfo.MessageChanged), b => {
+    private readonly IBinder<UserInputInfo> messageBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.MessageChanged), b => {
         b.Control.SetValue(IsVisibleProperty, !string.IsNullOrWhiteSpace(b.Model.Message));
         b.Control.SetValue(TextBlock.TextProperty, b.Model.Message);
     });
-    private readonly EventPropertyBinder<UserInputInfo> confirmTextBinder = new EventPropertyBinder<UserInputInfo>(nameof(UserInputInfo.ConfirmTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.ConfirmText));
-    private readonly EventPropertyBinder<UserInputInfo> cancelTextBinder = new EventPropertyBinder<UserInputInfo>(nameof(UserInputInfo.CancelTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.CancelText));
+    private readonly IBinder<UserInputInfo> confirmTextBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.ConfirmTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.ConfirmText));
+    private readonly IBinder<UserInputInfo> cancelTextBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.CancelTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.CancelText));
 
     public UserInputDialogView() {
         this.InitializeComponent();

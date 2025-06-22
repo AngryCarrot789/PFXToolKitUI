@@ -24,6 +24,7 @@ using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.PropertyEditing;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.PropertyEditing;
 
@@ -53,9 +54,9 @@ public class PropertyEditorGridGroupControl : TemplatedControl {
 
     public Expander? TheExpander { get; private set; }
 
-    private readonly EventPropertyBinder<BasePropertyEditorGroup> displayNameBinder = new EventPropertyBinder<BasePropertyEditorGroup>(nameof(BasePropertyEditorGroup.DisplayNameChanged), UpdateControlDisplayName);
-    private readonly EventPropertyBinder<BasePropertyEditorGroup> isVisibleBinder = new EventPropertyBinder<BasePropertyEditorGroup>(nameof(BasePropertyEditorGroup.IsCurrentlyApplicableChanged), obj => ((PropertyEditorGridGroupControl) obj.Control).IsVisible = obj.Model.IsRoot || obj.Model.IsVisible);
-    private readonly EventPropertyBinder<BasePropertyEditorGroup> isExpandedBinder = new EventPropertyBinder<BasePropertyEditorGroup>(nameof(BasePropertyEditorGroup.IsExpandedChanged), obj => ((PropertyEditorGridGroupControl) obj.Control).IsExpanded = obj.Model.IsExpanded, obj => obj.Model.IsExpanded = ((PropertyEditorGridGroupControl) obj.Control).IsExpanded);
+    private readonly IBinder<BasePropertyEditorGroup> displayNameBinder = new EventUpdateBinder<BasePropertyEditorGroup>(nameof(BasePropertyEditorGroup.DisplayNameChanged), UpdateControlDisplayName);
+    private readonly IBinder<BasePropertyEditorGroup> isVisibleBinder = new EventUpdateBinder<BasePropertyEditorGroup>(nameof(BasePropertyEditorGroup.IsCurrentlyApplicableChanged), b => ((PropertyEditorGridGroupControl) b.Control).IsVisible = b.Model.IsRoot || b.Model.IsVisible);
+    private readonly IBinder<BasePropertyEditorGroup> isExpandedBinder = new AvaloniaPropertyToEventPropertyGetSetBinder<BasePropertyEditorGroup>(IsExpandedProperty, nameof(BasePropertyEditorGroup.IsExpandedChanged), b => b.Model.IsExpanded.Box(), (b, v) => b.Model.IsExpanded = (bool) v!);
 
     public PropertyEditorGridGroupControl() {
     }

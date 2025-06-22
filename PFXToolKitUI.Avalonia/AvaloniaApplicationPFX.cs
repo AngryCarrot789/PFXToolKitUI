@@ -22,6 +22,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Threading;
+using PFXToolKitUI.Avalonia.Bindings.Events;
 using PFXToolKitUI.Avalonia.Configurations;
 using PFXToolKitUI.Avalonia.Icons;
 using PFXToolKitUI.Avalonia.Services;
@@ -72,6 +73,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         }
         
         this.StartupPhase = ApplicationStartupPhase.Stopped;
+        EventRelayBinderUtils.CheckMemoryLeaksOnAppShutdown();
     }
     
     private void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e) {

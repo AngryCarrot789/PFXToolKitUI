@@ -54,9 +54,9 @@ public abstract class WindowingSystem {
     /// It is automatically unregistered when the window closes
     /// </summary>
     /// <param name="window">The window</param>
-    /// <param name="isMainWindowable">True to allow the window to be elegible for main window status</param>
+    /// <param name="setAsMainWindow">True to allow the window to be elegible for main window status</param>
     /// <returns>The parameter, for chain calling</returns>
-    public abstract DesktopWindow Register(DesktopWindow window, bool isMainWindowable = false);
+    public abstract DesktopWindow Register(DesktopWindow window, bool setAsMainWindow = false);
 
     /// <summary>
     /// Tries to get the window that is currently focused.
@@ -147,10 +147,10 @@ public sealed class WindowingSystemImpl : WindowingSystem {
     private void OnWindowDeactivated(object? sender, EventArgs e) {
     }
 
-    public override DesktopWindow Register(DesktopWindow window, bool isMainWindowable = false) {
+    public override DesktopWindow Register(DesktopWindow window, bool setAsMainWindow = false) {
         window.Opened += this.OnWindowOpened;
         window.Closed += this.OnWindowClosed;
-        if (isMainWindowable) {
+        if (setAsMainWindow) {
             DesktopWindow? myMainWindow = this.MainWindow;
             if (myMainWindow != null && myMainWindow.IsOpen)
                 throw new InvalidOperationException("Current main window is still open. Cannot show a new window as a main window");
@@ -163,7 +163,7 @@ public sealed class WindowingSystemImpl : WindowingSystem {
 
     public override bool TryGetActiveWindow([NotNullWhen(true)] out DesktopWindow? window) {
         // Get last activated, or find the first that is activated
-        window = this.lastActivated ?? this.openWindows.FirstOrDefault(x => x.IsActive);
+        window = (this.lastActivated?.IsOpen == true ? this.lastActivated : null) ?? this.openWindows.FirstOrDefault(x => x.IsActive && x.IsOpen);
 
         // No windows are activated. App is completely unfocused. So find the main window
         window ??= this.MainWindow;

@@ -29,10 +29,6 @@ public class ColourPickerDialogServiceImpl : IColourPickerDialogService {
             Colour = defaultColour ?? SKColors.Black
         };
 
-        return await ShowAsync(info) == true ? info.Colour : default(SKColor?);
-    }
-
-    private static Task<bool?> ShowAsync(ColourUserInputInfo info) {
-        return UserInputDialogView.ShowDialogAsync(info);
+        return await UserInputDialogView.ShowDialogAsync(info) == true ? info.Colour : null;
     }
 }

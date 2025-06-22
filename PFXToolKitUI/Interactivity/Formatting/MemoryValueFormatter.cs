@@ -18,6 +18,7 @@
 // 
 
 using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Runtime.CompilerServices;
 using PFXToolKitUI.Utils;
@@ -56,7 +57,7 @@ public class MemoryValueFormatter : BaseSimpleValueFormatter {
         public readonly double Bytes = bytes;
     }
 
-    public static readonly ImmutableList<MemoryFormatConversion> Conversions = new List<MemoryFormatConversion>() {
+    public static readonly ReadOnlyCollection<MemoryFormatConversion> Conversions = new List<MemoryFormatConversion>() {
         new MemoryFormatConversion(MemoryFormatType.Bit, 1.0 / 8),
         new MemoryFormatConversion(MemoryFormatType.Byte, 1),
         new MemoryFormatConversion(MemoryFormatType.KiloBit, 1.0 / 8.0 * 1000.0),
@@ -71,7 +72,7 @@ public class MemoryValueFormatter : BaseSimpleValueFormatter {
         new MemoryFormatConversion(MemoryFormatType.TeraBit, 1.0 / 8.0 * 1000000000.0),
         new MemoryFormatConversion(MemoryFormatType.TeraByte1000, 1 * 1000000000000.0),
         new MemoryFormatConversion(MemoryFormatType.TebiByte1024, 1024.0 * 1024.0 * 1024.0 * 1024.0)
-    }.ToImmutableList();
+    }.AsReadOnly();
 
     public static readonly Dictionary<MemoryFormatType, double> ConversionTable;
 

@@ -18,30 +18,22 @@
 // 
 
 using Avalonia.Controls;
-using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.UserInputs;
-using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Services.Colours;
 
 public partial class ColourUserInputControl : UserControl, IUserInputContent {
-    private readonly AvaloniaPropertyToDataParameterAutoBinder<ColourUserInputInfo> colourBinder;
+    private readonly IBinder<ColourUserInputInfo> colourBinder = new AvaloniaPropertyToEventPropertyBinder<ColourUserInputInfo>(ColorView.ColorProperty, nameof(ColourUserInputInfo.ColourChanged), b => b.Control.SetValue(ColorView.ColorProperty, b.Model.Colour.SkiaToAv()), b => b.Model.Colour = b.Control.GetValue(ColorView.ColorProperty).AvToSkia());
+
     private UserInputDialogView? myDialog;
     private ColourUserInputInfo? myData;
 
     public ColourUserInputControl() {
         this.InitializeComponent();
-        this.colourBinder = new AvaloniaPropertyToDataParameterAutoBinder<ColourUserInputInfo>(ColorView.ColorProperty, ColourUserInputInfo.ColourParameter, arg => {
-            SKColor c = (SKColor) arg!;
-            return new Color(c.Alpha, c.Red, c.Green, c.Blue);
-        }, arg => {
-            Color c = (Color) arg!;
-            return new SKColor(c.R, c.G, c.B, c.A);
-        });
-
         this.colourBinder.AttachControl(this.PART_ColorView);
     }
 

@@ -55,6 +55,8 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
 
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
+    
+    void IRelayEventHandler.OnEventFired() => this.OnAnyEventFired();
 
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
@@ -94,9 +96,5 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
     protected override void OnDetached() {
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
             EventRelayBinderUtils.OnDetached(this.myModel!, this, aeh);
-    }
-
-    void IRelayEventHandler.OnEventFired() {
-        this.OnAnyEventFired();
     }
 }

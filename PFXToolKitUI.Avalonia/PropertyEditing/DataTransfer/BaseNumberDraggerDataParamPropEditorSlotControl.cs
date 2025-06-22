@@ -41,10 +41,10 @@ public abstract class BaseNumberDraggerDataParamPropEditorSlotControl : BaseData
 
     protected NumberDragger? dragger;
     protected Button? resetButton;
-    private readonly EventPropertyBinder<BaseDataParameterNumberPropertyEditorSlot> valueFormatterBinder;
+    private readonly IBinder<BaseDataParameterNumberPropertyEditorSlot> valueFormatterBinder;
 
     protected BaseNumberDraggerDataParamPropEditorSlotControl() {
-        this.valueFormatterBinder = new EventPropertyBinder<BaseDataParameterNumberPropertyEditorSlot>(nameof(BaseDataParameterNumberPropertyEditorSlot.ValueFormatterChanged), (x) => ((NumberDragger) x.Control).ValueFormatter = x.Model.ValueFormatter);
+        this.valueFormatterBinder = new EventUpdateBinder<BaseDataParameterNumberPropertyEditorSlot>(nameof(BaseDataParameterNumberPropertyEditorSlot.ValueFormatterChanged), (x) => ((NumberDragger) x.Control).ValueFormatter = x.Model.ValueFormatter);
     }
 
     static BaseNumberDraggerDataParamPropEditorSlotControl() {

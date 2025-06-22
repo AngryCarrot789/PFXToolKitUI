@@ -27,7 +27,7 @@ using PFXToolKitUI.Services.UserInputs;
 namespace PFXToolKitUI.Avalonia.Services.UserInputs;
 
 public partial class UserInputDialogWindow : DesktopWindow {
-    private readonly EventPropertyBinder<UserInputInfo> captionBinder = new EventPropertyBinder<UserInputInfo>(nameof(UserInputInfo.CaptionChanged), b => b.Control.SetValue(TitleProperty, b.Model.Caption));
+    private readonly IBinder<UserInputInfo> captionBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.CaptionChanged), b => b.Control.SetValue(TitleProperty, b.Model.Caption));
     
     public static readonly StyledProperty<UserInputInfo?> UserInputInfoProperty = AvaloniaProperty.Register<UserInputDialogWindow, UserInputInfo?>("UserInputInfo");
 

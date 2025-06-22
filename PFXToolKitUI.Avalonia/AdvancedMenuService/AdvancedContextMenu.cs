@@ -18,12 +18,10 @@
 // 
 
 using System.ComponentModel;
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.AdvancedMenuService;
@@ -39,7 +37,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     public static readonly AttachedProperty<ContextRegistry?> ContextRegistryProperty = AvaloniaProperty.RegisterAttached<AdvancedContextMenu, Control, ContextRegistry?>("ContextRegistry");
     public static readonly StyledProperty<string?> ContextCaptionProperty = AvaloniaProperty.Register<AdvancedContextMenu, string?>(nameof(ContextCaption));
 
-    private readonly EventPropertyBinder<ContextRegistry> captionBinder;
+    private readonly IBinder<ContextRegistry> captionBinder;
     private readonly Dictionary<Type, Stack<Control>> itemCache;
     private readonly List<Control> owners;
     private InputElement? currentTarget;
@@ -59,7 +57,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
     public AdvancedContextMenu(ContextRegistry registry) {
         this.ContextRegistry = registry ?? throw new ArgumentNullException(nameof(registry));
-        this.captionBinder = new EventPropertyBinder<ContextRegistry>(nameof(this.ContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
+        this.captionBinder = new EventUpdateBinder<ContextRegistry>(nameof(this.ContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
         this.itemCache = new Dictionary<Type, Stack<Control>>();
         this.owners = new List<Control>();
         this.Opening += this.OnMenuOpening;

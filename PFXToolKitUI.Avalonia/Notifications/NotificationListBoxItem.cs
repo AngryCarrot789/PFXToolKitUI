@@ -226,8 +226,8 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
         protected override Type StyleKeyOverride => typeof(HyperlinkButton);
 
-        private readonly EventPropertyBinder<NotificationCommand> textBinder = new EventPropertyBinder<NotificationCommand>(nameof(NotificationCommand.TextChanged), (b) => ((NotificationHyperlinkButton) b.Control).Content = b.Model.Text);
-        private readonly EventPropertyBinder<NotificationCommand> toolTipBinder = new EventPropertyBinder<NotificationCommand>(nameof(NotificationCommand.ToolTipChanged), (b) => {
+        private readonly IBinder<NotificationCommand> textBinder = new EventUpdateBinder<NotificationCommand>(nameof(NotificationCommand.TextChanged), (b) => ((NotificationHyperlinkButton) b.Control).Content = b.Model.Text);
+        private readonly IBinder<NotificationCommand> toolTipBinder = new EventUpdateBinder<NotificationCommand>(nameof(NotificationCommand.ToolTipChanged), (b) => {
             if (!string.IsNullOrEmpty(b.Model.ToolTip)) {
                 TextBlock tb = new TextBlock {
                     Text = b.Model.ToolTip,

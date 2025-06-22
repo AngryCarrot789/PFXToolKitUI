@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia.Controls;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
@@ -25,27 +26,31 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// A non-generic interface for a binder
 /// </summary>
 public interface IBinder {
+    internal Control? Debug_Control { get; }
+    
+    internal object? Debug_Model { get; }
+
     /// <summary>
     /// Returns true when this binder is fully attached to a control and model,
     /// meaning <see cref="Control"/> and <see cref="Model"/> are non-null
     /// </summary>
-    bool IsFullyAttached { get; }
+    public bool IsFullyAttached { get; }
 
     /// <summary>
     /// Returns true when the binder is currently processing the model change signal, and
     /// is now updating the control's value. This is used to prevent a stack overflow exception
     /// </summary>
-    bool IsUpdatingControl { get; }
+    public bool IsUpdatingControl { get; }
 
     /// <summary>
     /// Updates the control's value based on the model's value. This is typically called when the model's value changes
     /// </summary>
-    void UpdateControl();
+    public void UpdateControl();
 
     /// <summary>
     /// Updates the model's value based on the control's value. This is typically called when the control's value changes
     /// </summary>
-    void UpdateModel();
+    public void UpdateModel();
 }
 
 /// <summary>

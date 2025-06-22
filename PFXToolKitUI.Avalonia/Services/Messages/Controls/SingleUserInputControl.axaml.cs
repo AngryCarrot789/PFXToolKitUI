@@ -28,9 +28,9 @@ using PFXToolKitUI.Services.UserInputs;
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
 public partial class SingleUserInputControl : UserControl, IUserInputContent {
-    private readonly EventPropertyBinder<SingleUserInputInfo> labelBinder = new EventPropertyBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LabelChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Label));
-    private readonly AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo> textBinder = new AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo>(TextBox.TextProperty, nameof(SingleUserInputInfo.TextChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.Text), b => b.Model.Text = b.Control.GetValue(TextBox.TextProperty) ?? "");
-    private readonly EventPropertyBinder<SingleUserInputInfo> footerBinder = new EventPropertyBinder<SingleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
+    private readonly IBinder<SingleUserInputInfo> labelBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LabelChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Label));
+    private readonly IBinder<SingleUserInputInfo> textBinder = new AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo>(TextBox.TextProperty, nameof(SingleUserInputInfo.TextChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.Text), b => b.Model.Text = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly IBinder<SingleUserInputInfo> footerBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
     private UserInputDialogView? myDialog;
     private SingleUserInputInfo? myData;
 

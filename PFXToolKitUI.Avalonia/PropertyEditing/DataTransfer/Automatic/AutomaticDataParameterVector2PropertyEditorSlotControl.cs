@@ -41,10 +41,10 @@ public class AutomaticDataParameterVector2PropertyEditorSlotControl : BaseDataPa
     protected NumberDragger draggerY;
     protected Button resetButton;
 
-    private readonly EventPropertyBinder<DataParameterFormattablePropertyEditorSlot> valueFormatterBinder;
+    private readonly IBinder<DataParameterFormattablePropertyEditorSlot> valueFormatterBinder;
 
     public AutomaticDataParameterVector2PropertyEditorSlotControl() {
-        this.valueFormatterBinder = new EventPropertyBinder<DataParameterFormattablePropertyEditorSlot>(nameof(DataParameterFormattablePropertyEditorSlot.ValueFormatterChanged), (x) => {
+        this.valueFormatterBinder = new EventUpdateBinder<DataParameterFormattablePropertyEditorSlot>(nameof(DataParameterFormattablePropertyEditorSlot.ValueFormatterChanged), (x) => {
             AutomaticDataParameterVector2PropertyEditorSlotControl editor = (AutomaticDataParameterVector2PropertyEditorSlotControl) x.Control;
             editor.draggerX.ValueFormatter = x.Model.ValueFormatter;
             editor.draggerY.ValueFormatter = x.Model.ValueFormatter;

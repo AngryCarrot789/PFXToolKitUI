@@ -30,13 +30,15 @@ namespace PFXToolKitUI.Avalonia.Bindings.Events;
 /// </summary>
 public readonly struct SenderEventRelay {
     public readonly EventInfo EventInfo;
-    public readonly Delegate HandlerDelegate;
     public readonly MethodInfo AddMethod, RemoveMethod;
+    public readonly string EventName;
     private readonly object?[] HandlerDelegateInArray;
+
+    public Delegate HandlerDelegate => (Delegate) this.HandlerDelegateInArray[0]!;
 
     private SenderEventRelay(EventInfo eventInfo, Delegate handlerDelegate) {
         this.EventInfo = eventInfo;
-        this.HandlerDelegate = handlerDelegate;
+        this.EventName = eventInfo.Name;
         this.HandlerDelegateInArray = [handlerDelegate];
 
         this.AddMethod = eventInfo.GetAddMethod(nonPublic: false) ?? throw new Exception("Missing add method");

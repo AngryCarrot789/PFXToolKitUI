@@ -44,6 +44,10 @@ internal static class EventRelayBinderUtils {
     // Only modified on main thread by binder constructors
     private static readonly Dictionary<EventInfoKey, SenderEventRelay> modelTypeToEventRelayMap;
 
+    // This is concurrent because model events are allowed to be fired from any event,
+    // and OnAttached/OnDetached only get invoked on the main thread. There's a chance that
+    // any model fires their event right as OnAttached or OnDetached is called.
+    // Dictionary<Model, Dictionary<EventName, IRelayEventHandler[]>>
     private static readonly ConcurrentDictionary<object, HybridDictionary> attachedInstanceMap;
 
     static EventRelayBinderUtils() {
@@ -54,36 +58,34 @@ internal static class EventRelayBinderUtils {
     // Both OnAttached and OnDetached can only be called on the main thread (soft assert).
     // The main thread is also the only one that can modify attachedInstanceMap and the inner map
     // But since the event handlers can be fired on any thread, we still need to support concurrent reads
-    
-    public static void OnAttached(object model, IRelayEventHandler binder, SenderEventRelay eventRelay) {
+
+    public static void OnAttached(object model, IRelayEventHandler binder, SenderEventRelay relay) {
         Debug.Assert(ApplicationPFX.Instance.Dispatcher.CheckAccess());
-        
-        string eventName = eventRelay.EventInfo.Name;
+
         HybridDictionary eventToHandlerList = attachedInstanceMap.GetOrAdd(model, _ => new HybridDictionary(caseInsensitive: false));
-        IRelayEventHandler[]? array = (IRelayEventHandler[]?) eventToHandlerList[eventName];
+        IRelayEventHandler[]? array = (IRelayEventHandler[]?) eventToHandlerList[relay.EventName];
         if (array == null) {
-            eventRelay.AddEventHandler(model);
-            eventToHandlerList[eventName] = new[] {binder};
+            relay.AddEventHandler(model);
+            eventToHandlerList[relay.EventName] = new[] { binder };
         }
         else {
-            eventToHandlerList[eventName] = ArrayUtils.Add(array, binder);
+            eventToHandlerList[relay.EventName] = ArrayUtils.Add(array, binder);
         }
     }
 
-    public static void OnDetached(object model, IRelayEventHandler binder, SenderEventRelay eventRelay) {
+    public static void OnDetached(object model, IRelayEventHandler binder, SenderEventRelay relay) {
         Debug.Assert(ApplicationPFX.Instance.Dispatcher.CheckAccess());
-        
-        string eventName = eventRelay.EventInfo.Name;
+
         HybridDictionary eventToHandlerList = attachedInstanceMap[model];
-        IRelayEventHandler[] array = (IRelayEventHandler[]) eventToHandlerList[eventName]!;
+        IRelayEventHandler[] array = (IRelayEventHandler[]) eventToHandlerList[relay.EventName]!;
         Debug.Assert(array != null);
 
         int idx = ArrayUtils.IndexOf_RefType(array, binder);
         Debug.Assert(idx != -1);
-        
+
         if (array.Length == 1) {
-            eventRelay.RemoveEventHandler(model); // no more binders listen to event, so remove handler
-            eventToHandlerList.Remove(eventName); // remove the list to open possibility to remove model from attachedInstanceMap
+            relay.RemoveEventHandler(model); // no more binders listen to event, so remove handler
+            eventToHandlerList.Remove(relay.EventName); // remove the list to open possibility to remove model from attachedInstanceMap
             if (eventToHandlerList.Count == 0) {
                 // prevent memory leak. the model should always be removed as soon as all binders using it are detached.
                 bool removed = attachedInstanceMap.TryRemove(model, out HybridDictionary? removedInnerMap);
@@ -91,7 +93,7 @@ internal static class EventRelayBinderUtils {
             }
         }
         else {
-            eventToHandlerList[eventName] = ArrayUtils.RemoveAt(array, idx);
+            eventToHandlerList[relay.EventName] = ArrayUtils.RemoveAt(array, idx);
         }
     }
 
@@ -102,7 +104,7 @@ internal static class EventRelayBinderUtils {
         if (modelTypeToEventRelayMap.TryGetValue(infoKey, out SenderEventRelay relay)) {
             return relay;
         }
-        
+
         return modelTypeToEventRelayMap[infoKey] = SenderEventRelay.Create(eventName, modelType, OnModelEventFired, eventName);
     }
 
@@ -117,6 +119,28 @@ internal static class EventRelayBinderUtils {
                     handler.OnEventFired();
                 }
             }
+        }
+    }
+
+    [Conditional("DEBUG")]
+    public static void CheckMemoryLeaksOnAppShutdown() {
+        if (!attachedInstanceMap.IsEmpty) {
+            Debug.WriteLine("Warning: binder memory leaks present (models still attached)");
+            foreach (KeyValuePair<object, HybridDictionary> entry in attachedInstanceMap) {
+                Debug.WriteLine($"Model Type: {entry.Key.GetType().FullName}");
+                foreach (DictionaryEntry subEntry in entry.Value) {
+                    Debug.WriteLine($"   Event Name: {subEntry.Key}");
+                    Debug.WriteLine( "   Handler(s) (most likely the binder classes):");
+                    foreach (IRelayEventHandler handler in (IRelayEventHandler[]) subEntry.Value!) {
+                        Debug.WriteLine($"      - {handler.GetType().FullName}");
+                        if (handler is IBinder binder && binder.IsFullyAttached) {
+                            Debug.WriteLine($"        (attached to {binder.Debug_Control?.GetType().FullName})");
+                        }
+                    }
+                }
+            }
+
+            Debugger.Break();
         }
     }
 

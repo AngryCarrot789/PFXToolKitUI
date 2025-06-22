@@ -17,31 +17,11 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia;
 using Avalonia.Controls;
-using PFXToolKitUI.Utils.Accessing;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 
 public static class Binders {
-    public static AvaloniaPropertyToEventPropertyAccessorBinder<TModel, TValue> AccessorAEDPLinq<TModel, TValue>(AvaloniaProperty<TValue> property, string eventName, string propertyOrFieldName) where TModel : class {
-        // Uses cached accessor
-        return AccessorAEDP<TModel, TValue>(property, eventName, ValueAccessors.LinqExpression<TValue>(typeof(TModel), propertyOrFieldName, true));
-    }
-
-    public static AvaloniaPropertyToEventPropertyAccessorBinder<TModel, TValue> AccessorAEDPFastStartup<TModel, TValue>(AvaloniaProperty<TValue> property, string eventName, string propertyOrFieldName) where TModel : class {
-        // Uses cached accessor
-        return AccessorAEDP<TModel, TValue>(property, eventName, ValueAccessors.FastStartupAccessor<TValue>(typeof(TModel), propertyOrFieldName));
-    }
-
-    public static AvaloniaPropertyToEventPropertyAccessorBinder<TModel, TValue> AccessorAEDP<TModel, TValue>(AvaloniaProperty<TValue> property, string eventName, ValueAccessor<TValue> accessor) where TModel : class {
-        return new AvaloniaPropertyToEventPropertyAccessorBinder<TModel, TValue>(property, eventName, accessor);
-    }
-
-    public static AvaloniaPropertyToEventPropertyBinder<TModel> AutoUpdateAndEvent<TModel>(AvaloniaProperty property, string eventName, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel) where TModel : class {
-        return new AvaloniaPropertyToEventPropertyBinder<TModel>(property, eventName, updateControl, updateModel);
-    }
-
     public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1) where TModel : class {
         binder1.AttachControl(control);
     }
@@ -95,6 +75,33 @@ public static class Binders {
         foreach (IBinder<TModel> b in binders) {
             b.AttachModel(model);
         }
+    }
+    
+    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1) where TModel : class {
+        binder1.Attach(control, model);
+    }
+    
+    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
+        binder1.Attach(control, model);
+        binder2.Attach(control, model);
+    }
+    
+    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
+        binder1.Attach(control, model);
+        binder2.Attach(control, model);
+        binder3.Attach(control, model);
+    }
+    
+    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
+        binder1.Attach(control, model);
+        binder2.Attach(control, model);
+        binder3.Attach(control, model);
+        binder4.Attach(control, model);
+    }
+    
+    public static void Attach<TModel>(Control control, TModel model, params IBinder<TModel>[] binders) where TModel : class {
+        foreach (IBinder<TModel> b in binders)
+            b.Attach(control, model);
     }
     
     public static void DetachModels<TModel>(IBinder<TModel> binder1) where TModel : class {

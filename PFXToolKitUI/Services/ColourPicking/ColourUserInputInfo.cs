@@ -17,25 +17,25 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.Services.UserInputs;
-using PFXToolKitUI.Utils.Accessing;
+using PFXToolKitUI.Utils;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Services.ColourPicking;
 
-public class ColourUserInputInfo : UserInputInfo {
-    public static readonly DataParameter<SKColor> ColourParameter = DataParameter.Register(new DataParameter<SKColor>(typeof(ColourUserInputInfo), nameof(Colour), SKColors.Empty, ValueAccessors.Reflective<SKColor>(typeof(ColourUserInputInfo), nameof(colour))));
+public delegate void ColourUserInputInfoEventHandler(ColourUserInputInfo sender);
 
-    private SKColor colour;
+public class ColourUserInputInfo : UserInputInfo {
+    private SKColor colour = SKColor.Empty;
 
     public SKColor Colour {
         get => this.colour;
-        set => DataParameter.SetValueHelper(this, ColourParameter, ref this.colour, value);
+        set => PropertyHelper.SetAndRaiseINE(ref this.colour, value, this, static t => t.ColourChanged?.Invoke(t));
     }
 
+    public event ColourUserInputInfoEventHandler? ColourChanged;
+
     public ColourUserInputInfo() {
-        this.colour = ColourParameter.GetDefaultValue(this);
     }
 
     public override bool HasErrors() {

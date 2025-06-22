@@ -44,10 +44,13 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
     public TModel Model => this.myModel ?? throw new InvalidOperationException("No model is attached");
 
+    Control? IBinder.Debug_Control => this.myControl;
+    object? IBinder.Debug_Model => this.myModel;
+    
     public bool HasControl => this.myControl != null;
 
     public bool HasModel => this.myModel != null;
-
+    
     public bool IsFullyAttached { get; private set; }
 
     public bool IsUpdatingControl { get; protected set; }
