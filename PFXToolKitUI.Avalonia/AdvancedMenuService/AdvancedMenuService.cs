@@ -235,6 +235,7 @@ public static class AdvancedMenuService {
         IAdvancedMenu menu = element.OwnerMenu ?? throw new InvalidOperationException("No menu available from menu item");
         IContextData context = menu.CapturedContext ?? EmptyContext.Instance;
 
+        // dynamicInserted maps the logical (non-offsetted) index of the DynamicGroupPlaceholderContextObject to the amount of items.
         dynamicInserted ??= new Dictionary<int, int>();
 
         int offset = 0;

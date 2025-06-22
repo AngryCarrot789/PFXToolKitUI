@@ -6,7 +6,8 @@
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
              x:Class="PFXToolKitUI.Avalonia.Services.UserInputs.UserInputDialogView">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
-        <StackPanel x:Name="PART_MessageContainer" DockPanel.Dock="Top" Margin="10,10,10,0">
+        <StackPanel x:Name="PART_MessageContainer" DockPanel.Dock="Top" Margin="10,10,10,0"
+                    IsVisible="{CompiledBinding ElementName=PART_Message, Path=IsVisible}">
             <TextBlock x:Name="PART_Message" Padding="0,0,0,2" Text="Message Here" FontSize="16" Foreground="{DynamicResource ABrush.ColourfulGlyph.Static}" FontWeight="Medium"/>
             <Separator/>
         </StackPanel>

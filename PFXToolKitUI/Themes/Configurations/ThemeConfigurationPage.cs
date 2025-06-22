@@ -134,6 +134,7 @@ public class ThemeConfigurationPage : ConfigurationPage {
             return;
         }
 
+        this.IsModified = true;
         this.originalBrushes.Add(themeKey, this.targetTheme.SaveThemeEntry(themeKey));
         this.ThemeEntryModified?.Invoke(this, themeKey, true);
     }
@@ -146,6 +147,7 @@ public class ThemeConfigurationPage : ConfigurationPage {
             return; // maintain first value
         }
         
+        this.IsModified = true;
         this.originalInheritance.Add(currentTce.ThemeKey, oldInheritFrom);
     }
 
@@ -157,11 +159,6 @@ public class ThemeConfigurationPage : ConfigurationPage {
     protected override ValueTask OnContextDestroyed(ConfigurationContext context) {
         this.TargetTheme = null;
         return base.OnContextDestroyed(context);
-    }
-
-    protected override void OnActiveContextChanged(ConfigurationContext? oldContext, ConfigurationContext? newContext) {
-        base.OnActiveContextChanged(oldContext, newContext);
-        this.IsModified = true;
     }
 
     public override ValueTask RevertLiveChanges(List<ApplyChangesFailureEntry>? errors) {
@@ -219,6 +216,8 @@ public class ThemeConfigurationPage : ConfigurationPage {
 
             this.originalInheritance = null;
         }
+        
+        this.TrySetNotModified();
     }
 
     public void ReverseChanges(Theme? target) {
@@ -241,6 +240,8 @@ public class ThemeConfigurationPage : ConfigurationPage {
 
             this.originalInheritance = null;
         }
+        
+        this.TrySetNotModified();
     }
 
     public bool ReverseChangeFor(Theme theme, string themeKey) {
@@ -250,6 +251,8 @@ public class ThemeConfigurationPage : ConfigurationPage {
         if (this.originalBrushes != null && this.originalBrushes.Remove(themeKey, out ISavedThemeEntry? entry)) {
             this.ThemeEntryModified?.Invoke(this, themeKey, false);
             theme.ApplyThemeEntry(themeKey, entry);
+         
+            this.TrySetNotModified();
             return true;
         }
 
@@ -267,6 +270,14 @@ public class ThemeConfigurationPage : ConfigurationPage {
             Dictionary<string, ISavedThemeEntry> items = this.originalBrushes.ToDictionary();
             this.originalBrushes = null;
             this.ModifiedThemeEntriesCleared?.Invoke(this, items);
+            
+            this.TrySetNotModified();
+        }
+    }
+
+    private void TrySetNotModified() {
+        if ((this.originalBrushes?.Count ?? 0) < 1 && (this.originalInheritance?.Count ?? 0) < 1) {
+            this.IsModified = false;
         }
     }
 }

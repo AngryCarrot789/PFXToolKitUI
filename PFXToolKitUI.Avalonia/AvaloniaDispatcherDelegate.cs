@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using Avalonia.Threading;
 
@@ -59,20 +60,34 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
     }
 
     public async Task InvokeAsync(Action action, DispatchPriority priority, CancellationToken token = default) {
-        await this.dispatcher.InvokeAsync(action, ToAvaloniaPriority(priority), token);
+        DispatcherOperation operation = this.dispatcher.InvokeAsync(action, ToAvaloniaPriority(priority), token);
+        try {
+            await operation;
+        }
+        finally {
+            if (!token.IsCancellationRequested && operation.Status == DispatcherOperationStatus.Aborted) {
+                Debugger.Break();
+            }
+        }
     }
 
     public async Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority, CancellationToken token = default) {
-        return await this.dispatcher.InvokeAsync(function, ToAvaloniaPriority(priority), token);
+        DispatcherOperation<T> operation = this.dispatcher.InvokeAsync(function, ToAvaloniaPriority(priority), token);
+        try {
+            return await operation;
+        }
+        finally {
+            if (!token.IsCancellationRequested && operation.Status == DispatcherOperationStatus.Aborted) {
+                Debugger.Break();
+            }
+        }
     }
 
     public void Post(Action action, DispatchPriority priority = DispatchPriority.Default) {
         this.dispatcher.Post(action, ToAvaloniaPriority(priority));
     }
 
-    public async Task Process(DispatchPriority priority) {
-        await this.InvokeAsync(EmptyAction, priority);
-    }
+    public async Task Process(DispatchPriority priority) => await this.InvokeAsync(EmptyAction, priority);
 
     public void InvokeShutdown() {
         this.dispatcher.InvokeShutdown();

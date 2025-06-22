@@ -18,10 +18,12 @@
 // 
 
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Rendering;
 using Avalonia.VisualTree;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Avalonia;
@@ -39,6 +41,7 @@ public static class AvUtils {
 
         // Test that the above code works
         GetService(typeof(object));
+        RuntimeHelpers.RunClassConstructor(typeof(AutoTemplate).TypeHandle);
     }
 
     public static void OnFrameworkInitialised() {
@@ -130,9 +133,7 @@ public static class AvUtils {
             InnerProperty = typeof(ResourceDictionary).GetProperty("Inner", BindingFlags.Instance | BindingFlags.NonPublic);
         }
 
-        public void Remove(object key) {
-            (this.removedKeys ??= []).Add(key);
-        }
+        public void Remove(object key) => (this.removedKeys ??= []).Add(key);
 
         public void Dispose() {
             // Fallback to slow version -- need to update for new avalonia versions
@@ -142,8 +143,7 @@ public static class AvUtils {
                     foreach (object key in this.removedKeys)
                         this.Dictionary.Remove(key);
                 if (this.map != null)
-                    foreach (KeyValuePair<object, object?> entry in this.map)
-                        this.Dictionary[entry.Key] = entry.Value;
+                    this.Dictionary.SetItems(this.map);
             }
             else {
                 bool anyChanges = false;

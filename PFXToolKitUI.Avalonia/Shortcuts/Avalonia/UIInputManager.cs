@@ -326,7 +326,7 @@ public class UIInputManager {
         if (string.IsNullOrEmpty(newPath))
             return;
 
-        AvaloniaObject? root = VisualTreeUtils.FindNearestInheritedPropertyDefinition(FocusPathProperty, target as StyledElement);
+        AvaloniaObject? root = VisualTreeUtils.FindNearestInheritedPropertyDefinitionForLogical(FocusPathProperty, target as StyledElement);
         if (root != null) {
             currentlyFocusedObject.Target = root;
             root.SetValue(IsFocusedProperty, true);

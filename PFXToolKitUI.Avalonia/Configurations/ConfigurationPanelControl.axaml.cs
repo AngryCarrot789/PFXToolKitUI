@@ -38,7 +38,7 @@ public partial class ConfigurationPanelControl : UserControl {
     private ConfigurationEntry? connectedEntry;
     private ConfigurationContext? activeContext;
     private readonly Dictionary<Type, BaseConfigurationPageControl> pageControlCache = new Dictionary<Type, BaseConfigurationPageControl>();
-    
+
     public ConfigurationManager? ConfigurationManager {
         get => this.GetValue(ConfigurationManagerProperty);
         set => this.SetValue(ConfigurationManagerProperty, value);
@@ -64,6 +64,11 @@ public partial class ConfigurationPanelControl : UserControl {
         this.InitializeComponent();
         this.PART_ConfigurationTree.SelectionMode = SelectionMode.Single;
         this.PART_ConfigurationTree.SelectionChanged += this.OnTreeSelectionChanged;
+        this.PART_LoadingBorder.Loaded += this.PART_LoadingBorderOnLoaded;
+    }
+
+    private void PART_LoadingBorderOnLoaded(object? sender, RoutedEventArgs e) {
+        Debug.WriteLine("hi!");
     }
 
     static ConfigurationPanelControl() {
@@ -82,7 +87,9 @@ public partial class ConfigurationPanelControl : UserControl {
 
     private void OnSelectionChanged() {
         if (this.activeContext == null) {
-            Debug.Assert(this.PART_PagePresenter.Content != null, "Expected page to be disconnected with no active context");
+            bool a = this.PART_ConfigurationTree.SelectedItem == null;
+            bool b = this.PART_PagePresenter.Content == null;
+            Debug.Assert((!a && !b) || (a && b), "Expected page to be disconnected with no active context");
         }
         else if (this.PART_ConfigurationTree.SelectedItem is ConfigurationTreeViewItem item && item.Entry != null) {
             if (this.connectedEntry == item.Entry) {
@@ -99,10 +106,10 @@ public partial class ConfigurationPanelControl : UserControl {
 
             if (page != null) {
                 this.DisconnectPage();
-                
+
                 if (!this.pageControlCache.TryGetValue(page.GetType(), out BaseConfigurationPageControl? control))
                     control = ConfigurationPageRegistry.Registry.NewInstance(page, false);
-                
+
                 this.ConnectPage(page, control);
                 this.connectedEntry = item.Entry;
                 this.UpdateNavigationHeading();
@@ -185,7 +192,7 @@ public partial class ConfigurationPanelControl : UserControl {
         }
 
         this.PART_PagePresenter.Content = null;
-        this.ActiveContext!.SetViewPage(null);
+        this.ActiveContext!.SetViewingPage(null);
     }
 
     private void ConnectPage(ConfigurationPage configPage, BaseConfigurationPageControl page) {
@@ -193,13 +200,16 @@ public partial class ConfigurationPanelControl : UserControl {
         page.ApplyStyling();
         page.ApplyTemplate();
         page.Connect(configPage);
-        this.ActiveContext!.SetViewPage(configPage);
+        this.ActiveContext!.SetViewingPage(configPage);
     }
 
     // ReSharper disable once AsyncVoidMethod -- we try-catch the parts that might throw
     private async void OnConfigurationManagerChanged(ConfigurationManager? oldValue, ConfigurationManager? newValue) {
+        // Process() should return after Loaded events
+        const DispatchPriority ProcessPriority = DispatchPriority.Default;
+
         this.SetLoadingState(true);
-        await ApplicationPFX.Instance.Dispatcher.Process(DispatchPriority.Loaded);
+        await ApplicationPFX.Instance.Dispatcher.Process(ProcessPriority);
 
         try {
             if (oldValue != null) {
@@ -209,8 +219,16 @@ public partial class ConfigurationPanelControl : UserControl {
             }
         }
         catch (Exception ex) {
-            await IMessageDialogService.Instance.ShowMessage("Error", "Error unloading settings properties. The editor will now crash", ex.ToString());
+            await IMessageDialogService.Instance.ShowMessage("Error", "Error unloading settings properties", ex.ToString());
             ApplicationPFX.Instance.Dispatcher.Post(() => throw ex, DispatchPriority.Send);
+        }
+
+        // Manager being set to null, so set selected page's tree node
+        // to null, which should disconnect the page, otherwise we got a memory leak
+        if (newValue == null && this.connectedEntry != null) {
+            this.DisconnectPage();
+            this.connectedEntry = null;
+            this.PART_NavigationPathTextBlock.Inlines = null;
         }
 
         this.ActiveContext?.OnDestroyed();
@@ -223,19 +241,21 @@ public partial class ConfigurationPanelControl : UserControl {
                 await ConfigurationManager.InternalLoadContext(newValue, this.ActiveContext);
             }
             catch (Exception ex) {
-                await IMessageDialogService.Instance.ShowMessage("Error", "Error loading settings properties. The editor will now crash", ex.ToString());
+                await IMessageDialogService.Instance.ShowMessage("Error", "Error loading settings properties", ex.ToString());
                 ApplicationPFX.Instance.Dispatcher.Post(() => throw ex, DispatchPriority.Send);
             }
 
             this.ActiveContext!.OnCreated();
             this.PART_ConfigurationTree.RootConfigurationEntry = newValue.RootEntry;
+            if (this.PART_ConfigurationTree.Items.Count > 0)
+                this.PART_ConfigurationTree.SelectedItem = this.PART_ConfigurationTree.Items[0];
         }
 
-        await ApplicationPFX.Instance.Dispatcher.Process(DispatchPriority.Loaded);
+        await ApplicationPFX.Instance.Dispatcher.Process(ProcessPriority);
         ApplicationPFX.Instance.Dispatcher.Post(() => {
             this.SetLoadingState(false);
             this.OnSelectionChanged();
-        }, DispatchPriority.INTERNAL_AfterRender);
+        }, DispatchPriority.SystemIdle);
     }
 
     private void SetLoadingState(bool isLoading) {
@@ -248,10 +268,5 @@ public partial class ConfigurationPanelControl : UserControl {
             this.PART_CoreContentGrid.Opacity = 1.0;
             this.PART_LoadingBorder.IsVisible = false;
         }
-    }
-
-    public void SelectFirst() {
-        if (this.PART_ConfigurationTree.Items.Count > 0)
-            this.PART_ConfigurationTree.SelectedItem = this.PART_ConfigurationTree.Items[0];
     }
 }

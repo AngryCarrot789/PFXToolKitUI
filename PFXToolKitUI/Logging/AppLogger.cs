@@ -105,8 +105,8 @@ public class AppLogger {
                 int j = Math.Min(i + ChunkSize, count);
                 await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
                     this.entries.AddSpanRange(items.AsSpan().Slice(i, j - i));
-                }, DispatchPriority.INTERNAL_AfterRender);
+                }, DispatchPriority.AfterRender);
             }
-        }, DispatchPriority.INTERNAL_BeforeRender).Unwrap();
+        }, DispatchPriority.Normal).Unwrap();
     }
 }

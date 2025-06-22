@@ -1,8 +1,5 @@
-﻿// using System.Runtime.CompilerServices;
-// using Avalonia;
+﻿// using Avalonia;
 // using Avalonia.Controls;
-// using PFXToolKitUI.Avalonia.Bindings;
-// using PFXToolKitUI.Avalonia.Utils;
 //
 // namespace PFXToolKitUI.Avalonia.BindingV2;
 //
@@ -17,7 +14,7 @@
 //     /// <param name="modelEventName">The name of the event in the model class</param>
 //     /// <param name="updateControl">Invoked when the model's event is fired, to update the control</param>
 //     /// <param name="updateModel">Invoked when the property on the control changes, to update the model</param>
-//     public static void Bind<TOwner, TControl, TModel, TValue>(string controlName, StyledProperty<TValue> property, string modelEventName, Action<TControl, TModel>? updateControl, Action<TControl, TModel>? updateModel) where TOwner : AvaloniaObject where TControl : AvaloniaObject where TModel : class {
+//     public static void Bind<TOwner, TControl, TModel, TValue>(string controlName, StyledProperty<TValue> property, string modelEventName, Action<object, object>? updateControl, Action<object, object>? updateModel) where TOwner : AvaloniaObject where TControl : AvaloniaObject where TModel : class {
 //         if (!controlInfo.TryGetValue(typeof(TOwner), out OwnerInfo? ownerInfo)) {
 //             controlInfo[typeof(TOwner)] = ownerInfo = new OwnerInfo(typeof(TOwner));
 //         }
@@ -33,7 +30,7 @@
 //             this.type = type;
 //         }
 //
-//         public void AssignControl<TControl, TModel, TValue>(string controlName, StyledProperty<TValue> property, string modelEventName, Action<TControl, TModel>? updateControl, Action<TControl, TModel>? updateModel) where TControl : AvaloniaObject where TModel : class {
+//         public void AssignControl<TControl, TModel, TValue>(string controlName, StyledProperty<TValue> property, string modelEventName, Action<object, object>? updateControl, Action<object, object>? updateModel) where TControl : AvaloniaObject where TModel : class {
 //             if (!this.bindingMap.TryGetValue(controlName, out Dictionary<AvaloniaProperty, ControlToModelBindingInfo>? map)) {
 //                 this.bindingMap[controlName] = map = new Dictionary<AvaloniaProperty, ControlToModelBindingInfo>();
 //             }
@@ -45,19 +42,16 @@
 //         }
 //
 //         private class ControlToModelBindingInfo {
-//             public ControlToModelBindingInfo(string controlName, AvaloniaProperty property, string modelEventName, Action<object,object>? updateControl, Action<object,object>? updateModel) {
-//                 
+//             public ControlToModelBindingInfo(string controlName, AvaloniaProperty property, string modelEventName, Action<object, object>? updateControl, Action<object, object>? updateModel) {
 //             }
 //         }
 //
 //         public void Attach(INameScope nameScope, object model) {
-//             foreach (KeyValuePair<string, Dictionary<AvaloniaProperty, string>> entry in this.bindingMap) {
+//             foreach (KeyValuePair<string, Dictionary<AvaloniaProperty, ControlToModelBindingInfo>> entry in this.bindingMap) {
 //                 object? obj = nameScope.Find(entry.Key);
 //                 if (!(obj is AvaloniaObject control)) {
 //                     continue;
 //                 }
-//                 
-//                 
 //             }
 //         }
 //     }

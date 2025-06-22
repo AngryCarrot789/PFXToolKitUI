@@ -6,7 +6,6 @@
         <Setter Property="Background" Value="{DynamicResource Window.Static.Background}"/>
         <Setter Property="TransparencyBackgroundFallback" Value="White"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
-        <Setter Property="FontSize" Value="12"/>
         <Setter Property="Template">
             <ControlTemplate>
                 <Panel>

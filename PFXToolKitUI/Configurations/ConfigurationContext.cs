@@ -65,7 +65,7 @@ public class ConfigurationContext {
     /// Sets the page that is currently being viewed
     /// </summary>
     /// <param name="newPage"></param>
-    public void SetViewPage(ConfigurationPage? newPage) {
+    public void SetViewingPage(ConfigurationPage? newPage) {
         ConfigurationPage? oldPage = this.activePage;
         if (oldPage == newPage) {
             return;

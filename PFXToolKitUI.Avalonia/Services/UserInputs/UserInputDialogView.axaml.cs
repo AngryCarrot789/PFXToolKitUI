@@ -31,6 +31,7 @@ using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.UserInputs;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Services.UserInputs;
 
@@ -39,7 +40,6 @@ public partial class UserInputDialogView : UserControl {
     public static readonly DoubleUserInputInfo DummyDoubleInput = new DoubleUserInputInfo("Text A Here", "Text B Here") { Message = "A primary message here", ConfirmText = "Confirm", CancelText = "Cancel", Caption = "The caption here", LabelA = "Label A Here:", LabelB = "Label B Here:" };
 
     public static readonly ModelControlRegistry<UserInputInfo, Control> Registry;
-
     public static readonly StyledProperty<UserInputInfo?> UserInputInfoProperty = AvaloniaProperty.Register<UserInputDialogView, UserInputInfo?>("UserInputInfo");
 
     public UserInputInfo? UserInputInfo {
@@ -62,17 +62,18 @@ public partial class UserInputDialogView : UserControl {
     /// </summary>
     public DesktopWindow? Window { get; private set; }
 
-    private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> messageBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(TextBlock.TextProperty, UserInputInfo.MessageParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> confirmTextBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(ContentProperty, UserInputInfo.ConfirmTextParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<UserInputInfo> cancelTextBinder = new AvaloniaPropertyToDataParameterBinder<UserInputInfo>(ContentProperty, UserInputInfo.CancelTextParameter);
+    private readonly EventPropertyBinder<UserInputInfo> messageBinder = new EventPropertyBinder<UserInputInfo>(nameof(UserInputInfo.MessageChanged), b => {
+        b.Control.SetValue(IsVisibleProperty, !string.IsNullOrWhiteSpace(b.Model.Message));
+        b.Control.SetValue(TextBlock.TextProperty, b.Model.Message);
+    });
+    private readonly EventPropertyBinder<UserInputInfo> confirmTextBinder = new EventPropertyBinder<UserInputInfo>(nameof(UserInputInfo.ConfirmTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.ConfirmText));
+    private readonly EventPropertyBinder<UserInputInfo> cancelTextBinder = new EventPropertyBinder<UserInputInfo>(nameof(UserInputInfo.CancelTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.CancelText));
 
     public UserInputDialogView() {
         this.InitializeComponent();
         this.messageBinder.AttachControl(this.PART_Message);
         this.confirmTextBinder.AttachControl(this.PART_ConfirmButton);
         this.cancelTextBinder.AttachControl(this.PART_CancelButton);
-        this.PART_Message.PropertyChanged += this.OnMessageTextBlockPropertyChanged;
-
         this.PART_ConfirmButton.Click += this.OnConfirmButtonClicked;
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
     }
@@ -106,12 +107,6 @@ public partial class UserInputDialogView : UserControl {
         Size size = base.MeasureOverride(availableSize);
         size = new Size(size.Width + 2, Math.Max(size.Height, 43));
         return new Size(Math.Max(size.Width, 250), size.Height);
-    }
-
-    private void OnMessageTextBlockPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
-        if (e.Property == TextBlock.TextProperty) {
-            this.PART_MessageContainer.IsVisible = !string.IsNullOrWhiteSpace(e.GetNewValue<string?>());
-        }
     }
     
     private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) => this.TryCloseDialog(true);
@@ -190,12 +185,12 @@ public partial class UserInputDialogView : UserControl {
             }
 
             if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
-                window.Close(this.DialogResult = true);
+                window.Close((this.DialogResult = true).BoxNullable());
             }
         }
         else {
             if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
-                window.Close(this.DialogResult = false);
+                window.Close((this.DialogResult = false).BoxNullable());
             }
         }
 

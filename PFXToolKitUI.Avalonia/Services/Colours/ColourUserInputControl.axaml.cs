@@ -28,13 +28,13 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Services.Colours;
 
 public partial class ColourUserInputControl : UserControl, IUserInputContent {
-    private readonly AvaloniaPropertyToDataParameterBinder<ColourUserInputInfo> colourBinder;
+    private readonly AvaloniaPropertyToDataParameterAutoBinder<ColourUserInputInfo> colourBinder;
     private UserInputDialogView? myDialog;
     private ColourUserInputInfo? myData;
 
     public ColourUserInputControl() {
         this.InitializeComponent();
-        this.colourBinder = new AvaloniaPropertyToDataParameterBinder<ColourUserInputInfo>(ColorView.ColorProperty, ColourUserInputInfo.ColourParameter, arg => {
+        this.colourBinder = new AvaloniaPropertyToDataParameterAutoBinder<ColourUserInputInfo>(ColorView.ColorProperty, ColourUserInputInfo.ColourParameter, arg => {
             SKColor c = (SKColor) arg!;
             return new Color(c.Alpha, c.Red, c.Green, c.Blue);
         }, arg => {

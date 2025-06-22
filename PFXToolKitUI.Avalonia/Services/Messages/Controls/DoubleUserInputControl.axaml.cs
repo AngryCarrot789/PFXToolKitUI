@@ -21,17 +21,16 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
-using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.Services.UserInputs;
 
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
 public partial class DoubleUserInputControl : UserControl, IUserInputContent {
-    private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> labelABinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBlock.TextProperty, DoubleUserInputInfo.LabelAParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> labelBBinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBlock.TextProperty, DoubleUserInputInfo.LabelBParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBox.TextProperty, DoubleUserInputInfo.TextAParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBox.TextProperty, DoubleUserInputInfo.TextBParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo> footerBinder = new AvaloniaPropertyToDataParameterBinder<DoubleUserInputInfo>(TextBlock.TextProperty, BaseTextUserInputInfo.FooterParameter);
+    private readonly EventPropertyBinder<DoubleUserInputInfo> labelABinder = new EventPropertyBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelAChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelA));
+    private readonly EventPropertyBinder<DoubleUserInputInfo> labelBBinder = new EventPropertyBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelBChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelB));
+    private readonly AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextAChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextA), b => b.Model.TextA = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextBChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextB), b => b.Model.TextB = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly EventPropertyBinder<DoubleUserInputInfo> footerBinder = new EventPropertyBinder<DoubleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
     private UserInputDialogView? myDialog;
     private DoubleUserInputInfo? myData;
 
@@ -61,9 +60,9 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         this.textABinder.AttachModel(this.myData);
         this.textBBinder.AttachModel(this.myData);
         this.footerBinder.AttachModel(this.myData);
-        DoubleUserInputInfo.LabelAParameter.AddValueChangedHandler(this.myData!, this.OnLabelAChanged);
-        DoubleUserInputInfo.LabelBParameter.AddValueChangedHandler(this.myData!, this.OnLabelBChanged);
-        BaseTextUserInputInfo.FooterParameter.AddValueChangedHandler(this.myData!, this.OnFooterChanged);
+        this.myData.LabelAChanged += this.OnLabelAChanged;
+        this.myData.LabelBChanged += this.OnLabelBChanged;
+        this.myData.FooterChanged += this.OnFooterChanged;
         this.myData.TextErrorsAChanged += this.UpdateTextErrorsA;
         this.myData.TextErrorsBChanged += this.UpdateTextErrorsB;
         this.UpdateLabelAVisibility();
@@ -79,9 +78,9 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         this.textABinder.DetachModel();
         this.textBBinder.DetachModel();
         this.footerBinder.DetachModel();
-        DoubleUserInputInfo.LabelAParameter.RemoveValueChangedHandler(this.myData!, this.OnLabelAChanged);
-        DoubleUserInputInfo.LabelBParameter.RemoveValueChangedHandler(this.myData!, this.OnLabelBChanged);
-        BaseTextUserInputInfo.FooterParameter.RemoveValueChangedHandler(this.myData!, this.OnFooterChanged);
+        this.myData!.LabelAChanged -= this.OnLabelAChanged;
+        this.myData!.LabelBChanged -= this.OnLabelBChanged;
+        this.myData!.FooterChanged -= this.OnFooterChanged;
         this.myData!.TextErrorsAChanged -= this.UpdateTextErrorsA;
         this.myData!.TextErrorsBChanged -= this.UpdateTextErrorsB;
         this.myDialog = null;
@@ -112,7 +111,7 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     private void UpdateLabelBVisibility() => this.PART_LabelA.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.LabelA);
     private void UpdateFooterVisibility() => this.PART_FooterTextBlock.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Footer);
 
-    private void OnLabelAChanged(DataParameter dataParameter, ITransferableData owner) => this.UpdateLabelAVisibility();
-    private void OnLabelBChanged(DataParameter dataParameter, ITransferableData owner) => this.UpdateLabelBVisibility();
-    private void OnFooterChanged(DataParameter dataParameter, ITransferableData owner) => this.UpdateFooterVisibility();
+    private void OnLabelAChanged(DoubleUserInputInfo sender) => this.UpdateLabelAVisibility();
+    private void OnLabelBChanged(DoubleUserInputInfo sender) => this.UpdateLabelBVisibility();
+    private void OnFooterChanged(BaseTextUserInputInfo sender) => this.UpdateFooterVisibility();
 }

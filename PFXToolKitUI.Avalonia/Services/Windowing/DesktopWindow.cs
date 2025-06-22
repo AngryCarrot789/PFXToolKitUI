@@ -34,7 +34,7 @@ namespace PFXToolKitUI.Avalonia.Services.Windowing;
 /// <summary>
 /// The base class for windows supported by a <see cref="WindowingSystem"/>
 /// </summary>
-public class DesktopWindow : WindowEx, ITopLevel {
+public class DesktopWindow : WindowEx, IDesktopWindow {
     /// <summary>
     /// Gets whether the window is actually open or not. False when not opened or <see cref="IsClosed"/> is true
     /// </summary>
@@ -65,8 +65,7 @@ public class DesktopWindow : WindowEx, ITopLevel {
 
         IClipboard? clip = this.Clipboard;
         this.ClipboardService = clip != null ? new ClipboardServiceImpl(clip) : null;
-        using (var token = DataManager.GetContextData(this).BeginChange())
-            token.Context.Set(ITopLevel.DataKey, this);
+        DataManager.GetContextData(this).Set(IDesktopWindow.DataKey, this);
     }
 
     public void Show(DesktopWindow? parent) {

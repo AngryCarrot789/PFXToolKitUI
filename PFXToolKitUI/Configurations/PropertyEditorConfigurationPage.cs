@@ -17,7 +17,6 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.PropertyEditing;
 
 namespace PFXToolKitUI.Configurations;
@@ -25,40 +24,14 @@ namespace PFXToolKitUI.Configurations;
 /// <summary>
 /// A configuration page that consists entirely of a property editor
 /// </summary>
-public abstract class PropertyEditorConfigurationPage : ConfigurationPage, ITransferableData {
+public abstract class PropertyEditorConfigurationPage : ConfigurationPage {
     public PropertyEditor PropertyEditor { get; }
-
-    public TransferableData TransferableData { get; }
 
     public PropertyEditorConfigurationPage() : this(new PropertyEditor()) {
     }
 
     public PropertyEditorConfigurationPage(PropertyEditor propertyEditor) {
         ArgumentNullException.ThrowIfNull(propertyEditor);
-        this.TransferableData = new TransferableData(this);
         this.PropertyEditor = propertyEditor;
-    }
-
-    private static void MarkModifiedHandler(DataParameter parameter, ITransferableData owner) => ((PropertyEditorConfigurationPage) owner).IsModified = true;
-
-    protected static void AffectsModifiedState(DataParameter parameter) {
-        parameter.ValueChanged += MarkModifiedHandler;
-    }
-
-    protected static void AffectsModifiedState(DataParameter p1, DataParameter p2) {
-        p1.ValueChanged += MarkModifiedHandler;
-        p2.ValueChanged += MarkModifiedHandler;
-    }
-
-    protected static void AffectsModifiedState(DataParameter p1, DataParameter p2, DataParameter p3) {
-        p1.ValueChanged += MarkModifiedHandler;
-        p2.ValueChanged += MarkModifiedHandler;
-        p3.ValueChanged += MarkModifiedHandler;
-    }
-
-    protected static void AffectsModifiedState(params DataParameter[] parameters) {
-        foreach (DataParameter p in parameters) {
-            p.ValueChanged += MarkModifiedHandler;
-        }
     }
 }

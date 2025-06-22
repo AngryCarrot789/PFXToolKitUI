@@ -192,10 +192,10 @@ public abstract class ApplicationPFX : IServiceable {
             }
             catch (Exception ex) {
                 Console.WriteLine("Exception during setup:" + Environment.NewLine + ex.GetToString());
-                
+
                 if (Debugger.IsAttached)
                     Debugger.Break();
-                
+
                 await instance.OnSetupFailed(ex);
                 return;
             }
@@ -266,6 +266,10 @@ public abstract class ApplicationPFX : IServiceable {
     }
 
     protected virtual void RegisterCommands(CommandManager manager) {
+#if DEBUG
+        manager.Register("commands.application.DebugContextCommand", new DebugContextCommand());
+#endif
+
         manager.Register("commands.mainWindow.OpenEditorSettings", new OpenApplicationSettingsCommand());
         manager.Register("commands.application.AboutApplicationCommand", new AboutApplicationCommand());
 

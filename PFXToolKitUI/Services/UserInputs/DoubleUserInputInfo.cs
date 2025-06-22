@@ -17,25 +17,17 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Collections.Immutable;
-using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.Utils.Accessing;
+using System.Collections.ObjectModel;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
 public delegate void DoubleUserInputDataEventHandler(DoubleUserInputInfo sender);
 
 public class DoubleUserInputInfo : BaseTextUserInputInfo {
-    public static readonly DataParameterString TextAParameter = DataParameter.Register(new DataParameterString(typeof(DoubleUserInputInfo), nameof(TextA), "", ValueAccessors.Reflective<string?>(typeof(DoubleUserInputInfo), nameof(textA)), isNullable: false));
-    public static readonly DataParameterString TextBParameter = DataParameter.Register(new DataParameterString(typeof(DoubleUserInputInfo), nameof(TextB), "", ValueAccessors.Reflective<string?>(typeof(DoubleUserInputInfo), nameof(textB)), isNullable: false));
-    public static readonly DataParameterString LabelAParameter = DataParameter.Register(new DataParameterString(typeof(DoubleUserInputInfo), nameof(LabelA), null, ValueAccessors.Reflective<string?>(typeof(DoubleUserInputInfo), nameof(labelA))));
-    public static readonly DataParameterString LabelBParameter = DataParameter.Register(new DataParameterString(typeof(DoubleUserInputInfo), nameof(LabelB), null, ValueAccessors.Reflective<string?>(typeof(DoubleUserInputInfo), nameof(labelB))));
-
-    private string textA = TextAParameter.DefaultValue!;
-    private string textB = TextBParameter.DefaultValue!;
-    private string? labelA = LabelAParameter.DefaultValue;
-    private string? labelB = LabelBParameter.DefaultValue;
-    private IImmutableList<string>? textErrorsA, textErrorsB;
+    private string textA, textB = "";
+    private string? labelA, labelB;
+    private ReadOnlyCollection<string>? textErrorsA, textErrorsB;
     private bool isUpdatingErrorA, isUpdatingErrorB;
     private bool doUpdateBAfterA, doUpdateAAfterB;
 
@@ -44,15 +36,21 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// </summary>
     public string TextA {
         get => this.textA;
-        set => DataParameter.SetValueHelper<string?>(this, TextAParameter, ref this.textA!, value ?? "");
+        set => PropertyHelper.SetAndRaiseINE(ref this.textA, value, this, static t => {
+            t.UpdateTextAError(true);
+            t.TextAChanged?.Invoke(t);
+        });
     }
-
+    
     /// <summary>
     /// Gets or sets the text in the B field
     /// </summary>
     public string TextB {
         get => this.textB;
-        set => DataParameter.SetValueHelper<string?>(this, TextBParameter, ref this.textB!, value ?? "");
+        set => PropertyHelper.SetAndRaiseINE(ref this.textB, value, this, static t => {
+            t.UpdateTextBError(true);
+            t.TextBChanged?.Invoke(t);
+        });
     }
 
     /// <summary>
@@ -60,7 +58,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// </summary>
     public string? LabelA {
         get => this.labelA;
-        set => DataParameter.SetValueHelper(this, LabelAParameter, ref this.labelA, value);
+        set => PropertyHelper.SetAndRaiseINE(ref this.labelA, value, this, static t => t.LabelAChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -68,7 +66,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// </summary>
     public string? LabelB {
         get => this.labelB;
-        set => DataParameter.SetValueHelper(this, LabelBParameter, ref this.labelB, value);
+        set => PropertyHelper.SetAndRaiseINE(ref this.labelB, value, this, static t => t.LabelBChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -85,7 +83,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// Gets the error messages with <see cref="TextA"/>. Only non-null
     /// when <see cref="ValidateA"/> is non-null and actually produces errors
     /// </summary>
-    public IImmutableList<string>? TextErrorsA {
+    public ReadOnlyCollection<string>? TextErrorsA {
         get => this.textErrorsA;
         private set {
             if (value?.Count < 1) {
@@ -104,7 +102,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// Gets the error messages with <see cref="TextB"/>. Only non-null
     /// when <see cref="ValidateB"/> is non-null and actually produces errors
     /// </summary>
-    public IImmutableList<string>? TextErrorsB {
+    public ReadOnlyCollection<string>? TextErrorsB {
         get => this.textErrorsB;
         private set {
             if (value?.Count < 1) {
@@ -119,8 +117,8 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
         }
     }
 
-    public event DoubleUserInputDataEventHandler? TextErrorsAChanged;
-    public event DoubleUserInputDataEventHandler? TextErrorsBChanged;
+    public event DoubleUserInputDataEventHandler? TextAChanged, TextBChanged, LabelAChanged, LabelBChanged;
+    public event DoubleUserInputDataEventHandler? TextErrorsAChanged, TextErrorsBChanged;
 
     public DoubleUserInputInfo() {
     }
@@ -128,11 +126,6 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     public DoubleUserInputInfo(string? textA, string? textB) {
         this.textA = textA ?? "";
         this.textB = textB ?? "";
-    }
-
-    static DoubleUserInputInfo() {
-        TextAParameter.PriorityValueChanged += (p, o) => ((DoubleUserInputInfo) o).UpdateTextAError(true);
-        TextBParameter.PriorityValueChanged += (p, o) => ((DoubleUserInputInfo) o).UpdateTextBError(true);
     }
 
     /// <summary>
@@ -150,7 +143,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             }
             
             this.isUpdatingErrorA = true;
-            this.TextErrorsA = SingleUserInputInfo.GetErrors(this.TextA, this.ValidateA, this.TextErrorsA != null);
+            this.TextErrorsA = SingleUserInputInfo.GetErrors(this.TextA, this.ValidateA, this.TextErrorsA != null)?.AsReadOnly();
             if (this.doUpdateBAfterA) {
                 this.doUpdateBAfterA = false;
                 this.UpdateTextBError(true);
@@ -178,7 +171,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             }
             
             this.isUpdatingErrorB = true;
-            this.TextErrorsB = SingleUserInputInfo.GetErrors(this.TextB, this.ValidateB, this.TextErrorsB != null);
+            this.TextErrorsB = SingleUserInputInfo.GetErrors(this.TextB, this.ValidateB, this.TextErrorsB != null)?.AsReadOnly();
             if (this.doUpdateAAfterB) {
                 this.doUpdateAAfterB = false;
                 this.UpdateTextAError(true);

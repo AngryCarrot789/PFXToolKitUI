@@ -31,9 +31,7 @@ public abstract class MultiChangeToken : IDisposable {
     /// Disposes this token
     /// </summary>
     public void Dispose() {
-        if (this.disposed)
-            throw new ObjectDisposedException("Already disposed");
-
+        ObjectDisposedException.ThrowIf(this.disposed, this);
         this.disposed = true;
         this.OnDisposed();
     }

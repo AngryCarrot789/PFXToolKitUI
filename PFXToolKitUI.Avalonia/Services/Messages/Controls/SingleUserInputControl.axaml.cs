@@ -17,21 +17,20 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Collections.Immutable;
+using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
-using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.Services.UserInputs;
 
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
 public partial class SingleUserInputControl : UserControl, IUserInputContent {
-    private readonly AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo> labelBinder = new AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo>(TextBlock.TextProperty, SingleUserInputInfo.LabelParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo> textBinder = new AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo>(TextBox.TextProperty, SingleUserInputInfo.TextParameter);
-    private readonly AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo> footerBinder = new AvaloniaPropertyToDataParameterBinder<SingleUserInputInfo>(TextBlock.TextProperty, BaseTextUserInputInfo.FooterParameter);
+    private readonly EventPropertyBinder<SingleUserInputInfo> labelBinder = new EventPropertyBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LabelChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Label));
+    private readonly AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo> textBinder = new AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo>(TextBox.TextProperty, nameof(SingleUserInputInfo.TextChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.Text), b => b.Model.Text = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly EventPropertyBinder<SingleUserInputInfo> footerBinder = new EventPropertyBinder<SingleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
     private UserInputDialogView? myDialog;
     private SingleUserInputInfo? myData;
 
@@ -56,8 +55,8 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         this.labelBinder.AttachModel(this.myData);
         this.textBinder.AttachModel(this.myData);
         this.footerBinder.AttachModel(this.myData);
-        SingleUserInputInfo.LabelParameter.AddValueChangedHandler(info, this.OnLabelChanged);
-        BaseTextUserInputInfo.FooterParameter.AddValueChangedHandler(this.myData!, this.OnFooterChanged);
+        this.myData.LabelChanged += this.OnLabelChanged;
+        this.myData.FooterChanged += this.OnFooterChanged;
         this.myData.TextErrorsChanged += this.UpdateTextErrors;
         this.UpdateLabelVisibility();
         this.UpdateFooterVisibility();
@@ -68,15 +67,15 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         this.labelBinder.DetachModel();
         this.textBinder.DetachModel();
         this.footerBinder.DetachModel();
-        SingleUserInputInfo.LabelParameter.RemoveValueChangedHandler(this.myData!, this.OnLabelChanged);
-        BaseTextUserInputInfo.FooterParameter.RemoveValueChangedHandler(this.myData!, this.OnFooterChanged);
+        this.myData!.LabelChanged -= this.OnLabelChanged;
+        this.myData!.FooterChanged -= this.OnFooterChanged;
         this.myData!.TextErrorsChanged -= this.UpdateTextErrors;
         this.myDialog = null;
         this.myData = null;
     }
 
-    public static void SetErrorsOrClear(AvaloniaObject target, IImmutableList<string>? errors) {
-        target.SetValue(DataValidationErrors.ErrorsProperty, errors?.ToList() ?? AvaloniaProperty.UnsetValue);
+    public static void SetErrorsOrClear(AvaloniaObject target, ReadOnlyCollection<string>? errors) {
+        target.SetValue(DataValidationErrors.ErrorsProperty, errors ?? AvaloniaProperty.UnsetValue);
     }
 
     private void UpdateTextErrors(SingleUserInputInfo info) {
@@ -98,6 +97,6 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
     private void UpdateLabelVisibility() => this.PART_Label.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Label);
     private void UpdateFooterVisibility() => this.PART_FooterTextBlock.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Footer);
 
-    private void OnLabelChanged(DataParameter parameter, ITransferableData owner) => this.UpdateLabelVisibility();
-    private void OnFooterChanged(DataParameter dataParameter, ITransferableData owner) => this.UpdateFooterVisibility();
+    private void OnLabelChanged(SingleUserInputInfo sender) => this.UpdateLabelVisibility();
+    private void OnFooterChanged(BaseTextUserInputInfo sender) => this.UpdateFooterVisibility();
 }

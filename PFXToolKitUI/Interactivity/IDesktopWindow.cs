@@ -21,8 +21,11 @@ using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.Interactivity;
 
-public interface ITopLevel {
-    public static readonly DataKey<ITopLevel> DataKey = DataKey<ITopLevel>.Create("PFXTopLevel");
+/// <summary>
+/// An interface that represents a window in the windowing system
+/// </summary>
+public interface IDesktopWindow {
+    public static readonly DataKey<IDesktopWindow> DataKey = DataKey<IDesktopWindow>.Create("TopLevel_DesktopWindow");
     
     /// <summary>
     /// Gets this window's clipboard service

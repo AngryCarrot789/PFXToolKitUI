@@ -17,20 +17,21 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.Utils.Accessing;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
-public abstract class BaseTextUserInputInfo : UserInputInfo {
-    public static readonly DataParameterString FooterParameter = DataParameter.Register(new DataParameterString(typeof(BaseTextUserInputInfo), nameof(Footer), null, ValueAccessors.Reflective<string?>(typeof(BaseTextUserInputInfo), nameof(footer))));
+public delegate void BaseTextUserInputInfoEventHandler(BaseTextUserInputInfo sender);
 
+public abstract class BaseTextUserInputInfo : UserInputInfo {
     private string? footer;
 
     public string? Footer {
         get => this.footer;
-        set => DataParameter.SetValueHelper(this, FooterParameter, ref this.footer, value);
+        set => PropertyHelper.SetAndRaiseINE(ref this.footer, value, this, static t => t.FooterChanged?.Invoke(t));
     }
+
+    public event BaseTextUserInputInfoEventHandler? FooterChanged;
 
     protected BaseTextUserInputInfo() {
     }

@@ -31,7 +31,7 @@ namespace PFXToolKitUI.Avalonia.Bindings.Events;
 public readonly struct SenderEventRelay {
     public readonly EventInfo EventInfo;
     public readonly Delegate HandlerDelegate;
-    public readonly MethodInfo addMethod, removeMethod;
+    public readonly MethodInfo AddMethod, RemoveMethod;
     private readonly object?[] HandlerDelegateInArray;
 
     private SenderEventRelay(EventInfo eventInfo, Delegate handlerDelegate) {
@@ -39,8 +39,8 @@ public readonly struct SenderEventRelay {
         this.HandlerDelegate = handlerDelegate;
         this.HandlerDelegateInArray = [handlerDelegate];
 
-        this.addMethod = eventInfo.GetAddMethod(nonPublic: false) ?? throw new Exception("Missing add method");
-        this.removeMethod = eventInfo.GetRemoveMethod(nonPublic: false) ?? throw new Exception("Missing remove method");
+        this.AddMethod = eventInfo.GetAddMethod(nonPublic: false) ?? throw new Exception("Missing add method");
+        this.RemoveMethod = eventInfo.GetRemoveMethod(nonPublic: false) ?? throw new Exception("Missing remove method");
     }
 
     public static SenderEventRelay Create(string eventName, Type senderType, Action<object> callback) {
@@ -69,9 +69,9 @@ public readonly struct SenderEventRelay {
         return new SenderEventRelay(info, EventUtils.CreateDelegateToInvokeActionFromEvent(handlerType, callback, senderType, extraParameter));
     }
 
-    public void AddEventHandler(object model) => this.addMethod.Invoke(model, this.HandlerDelegateInArray);
+    public void AddEventHandler(object model) => this.AddMethod.Invoke(model, this.HandlerDelegateInArray);
 
-    public void RemoveEventHandler(object model) => this.removeMethod.Invoke(model, this.HandlerDelegateInArray);
+    public void RemoveEventHandler(object model) => this.RemoveMethod.Invoke(model, this.HandlerDelegateInArray);
 }
 
 public static class TestShit {

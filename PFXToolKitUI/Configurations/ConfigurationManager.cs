@@ -40,40 +40,39 @@ public abstract class ConfigurationManager {
     private const int Flag_None = 0;
     private const int Flag_OnlyIfModified = 1;
 
-    public async Task RevertLiveChangesInHierarchyAsync(List<ApplyChangesFailureEntry>? errors) {
-        await ApplyPagesRecursive(this.RootEntry, (x) => x.RevertLiveChanges(errors), Flag_None);
+    public ValueTask RevertLiveChangesInHierarchyAsync(List<ApplyChangesFailureEntry>? errors) {
+        return ApplyPagesRecursive(this.RootEntry, x => x.RevertLiveChanges(errors), Flag_None);
     }
 
     /// <summary>
     /// Applies all changes to our configuration manager's hierarchy (aka recursively apply)
     /// </summary>
-    public async Task ApplyChangesInHierarchyAsync(List<ApplyChangesFailureEntry>? errors) {
+    public async ValueTask ApplyChangesInHierarchyAsync(List<ApplyChangesFailureEntry>? errors) {
         PersistentStorageManager manager = ApplicationPFX.Instance.PersistentStorageManager;
 
         manager.BeginSavingStack();
-        await ApplyPagesRecursive(this.RootEntry, (x) => x.Apply(errors), Flag_OnlyIfModified);
+        await ApplyPagesRecursive(this.RootEntry, x => x.Apply(errors), Flag_OnlyIfModified);
         if (manager.EndSavingStack()) {
-            manager.SaveStackedAreas();
             manager.SaveAll();
         }
     }
 
-    protected async Task LoadContextAsync(ConfigurationContext context) {
-        await ApplyPagesRecursive(this.RootEntry, (x) => {
+    private ValueTask LoadContextAsync(ConfigurationContext context) {
+        return ApplyPagesRecursive(this.RootEntry, x => {
             x.IsModified = false;
             return ConfigurationPage.InternalOnContextCreated(x, context);
         }, Flag_None);
     }
 
-    protected async Task UnloadContextAsync(ConfigurationContext context) {
-        await ApplyPagesRecursive(this.RootEntry, async (x) => {
+    private ValueTask UnloadContextAsync(ConfigurationContext context) {
+        return ApplyPagesRecursive(this.RootEntry, x => {
             // Should be null if the page system has no bugs in it. But, check
             // anyway because some pages might do stuff in the context change handler
             if (x.ActiveContext != null) {
                 ConfigurationPage.InternalSetContext(x, null);
             }
 
-            await ConfigurationPage.InternalOnContextDestroyed(x, context);
+            return ConfigurationPage.InternalOnContextDestroyed(x, context);
         }, Flag_None);
     }
 
@@ -94,6 +93,7 @@ public abstract class ConfigurationManager {
         }
     }
 
-    public static Task InternalLoadContext(ConfigurationManager manager, ConfigurationContext context) => manager.LoadContextAsync(context);
-    public static Task InternalUnloadContext(ConfigurationManager manager, ConfigurationContext context) => manager.UnloadContextAsync(context);
+    public static ValueTask InternalLoadContext(ConfigurationManager manager, ConfigurationContext context) => manager.LoadContextAsync(context);
+    
+    public static ValueTask InternalUnloadContext(ConfigurationManager manager, ConfigurationContext context) => manager.UnloadContextAsync(context);
 }

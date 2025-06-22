@@ -33,7 +33,7 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 public partial class KeyStrokeUserInputControl : UserControl, IUserInputContent {
     public KeyStrokeUserInputInfo? InputInfo { get; private set; }
 
-    private readonly IBinder<KeyStrokeUserInputInfo> keyStrokeBinder = new AvaloniaPropertyToDataParameterBinder<KeyStrokeUserInputInfo>(TextBox.TextProperty, KeyStrokeUserInputInfo.KeyStrokeParameter, (p) => {
+    private readonly IBinder<KeyStrokeUserInputInfo> keyStrokeBinder = new AvaloniaPropertyToDataParameterAutoBinder<KeyStrokeUserInputInfo>(TextBox.TextProperty, KeyStrokeUserInputInfo.KeyStrokeParameter, (p) => {
         KeyStroke s = (KeyStroke?) p ?? default;
         return KeyStrokeStringConverter.ToStringFunction(s.KeyCode, s.Modifiers, s.IsRelease, false, true);
     }) {

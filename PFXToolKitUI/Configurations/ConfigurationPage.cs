@@ -17,6 +17,7 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Configurations;
@@ -31,15 +32,15 @@ public delegate void ConfigurationPageEventHandler(ConfigurationPage sender);
 /// to these pages (such as <see cref="Apply"/>), or it may be an entirely custom page (e.g. shortcut editor tree)
 /// </para>
 /// </summary>
-public abstract class ConfigurationPage {
+public abstract class ConfigurationPage : ITransferableData {
+    private bool isModified, ignoreDataParamChange;
+
     /// <summary>
     /// Gets the configuration context currently applicable to this page. This is updated when the page
     /// is being viewed by the user. An instance of a page cannot be concurrently viewed multiple times,
     /// hence why this property is not a list of configuration contexts
     /// </summary>
     public ConfigurationContext? ActiveContext { get; private set; }
-
-    private bool isModified;
 
     /// <summary>
     /// Gets or sets if this page has been modified since being loaded. This determines if it requires saving
@@ -49,10 +50,43 @@ public abstract class ConfigurationPage {
         set => PropertyHelper.SetAndRaiseINE(ref this.isModified, value, this, static t => t.IsModifiedChanged?.Invoke(t));
     }
 
+    public TransferableData TransferableData { get; }
 
     public event ConfigurationPageEventHandler? IsModifiedChanged;
 
     protected ConfigurationPage() {
+        this.TransferableData = new TransferableData(this);
+    }
+
+    private static void MarkModifiedOnDataParameterChanged(DataParameter parameter, ITransferableData owner) {
+        if (!((ConfigurationPage) owner).ignoreDataParamChange)
+            ((ConfigurationPage) owner).IsModified = true;
+    }
+
+    protected static void AffectsIsModified(DataParameter parameter) {
+        parameter.ValueChanged += MarkModifiedOnDataParameterChanged;
+    }
+
+    protected static void AffectsIsModified(DataParameter p1, DataParameter p2) {
+        p1.ValueChanged += MarkModifiedOnDataParameterChanged;
+        p2.ValueChanged += MarkModifiedOnDataParameterChanged;
+    }
+
+    protected static void AffectsIsModified(DataParameter p1, DataParameter p2, DataParameter p3) {
+        p1.ValueChanged += MarkModifiedOnDataParameterChanged;
+        p2.ValueChanged += MarkModifiedOnDataParameterChanged;
+        p3.ValueChanged += MarkModifiedOnDataParameterChanged;
+    }
+
+    protected static void AffectsIsModified(DataParameter p1, DataParameter p2, DataParameter p3, DataParameter p4) {
+        p1.ValueChanged += MarkModifiedOnDataParameterChanged;
+        p2.ValueChanged += MarkModifiedOnDataParameterChanged;
+        p3.ValueChanged += MarkModifiedOnDataParameterChanged;
+        p4.ValueChanged += MarkModifiedOnDataParameterChanged;
+    }
+
+    protected static void AffectsIsModified(params DataParameter[] parameters) {
+        DataParameter.AddMultipleHandlers(MarkModifiedOnDataParameterChanged, parameters);
     }
 
     /// <summary>
@@ -120,7 +154,7 @@ public abstract class ConfigurationPage {
     /// </summary>
     /// <param name="oldContext">The previous context</param>
     /// <param name="newContext">The new context</param>
-    protected virtual void OnActiveContextChanged(ConfigurationContext? oldContext, ConfigurationContext? newContext) {
+    protected virtual void OnIsViewingChanged(ConfigurationContext? oldContext, ConfigurationContext? newContext) {
     }
 
     internal static void InternalSetContext(ConfigurationPage page, ConfigurationContext? context) {
@@ -130,7 +164,13 @@ public abstract class ConfigurationPage {
         }
 
         page.ActiveContext = context;
-        page.OnActiveContextChanged(oldContext, context);
+        if (context != null)
+            page.ignoreDataParamChange = true;
+
+        page.OnIsViewingChanged(oldContext, context);
+
+        if (context != null)
+            page.ignoreDataParamChange = false;
     }
 
     internal static ValueTask InternalOnContextCreated(ConfigurationPage page, ConfigurationContext context) => page.OnContextCreated(context);

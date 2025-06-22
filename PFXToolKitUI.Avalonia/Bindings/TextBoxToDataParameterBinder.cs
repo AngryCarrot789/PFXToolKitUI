@@ -27,7 +27,7 @@ using PFXToolKitUI.DataTransfer;
 namespace PFXToolKitUI.Avalonia.Bindings;
 
 /// <summary>
-/// Same as <see cref="AvaloniaPropertyToDataParameterBinder{TModel}"/> but does not map the control property
+/// Same as <see cref="AvaloniaPropertyToDataParameterAutoBinder{TModel}"/> but does not map the control property
 /// back to the model value directly, but instead tries to parse the control value to a model compatible value
 /// </summary>
 /// <typeparam name="TModel">Type of model</typeparam>

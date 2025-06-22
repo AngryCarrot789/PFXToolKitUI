@@ -23,7 +23,7 @@ using System.Reflection;
 namespace PFXToolKitUI.Utils;
 
 public static class EventUtils {
-    internal static readonly MethodInfo InvokeActionMethod = typeof(Action).GetMethod("Invoke") ?? throw new Exception("Missing Invoke method on action");
+    internal static MethodInfo? InvokeActionMethod;
     internal static readonly Dictionary<Type, ParameterExpression[]> DelegateTypeToParameters = new Dictionary<Type, ParameterExpression[]>();
 
     public static Delegate CreateDelegateToInvokeActionFromEvent(Type eventHandlerType, Action actionToInvoke) {
@@ -32,7 +32,7 @@ public static class EventUtils {
 
         // This can't really be optimised any further
         // Creates a lambda, with the eventType's delegate method signature, that invokes actionToInvoke
-        MethodCallExpression invokeAction = Expression.Call(Expression.Constant(actionToInvoke), InvokeActionMethod);
+        MethodCallExpression invokeAction = Expression.Call(Expression.Constant(actionToInvoke), InvokeActionMethod ??= (typeof(Action).GetMethod("Invoke") ?? throw new Exception("Missing Invoke method on action")));
         return Expression.Lambda(eventHandlerType, invokeAction, paramArray).Compile();
     }
 
@@ -58,10 +58,12 @@ public static class EventUtils {
         });
 
         Expression senderParam = paramArray[0].Type != typeOfParameter ? Expression.Convert(paramArray[0], typeOfParameter) : paramArray[0];
-        ConstantExpression delegateExpr = Expression.Constant(actionToInvokeWithParameter);
+        ConstantExpression constActionToInvoke = Expression.Constant(actionToInvokeWithParameter);
+        MethodCallExpression invokeHandler = extraParameterCall == null 
+            ? Expression.Call(constActionToInvoke, invoke, senderParam) 
+            : Expression.Call(constActionToInvoke, invoke, senderParam, Expression.Constant(extraParameterCall));
         
-        MethodCallExpression invokeAction = extraParameterCall == null ? Expression.Call(delegateExpr, invoke, senderParam) : Expression.Call(delegateExpr, invoke, senderParam, Expression.Constant(extraParameterCall));
-        return Expression.Lambda(eventHandlerType, invokeAction, paramArray).Compile();
+        return Expression.Lambda(eventHandlerType, invokeHandler, paramArray).Compile();
     }
 
     public static void CreateEventInterface<TTarget, TEvent>(EventInfo info, out Action<TTarget, TEvent> addHandler, out Action<TTarget, TEvent> removeHandler) where TEvent : Delegate {

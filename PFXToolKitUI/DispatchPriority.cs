@@ -17,97 +17,61 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.ComponentModel;
-
 namespace PFXToolKitUI;
 
-public enum DispatchPriority : int {
+/// <summary>
+/// A priority for a dispatcher operation. A lower value means a lower priority and will be processed after higher priority operations.
+/// </summary>
+public enum DispatchPriority {
+    /*
+     * Example: You set a control's IsVisible property to true.
+     *
+     *   If you then InvokeAsync an operation using a priority lower than Loaded,
+     *   the control's Loaded event is fired first, then your operation is run
+     *
+     *   But if you InvokeAsync an operation using a higher priority (above Loaded),
+     *   your operation runs first, then Loaded will be fired some point after your operation completes
+     *   (sooner or later depending on how many extra operations are scheduled above Loaded)
+     *
+     *   If you InvokeAsync on the Loaded priority, the behaviour can be complicated
+     */
+    
     /// <summary>The lowest foreground dispatcher priority</summary>
     Default = 0,
 
-    // INTERNAL_MinimumForegroundPriority = Default,
-    /// <summary>
-    /// The job will be processed with the same priority as input.
-    /// </summary>
+    /// <summary>The job will be processed with the same priority as input</summary>
     Input = Default - 1,
 
-    /// <summary>
-    /// The job will be processed after other non-idle operations have completed.
-    /// </summary>
+    /// <summary>The job will be processed after other non-idle operations have completed</summary>
     Background = Input - 1,
 
-    /// <summary>
-    /// The job will be processed after background operations have completed.
-    /// </summary>
+    /// <summary>The job will be processed after background operations have completed</summary>
     ContextIdle = Background - 1,
 
-    /// <summary>
-    /// The job will be processed when the application is idle.
-    /// </summary>
+    /// <summary>The job will be processed when the application is idle</summary>
     ApplicationIdle = ContextIdle - 1,
 
-    /// <summary>The job will be processed when the system is idle.</summary>
+    /// <summary>The job will be processed when the system is idle. This is the minimum possible priority that's actually dispatched</summary>
     SystemIdle = ApplicationIdle - 1,
 
-    /// <summary>
-    /// Minimum possible priority that's actually dispatched, default value
-    /// </summary>
-    INTERNAL_MinimumActiveValue = SystemIdle,
-
-    /// <summary>
-    /// A dispatcher priority for jobs that shouldn't be executed yet
-    /// </summary>
-    Inactive = INTERNAL_MinimumActiveValue - 1,
-
-    /// <summary>Minimum valid priority</summary>
-    INTERNAL_MinValue = Inactive,
-
-    /// <summary>Used internally in dispatcher code</summary>
-    Invalid = INTERNAL_MinimumActiveValue - 2,
-
-    /// <summary>
-    /// The job will be processed after layout and render but before input.
-    /// </summary>
+    /// <summary>The job will be processed after layout and render but before input</summary>
     Loaded = Default + 1,
 
-    /// <summary>
-    /// A special priority for platforms with UI render timer or for forced full rasterization requests
-    /// </summary>
-    INTERNAL_UiThreadRender = Loaded + 1,
+    /// <summary>A special priority for platforms with UI render timer or for forced full rasterization requests</summary>
+    TimedOrForcedRender = Loaded + 1,
 
-    /// <summary>
-    /// A special priority to synchronize native control host positions, IME, etc
-    /// We should probably have a better API for that, so the priority is internal
-    /// </summary>
-    INTERNAL_AfterRender = INTERNAL_UiThreadRender + 1,
+    /// <summary>A special priority for jobs to run after rendering, usually to synchronize native control host positions, IME, etc.</summary>
+    AfterRender = TimedOrForcedRender + 1,
 
-    /// <summary>
-    /// The job will be processed with the same priority as render.
-    /// </summary>
-    Render = INTERNAL_AfterRender + 1,
+    /// <summary>The job will be processed with the same priority as render</summary>
+    Render = AfterRender + 1,
+    
+    /// <summary>The job will be processed before render operations</summary>
+    BeforeRender = Render + 1,
+    
+    /// <summary>The job will be processed with normal priority. This is the same as <see cref="BeforeRender"/></summary>
+    Normal = BeforeRender,
 
-    /// <summary>
-    /// A special platform hook for jobs to be executed before the normal render cycle
-    /// </summary>
-    INTERNAL_BeforeRender = Render + 1,
-
-    /// <summary>
-    /// A special priority for platforms that resize the render target in asynchronous-ish matter,
-    /// should be changed into event grouping in the platform backend render
-    /// </summary>
-    INTERNAL_AsyncRenderTargetResize = INTERNAL_BeforeRender + 1,
-
-    /// <summary>
-    /// The job will be processed with the same priority as data binding.
-    /// </summary>
-    [Obsolete("WPF compatibility")] [EditorBrowsable(EditorBrowsableState.Never)]
-    DataBind = Render,
-
-    /// <summary>The job will be processed with normal priority.</summary>
-    Normal = Render + 1,
-
-    /// <summary>
-    /// The job will be processed before other asynchronous operations.
-    /// </summary>
+    /// <summary>The job will be processed before other asynchronous operations. This is the highest foreground priority</summary>
     Send = Normal + 1,
 }

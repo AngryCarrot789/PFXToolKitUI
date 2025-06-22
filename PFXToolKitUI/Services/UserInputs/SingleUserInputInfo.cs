@@ -17,28 +17,30 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Collections.Immutable;
-using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.Utils.Accessing;
+using System.Collections.ObjectModel;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
 public delegate void SingleUserInputDataEventHandler(SingleUserInputInfo sender);
 
 public class SingleUserInputInfo : BaseTextUserInputInfo {
-    public static readonly DataParameterString TextParameter = DataParameter.Register(new DataParameterString(typeof(SingleUserInputInfo), nameof(Text), "", ValueAccessors.Reflective<string?>(typeof(SingleUserInputInfo), nameof(text)), isNullable: false));
-    public static readonly DataParameterString LabelParameter = DataParameter.Register(new DataParameterString(typeof(SingleUserInputInfo), nameof(Label), null, ValueAccessors.Reflective<string?>(typeof(SingleUserInputInfo), nameof(label))));
+    private ReadOnlyCollection<string>? textErrors;
 
     private string text;
-    private string? label = LabelParameter.DefaultValue;
-    private IImmutableList<string>? textErrors;
+    private string? label;
 
     /// <summary>
     /// Gets the value the user have typed into the text field
     /// </summary>
     public string Text {
         get => this.text;
-        set => DataParameter.SetValueHelper<string?>(this, TextParameter, ref this.text!, value ?? "");
+        set {
+            PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => {
+                t.UpdateTextError();
+                t.TextChanged?.Invoke(t);
+            });
+        }
     }
 
     /// <summary>
@@ -46,7 +48,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     /// </summary>
     public string? Label {
         get => this.label;
-        set => DataParameter.SetValueHelper(this, LabelParameter, ref this.label, value);
+        set => PropertyHelper.SetAndRaiseINE(ref this.label, value, this, static t => t.LabelChanged?.Invoke(t));
     }
 
     /// <summary>
@@ -58,7 +60,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     /// <summary>
     /// Gets the current list of errors present. This value will either be null, or it will have at least one element
     /// </summary>
-    public IImmutableList<string>? TextErrors {
+    public ReadOnlyCollection<string>? TextErrors {
         get => this.textErrors;
         private set {
             if (value?.Count < 1) {
@@ -73,6 +75,8 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         }
     }
 
+    public event SingleUserInputDataEventHandler? TextChanged;
+    public event SingleUserInputDataEventHandler? LabelChanged;
     public event SingleUserInputDataEventHandler? TextErrorsChanged;
 
     public SingleUserInputInfo(string? defaultText) : this(null, null, null, defaultText) {
@@ -84,15 +88,10 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     public SingleUserInputInfo(string? caption, string? message, string? label, string? defaultText) : base(caption, message) {
         this.label = label;
         this.text = defaultText ?? "";
-        this.TransferableData.AddValueChangedHandler(TextParameter, (p, o) => ((SingleUserInputInfo) o).UpdateTextError());
-    }
-    
-    static SingleUserInputInfo() {
-        TextParameter.PriorityValueChanged += (p, o) => ((SingleUserInputInfo) o).UpdateTextError();
     }
 
     private void UpdateTextError() {
-        this.TextErrors = GetErrors(this.Text, this.Validate, this.HasErrors());
+        this.TextErrors = GetErrors(this.Text, this.Validate, this.HasErrors())?.AsReadOnly();
     }
 
     public override bool HasErrors() => this.TextErrors != null;
@@ -101,13 +100,13 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         this.UpdateTextError();
     }
 
-    public static ImmutableList<string>? GetErrors(string text, Action<ValidationArgs>? validate, bool hasError) {
+    public static List<string>? GetErrors(string text, Action<ValidationArgs>? validate, bool hasError) {
         if (validate == null) {
             return null;
         }
 
         List<string> list = new List<string>();
         validate(new ValidationArgs(text, list, hasError));
-        return list.Count > 0 ? list.ToImmutableList() : null;
+        return list.Count > 0 ? list : null;
     }
 }

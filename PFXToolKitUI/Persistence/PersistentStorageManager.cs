@@ -246,6 +246,7 @@ public sealed class PersistentStorageManager {
             throw new InvalidOperationException("Save stack is active");
         }
 
+        this.saveAreaStack = null;
         foreach (string area in this.myAreas.Keys) {
             this.SaveArea(area, areaErrors);
         }

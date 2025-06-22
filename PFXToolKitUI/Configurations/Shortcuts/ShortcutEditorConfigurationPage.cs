@@ -43,8 +43,8 @@ public class ShortcutEditorConfigurationPage : ConfigurationPage {
         return base.OnContextCreated(context);
     }
 
-    protected override void OnActiveContextChanged(ConfigurationContext? oldContext, ConfigurationContext? newContext) {
-        base.OnActiveContextChanged(oldContext, newContext);
+    protected override void OnIsViewingChanged(ConfigurationContext? oldContext, ConfigurationContext? newContext) {
+        base.OnIsViewingChanged(oldContext, newContext);
         if (newContext == null) {
             this.originalShortcuts = null;
         }

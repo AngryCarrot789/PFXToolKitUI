@@ -19,25 +19,19 @@
 
 namespace PFXToolKitUI.Services.UserInputs;
 
-public readonly struct ValidationArgs {
+public readonly struct ValidationArgs(string input, List<string> errors, bool hadErrorPreviously) {
     /// <summary>
     /// The value in the text box
     /// </summary>
-    public readonly string Input;
+    public readonly string Input = input;
     
     /// <summary>
     /// A list of errors to present to the user
     /// </summary>
-    public readonly List<string> Errors;
+    public readonly List<string> Errors = errors;
     
     /// <summary>
     /// Whether there was an error last time the validation was invoked
     /// </summary>
-    public readonly bool HadErrorPreviously;
-
-    public ValidationArgs(string input, List<string> errors, bool hadErrorPreviously) {
-        this.Input = input;
-        this.Errors = errors;
-        this.HadErrorPreviously = hadErrorPreviously;
-    }
+    public readonly bool HadErrorPreviously = hadErrorPreviously;
 }

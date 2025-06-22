@@ -34,6 +34,11 @@ public abstract class WindowingSystem {
     /// Gets the current main window
     /// </summary>
     public abstract DesktopWindow? MainWindow { get; }
+    
+    /// <summary>
+    /// Gets or sets the shutdown behaviour of the application. Default value is <see cref="global::Avalonia.Controls.ShutdownMode.OnLastWindowClose"/>
+    /// </summary>
+    public abstract ShutdownMode ShutdownMode { get; set; }
 
     /// <summary>
     /// Tries to get the windowing system for the application
@@ -74,6 +79,11 @@ public sealed class WindowingSystemImpl : WindowingSystem {
     private bool failedToLoadDefaultIcon;
 
     public override DesktopWindow? MainWindow => this.desktop.ApplicationLifetime.MainWindow as DesktopWindow;
+
+    public override ShutdownMode ShutdownMode {
+        get => this.desktop.ApplicationLifetime.ShutdownMode;
+        set => this.desktop.ApplicationLifetime.ShutdownMode = value;
+    }
 
     public WindowingSystemImpl(Uri? defaultIconUri = null) {
         this.desktop = ApplicationPFX.Instance.ServiceManager.GetService<IDesktopService>();

@@ -120,8 +120,6 @@ public abstract class BaseContextEntry : IContextObject {
 
         entry.isInUse = true;
         entry.CapturedContext = capturedContext;
-
-        Debug.WriteLine($"[ADVANCEDMENUSYSTEM] ENTRY VISIBLE - {entry.GetType().Name} (\"{entry.displayName}\")");
     }
 
     public static void InternalOnBecomeHidden(BaseContextEntry entry) {
@@ -131,7 +129,5 @@ public abstract class BaseContextEntry : IContextObject {
 
         entry.isInUse = false;
         entry.CapturedContext = null;
-
-        Debug.WriteLine($"[ADVANCEDMENUSYSTEM] ENTRY HIDDEN - {entry.GetType().Name} (\"{entry.displayName}\")");
     }
 }

@@ -17,16 +17,18 @@
 // along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+// #define MEASURE_INHERITANCE_CACHE_HITS_MISSES
+
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Xml;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
-using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.Avalonia.Interactivity;
@@ -34,8 +36,8 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 /// <summary>
 /// A class that is used to store and extract contextual information from WPF components.
 /// <para>
-/// This class generates inherited-merged contextual data for the visual tree, that is, all contextual data
-/// is accumulated and cached in each element, and the <see cref="InheritedContextChangedEvent"/> is fired
+/// This class generates inherited-merged contextual data for the logical tree, that is, all contextual data
+/// is accumulated and cached in each element from logical parents, and the <see cref="InheritedContextChangedEvent"/> is fired
 /// on the element and all of its visual children when that parent's <see cref="ContextDataProperty"/> changes,
 /// allowing listeners to do anything they want (e.g. re-query command executability based on available context)
 /// </para>
@@ -71,7 +73,6 @@ public class DataManager {
         RoutedEvent.Register<DataManager, RoutedEventArgs>("InheritedContextChanged", RoutingStrategies.Direct);
 
     static DataManager() {
-        // May cause performance issues... xaml seems to be loaded bottom-to-top when a control template is loaded
         Visual.VisualParentProperty.Changed.AddClassHandler<Visual, Visual?>(OnVisualParentChanged);
     }
 
@@ -124,20 +125,19 @@ public class DataManager {
             return;
         }
 
+        // For MemoryEngine360, this takes about 0.8ms for EngineWindow, which uses a fairly
+        // dense control tree and quite a few handlers of the invalidation events
         // long a = Time.GetSystemTicks();
-        // WalkVisualTreeForParentContextInvalidated(element, new RoutedEventArgs(InheritedContextInvalidatedEvent, element));
-
-        // In release mode, using Time.GetSystemTicks, these 2 methods when element is NotepadWindow with an active editor,
-        // takes about 150 microseconds to invoke... that's pretty fast, especially for a double visual tree traversal
 
         InvalidateInheritedContextAndChildren(element);
         RaiseInheritedContextChanged(element);
+
         // long b = Time.GetSystemTicks() - a;
-        // IoC.MessageService.ShowMessage("Time", (b / Time.TICK_PER_MILLIS_D).ToString());
+        // Debug.WriteLine($"{nameof(InvalidateInheritedContext)} on {element.GetType().Name} = {(b / Time.TICK_PER_MILLIS_D).ToString()}");
     }
 
     /// <summary>
-    /// Raises the <see cref="InheritedContextChangedEvent"/> event for the element's visual tree.
+    /// Raises the <see cref="InheritedContextChangedEvent"/> event for the element's visual tree (self and all children recursively).
     /// <para>
     /// This does not affect the return value of <see cref="GetFullContextData"/>. Use <see cref="InvalidateInheritedContext"/> instead
     /// </para>
@@ -247,39 +247,27 @@ public class DataManager {
     /// method, however, that method calls this one anyway (and invalidates the results for every visual child
     /// when the <see cref="InheritedContextChangedEvent"/> is about to be fired)
     /// </summary>
-    /// <param name="obj">The element to get the full context of</param>
+    /// <param name="source">The element to get the full context of</param>
     /// <returns>The context</returns>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
-    public static IContextData EvaluateContextDataRaw(AvaloniaObject obj) {
+    public static IContextData EvaluateContextDataRaw(AvaloniaObject source) {
         ProviderContextData ctx = new ProviderContextData();
 
-        // I thought about using TreeLevel, then thought reflection was too slow, so then I profiled the code...
-        // This entire method (for a clip, 26 visual elements to the root) takes about 20 microseconds
-        // Using the TreeLevel trick adds about 10 microseconds on top of it
-
-        // int initialSize = 0;
-        // if (obj is Control element && element.IsArrangeValid)
-        //     initialSize = (int) (uint) TreeLevelPropertyInfo.GetValue(element);
-        // if (initialSize < 1)
-        //     initialSize = 32;
-
-        // Try to find a linked list from the element's parent chain
-
-        // Accumulate visual tree bottom-to-top. Visual tree will contain the reverse tree
-        List<AvaloniaObject> visualTree = new List<AvaloniaObject>(32);
-        for (AvaloniaObject? dp = obj; dp != null; dp = VisualTreeUtils.GetParent(dp)) {
-            visualTree.Add(dp);
+        // EvaluateContextDataRaw with about 26 elements takes about 20 microseconds
+        List<AvaloniaObject> hierarchy = new List<AvaloniaObject>(32) { source };
+        for (StyledElement? parent = (source as StyledElement)?.Parent; parent != null; parent = parent.Parent) {
+            hierarchy.Add(parent);
         }
 
         // Scan top-down in order to allow deeper objects' entries to override higher up entries
-        for (int i = visualTree.Count - 1; i >= 0; i--) {
-            AvaloniaObject dp = visualTree[i];
-            IControlContextData? data = dp.GetBaseValue(ContextDataProperty).GetValueOrDefault();
+        for (int i = hierarchy.Count - 1; i >= 0; i--) {
+            AvaloniaObject obj = hierarchy[i];
+            IControlContextData? data = obj.GetBaseValue(ContextDataProperty).GetValueOrDefault();
             if (data != null && data.Count > 0) {
                 ctx.Merge(data);
             }
 
-            if (GetDataContextDataKey(dp) is DataKey key && dp is StyledElement ctrl) {
+            if (GetDataContextDataKey(obj) is DataKey key && obj is StyledElement ctrl) {
                 ctx.SetValueRaw(key.Id, ctrl.DataContext);
             }
         }
@@ -290,9 +278,9 @@ public class DataManager {
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void InvalidateInheritedContextAndChildren(AvaloniaObject obj) {
         // Debug.WriteLine($"InvalidateInheritedContext for {obj}");
-        
+
         // SetValue is around 2x faster than ClearValue, and either way, ClearValue isn't
-        // very useful here since WPF inheritance isn't used, and the value will most
+        // very useful here since inheritance isn't used, and the value will most
         // likely be re-calculated very near in the future possibly via dispatcher on background priority
 
         // Checking there is a value before setting generally improves runtime performance, since SetValue is fairly intensive
@@ -300,7 +288,7 @@ public class DataManager {
             obj.SetValue(InheritedContextDataProperty, null);
 
         if (obj is Visual) {
-            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(((Visual) obj).GetVisualChildren());
+            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(Unsafe.As<AvaloniaObject, Visual>(ref obj).GetVisualChildren());
             foreach (Visual child in list)
                 InvalidateInheritedContextAndChildren(child);
         }
@@ -309,12 +297,14 @@ public class DataManager {
     // Minimize stack usage as much as possible by using 'as' cast
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void RaiseEventRecursive(AvaloniaObject target, RoutedEventArgs args) {
-        (target as IInputElement)?.RaiseEvent(args);
-
-        if (target is Visual) {
-            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(((Visual) target).GetVisualChildren());
+        if (target is InputElement element) {
+            element.RaiseEvent(args);
+            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(element.GetVisualChildren());
             foreach (Visual child in list)
                 RaiseEventRecursive(child, args);
+        }
+        else {
+            Debugger.Break();
         }
     }
 
@@ -342,7 +332,7 @@ public class DataManager {
     /// <returns></returns>
     public static IDisposable SuspendMergedContextInvalidation(AvaloniaObject obj, bool autoInvalidateOnUnsuspended = true) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-        
+
         totalSuspensionCount++;
         return new SuspendInvalidation(obj, autoInvalidateOnUnsuspended);
     }
@@ -350,7 +340,7 @@ public class DataManager {
     public static int GetSuspendedInvalidationCount(AvaloniaObject element) {
         return element.GetValue(SuspendedInvalidationCountProperty);
     }
-    
+
     /// <summary>
     /// Sets the data key used to key the data context object
     /// </summary>
@@ -360,7 +350,7 @@ public class DataManager {
     /// Gets the data key used to key the data context object
     /// </summary>
     public static DataKey? GetDataContextDataKey(AvaloniaObject obj) => obj.GetValue(DataContextDataKeyProperty);
-    
+
     private class SuspendInvalidation : IDisposable {
         private AvaloniaObject? target;
         private readonly bool autoInvalidateOnUnsuspended;
@@ -376,7 +366,7 @@ public class DataManager {
             if (this.target == null) {
                 return;
             }
-            
+
             totalSuspensionCount--;
             int count = GetSuspendedInvalidationCount(this.target);
             if (count < 0) {
@@ -393,7 +383,7 @@ public class DataManager {
             else {
                 this.target.SetValue(SuspendedInvalidationCountProperty, count - 1);
             }
-            
+
             this.target = null;
         }
     }

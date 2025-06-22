@@ -22,8 +22,8 @@ using PFXToolKitUI.AdvancedMenuService;
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
 /// <summary>
-/// An interface for some sort of object inside an advanced menu that
-/// can be connected to and from a context menu entry
+/// An interface for some sort of object inside an advanced menu that can be connected to and from a context menu entry.
+/// An example implementation is <see cref="CaptionSeparator"/> which wants to listen to text changes on its entry
 /// </summary>
 public interface IAdvancedEntryConnection {
     IContextObject? Entry { get; }

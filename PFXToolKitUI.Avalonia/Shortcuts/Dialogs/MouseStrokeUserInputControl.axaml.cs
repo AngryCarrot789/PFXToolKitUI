@@ -32,7 +32,7 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 public partial class MouseStrokeUserInputControl : UserControl, IUserInputContent {
     public MouseStrokeUserInputInfo? InputInfo { get; private set; }
 
-    private readonly IBinder<MouseStrokeUserInputInfo> mouseStrokeBinder = new AvaloniaPropertyToDataParameterBinder<MouseStrokeUserInputInfo>(TextBox.TextProperty, MouseStrokeUserInputInfo.MouseStrokeParameter, (p) => {
+    private readonly IBinder<MouseStrokeUserInputInfo> mouseStrokeBinder = new AvaloniaPropertyToDataParameterAutoBinder<MouseStrokeUserInputInfo>(TextBox.TextProperty, MouseStrokeUserInputInfo.MouseStrokeParameter, (p) => {
         MouseStroke s = (MouseStroke?) p ?? default;
         return MouseStrokeStringConverter.ToStringFunction(s.MouseButton, s.Modifiers, s.ClickCount);
     });

@@ -18,6 +18,7 @@
 // 
 
 using System.ComponentModel;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -38,44 +39,113 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     public static readonly AttachedProperty<ContextRegistry?> ContextRegistryProperty = AvaloniaProperty.RegisterAttached<AdvancedContextMenu, Control, ContextRegistry?>("ContextRegistry");
     public static readonly StyledProperty<string?> ContextCaptionProperty = AvaloniaProperty.Register<AdvancedContextMenu, string?>(nameof(ContextCaption));
 
+    private readonly EventPropertyBinder<ContextRegistry> captionBinder;
+    private readonly Dictionary<Type, Stack<Control>> itemCache;
+    private readonly List<Control> owners;
+    private InputElement? currentTarget;
+    private Dictionary<int, DynamicGroupPlaceholderContextObject>? dynamicInsertion;
+    private Dictionary<int, int>? dynamicInserted;
+
+    IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
+
     public string? ContextCaption {
         get => this.GetValue(ContextCaptionProperty);
         set => this.SetValue(ContextCaptionProperty, value);
     }
 
-    private readonly IBinder<ContextRegistry> captionBinder;
-    private readonly Dictionary<Type, Stack<Control>> itemCache;
-    private readonly List<Control> owners;
-    private Control? currentTarget;
-    private Dictionary<int, DynamicGroupPlaceholderContextObject>? dynamicInsertion;
-    private Dictionary<int, int>? dynamicInserted;
-    private bool ignoreUpdateNormalisation;
-
     public IContextData? CapturedContext { get; private set; }
-    IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
+
+    public ContextRegistry ContextRegistry { get; }
 
     public AdvancedContextMenu(ContextRegistry registry) {
         this.ContextRegistry = registry ?? throw new ArgumentNullException(nameof(registry));
-        this.captionBinder = new AvaloniaPropertyToEventPropertyGetSetBinder<ContextRegistry>(ContextCaptionProperty, nameof(this.ContextRegistry.CaptionChanged), (b) => b.Model.Caption, null);
+        this.captionBinder = new EventPropertyBinder<ContextRegistry>(nameof(this.ContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
         this.itemCache = new Dictionary<Type, Stack<Control>>();
         this.owners = new List<Control>();
-        this.Opening += this.OnOpening;
-        this.Closed += this.OnClosed;
-        this.ignoreUpdateNormalisation = true;
-    }
-
-    public void UpdateSubListVisibility() {
-        if (this.ignoreUpdateNormalisation)
-            return;
-
-        this.ignoreUpdateNormalisation = true;
-        AdvancedMenuService.NormaliseSeparators(this);
-        this.ignoreUpdateNormalisation = false;
+        this.Opening += this.OnMenuOpening;
+        this.Closed += this.OnMenuClosed;
     }
 
     static AdvancedContextMenu() {
         contextMenus = new Dictionary<ContextRegistry, AdvancedContextMenu>();
         ContextRegistryProperty.Changed.AddClassHandler<Control, ContextRegistry?>((d, e) => OnContextRegistryChanged(d, e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    }
+
+    #region Opening and Closing
+
+    // These methods are defined in the order they're called
+
+    private void OnRequestOpenContextMenu(object? sender, ContextRequestedEventArgs e) {
+        this.currentTarget = sender as InputElement;
+    }
+
+    private void OnMenuOpening(object? sender, CancelEventArgs e) {
+        if (this.currentTarget == null) {
+            e.Cancel = true;
+            return;
+        }
+
+        this.CaptureContextFromObject(this.currentTarget);
+        AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
+        AdvancedMenuService.NormaliseSeparators(this);
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e) {
+        base.OnLoaded(e);
+        if (this.ContextRegistry.IsOpened)
+            this.ContextRegistry.OnClosed();
+
+        this.ContextRegistry.OnOpened(this.CapturedContext ?? EmptyContext.Instance);
+        this.captionBinder.Attach(this, this.ContextRegistry);
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e) {
+        base.OnUnloaded(e);
+        this.captionBinder.Detach();
+        if (this.ContextRegistry.IsOpened) {
+            this.ContextRegistry.OnClosed();
+        }
+    }
+
+    private void OnMenuClosed(object? sender, RoutedEventArgs e) {
+        AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
+        this.ClearContext();
+    }
+
+    #endregion
+
+    private void ClearContext() {
+        DataManager.ClearDelegateContextData(this);
+        this.CapturedContext = null;
+        this.currentTarget = null;
+    }
+
+    private void CaptureContextFromObject(InputElement inputElement) {
+        DataManager.SetDelegateContextData(this, this.CapturedContext = DataManager.GetFullContextData(inputElement));
+    }
+
+    private void AddOwner(Control target) {
+        this.owners.Add(target);
+
+        // ContextRequested is fired when the user wants to open the context menu.
+        // Usually originates from handling a right click mouse event
+        target.ContextRequested += this.OnRequestOpenContextMenu;
+    }
+
+    private bool RemoveOwnerAndShouldDestroy(Control target) {
+        if (this.owners.Remove(target))
+            target.ContextRequested -= this.OnRequestOpenContextMenu;
+        return this.owners.Count == 0;
+    }
+
+    public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuService.PushCachedItem(this.itemCache, entryType, item);
+
+    public Control? PopCachedItem(Type entryType) => AdvancedMenuService.PopCachedItem(this.itemCache, entryType);
+
+    public Control CreateItem(IContextObject entry) => AdvancedMenuService.CreateChildItem(this, entry);
+
+    public void StoreDynamicGroup(DynamicGroupPlaceholderContextObject groupPlaceholder, int index) {
+        (this.dynamicInsertion ??= new Dictionary<int, DynamicGroupPlaceholderContextObject>())[index] = groupPlaceholder;
     }
 
     protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey) {
@@ -92,56 +162,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         return true;
     }
 
-    private void OnClosed(object? sender, RoutedEventArgs e) {
-        this.ClearContext();
-        this.ignoreUpdateNormalisation = true;
-    }
-
-    private void OnOpening(object? sender, CancelEventArgs e) {
-        if (this.currentTarget == null) {
-            e.Cancel = true;
-            return;
-        }
-
-        this.CaptureContextFromObject(this.currentTarget);
-    }
-
-    protected override void OnLoaded(RoutedEventArgs e) {
-        base.OnLoaded(e);
-        AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
-        Dispatcher.UIThread.InvokeAsync(() => {
-            AdvancedMenuService.NormaliseSeparators(this);
-            this.ignoreUpdateNormalisation = false;
-        }, DispatcherPriority.Loaded);
-
-        if (this.ContextRegistry.IsOpened)
-            this.ContextRegistry.OnClosed();
-
-        this.ContextRegistry.OnOpened(this.CapturedContext ?? EmptyContext.Instance);
-        this.captionBinder.Attach(this, this.ContextRegistry);
-    }
-
-    protected override void OnUnloaded(RoutedEventArgs e) {
-        base.OnUnloaded(e);
-        AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
-        this.captionBinder.Detach();
-        if (this.ContextRegistry.IsOpened)
-            this.ContextRegistry.OnClosed();
-    }
-
-    private void OnOwnerRequestedContext(object? sender, ContextRequestedEventArgs e) {
-        this.currentTarget = sender as Control;
-    }
-
-    private void ClearContext() {
-        DataManager.ClearDelegateContextData(this);
-        this.CapturedContext = null;
-        this.currentTarget = null;
-    }
-
-    private void CaptureContextFromObject(InputElement inputElement) {
-        DataManager.SetDelegateContextData(this, this.CapturedContext = DataManager.GetFullContextData(inputElement));
-    }
+    public static void SetContextRegistry(Control obj, ContextRegistry? value) => obj.SetValue(ContextRegistryProperty, value);
 
     private static void OnContextRegistryChanged(Control target, ContextRegistry? oldValue, ContextRegistry? newValue) {
         if (ReferenceEquals(oldValue, newValue)) {
@@ -183,29 +204,4 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
             target.ContextMenu = null;
         }
     }
-
-    public ContextRegistry ContextRegistry { get; init; }
-
-    private void AddOwner(Control target) {
-        this.owners.Add(target);
-        target.ContextRequested += this.OnOwnerRequestedContext;
-    }
-
-    private bool RemoveOwnerAndShouldDestroy(Control target) {
-        if (this.owners.Remove(target))
-            target.ContextRequested -= this.OnOwnerRequestedContext;
-        return this.owners.Count == 0;
-    }
-
-    public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuService.PushCachedItem(this.itemCache, entryType, item);
-
-    public Control? PopCachedItem(Type entryType) => AdvancedMenuService.PopCachedItem(this.itemCache, entryType);
-
-    public Control CreateItem(IContextObject entry) => AdvancedMenuService.CreateChildItem(this, entry);
-
-    public void StoreDynamicGroup(DynamicGroupPlaceholderContextObject groupPlaceholder, int index) {
-        (this.dynamicInsertion ??= new Dictionary<int, DynamicGroupPlaceholderContextObject>())[index] = groupPlaceholder;
-    }
-
-    public static void SetContextRegistry(Control obj, ContextRegistry? value) => obj.SetValue(ContextRegistryProperty, value);
 }

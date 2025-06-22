@@ -18,7 +18,6 @@
 // 
 
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Utils.Commands;
@@ -41,41 +40,38 @@ public partial class ConfigurationDialogView : UserControl {
         this.PART_EditorPanel.IsEnabled = true;
 
         this.ApplyCommand = new AsyncRelayCommand(async () => {
-            this.PART_ApplyButton.IsEnabled = false;
-            this.PART_ConfirmButton.IsEnabled = false;
-            this.PART_CancelButton.IsEnabled = false;
+            this.UpdateCommands();
+            
             this.PART_EditorPanel.IsEnabled = false;
             await this.configManager.ApplyChangesInHierarchyAsync(null);
-            this.PART_ApplyButton.IsEnabled = true;
-            this.PART_ConfirmButton.IsEnabled = true;
-            this.PART_CancelButton.IsEnabled = true;
             this.PART_EditorPanel.IsEnabled = true;
-            this.UpdateConfirm();
+            
+            ApplicationPFX.Instance.Dispatcher.Post(this.UpdateCommands);
+        }, () => {
+            if (this.ApplyThenCloseCommand!.IsRunning || this.CancelCommand!.IsRunning)
+                return false;
+            ConfigurationContext? ctx = this.PART_EditorPanel.ActiveContext;
+            return ctx != null && ctx.ModifiedPages.Any();
         });
 
         this.ApplyThenCloseCommand = new AsyncRelayCommand(async () => {
-            this.PART_ApplyButton.IsEnabled = false;
-            this.PART_ConfirmButton.IsEnabled = false;
-            this.PART_CancelButton.IsEnabled = false;
+            this.UpdateCommands();
+            
             this.PART_EditorPanel.IsEnabled = false;
-
             await this.configManager.ApplyChangesInHierarchyAsync(null);
             if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
                 window.Close(true);
             }
-        });
+        }, () => !this.ApplyCommand.IsRunning && !this.CancelCommand!.IsRunning);
 
         this.CancelCommand = new AsyncRelayCommand(async () => {
-            this.PART_ApplyButton.IsEnabled = false;
-            this.PART_ConfirmButton.IsEnabled = false;
-            this.PART_CancelButton.IsEnabled = false;
+            this.UpdateCommands();
             this.PART_EditorPanel.IsEnabled = false;
-
             await this.configManager.RevertLiveChangesInHierarchyAsync(null);
             if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
                 window.Close(false);
             }
-        });
+        }, () => !this.ApplyCommand.IsRunning && !this.ApplyThenCloseCommand.IsRunning);
 
         this.PART_ApplyButton.Command = this.ApplyCommand;
         this.PART_ConfirmButton.Command = this.ApplyThenCloseCommand;
@@ -83,13 +79,8 @@ public partial class ConfigurationDialogView : UserControl {
 
         this.PART_EditorPanel.ActiveContextChanged += this.OnEditorContextChanged;
         this.PART_EditorPanel.ConfigurationManager = manager;
-    }
 
-    protected override void OnLoaded(RoutedEventArgs e) {
-        base.OnLoaded(e);
-        ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
-            this.PART_EditorPanel.SelectFirst();
-        }, DispatchPriority.Loaded);
+        this.UpdateCommands();
     }
 
     private void OnEditorContextChanged(ConfigurationPanelControl sender, ConfigurationContext? oldContext, ConfigurationContext? newContext) {
@@ -99,15 +90,16 @@ public partial class ConfigurationDialogView : UserControl {
         if (newContext != null)
             newContext.ModifiedPagesUpdated += this.OnModifiedPagesChanged;
 
-        this.UpdateConfirm();
+        this.UpdateCommands();
     }
 
     private void OnModifiedPagesChanged(ConfigurationContext context) {
-        this.UpdateConfirm();
+        this.UpdateCommands();
     }
 
-    private void UpdateConfirm() {
-        ConfigurationContext? ctx = this.PART_EditorPanel.ActiveContext;
-        this.PART_ConfirmButton.IsEnabled = ctx != null && ctx.ModifiedPages.Any();
+    private void UpdateCommands() {
+        this.ApplyCommand.RaiseCanExecuteChanged();
+        this.ApplyThenCloseCommand.RaiseCanExecuteChanged();
+        this.CancelCommand.RaiseCanExecuteChanged();
     }
 }

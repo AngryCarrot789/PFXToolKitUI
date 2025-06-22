@@ -43,7 +43,7 @@ public interface IAdvancedMenuOrItem {
 
     /// <summary>
     /// Stores the dynamic group for insertion at the given index inside this element's item
-    /// list. Post-processing must be done on this index during generation (at OnLoaded)
+    /// list. Post-processing must be done on this index during generation
     /// </summary>
     /// <param name="groupPlaceholder">The dynamic group</param>
     /// <param name="index">The unprocessed index</param>
