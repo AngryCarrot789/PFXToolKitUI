@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,26 +13,37 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.AdvancedMenuService;
+
+public delegate void CustomContextEntryEventHandler(CustomContextEntry sender);
 
 /// <summary>
 /// A context entry that has a <see cref="CanExecute"/> and <see cref="OnExecute"/> method
 /// </summary>
 public abstract class CustomContextEntry : BaseContextEntry {
+    private string? inputGestureText;
+
+    public string? InputGestureText {
+        get => this.inputGestureText;
+        set => PropertyHelper.SetAndRaiseINE(ref this.inputGestureText, value, this, static t => t.InputGestureTextChanged?.Invoke(t));
+    }
+
+    public event CustomContextEntryEventHandler? InputGestureTextChanged;
+
     protected CustomContextEntry() {
     }
 
     protected CustomContextEntry(string displayName, string? description, Icon? icon = null) : base(displayName, description, icon) {
-        
     }
-    
+
     public virtual bool CanExecute(IContextData context) {
         return true;
     }

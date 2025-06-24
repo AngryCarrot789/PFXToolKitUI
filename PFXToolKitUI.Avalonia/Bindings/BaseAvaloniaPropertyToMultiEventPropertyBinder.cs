@@ -1,7 +1,7 @@
 ﻿// 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using Avalonia;
@@ -41,7 +41,7 @@ public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : B
     }
 
     /// <summary>
-    /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
+    /// Invoked by the model's value changed event handler. By default, this method invokes <see cref="IBinder.UpdateControl"/>
     /// </summary>
     protected virtual void OnModelValueChanged() => this.UpdateControl();
 

@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,22 +13,26 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using PFXToolKitUI.AdvancedMenuService;
+using PFXToolKitUI.Avalonia.Bindings;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Services.Messaging;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
 public class AdvancedCustomMenuItem : AdvancedMenuItem {
     private bool canExecute;
+    private TextBlock? InputGestureTextBlock;
+    private readonly IBinder<CustomContextEntry> gestureBinder = new EventUpdateBinder<CustomContextEntry>(nameof(CustomContextEntry.InputGestureTextChanged), b => b.Control.SetValue(TextBlock.TextProperty, !string.IsNullOrWhiteSpace(b.Model.InputGestureText) ? b.Model.InputGestureText : null));
 
     public new CustomContextEntry? Entry => (CustomContextEntry?) base.Entry;
 
@@ -48,6 +52,22 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
     protected override bool IsEnabledCore => base.IsEnabledCore && this.CanExecute;
 
     public AdvancedCustomMenuItem() {
+    }
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
+        base.OnApplyTemplate(e);
+        this.InputGestureTextBlock = e.NameScope.GetTemplateChild<TextBlock>("PART_InputGestureText");
+        this.gestureBinder.AttachControl(this.InputGestureTextBlock);
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
+        base.OnAttachedToVisualTree(e);
+        this.gestureBinder.AttachModel(this.Entry!);
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
+        base.OnDetachedFromVisualTree(e);
+        this.gestureBinder.DetachModel();
     }
 
     public override void UpdateCanExecute() {
@@ -109,13 +129,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
             await entry.OnExecute(context);
         }
         catch (Exception e) {
-            if (!Debugger.IsAttached) {
-                await IMessageDialogService.Instance.ShowMessage(
-                    "Error",
-                    "An unexpected error occurred while processing command. " +
-                    "FramePFX may or may not crash now, but you should probably restart and save just in case",
-                    e.GetToString());
-            }
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
         }
         finally {
             this.IsExecuting = false;

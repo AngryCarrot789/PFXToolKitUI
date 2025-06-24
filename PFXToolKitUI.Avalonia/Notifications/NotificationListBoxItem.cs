@@ -1,7 +1,7 @@
 ﻿// 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using System.Diagnostics;
@@ -273,13 +273,13 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             }
 
             Binders.AttachModels(this.myCurrentCommand, this.toolTipBinder, this.textBinder);
-            ((NotificationCommandWrapper?) this.Command)?.OnButtonAttachedToVT();
+            ((NotificationCommandWrapper) this.Command!).OnButtonAttachedToVT();
         }
 
         protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
             base.OnDetachedFromVisualTree(e);
             Binders.DetachModels(this.toolTipBinder, this.textBinder);
-            ((NotificationCommandWrapper?) this.Command)?.OnButtonDetachedFromVT();
+            ((NotificationCommandWrapper) this.Command!).OnButtonDetachedFromVT();
         }
 
         // We delegate to ICommand just because it's simpler to do that over managing

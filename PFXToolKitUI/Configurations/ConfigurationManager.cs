@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2023-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using PFXToolKitUI.Persistence;
@@ -23,8 +23,6 @@ namespace PFXToolKitUI.Configurations;
 
 /// <summary>
 /// A class which exposes information about a hierarchy of configuration pages.
-/// FramePFX has two: the application settings and project settings, both of which
-/// are separate instances and store their own hierarchy of configuration pages
 /// </summary>
 public abstract class ConfigurationManager {
     /// <summary>

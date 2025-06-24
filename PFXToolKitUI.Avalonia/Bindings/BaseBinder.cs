@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using Avalonia.Controls;
@@ -45,6 +45,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     public TModel Model => this.myModel ?? throw new InvalidOperationException("No model is attached");
 
     Control? IBinder.Debug_Control => this.myControl;
+    
     object? IBinder.Debug_Model => this.myModel;
     
     public bool HasControl => this.myControl != null;

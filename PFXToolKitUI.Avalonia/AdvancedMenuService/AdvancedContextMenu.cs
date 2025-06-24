@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using System.ComponentModel;
@@ -39,7 +39,6 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
     private readonly IBinder<ContextRegistry> captionBinder;
     private readonly Dictionary<Type, Stack<Control>> itemCache;
-    private readonly List<Control> owners;
     private InputElement? currentTarget;
     private Dictionary<int, DynamicGroupPlaceholderContextObject>? dynamicInsertion;
     private Dictionary<int, int>? dynamicInserted;
@@ -53,13 +52,12 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
     public IContextData? CapturedContext { get; private set; }
 
-    public ContextRegistry ContextRegistry { get; }
+    public ContextRegistry MyContextRegistry { get; }
 
     public AdvancedContextMenu(ContextRegistry registry) {
-        this.ContextRegistry = registry ?? throw new ArgumentNullException(nameof(registry));
-        this.captionBinder = new EventUpdateBinder<ContextRegistry>(nameof(this.ContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
+        this.MyContextRegistry = registry ?? throw new ArgumentNullException(nameof(registry));
+        this.captionBinder = new EventUpdateBinder<ContextRegistry>(nameof(this.MyContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
         this.itemCache = new Dictionary<Type, Stack<Control>>();
-        this.owners = new List<Control>();
         this.Opening += this.OnMenuOpening;
         this.Closed += this.OnMenuClosed;
     }
@@ -90,18 +88,18 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
-        if (this.ContextRegistry.IsOpened)
-            this.ContextRegistry.OnClosed();
+        if (this.MyContextRegistry.IsOpened)
+            this.MyContextRegistry.OnClosed();
 
-        this.ContextRegistry.OnOpened(this.CapturedContext ?? EmptyContext.Instance);
-        this.captionBinder.Attach(this, this.ContextRegistry);
+        this.MyContextRegistry.OnOpened(this.CapturedContext ?? EmptyContext.Instance);
+        this.captionBinder.Attach(this, this.MyContextRegistry);
     }
 
     protected override void OnUnloaded(RoutedEventArgs e) {
         base.OnUnloaded(e);
         this.captionBinder.Detach();
-        if (this.ContextRegistry.IsOpened) {
-            this.ContextRegistry.OnClosed();
+        if (this.MyContextRegistry.IsOpened) {
+            this.MyContextRegistry.OnClosed();
         }
     }
 
@@ -123,17 +121,13 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     }
 
     private void AddOwner(Control target) {
-        this.owners.Add(target);
-
         // ContextRequested is fired when the user wants to open the context menu.
         // Usually originates from handling a right click mouse event
         target.ContextRequested += this.OnRequestOpenContextMenu;
     }
 
-    private bool RemoveOwnerAndShouldDestroy(Control target) {
-        if (this.owners.Remove(target))
-            target.ContextRequested -= this.OnRequestOpenContextMenu;
-        return this.owners.Count == 0;
+    private void RemoveOwner(Control target) {
+        target.ContextRequested -= this.OnRequestOpenContextMenu;
     }
 
     public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuService.PushCachedItem(this.itemCache, entryType, item);
@@ -168,9 +162,8 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         }
 
         if (oldValue != null && contextMenus.TryGetValue(oldValue, out AdvancedContextMenu? oldMenu)) {
-            if (oldMenu.RemoveOwnerAndShouldDestroy(target)) {
-                contextMenus.Remove(oldValue); // remove the menu to prevent a memory leak I guess?
-            }
+            oldMenu.RemoveOwner(target);
+            // contextMenus.Remove(oldValue); // remove the menu to prevent a memory leak I guess?
         }
 
         if (newValue != null) {

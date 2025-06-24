@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using Avalonia.Controls;
@@ -26,8 +26,6 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Services.Messaging;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
@@ -57,7 +55,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
-        e.NameScope.GetTemplateChild("PART_InputGestureText", out this.InputGestureTextBlock);
+        this.InputGestureTextBlock = e.NameScope.GetTemplateChild<TextBlock>("PART_InputGestureText");
         this.UpdateInputGestureText();
     }
 
@@ -132,10 +130,10 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
 
         Dispatcher.UIThread.Post(async void () => {
             try {
-                await ExecuteCommandAndHandleError(cmdId, context);
+                await CommandManager.Instance.Execute(cmdId, context);
             }
-            catch {
-                // ignored, should be handled above
+            catch (Exception e) {
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
             }
             finally {
                 this.IsExecuting = false;
@@ -150,16 +148,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
             await CommandManager.Instance.Execute(cmdId, context);
         }
         catch (Exception e) {
-            try {
-                await IMessageDialogService.Instance.ShowMessage(
-                    "Error executing command",
-                    "An unexpected error occurred while executing a command. " +
-                    "FramePFX may or may not crash now, but you should probably restart WITHOUT saving just in case",
-                    e.GetToString());
-            }
-            catch {
-                // ignored
-            }
+            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
         }
     }
 }

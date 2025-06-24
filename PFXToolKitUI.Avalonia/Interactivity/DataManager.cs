@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2024-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 // #define MEASURE_INHERITANCE_CACHE_HITS_MISSES
@@ -63,6 +63,9 @@ public class DataManager {
 
     public static readonly AttachedProperty<DataKey?> DataContextDataKeyProperty =
         AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, DataKey?>("DataContextDataKey");
+    
+    public static readonly AttachedProperty<DataKey?> SelfDataKeyProperty =
+        AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, DataKey?>("SelfDataKey");
 
     /// <summary>
     /// An event that gets raised on every single visual child (similar to tunnelling) when its inherited context
@@ -266,8 +269,13 @@ public class DataManager {
                 ctx.Merge(data);
             }
 
-            if (GetDataContextDataKey(obj) is DataKey key && obj is StyledElement ctrl) {
+            DataKey? key;
+            if (obj is StyledElement ctrl && (key = GetDataContextDataKey(obj)) != null) {
                 ctx.SetValueRaw(key.Id, ctrl.DataContext);
+            }
+            
+            if ((key = GetSelfDataKey(obj)) != null) {
+                ctx.SetValueRaw(key.Id, obj);
             }
         }
 
@@ -349,6 +357,16 @@ public class DataManager {
     /// Gets the data key used to key the data context object
     /// </summary>
     public static DataKey? GetDataContextDataKey(AvaloniaObject obj) => obj.GetValue(DataContextDataKeyProperty);
+    
+    /// <summary>
+    /// Sets the data key used to key the control instance itself
+    /// </summary>
+    public static void SetSelfDataKey(AvaloniaObject obj, DataKey? value) => obj.SetValue(SelfDataKeyProperty, value);
+
+    /// <summary>
+    /// Gets the data key used to key the control instance itself
+    /// </summary>
+    public static DataKey? GetSelfDataKey(AvaloniaObject obj) => obj.GetValue(SelfDataKeyProperty);
 
     private class SuspendInvalidation : IDisposable {
         private AvaloniaObject? target;

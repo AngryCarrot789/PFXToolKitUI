@@ -1,7 +1,7 @@
 // 
 // Copyright (c) 2023-2025 REghZy
 // 
-// This file is part of FramePFX.
+// This file is part of PFXToolKitUI.
 // 
 // This program is free software; you can redistribute it and/or
 // modify it under the terms of the GNU Lesser General Public
@@ -13,8 +13,8 @@
 // MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
 // Lesser General Public License for more details.
 // 
-// You should have received a copy of the GNU General Public License
-// along with FramePFX. If not, see <https://www.gnu.org/licenses/>.
+// You should have received a copy of the GNU Lesser General Public
+// License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
 using System.Collections.ObjectModel;
@@ -41,9 +41,7 @@ public sealed class PluginLoader {
     }
 
     /// <summary>
-    /// Adds a core plugin descriptor to the list of plugins to load once the application begins
-    /// loading plugins. A core plugin is a plugin directly referenced by FramePFX, rather than
-    /// being completely dynamically loaded
+    /// Adds a core plugin to the list of plugins to load once the application begins loading plugins.
     /// </summary>
     /// <param name="descriptor">the descriptor</param>
     public void AddCorePlugin(Type pluginType) {
