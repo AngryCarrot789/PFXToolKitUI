@@ -80,9 +80,13 @@ public static class TextIncrement {
             left = "";
             bracketed = input.Substring(1, input.Length - 2);
         }
-        else {
+        
+        else if (long.TryParse(input.AsSpan(indexA + 1, indexB - indexA - 1), out _) || ulong.TryParse(input.AsSpan(indexA + 1, indexB - indexA - 1), out _)) {
             left = input.Substring(0, indexA - 1);
             bracketed = input.JSubstring(indexA + 1, indexB);
+        }
+        else {
+            goto fail;
         }
 
         return true;

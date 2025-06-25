@@ -33,8 +33,8 @@ public class DebugContextCommand : Command {
             }
             else {
                 foreach (KeyValuePair<string, object> entry in entries) {
-                    sb.AppendLine($"Key: {entry.Key}");
-                    sb.AppendLine($"  (Value: {entry.Value})");
+                    sb.AppendLine($"- Key: {entry.Key}");
+                    sb.AppendLine($"  Value: {entry.Value}");
                 }
             }
 

@@ -26,12 +26,9 @@
                 <Grid Margin="0,2" RowDefinitions="Auto,5,*">
                     <Grid Grid.Row="0">
                         <TextBlock Padding="10" TextWrapping="Wrap">
-                            <Run Text="The key maps shows a tree of shortcut areas, which represent GUI areas" BaselineAlignment="Center"/>
+                            <Run Text="This is the shortcut tree. Each expandable note represents a GUI areas, and the others are shortcuts." BaselineAlignment="Center"/>
                             <LineBreak/>
-                            <LineBreak/>
-                            <Run Text="For example, " BaselineAlignment="Center"/><HyperlinkButton Content="EditorWindow/Timeline" FontWeight="Bold" x:Name="PART_DemoHyperlink" ToolTip.Tip="Navigate to this path"/><Run Text=" is the timeline area." BaselineAlignment="Center"/>
-                            <LineBreak/>
-                            <Run Text="If any control in the timeline is focused and there's an input event, any shortcuts in this timeline area will have a chance of being executed." BaselineAlignment="Center"/>
+                            <Run Text="The yellow labels are the input gestures that must be performed to activate the shortcut. More than one label means a multi-gesture shortcut" BaselineAlignment="Center"/>
                         </TextBlock>
                     </Grid>
                     <c:GroupBox Grid.Row="2" Header="Keymap" Margin="5,0,5,5">
@@ -60,7 +57,7 @@
                 <Grid Margin="0,2" RowDefinitions="Auto,5,*">
                     <Grid Grid.Row="0">
                         <TextBlock Padding="10" TextWrapping="Wrap">
-                            <Run Text="If any control in the timeline is focused and there's an input event, any shortcuts in this timeline area will have a chance of being executed." BaselineAlignment="Center"/>
+                            <Run Text="Dialogs have the ability to remember your choice. This lets you view your choices, modify the persistence, and also delete the choice (by pressing delete)" BaselineAlignment="Center"/>
                         </TextBlock>
                     </Grid>
                     <c:GroupBox Grid.Row="2" Header="Keymap" Margin="5,0,5,5">

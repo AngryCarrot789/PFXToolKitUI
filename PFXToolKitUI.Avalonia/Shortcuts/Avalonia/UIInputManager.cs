@@ -259,7 +259,7 @@ public class UIInputManager {
                 msg = $" (error: differing lastTarget from LostFocus source '{element.GetType().Name}')";
             }
 
-            Debug.WriteLine($"Focus LOST: '{lastTarget?.GetType().Name ?? "null"}'{msg}");
+            Debug.WriteLine($"Focus LOST: '{lastTarget?.GetType().Name ?? "null"}{(((InputElement?) lastTarget)?.Name is string str ? $" [NAME={str}]" : "")}'{msg}");
         }
         else {
             curr.Target = element;
@@ -269,7 +269,7 @@ public class UIInputManager {
             }
 
             newFocusPath = GetFocusPath(element);
-            Debug.WriteLine($"Focus GAINED: null -> '{curr.Target?.GetType().Name ?? "null"}{(newFocusPath != null ? $" (FPath: {newFocusPath})" : "")}'{msg}");
+            Debug.WriteLine($"Focus GAINED: null -> '{element.GetType().Name}{(element.Name != null ? $" [NAME={element.Name}]" : "")}'{(newFocusPath != null ? $" (FPath: {newFocusPath})" : "")}{msg}");
         }
 
         if (oldFocusPath != newFocusPath) {
