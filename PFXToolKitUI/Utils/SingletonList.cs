@@ -21,7 +21,7 @@ using System.Collections;
 
 namespace PFXToolKitUI.Utils;
 
-public class SingletonList<T> : IList<T> {
+public class SingletonList<T> : IList<T>, IList {
     private readonly T value;
 
     public int Count => 1;
@@ -32,6 +32,15 @@ public class SingletonList<T> : IList<T> {
         get => index == 0 ? this.value : throw new IndexOutOfRangeException("Index was out of range: " + index);
         set => throw new NotImplementedException("Read-only list");
     }
+
+    object? IList.this[int index] {
+        get => index == 0 ? this.value : throw new IndexOutOfRangeException("Index was out of range: " + index);
+        set => throw new NotImplementedException("Read-only list");
+    }
+
+    public bool IsSynchronized => false;
+    public object SyncRoot => this;
+    public bool IsFixedSize => true;
 
     public SingletonList(T value) {
         this.value = value;
@@ -67,6 +76,18 @@ public class SingletonList<T> : IList<T> {
     IEnumerator IEnumerable.GetEnumerator() {
         yield return this.value;
     }
+
+    public void CopyTo(Array array, int index) => array.SetValue(this.value, index);
+
+    public int Add(object? value) => throw new NotImplementedException("Read-only list");
+
+    public bool Contains(object? val) => EqualityComparer<object>.Default.Equals(val, this.value);
+
+    public int IndexOf(object? val) => this.Contains(val) ? 0 : -1;
+
+    public void Insert(int index, object? value) => throw new NotImplementedException("Read-only list");
+
+    public void Remove(object? value) => throw new NotImplementedException("Read-only list");
 }
 
 public class SingletonReadOnlyList<T> : IReadOnlyList<T> {

@@ -237,7 +237,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         try {
             this.blockReentrancyCount++;
             this.ItemsAdded?.Invoke(this, index, items);
-            this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, (IList) items, index));
+            this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items as IList ?? items.ToList(), index));
         }
         finally {
             this.blockReentrancyCount--;
@@ -250,7 +250,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
             this.ItemsRemoved?.Invoke(this, index, items);
             this.CollectionChanged?.Invoke(this,
                 this.Count > 0 || this.ResetBehavior == ResetBehavior.Remove // call Remove on reset
-                    ? new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, (IList) items, index)
+                    ? new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, items as IList ?? items.ToList(), index)
                     : new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
         finally {
