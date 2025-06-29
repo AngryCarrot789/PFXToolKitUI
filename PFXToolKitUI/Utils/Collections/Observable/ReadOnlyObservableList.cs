@@ -18,6 +18,7 @@
 // 
 
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
 
@@ -34,6 +35,7 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
     public event ObservableListMultipleItemsEventHandler<T>? ItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? ItemReplaced;
     public event ObservableListSingleItemEventHandler<T>? ItemMoved;
+    public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
     public ReadOnlyObservableList(IObservableList<T> list) : base(list) {
         list.BeforeItemAdded += this.ListOnBeforeItemAdded;
@@ -44,6 +46,7 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
         list.ItemsRemoved += this.ListOnItemsRemoved;
         list.ItemReplaced += this.ListOnItemReplaced;
         list.ItemMoved += this.ListOnItemMoved;
+        list.CollectionChanged += this.ListCollectionChanged;
     }
 
     private void ListOnBeforeItemAdded(IObservableList<T> list, int index, T item) => this.BeforeItemAdded?.Invoke(this, index, item);
@@ -61,4 +64,5 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
     private void ListOnItemReplaced(IObservableList<T> list, int index, T oldItem, T newItem) => this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
 
     private void ListOnItemMoved(IObservableList<T> list, int oldIndex, int newIndex, T item) => this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
+    private void ListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => this.CollectionChanged?.Invoke(this, e);
 }

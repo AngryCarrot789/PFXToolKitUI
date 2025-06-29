@@ -17,16 +17,32 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Collections;
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.Diagnostics;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
+
+public enum ResetBehavior {
+    /// <summary>
+    /// When the list is cleared or all items are removed, we call reset
+    /// </summary>
+    Reset,
+
+    /// <summary>
+    /// When the list is cleared or all items are removed, we call with the cleared/removed items
+    /// </summary>
+    Remove
+}
 
 /// <summary>
 /// An optimised observable collection. This class is not thread safe; manual synchronization required
 /// </summary>
 /// <typeparam name="T">Type of value to store</typeparam>
 public class ObservableList<T> : Collection<T>, IObservableList<T> {
+    public const ResetBehavior DefaultResetBehavior = ResetBehavior.Reset;
+
     private readonly List<T> myItems;
     private SimpleMonitor? _monitor;
     private readonly bool isDerivedType;
@@ -42,13 +58,29 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
     public event ObservableListReplaceEventHandler<T>? ItemReplaced;
     public event ObservableListSingleItemEventHandler<T>? ItemMoved;
 
-    public ObservableList() : this(new List<T>()) {
+    /// <summary>
+    /// Fired when items are added to or removed from this list, or an item is replaced or moved.
+    /// <para>
+    /// When this list is cleared, this is fired with <see cref="NotifyCollectionChangedAction.Reset"/>
+    /// </para>
+    /// </summary>
+    public event NotifyCollectionChangedEventHandler? CollectionChanged;
+
+    public ResetBehavior ResetBehavior { get; }
+
+    public ObservableList() : this(DefaultResetBehavior) {
     }
 
-    public ObservableList(IEnumerable<T> collection) : this(new List<T>(collection ?? throw new ArgumentNullException(nameof(collection)))) {
+    public ObservableList(ResetBehavior resetBehavior) : this([], resetBehavior) {
     }
 
-    public ObservableList(List<T> list) : base(new List<T>(list ?? throw new ArgumentNullException(nameof(list)))) {
+    public ObservableList(IEnumerable<T> collection) : this(collection.ToList(), DefaultResetBehavior) {
+    }
+
+    public ObservableList(IEnumerable<T> collection, ResetBehavior resetBehavior) : this(collection.ToList(), resetBehavior) {
+    }
+
+    private ObservableList(List<T> list, ResetBehavior resetBehavior) : base(list) {
         this.myItems = (List<T>?) base.Items!;
 
         // Optimisation
@@ -57,6 +89,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         // If we are a derived type, then disable optimisations that avoid invoking specific
         // notification methods since they may involve copying the lots of items when it's unnecessary
         this.isDerivedType = this.GetType() != typeof(ObservableList<T>);
+
+        this.ResetBehavior = resetBehavior;
     }
 
     protected override void InsertItem(int index, T item) {
@@ -65,8 +99,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         this.BeforeItemAdded?.Invoke(this, index, item);
         this.myItems.Insert(index, item);
 
-        // Invoke base method when derived or we have an ItemsAdded handler
-        if (this.isDerivedType || this.ItemsAdded != null)
+        // Invoke base method when derived or if we have an ItemsAdded or CC handler
+        if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null)
             this.OnItemsAdded(index, new SingletonList<T>(item));
     }
 
@@ -94,7 +128,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
 
         this.myItems.InsertRange(index, list);
 
-        if (this.isDerivedType || this.ItemsAdded != null) // Stops the event handler modifying the list
+        if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null) // Stops the event handler modifying the list
             list = list.AsReadOnly();
 
         this.OnItemsAdded(index, list);
@@ -119,7 +153,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         }
 
         this.myItems.InsertRange(index, items);
-        if (this.isDerivedType || this.ItemsAdded != null)
+        if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null)
             this.OnItemsAdded(index, new ReadOnlyCollection<T>(items.ToArray()));
     }
 
@@ -131,7 +165,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         this.myItems.RemoveAt(index);
 
         // Invoke base method when derived or we have an ItemsRemoved handler
-        if (this.isDerivedType || this.ItemsRemoved != null)
+        if (this.isDerivedType || this.ItemsRemoved != null || this.CollectionChanged != null)
             this.OnItemsRemoved(index, new SingletonList<T>(removedItem));
     }
 
@@ -146,8 +180,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         this.CheckReentrancy();
 
         this.BeforeItemsRemoved?.Invoke(this, index, count);
-        if (!this.isDerivedType && this.ItemsRemoved == null) {
-            // We are not a derived type, and we have no ItemsRemoved handler,
+        if (!this.isDerivedType && this.ItemsRemoved == null && this.CollectionChanged == null) {
+            // We are not a derived type, and we have no ItemsRemoved or CC handler,
             // so we don't need to create any pointless sub-lists
 
             this.myItems.RemoveRange(index, count);
@@ -187,8 +221,8 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         }
 
         this.BeforeItemsRemoved?.Invoke(this, 0, this.myItems.Count);
-        if (!this.isDerivedType && this.ItemsRemoved == null) {
-            // We are not a derived type, and we have no ItemsRemoved handler,
+        if (!this.isDerivedType && this.ItemsRemoved == null && this.CollectionChanged == null) {
+            // We are not a derived type, and we have no ItemsRemoved or CC handler,
             // so we don't need to create any pointless sub-lists
             this.myItems.Clear();
         }
@@ -203,6 +237,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         try {
             this.blockReentrancyCount++;
             this.ItemsAdded?.Invoke(this, index, items);
+            this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, (IList) items, index));
         }
         finally {
             this.blockReentrancyCount--;
@@ -213,6 +248,10 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         try {
             this.blockReentrancyCount++;
             this.ItemsRemoved?.Invoke(this, index, items);
+            this.CollectionChanged?.Invoke(this,
+                this.Count > 0 || this.ResetBehavior == ResetBehavior.Remove // call Remove on reset
+                    ? new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, (IList) items, index)
+                    : new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
         }
         finally {
             this.blockReentrancyCount--;
@@ -223,6 +262,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         try {
             this.blockReentrancyCount++;
             this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
+            this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, index));
         }
         finally {
             this.blockReentrancyCount--;
@@ -233,6 +273,7 @@ public class ObservableList<T> : Collection<T>, IObservableList<T> {
         try {
             this.blockReentrancyCount++;
             this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
+            this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, item, newIndex, oldIndex));
         }
         finally {
             this.blockReentrancyCount--;

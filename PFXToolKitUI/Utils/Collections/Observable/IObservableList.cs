@@ -17,6 +17,9 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Collections.Specialized;
+using System.ComponentModel;
+
 namespace PFXToolKitUI.Utils.Collections.Observable;
 
 public delegate void ObservableListBeforeAddedEventHandler<T>(IObservableList<T> list, int index, T item);
@@ -33,7 +36,7 @@ public delegate void ObservableListReplaceEventHandler<T>(IObservableList<T> lis
 /// A list implementation that invokes a series of events when the collection changes
 /// </summary>
 /// <typeparam name="T"></typeparam>
-public interface IObservableList<T> : IList<T> {
+public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <summary>
     /// An event fired when an item is about to be added. This is fired multiple times but before any item is added
     /// when adding multiple items. This can be used for pre-checks and throwing an exception when those checks fail.
