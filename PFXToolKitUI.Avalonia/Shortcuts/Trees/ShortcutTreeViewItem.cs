@@ -172,7 +172,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.ShortcutTree = null;
         this.ParentNode = null;
         this.Entry = null;
-        DataManager.ClearContextData(this);
+        DataManager.GetContextData(this).Set(ShortcutContextRegistry.ShortcutEntryKey, null);
     }
 
     #endregion
