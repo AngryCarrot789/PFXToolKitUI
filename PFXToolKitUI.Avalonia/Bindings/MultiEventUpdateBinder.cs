@@ -27,11 +27,11 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// </para>
 /// </summary>
 /// <typeparam name="TModel">Model type</typeparam>
-public class MultiEventPropertyBinder<TModel> : BaseMultiEventPropertyBinder<TModel> where TModel : class {
+public class MultiEventUpdateBinder<TModel> : BaseMultiEventPropertyBinder<TModel> where TModel : class {
     public event Action<IBinder<TModel>>? DoUpdateControl;
     public event Action<IBinder<TModel>>? DoUpdateModel;
 
-    public MultiEventPropertyBinder(string[] eventNames, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel = null) : base(eventNames) {
+    public MultiEventUpdateBinder(string[] eventNames, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel = null) : base(eventNames) {
         this.DoUpdateControl = updateControl;
         this.DoUpdateModel = updateModel;
     }

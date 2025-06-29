@@ -37,6 +37,8 @@ public class DynamicContextGroup : IContextGroup {
     }
 
     public List<IContextObject> GenerateItems(IContextData context) {
+        ArgumentNullException.ThrowIfNull(context);
+        
         List<IContextObject> list = new List<IContextObject>();
         this.generate(this, context, list);
         return list;

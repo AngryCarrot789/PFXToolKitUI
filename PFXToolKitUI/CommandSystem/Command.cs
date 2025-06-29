@@ -76,8 +76,8 @@ public abstract class Command {
 
     /// <summary>
     /// Gets this command's executability state based on the given command event args context.
-    /// This typically isn't checked before <see cref="CanExecuteCore"/> is invoked, but instead is
-    /// mainly used by the UI to determine if something like a button or menu item is actually clickable
+    /// This typically isn't checked before actually executing, but instead is used by the UI to
+    /// determine if something like a button or menu item is actually clickable
     /// <para>
     /// This method should be quick to execute, as it may be called quite often
     /// </para>

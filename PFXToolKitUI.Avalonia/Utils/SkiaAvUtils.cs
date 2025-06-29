@@ -27,9 +27,9 @@ namespace PFXToolKitUI.Avalonia.Utils;
 /// A helper class for converting between avalonia and skia objects
 /// </summary>
 public static class SkiaAvUtils { // SkAv seems like a weird name so SkiaAv it is
-    public static SKColor AvToSkia(this Color c) => new(c.R, c.G, c.B, c.A);
+    public static SKColor AvToSkia(this Color c) => new SKColor(c.R, c.G, c.B, c.A);
 
-    public static Color SkiaToAv(this SKColor c) => new(c.Alpha, c.Red, c.Green, c.Blue);
+    public static Color SkiaToAv(this SKColor c) => new Color(c.Alpha, c.Red, c.Green, c.Blue);
 
     internal static Matrix ToAvMatrix(this SKMatrix m) {
         return new Matrix(m.ScaleX, m.SkewY, m.Persp0, m.SkewX, m.ScaleY, m.Persp1, m.TransX, m.TransY, m.Persp2);

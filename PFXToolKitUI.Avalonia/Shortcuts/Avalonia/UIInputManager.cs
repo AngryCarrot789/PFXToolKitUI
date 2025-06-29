@@ -234,11 +234,12 @@ public class UIInputManager {
     }
 
     private static void OnGotOrLostFocus(TopLevel topLevel, RoutedEventArgs e, bool lost) {
-        InputElement? element = e.Source as InputElement;
-        if (element == null) {
-            return;
+        if (e.Source is InputElement element) {
+            OnGotOrLostFocus(topLevel, element, lost);
         }
-
+    }
+    
+    private static void OnGotOrLostFocus(TopLevel topLevel, InputElement element, bool lost) {
         string? oldFocusPath = Instance.FocusedPath, newFocusPath;
 
         WeakReference? last = topLevel.GetValue(LastFocusedElementProperty);
@@ -252,30 +253,48 @@ public class UIInputManager {
         object? lastTarget = curr.Target;
         last.Target = lastTarget;
         if (lost) {
+            if (!ReferenceEquals(lastTarget, element)) {
+                Debug.Fail("Last Target not equal to element which lost focus");
+                throw new Exception("Last Target not equal to element which lost focus");
+            }
+            
             newFocusPath = null;
             curr.Target = null;
-            string msg = "";
-            if (!ReferenceEquals(lastTarget, element)) {
-                msg = $" (error: differing lastTarget from LostFocus source '{element.GetType().Name}')";
-            }
 
-            Debug.WriteLine($"Focus LOST: '{lastTarget?.GetType().Name ?? "null"}{(((InputElement?) lastTarget)?.Name is string str ? $" [NAME={str}]" : "")}'{msg}");
+            Debug.WriteLine($"Focus LOST: '{element.GetType().Name}{(element.Name != null ? $" [NAME={element.Name}]" : "")}'");
+
+            element.DetachedFromVisualTree -= OnElementDetachedFromVisualTree;
         }
         else {
             curr.Target = element;
+            newFocusPath = GetFocusPath(element);
+
+#if DEBUG
             string msg = "";
             if (lastTarget != null) {
                 msg = $" (ERROR: lastTarget still valid '{lastTarget.GetType().Name}')";
             }
 
-            newFocusPath = GetFocusPath(element);
             Debug.WriteLine($"Focus GAINED: null -> '{element.GetType().Name}{(element.Name != null ? $" [NAME={element.Name}]" : "")}'{(newFocusPath != null ? $" (FPath: {newFocusPath})" : "")}{msg}");
+#endif
+
+            element.DetachedFromVisualTree += OnElementDetachedFromVisualTree;
         }
 
         if (oldFocusPath != newFocusPath) {
             Instance.FocusedPath = newFocusPath;
             OnFocusedPathChanged?.Invoke(oldFocusPath, newFocusPath, false);
             UpdateCurrentlyFocusedObject(element, newFocusPath);
+        }
+    }
+
+    private static void OnElementDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e) {
+        if (e.Root is TopLevel topLevel) {
+            WeakReference? curr = topLevel.GetValue(CurrentFocusedElementProperty);
+            if (curr != null && curr.Target == sender) {
+                Debug.WriteLine("Control removed from VT. Forcing lost focus");
+                OnGotOrLostFocus(topLevel, (InputElement) sender!, lost: true);
+            }
         }
     }
 

@@ -69,7 +69,7 @@ public abstract class NotificationCommand {
 
     /// <summary>
     /// Gets the current context data for this command. This changes when <see cref="Notification"/> 
-    /// changes or <see cref="Notifications.Notification.ContextData"/> changes
+    /// changes or the notification's <see cref="Notifications.Notification.ContextData"/> changes
     /// </summary>
     public IContextData? ContextData { get; private set; }
 

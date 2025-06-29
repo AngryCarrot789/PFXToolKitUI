@@ -35,13 +35,13 @@ public delegate void ContextRegistryContextEventHandler(ContextRegistry registry
 /// </para>
 /// </summary>
 public class ContextRegistry {
-    private readonly Dictionary<int, Dictionary<string, IContextGroup>> groups;
+    private readonly SortedList<int, Dictionary<string, IContextGroup>> groups;
     private string? caption;
 
     /// <summary>
     /// Gets the groups in our registry
     /// </summary>
-    public IEnumerable<KeyValuePair<string, IContextGroup>> Groups => this.groups.OrderBy(x => x.Key).Select(x => x.Value).SelectMany(x => x);
+    public IEnumerable<KeyValuePair<string, IContextGroup>> Groups => this.groups.Select(x => x.Value).SelectMany(x => x);
 
     /// <summary>
     /// Gets or sets this registry's caption
@@ -58,7 +58,7 @@ public class ContextRegistry {
     public event ContextRegistryEventHandler? Closed;
 
     public ContextRegistry(string caption) {
-        this.groups = new Dictionary<int, Dictionary<string, IContextGroup>>();
+        this.groups = new SortedList<int, Dictionary<string, IContextGroup>>();
         this.Caption = caption;
     }
 

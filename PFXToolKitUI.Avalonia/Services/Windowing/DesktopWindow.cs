@@ -58,7 +58,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
 
     public IClipboardService? ClipboardService { get; }
 
-    public DesktopWindow() {
+    public DesktopWindow() : base() {
         this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
         this.VerticalContentAlignment = VerticalAlignment.Stretch;
         this.HorizontalContentAlignment = HorizontalAlignment.Stretch;

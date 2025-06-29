@@ -49,7 +49,7 @@ public class WindowEx : Window {
     private Button? PART_ButtonMinimize, PART_ButtonRestore, PART_ButtonMaximize, PART_ButtonClose;
     private DockPanel? PART_TitleBar;
 
-    public WindowEx() {
+    public WindowEx() : base() {
         if (AvUtils.TryGetService(out Win32PlatformOptions options)) {
             if (options.CompositionMode.Any(x => x == Win32CompositionMode.LowLatencyDxgiSwapChain)) {
                 this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.PreferSystemChrome;

@@ -119,7 +119,7 @@ public class ActivityTask {
     public event ActivityTaskPausableTaskChangedEventHandler? PausableTaskChanged;
     
     /// <summary>
-    /// Raises (on the main thread) when <see cref="IsCompleted"/> changes
+    /// Fired (on the main thread) when <see cref="IsCompleted"/> changes
     /// </summary>
     public event ActivityTaskEventHandler? IsCompletedChanged;
 
@@ -133,7 +133,7 @@ public class ActivityTask {
 
     protected virtual Task CreateTask(TaskCreationOptions creationOptions) {
         // We don't provide the cancellation token, because we want to handle it
-        // separately. Awaiting this activity task should never throw an exceptino
+        // separately. Awaiting this activity task should never throw an exception
         return Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap();
     }
 
@@ -145,25 +145,18 @@ public class ActivityTask {
     public TaskAwaiter GetAwaiter() => this.Task.GetAwaiter();
 
     protected async Task TaskMain() {
-        // This Dispatcher usage here was used to have a synchronisation context so that async callbacks
-        // would be fired on the dispatcher thread meaning ThreadLocal would work. However, AsyncLocal works nicely
-
-        // this.OwningThreadId = Thread.CurrentThread.ManagedThreadId;
-        // Dispatcher.CurrentDispatcher.InvokeAsync(async () => {
         try {
             await ActivityManager.InternalPreActivateTask(this.activityManager, this);
             this.CheckCancelled();
-            await ((this.userTask = this.action()) ?? Task.CompletedTask);
+            await (this.userTask = this.action());
             await this.OnCompleted(null);
         }
-        catch (OperationCanceledException) { // gets TaskCancelledException too
+        catch (OperationCanceledException) {
             await this.OnCancelled();
         }
         catch (Exception e) {
             await this.OnCompleted(e);
         }
-        // });
-        // Dispatcher.Run();
     }
 
     public void CheckCancelled() => this.CancellationToken.ThrowIfCancellationRequested();

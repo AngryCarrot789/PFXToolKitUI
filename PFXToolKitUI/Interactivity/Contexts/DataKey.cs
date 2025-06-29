@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.CommandSystem;
 
@@ -94,12 +95,16 @@ public sealed class DataKey<T> : DataKey {
 
     public bool TryGetContext(IContextData context, [NotNullWhen(true)] out T? value) {
         ArgumentNullException.ThrowIfNull(context);
-        if (context.TryGetContext(this.Id, out object? obj)) {
-            value = obj is T t ? t : throw new Exception($"Context contained an invalid value for this key: type mismatch ({typeof(T)} != {obj.GetType()})");
+        if (context.TryGetContext(this.Id, out object? obj) && obj is T val) {
+            value = val;
             return true;
         }
         else {
-            value = default!;
+            if (obj != null) {
+                Debug.Fail($"Context contained an invalid value for this key: type mismatch ({typeof(T)} != {obj.GetType()})");
+            }
+            
+            value = default;
             return false;
         }
     }

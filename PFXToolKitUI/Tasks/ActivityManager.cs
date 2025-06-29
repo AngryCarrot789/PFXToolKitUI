@@ -149,9 +149,6 @@ public sealed class ActivityManager : IDisposable {
 
     internal static Task InternalOnActivityCompleted(ActivityManager activityManager, ActivityTask task, int state) {
         activityManager.threadToTask.Value = null;
-
-        // Before AsyncLocal, I was trying out a dispatcher for each task XD
-        // Dispatcher.CurrentDispatcher.BeginInvokeShutdown(DispatchPriority.Background);
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => InternalOnTaskCompleted(activityManager, task, state));
     }
 
@@ -172,8 +169,7 @@ public sealed class ActivityManager : IDisposable {
         lock (activityManager.locker) {
             int index = activityManager.tasks.IndexOf(task);
             if (index == -1) {
-                const string msg = "Completed activity task did not exist in this task manager's internal task list";
-                Debug.WriteLine("[FATAL] " + msg);
+                Debug.WriteLine("[FATAL] Completed activity task did not exist in this task manager's internal task list");
                 Debugger.Break();
                 return;
             }
