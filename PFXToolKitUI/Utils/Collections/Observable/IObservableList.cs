@@ -18,7 +18,6 @@
 // 
 
 using System.Collections.Specialized;
-using System.ComponentModel;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
 

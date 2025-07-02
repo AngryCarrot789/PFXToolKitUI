@@ -17,12 +17,16 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Interactivity.Contexts;
+
 namespace PFXToolKitUI.Shortcuts;
 
 /// <summary>
 /// An interface implemented by <see cref="ShortcutGroupEntry"/>, <see cref="ShortcutEntry"/> and <see cref="InputStateEntry"/>
 /// </summary>
 public interface IKeyMapEntry {
+    public static readonly DataKey<IKeyMapEntry> DataKey = DataKey<IKeyMapEntry>.Create(nameof(IKeyMapEntry));
+    
     /// <summary>
     /// Gets the manager that this object belongs to. This typically is equal to <see cref="ShortcutManager.Instance"/>
     /// </summary>

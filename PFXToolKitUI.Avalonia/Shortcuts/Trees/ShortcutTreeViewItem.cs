@@ -17,18 +17,16 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Documents;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
-using Avalonia.Media;
 using PFXToolKitUI.Avalonia.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Avalonia.Shortcuts.Trees.InputStrokeControls;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
-using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
@@ -74,8 +72,11 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.ShortcutTree = tree;
         this.ParentNode = parentNode;
         this.Entry = resource;
+
+        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange(); 
         if (resource is ShortcutEntry entry)
-            DataManager.GetContextData(this).Set(ShortcutContextRegistry.ShortcutEntryKey, entry);
+            change.Context.Set(ShortcutContextRegistry.ShortcutEntryKey, entry);
+        change.Context.Set(IKeyMapEntry.DataKey, resource);
     }
 
     public virtual void OnAdded() {
@@ -103,42 +104,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         // rawName should not be <root> because the root object should never be visible technically.
         // But just in case...
         this.PART_HeaderControl!.KeyMapEntry = this.Entry!;
-        this.SetupToolTip(this.Entry!);
-    }
-
-    private void SetupToolTip(IKeyMapEntry entry) {
-        TextBlock textBlock = new TextBlock() {
-            Inlines = new InlineCollection(),
-            Padding = new Thickness(5)
-        };
-
-        bool insertSpacing = false;
-
-        if (entry is ShortcutEntry shortcut && !string.IsNullOrWhiteSpace(shortcut.CommandId)) {
-            textBlock.Inlines.Add(new Run("Target Command ID") { FontSize = 16, FontWeight = FontWeight.Bold, BaselineAlignment = BaselineAlignment.Center });
-            textBlock.Inlines.Add(new LineBreak());
-
-            if (CommandManager.Instance.GetCommandById(shortcut.CommandId) != null) {
-                textBlock.Inlines.Add(new Run(shortcut.CommandId) { FontWeight = FontWeight.Normal });
-            }
-            else {
-                textBlock.Inlines.Add(new Run(shortcut.CommandId) { TextDecorations = TextDecorations.Strikethrough, FontStyle = FontStyle.Italic, FontWeight = FontWeight.Normal });
-                textBlock.Inlines.Add(new Run(" (does not exist)"));
-            }
-
-            insertSpacing = true;
-        }
-
-        if (!string.IsNullOrWhiteSpace(entry.Description)) {
-            if (insertSpacing) {
-                textBlock.Inlines.Add(new LineBreak());
-                textBlock.Inlines.Add(new LineBreak());
-            }
-
-            textBlock.Inlines.Add(new Run(entry.Description) { BaselineAlignment = BaselineAlignment.Center });
-        }
-
-        ToolTip.SetTip(this, textBlock);
+        ToolTipEx.SetTipType(this, typeof(ShotcutTreeViewItemToolTip));
     }
 
     private void OnEntryShortcutChanged(ShortcutEntry sender, IShortcut oldShortcut, IShortcut newShortcut) {
@@ -172,7 +138,9 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.ShortcutTree = null;
         this.ParentNode = null;
         this.Entry = null;
-        DataManager.GetContextData(this).Set(ShortcutContextRegistry.ShortcutEntryKey, null);
+        
+        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange(); 
+        change.Context.Set(ShortcutContextRegistry.ShortcutEntryKey, null).Set(IKeyMapEntry.DataKey, null);
     }
 
     #endregion

@@ -20,6 +20,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings.Events;
@@ -64,6 +65,15 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         }
         
         avd.ShutdownFinished += this.OnDispatcherShutDown;
+    }
+
+    static AvaloniaApplicationPFX() {
+        ToolTip.ToolTipOpeningEvent.AddClassHandler<Control>(Handler);
+    }
+
+    private static void Handler(Control sender, CancelRoutedEventArgs arg2) {
+        ToolTip.SetHorizontalOffset(sender, 12.0);
+        ToolTip.SetVerticalOffset(sender, 12.0);
     }
 
     private void OnDispatcherShutDown(object? sender, EventArgs e) {

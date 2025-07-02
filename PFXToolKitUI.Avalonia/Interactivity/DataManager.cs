@@ -22,6 +22,7 @@
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
+using System.Text;
 using Avalonia;
 using Avalonia.Collections;
 using Avalonia.Input;
@@ -63,9 +64,19 @@ public class DataManager {
 
     public static readonly AttachedProperty<DataKey?> DataContextDataKeyProperty =
         AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, DataKey?>("DataContextDataKey");
-    
+
     public static readonly AttachedProperty<DataKey?> SelfDataKeyProperty =
-        AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, DataKey?>("SelfDataKey");
+        AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, DataKey?>("SelfDataKey", coerce: (o, key) => {
+            if (key != null && !key.DataType.IsInstanceOfType(o)) {
+                StringBuilder sb = new StringBuilder(128);
+                sb.AppendLine("Attempt to set SelfDataKey to a key whose data type is incompatible with the instance type.");
+                sb.AppendLine($"  Instance Type = {o.GetType()}");
+                sb.AppendLine($"  DataKey ID = {key.Id}, Data Type = {key.DataType}");
+                throw new InvalidOperationException(sb.ToString());
+            }
+            
+            return key;
+        });
 
     /// <summary>
     /// An event that gets raised on every single visual child (similar to tunnelling) when its inherited context
@@ -76,6 +87,8 @@ public class DataManager {
 
     static DataManager() {
         Visual.VisualParentProperty.Changed.AddClassHandler<Visual, Visual?>(OnVisualParentChanged);
+        DataContextDataKeyProperty.Changed.AddClassHandler<AvaloniaObject, DataKey?>(OnDataContextDataKeyPropertyChanged);
+        SelfDataKeyProperty.Changed.AddClassHandler<AvaloniaObject, DataKey?>(OnSelfDataKeyPropertyChanged);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -84,8 +97,36 @@ public class DataManager {
             InvalidateInheritedContext(sender);
         }
         // else {
-        //     Debug.WriteLine($"Skipped InvalidateInheritedContext for {sender} (not attached to VT)");
+        //     Debug.WriteLine($"[{nameof(OnVisualParentChanged)}] Skipped InvalidateInheritedContext for {sender} (not attached to VT)");
         // }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void OnDataContextDataKeyPropertyChanged(AvaloniaObject sender, AvaloniaPropertyChangedEventArgs<DataKey?> e) {
+        if (sender is StyledElement element) {
+            if (!e.NewValue.HasValue)
+                element.DataContextChanged -= OnDataContextChanged;
+            else if (!e.OldValue.HasValue)
+                element.DataContextChanged += OnDataContextChanged;
+        }
+        
+        if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
+            InvalidateInheritedContext(sender);
+        }
+    }
+
+    private static void OnDataContextChanged(object? sender, EventArgs e) {
+        Debug.Assert(((AvaloniaObject) sender!).GetValue(DataContextDataKeyProperty) != null);
+        if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
+            InvalidateInheritedContext((StyledElement) sender!);
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
+    private static void OnSelfDataKeyPropertyChanged(AvaloniaObject sender, AvaloniaPropertyChangedEventArgs<DataKey?> e) {
+        if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
+            InvalidateInheritedContext(sender);
+        }
     }
 
     /// <summary>
@@ -225,8 +266,7 @@ public class DataManager {
     /// See <see cref="EvaluateContextDataRaw"/> for more info on how this works
     /// </para>
     /// <para>
-    /// The returned data should not be modified, even though it is mutable,
-    /// since changes will not be reflected down the visual tree
+    /// The returned data should not be modified (despite being potentially mutable), since changes will not be reflected down the visual tree
     /// </para>
     /// </summary>
     /// <param name="component">The target object</param>
@@ -263,19 +303,27 @@ public class DataManager {
 
         // Scan top-down in order to allow deeper objects' entries to override higher up entries
         for (int i = hierarchy.Count - 1; i >= 0; i--) {
-            AvaloniaObject obj = hierarchy[i];
-            IControlContextData? data = obj.GetBaseValue(ContextDataProperty).GetValueOrDefault();
+            AvaloniaObject control = hierarchy[i];
+            IControlContextData? data = control.GetBaseValue(ContextDataProperty).GetValueOrDefault();
             if (data != null && data.Count > 0) {
                 ctx.Merge(data);
             }
 
             DataKey? key;
-            if (obj is StyledElement ctrl && (key = GetDataContextDataKey(obj)) != null) {
-                ctx.SetValueRaw(key.Id, ctrl.DataContext);
+            if (control is StyledElement element && (key = GetDataContextDataKey(control)) != null) {
+                object? dc = element.DataContext;
+                if (dc == null || key.DataType.IsInstanceOfType(dc)) {
+                    ctx.SetValueRaw(key.Id, element.DataContext);
+                }
+                else {
+                    Debug.WriteLine($"DataContextDataKey of {control.GetType().Name} was invalid for its actual data context.");
+                    Debug.WriteLine($"  DataContext = {dc.GetType()}");
+                    Debug.WriteLine($"  DataKey ID = {key.Id}, Data Type = {key.DataType}");
+                }
             }
-            
-            if ((key = GetSelfDataKey(obj)) != null) {
-                ctx.SetValueRaw(key.Id, obj);
+
+            if ((key = GetSelfDataKey(control)) != null) {
+                ctx.SetValueRaw(key.Id, control);
             }
         }
 
@@ -357,7 +405,7 @@ public class DataManager {
     /// Gets the data key used to key the data context object
     /// </summary>
     public static DataKey? GetDataContextDataKey(AvaloniaObject obj) => obj.GetValue(DataContextDataKeyProperty);
-    
+
     /// <summary>
     /// Sets the data key used to key the control instance itself
     /// </summary>

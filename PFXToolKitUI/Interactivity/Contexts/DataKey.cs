@@ -31,10 +31,16 @@ public abstract class DataKey {
     /// </summary>
     public string Id { get; }
 
-    protected DataKey(string id) {
-        if (string.IsNullOrWhiteSpace(id))
-            throw new ArgumentException("ID cannot be null, empty or consist of only whitespaces");
+    /// <summary>
+    /// Gets the type of data this key is used to access
+    /// </summary>
+    public Type DataType { get; }
+
+    internal DataKey(string id, Type dataType) {
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(dataType);
         this.Id = id;
+        this.DataType = dataType;
     }
 
     static DataKey() {
@@ -47,8 +53,6 @@ public abstract class DataKey {
     }
 
     protected static void RegisterInternal(string id, DataKey key) {
-        ArgumentException.ThrowIfNullOrWhiteSpace(id);
-        ArgumentNullException.ThrowIfNull(key);
         lock (Registry) {
             if (!Registry.TryAdd(id, key))
                 throw new InvalidOperationException("ID already in use: " + id);
@@ -56,22 +60,20 @@ public abstract class DataKey {
     }
 
     public static bool operator ==(DataKey? a, DataKey? b) {
-        return ReferenceEquals(a, b) || !ReferenceEquals(a, null) && !ReferenceEquals(b, null) && a.Equals(b);
+        return ReferenceEquals(a, b) || (!ReferenceEquals(a, null) && !ReferenceEquals(b, null) && a.Equals(b));
     }
 
-    public static bool operator !=(DataKey? a, DataKey? b) {
-        return !ReferenceEquals(a, b) && (ReferenceEquals(a, null) || ReferenceEquals(b, null) || !a.Equals(b));
-    }
+    public static bool operator !=(DataKey? a, DataKey? b) => !(a == b);
 
     protected bool Equals(DataKey other) {
         return this.Id == other.Id;
     }
 
     public override bool Equals(object? obj) {
-        if (ReferenceEquals(null, obj))
-            return false;
+        if (obj == null) return false;
         if (ReferenceEquals(this, obj))
             return true;
+        
         return obj is DataKey key && this.Equals(key);
     }
 
@@ -81,8 +83,9 @@ public abstract class DataKey {
 }
 
 public sealed class DataKey<T> : DataKey {
-    private DataKey(string id) : base(id) { }
-    
+    private DataKey(string id) : base(id, typeof(T)) {
+    }
+
     public static DataKey<T> Create(string id) {
         DataKey<T> key = new DataKey<T>(id);
         RegisterInternal(id, key);
@@ -101,9 +104,9 @@ public sealed class DataKey<T> : DataKey {
         }
         else {
             if (obj != null) {
-                Debug.Fail($"Context contained an invalid value for this key: type mismatch ({typeof(T)} != {obj.GetType()})");
+                Debug.WriteLine($"Context contained an invalid value for this key: type mismatch ({typeof(T)} != {obj.GetType()})");
             }
-            
+
             value = default;
             return false;
         }

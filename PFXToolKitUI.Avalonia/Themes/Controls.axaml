@@ -5,6 +5,8 @@
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
                 <MergeResourceInclude Source="ControlStyles/DataValidationErrors.axaml"/>
+                <MergeResourceInclude Source="ControlStyles/ToolTip.axaml"/>
+                <MergeResourceInclude Source="ControlStyles/PopupRoot.axaml"/>
                 <MergeResourceInclude Source="ControlStyles/Thumb.axaml"/>
                 <MergeResourceInclude Source="ControlStyles/ScrollViewer.axaml"/>
                 <MergeResourceInclude Source="ControlStyles/ScrollBar.axaml"/>
