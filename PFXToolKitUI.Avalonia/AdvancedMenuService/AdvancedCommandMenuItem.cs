@@ -76,7 +76,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         }
 
         if (CommandManager.Instance.GetCommandById(entry.CommandId) != null) {
-            if (CommandIdToGestureConverter.CommandIdToGesture(entry.CommandId, null, out string value)) {
+            if (CommandIdToGestureConverter.CommandIdToGesture(entry.CommandId, out string value)) {
                 this.InputGestureTextBlock.Text = value;
             }
         }

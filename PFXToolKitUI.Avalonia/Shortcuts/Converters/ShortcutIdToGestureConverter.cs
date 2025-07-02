@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
@@ -34,7 +35,7 @@ public class ShortcutIdToGestureConverter : IValueConverter {
             return ShortcutIdToGesture(path, null, out string? gesture) ? gesture : AvaloniaProperty.UnsetValue;
         }
         else if (value is IEnumerable<string> paths) {
-            return ShortcutIdToGesture(paths, null, out string gesture) ? gesture : AvaloniaProperty.UnsetValue;
+            return ShortcutIdToGesture(paths, null, out string? gesture) ? gesture : AvaloniaProperty.UnsetValue;
         }
 
         throw new Exception("Value is not a shortcut string");
@@ -54,7 +55,7 @@ public class ShortcutIdToGestureConverter : IValueConverter {
         return true;
     }
 
-    public static bool ShortcutIdToGesture(IEnumerable<string> paths, string fallback, out string gesture) {
+    public static bool ShortcutIdToGesture(IEnumerable<string> paths, string? fallback, [NotNullWhen(true)] out string? gesture) {
         List<ShortcutEntry>? shortcut = ShortcutManager.Instance?.FindShortcutsByPaths(paths).ToList();
         if (shortcut == null || shortcut.Count < 1) {
             return (gesture = fallback) != null;
@@ -63,7 +64,7 @@ public class ShortcutIdToGestureConverter : IValueConverter {
         return (gesture = ShortcutsToGesture(shortcut, null)) != null;
     }
 
-    public static string ShortcutsToGesture(IEnumerable<ShortcutEntry> shortcuts, string fallback, bool removeDupliateInputStrokes = true) {
+    public static string? ShortcutsToGesture(IEnumerable<ShortcutEntry> shortcuts, string? fallback, bool removeDupliateInputStrokes = true) {
         if (removeDupliateInputStrokes) {
             HashSet<string> strokes = new HashSet<string>();
             List<string> newList = new List<string>();

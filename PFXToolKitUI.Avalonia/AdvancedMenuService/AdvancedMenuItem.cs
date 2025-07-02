@@ -24,6 +24,7 @@ using Avalonia.Interactivity;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.AdvancedMenuService;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils.Collections.Observable;
@@ -122,7 +123,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
             this.Icon = null;
         }
 
-        this.ClearValue(ToolTip.TipProperty);
+        this.ClearValue(ToolTipEx.TipProperty);
         AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
         AdvancedMenuService.ClearItemNodes(this);
     }
@@ -197,7 +198,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
             ToolTip.SetTip(this, sender.Description ?? "");
         }
         else {
-            this.ClearValue(ToolTip.TipProperty);
+            this.ClearValue(ToolTipEx.TipProperty);
         }
     }
 

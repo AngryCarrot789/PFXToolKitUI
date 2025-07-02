@@ -1,7 +1,8 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:avalonia="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia;assembly=PFXToolKitUI.Avalonia"
-                    xmlns:trees="clr-namespace:PFXToolKitUI.Avalonia.Themes.Configurations">
+                    xmlns:trees="clr-namespace:PFXToolKitUI.Avalonia.Themes.Configurations"
+                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips">
     <ControlTheme x:Key="{x:Type trees:ThemeConfigTreeView}" TargetType="{x:Type trees:ThemeConfigTreeView}" BasedOn="{StaticResource {x:Type TreeView}}">
         <Setter Property="SelectionMode" Value="Single"/>
         <Setter Property="Background" Value="{DynamicResource ABrush.Tone2.Background.Static}"/>
@@ -73,16 +74,8 @@
                                     <StackPanel Orientation="Horizontal" Spacing="3">
                                         <Ellipse Width="7" Height="7" Fill="DodgerBlue"
                                                  Stroke="Black" StrokeThickness="1"
-                                                 x:Name="PART_IsInheritedIndicator" IsVisible="False">
-                                            <ToolTip.Tip>
-                                                <TextBlock>
-                                                    <Run Text="This indicator means we're inherited from another key"/>
-                                                    <LineBreak/>
-                                                    <Run Text="Light blue means the current theme has defined the inheritance"/>
-                                                    <LineBreak/>
-                                                    <Run Text="Yellow means a base theme has defined the inheritance, however, you can still override it, and then it becomes light blue."/>
-                                                </TextBlock>
-                                            </ToolTip.Tip>
+                                                 x:Name="PART_IsInheritedIndicator" IsVisible="False"
+                                                 tt:ToolTipEx.TipType="{x:Type trees:ThemeInheritanceIndicatorToolTip}">
                                         </Ellipse>
                                         <Rectangle x:Name="PART_ThemeColourPreview" IsVisible="False" Width="18"/>
                                         <Panel VerticalAlignment="Center">

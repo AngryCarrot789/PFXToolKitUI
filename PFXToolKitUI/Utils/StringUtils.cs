@@ -38,13 +38,13 @@ public static class StringUtils {
         return new StringBuilder(32).Append(a).Append(join).Append(b).Append(join).Append(c).ToString();
     }
 
-    public static string JoinString(this IEnumerable<string> elements, string delimiter, string finalDelimiter, string emptyEnumerator = "") {
+    public static string? JoinString(this IEnumerable<string> elements, string delimiter, string finalDelimiter, string? emptyEnumerator = "") {
         using (IEnumerator<string> enumerator = elements.GetEnumerator()) {
             return JoinString(enumerator, delimiter, finalDelimiter, emptyEnumerator);
         }
     }
 
-    public static string JoinString(this IEnumerator<string> elements, string delimiter, string finalDelimiter, string emptyEnumerator = "") {
+    public static string? JoinString(this IEnumerator<string> elements, string delimiter, string finalDelimiter, string? emptyEnumerator = "") {
         if (!elements.MoveNext()) {
             return emptyEnumerator;
         }

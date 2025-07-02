@@ -17,8 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
-using Avalonia;
 using Avalonia.Data.Converters;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Shortcuts;
@@ -28,11 +28,11 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 public class CommandIdToGestureConverter : IValueConverter {
     public static CommandIdToGestureConverter Instance { get; } = new CommandIdToGestureConverter();
 
-    public string NoSuchActionText { get; set; } = null;
+    public string? NoSuchActionText { get; set; } = null;
 
-    public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is string id) {
-            return CommandIdToGesture(id, this.NoSuchActionText, out string gesture) ? gesture : AvaloniaProperty.UnsetValue;
+            return CommandIdToGesture(id, out string? gesture) ? gesture : this.NoSuchActionText;
         }
 
         throw new Exception("Value is not a string");
@@ -42,16 +42,15 @@ public class CommandIdToGestureConverter : IValueConverter {
         throw new NotImplementedException();
     }
 
-    public static bool CommandIdToGesture(string id, string fallback, out string gesture) {
-        if (CommandManager.Instance.GetCommandById(id) == null) {
-            return (gesture = fallback) != null;
+    public static bool CommandIdToGesture(string? id, [NotNullWhen(true)] out string? gesture) {
+        if (id != null && CommandManager.Instance.GetCommandById(id) != null) {
+            IEnumerable<ShortcutEntry>? shortcuts = ShortcutManager.Instance.GetShortcutsByCommandId(id);
+            if (shortcuts != null) {
+                return (gesture = ShortcutIdToGestureConverter.ShortcutsToGesture(shortcuts, null)) != null;
+            }
         }
 
-        IEnumerable<ShortcutEntry>? shortcuts = ShortcutManager.Instance.GetShortcutsByCommandId(id);
-        if (shortcuts == null) {
-            return (gesture = fallback) != null;
-        }
-
-        return (gesture = ShortcutIdToGestureConverter.ShortcutsToGesture(shortcuts, fallback)) != null;
+        gesture = null;
+        return false;
     }
 }

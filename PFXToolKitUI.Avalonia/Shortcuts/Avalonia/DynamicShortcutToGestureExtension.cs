@@ -18,6 +18,7 @@
 // 
 
 using System.Runtime.CompilerServices;
+using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
@@ -42,6 +43,6 @@ public class DynamicShortcutToGestureExtension {
         if (ShortcutIdToGestureConverter.ShortcutIdToGesture(resourceKey.ToString() ?? "", null, out string? gesture))
             return gesture;
 
-        return "";
+        return ShortcutLabel.NoShortcutTextProperty.GetDefaultValue(typeof(ShortcutLabel));
     }
 }

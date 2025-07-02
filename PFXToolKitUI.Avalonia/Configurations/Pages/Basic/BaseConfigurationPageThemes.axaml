@@ -11,7 +11,8 @@
                     xmlns:cb="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
                     xmlns:messages="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages"
                     xmlns:dd="clr-namespace:PFXToolKitUI.Configurations.Dialogs;assembly=PFXToolKitUI"
-                    xmlns:avalonia="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia">
+                    xmlns:avalonia="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia"
+                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips">
     <ControlTheme x:Key="{x:Type pages:PropertyEditorConfigurationPageControl}" TargetType="{x:Type pages:PropertyEditorConfigurationPageControl}">
         <Setter Property="Template">
             <ControlTemplate TargetType="{x:Type pages:PropertyEditorConfigurationPageControl}">
@@ -130,11 +131,11 @@
                                                 cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CollapseThemeConfigTree"/>
                                         <Separator Theme="{StaticResource VerticalSeparatorTheme}" Margin="0"/>
                                         <Button BorderThickness="0" Content="Create Inherited Copy" cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CreateInheritedCopy" Padding="5,0"
-                                                ToolTip.Tip="Creates a new theme that is based on (inheriting from) the current theme"/>
+                                                tt:ToolTipEx.Tip="Creates a new theme that is based on (inheriting from) the current theme"/>
                                         <Separator Theme="{StaticResource VerticalSeparatorTheme}" Margin="0"/>
                                         <Button BorderThickness="0" Content="Create Clone" Padding="5,0"
                                                 cu:CommandUsageManager.SimpleButtonCommandId="commands.config.themeconfig.CreateCompleteCopy">
-                                            <ToolTip.Tip>
+                                            <tt:ToolTipEx.Tip>
                                                 <TextBlock>
                                                     <Run Text="Creates a complete copy of the current theme"/>
                                                     <LineBreak/>
@@ -143,7 +144,7 @@
                                                     <LineBreak/>
                                                     <Run Text="This basically just copies all theme entries from the current theme"/>
                                                 </TextBlock>
-                                            </ToolTip.Tip>
+                                            </tt:ToolTipEx.Tip>
                                         </Button>
                                         <Separator Theme="{StaticResource VerticalSeparatorTheme}" Margin="0"/>
                                     </StackPanel>
@@ -169,17 +170,17 @@
                                              Watermark="Not Inherited"/>
                                     <Button x:Name="PART_SetInheritedFromKeyButton"
                                             Content="Set" Grid.Column="2" Padding="6,2"
-                                            ToolTip.Tip="Sets the ThemeKey that this inherits from"/>
+                                            tt:ToolTipEx.Tip="Sets the ThemeKey that this inherits from"/>
                                     <Button x:Name="PART_NavigateToInheritedKeyButton"
                                             Content="Navigate" Grid.Column="4" Padding="4,2"
-                                            ToolTip.Tip="Navigate to the theme key"/>
+                                            tt:ToolTipEx.Tip="Navigate to the theme key"/>
                                 </Grid>
 
                                 <av:IconButton x:Name="PART_ResetButton"
                                                Grid.Row="0" Grid.Column="4"
                                                IconMaxHeight="24" IconMaxWidth="24"
                                                Icon="{x:Static cb:ConfigurationButtons.ResetIcon}"
-                                               ToolTip.Tip="Reset this brush to the value before you changed it"/>
+                                               tt:ToolTipEx.Tip="Reset this brush to the value before you changed it"/>
 
                                 <ColorPicker Grid.Column="6" Grid.Row="0" Grid.RowSpan="2" x:Name="PART_ColorPicker" Margin="0,0,5,0"/>
                             </Grid>

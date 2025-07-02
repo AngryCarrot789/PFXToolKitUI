@@ -4,6 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Activities"
              xmlns:ac="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
+             xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
              mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="24"
              x:Class="PFXToolKitUI.Avalonia.Activities.ActivityStatusBarControl"
              IsVisible="False">
@@ -23,7 +24,7 @@
                            Padding="4,1" Margin="0,0,2,0"
                            BorderThickness="0"
                            CornerRadius="2"
-                           ToolTip.Tip="Cancels the task"
+                           tt:ToolTipEx.Tip="Cancels the task"
                            Click="PART_CancelActivityButton_OnClick"
                            Icon="{x:Static local:ActivityStatusBarControl.CancelIcon}"
                            IconMaxHeight="12" IconMaxWidth="12"

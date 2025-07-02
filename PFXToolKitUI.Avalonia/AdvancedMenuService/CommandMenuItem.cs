@@ -91,7 +91,7 @@ public class CommandMenuItem : MenuItem {
         }
 
         if (CommandManager.Instance.GetCommandById(id) != null) {
-            if (CommandIdToGestureConverter.CommandIdToGesture(id, null, out string value)) {
+            if (CommandIdToGestureConverter.CommandIdToGesture(id, out string value)) {
                 this.InputGestureTextBlock.Text = value;
             }
         }

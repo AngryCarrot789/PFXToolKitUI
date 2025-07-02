@@ -24,6 +24,7 @@ using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using PFXToolKitUI.Avalonia.AvControls.Dragger;
 using PFXToolKitUI.Avalonia.Bindings;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.PropertyEditing.DataTransfer;
 
@@ -107,11 +108,11 @@ public abstract class BaseNumberDraggerDataParamPropEditorSlotControl : BaseData
 
         if (hasMultipleValues) {
             dragger.SetCurrentValue(BackgroundProperty, MultipleValuesBrush);
-            dragger.SetCurrentValue(ToolTip.TipProperty, "This dragger currently has multiple values present. Modifying this value will change the underlying value for all selected objects");
+            dragger.SetCurrentValue(ToolTipEx.TipProperty, "This dragger currently has multiple values present. Modifying this value will change the underlying value for all selected objects");
         }
         else {
             dragger.ClearValue(BackgroundProperty);
-            dragger.ClearValue(ToolTip.TipProperty);
+            dragger.ClearValue(ToolTipEx.TipProperty);
         }
     }
 

@@ -1,7 +1,8 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Activities"
-                    xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls">
+                    xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
+                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips">
     <ControlTheme x:Key="{x:Type local:ActivityListItem}" TargetType="{x:Type local:ActivityListItem}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -20,7 +21,7 @@
                                             Padding="4,1" Margin="0"
                                             BorderThickness="0"
                                             CornerRadius="2"
-                                            ToolTip.Tip="Cancels this task"
+                                            tt:ToolTipEx.Tip="Cancels this task"
                                             Icon="{x:Static local:ActivityStatusBarControl.CancelIcon}"
                                             IconMaxHeight="12" IconMaxWidth="12"
                                             VerticalContentAlignment="Center"

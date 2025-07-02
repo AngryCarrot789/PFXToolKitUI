@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
@@ -17,9 +17,12 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.AdvancedMenuService;
+using Avalonia.Controls;
 
-/// <summary>
-/// An entry that is just a separator. Do not use cached instances! The same rule applies to any other context object too of course
-/// </summary>
-public sealed class SeparatorEntry : IContextObject;
+namespace PFXToolKitUI.Avalonia.Themes.Configurations;
+
+public partial class ThemeInheritanceIndicatorToolTip : UserControl {
+    public ThemeInheritanceIndicatorToolTip() {
+        InitializeComponent();
+    }
+}

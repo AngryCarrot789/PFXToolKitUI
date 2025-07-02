@@ -5,7 +5,8 @@
                     xmlns:l="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing"
                     xmlns:dt="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer"
                     xmlns:enums="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer.Enums"
-                    xmlns:dta="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer.Automatic">
+                    xmlns:dta="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer.Automatic"
+                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips">
     <ControlTheme x:Key="NonToggleableCheckBox" TargetType="{x:Type CheckBox}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -48,7 +49,7 @@
                                     Background="{DynamicResource ABrush.Tone4.Border.Static}"
                                     BorderBrush="Black"
                                     Width="20" Height="20" CornerRadius="2"
-                                    ToolTip.Tip="Reset value" DockPanel.Dock="Right" Focusable="False">
+                                    tt:ToolTipEx.Tip="Reset value" DockPanel.Dock="Right" Focusable="False">
                                 <Path Width="12" Height="14" Stretch="Fill" Fill="{DynamicResource ABrush.Glyph.Static}" Data="{StaticResource ResetGeometry}"/>
                             </Button>
                             <d:NumberDragger x:Name="PART_Dragger" BorderBrush="Black" Padding="4,2"/>
@@ -86,7 +87,7 @@
                                     Background="{DynamicResource ABrush.Tone4.Border.Static}"
                                     BorderBrush="Black"
                                     Width="20" Height="20" CornerRadius="2"
-                                    ToolTip.Tip="Reset value" Grid.Column="4" Focusable="False">
+                                    tt:ToolTipEx.Tip="Reset value" Grid.Column="4" Focusable="False">
                                 <Path Width="12" Height="14" Stretch="Fill" Fill="{DynamicResource ABrush.Glyph.Static}" Data="{StaticResource ResetGeometry}"/>
                             </Button>
                         </Grid>
@@ -231,7 +232,7 @@
                                     Background="{DynamicResource ABrush.Tone4.Border.Static}"
                                     BorderBrush="Black"
                                     Width="20" Height="20" CornerRadius="2"
-                                    ToolTip.Tip="Make this parameter automatically calculated" 
+                                    tt:ToolTipEx.Tip="Make this parameter automatically calculated" 
                                     Grid.Column="4" Focusable="False">
                                 <Path Width="12" Height="14" Stretch="Fill" Fill="{DynamicResource ABrush.Glyph.Static}" Data="M0 40 10 0 25 0 35 40 30 40 21 5 14 5 5 40ZM11.4286 15 23.5714 15 23.3142 14 11.6857 14"/>
                             </Button>
@@ -240,7 +241,7 @@
                                     Background="{DynamicResource ABrush.Tone4.Border.Static}"
                                     BorderBrush="Black"
                                     Width="20" Height="20" CornerRadius="2"
-                                    ToolTip.Tip="Reset value" Grid.Column="4" Focusable="False">
+                                    tt:ToolTipEx.Tip="Reset value" Grid.Column="4" Focusable="False">
                                 <Path Width="12" Height="14" Stretch="Fill" Fill="{DynamicResource ABrush.Glyph.Static}" Data="{StaticResource ResetGeometry}"/>
                             </Button>
                         </Grid>

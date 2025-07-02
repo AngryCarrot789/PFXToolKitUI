@@ -110,4 +110,26 @@
             <Setter Property="BorderBrush" Value="{DynamicResource ToggleButton.Pressed.IsChecked.Border}"/>
         </Style>
     </ControlTheme>
+    
+    <ControlTheme x:Key="{x:Type local:ShortcutLabel}" TargetType="{x:Type local:ShortcutLabel}">
+        <Setter Property="Background" Value="{DynamicResource ABrush.Tone3.Background.Static}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone7.Border.Static}"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="4,2"/>
+        <Setter Property="CornerRadius" Value="2"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border x:Name="PART_Border"
+                        Padding="{TemplateBinding Padding}"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        TextElement.Foreground="{TemplateBinding Foreground}">
+                    <TextBlock x:Name="PART_Text"/>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
 </ResourceDictionary>

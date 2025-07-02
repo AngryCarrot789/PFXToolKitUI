@@ -28,6 +28,7 @@ using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 using PFXToolKitUI.Avalonia.Bindings;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Notifications;
 using PFXToolKitUI.Tasks;
@@ -237,7 +238,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
                 ToolTip.SetTip((NotificationHyperlinkButton) b.Control, tb);
             }
             else {
-                b.Control.ClearValue(ToolTip.TipProperty);
+                b.Control.ClearValue(ToolTipEx.TipProperty);
             }
         });
 

@@ -39,7 +39,7 @@ public class DynamicCommandToGestureExtension {
         if (cmdId == null)
             throw new ArgumentException("DynamicShortcutsExtension.ResourceKey must be set.");
 
-        if (CommandIdToGestureConverter.CommandIdToGesture(cmdId.ToString() ?? "", null, out string? gesture))
+        if (CommandIdToGestureConverter.CommandIdToGesture(cmdId.ToString() ?? "", out string? gesture))
             return gesture;
 
         return "";

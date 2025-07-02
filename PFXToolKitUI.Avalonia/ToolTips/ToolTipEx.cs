@@ -19,9 +19,15 @@
 
 // #define MEASURE_INHERITANCE_CACHE_HITS_MISSES
 
+using System.Diagnostics;
 using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
+using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
+using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Interactivity;
 
 namespace PFXToolKitUI.Avalonia.ToolTips;
@@ -30,13 +36,15 @@ public static class ToolTipEx {
     private static readonly Dictionary<Type, Control> toolTipControlCache = new Dictionary<Type, Control>();
 
     public static readonly AttachedProperty<Type?> TipTypeProperty = AvaloniaProperty.RegisterAttached<Control, Type?>("TipType", typeof(ToolTipEx));
+    public static readonly AttachedProperty<object?> TipProperty = AvaloniaProperty.RegisterAttached<Control, object?>("Tip", typeof(ToolTipEx));
+    public static readonly AttachedProperty<bool> MoveWithCursorProperty = AvaloniaProperty.RegisterAttached<Control, bool>("MoveWithCursor", typeof(ToolTipEx), defaultValue: true);
 
-    public static void SetTipType(Control obj, Type? value) => obj.SetValue(TipTypeProperty, value);
-    public static Type? GetTipType(Control obj) => obj.GetValue(TipTypeProperty);
+    private static ToolTipControlEx? currentShownToolTip;
 
     static ToolTipEx() {
         TipTypeProperty.Changed.AddClassHandler<Control, Type?>(static (s, e) => OnTipTypeChanged(s, e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
-        ToolTip.IsOpenProperty.Changed.AddClassHandler<Control, bool>(OnIsToolTipOpenChanged);
+        TipProperty.Changed.AddClassHandler<Control, object?>(static (s, e) => OnTipChanged(s, e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+        InputElement.PointerMovedEvent.AddClassHandler<TopLevel>(OnPreviewPointerMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
 
         // These events are unbelievably unreliable. ToolTipOpeningEvent is called before ToolTipClosingEvent,
         // because some sort of Close method is called before attempting to open again
@@ -44,18 +52,37 @@ public static class ToolTipEx {
         // ToolTip.ToolTipClosingEvent.AddClassHandler(typeof(Control), OnToolTipClosing);
     }
 
+    public static void SetTipType(Control obj, Type? value) => obj.SetValue(TipTypeProperty, value);
+    public static Type? GetTipType(Control obj) => obj.GetValue(TipTypeProperty);
+    public static void SetTip(Control obj, object? value) => obj.SetValue(TipProperty, value);
+    public static object? GetTip(Control obj) => obj.GetValue(TipProperty);
+
+    public static void SetMoveWithCursor(Control obj, bool value) => obj.SetValue(MoveWithCursorProperty, value);
+    public static bool GetMoveWithCursor(Control obj) => obj.GetValue(MoveWithCursorProperty);
+
+    private static void OnPreviewPointerMoved(TopLevel topLevel, PointerEventArgs e) {
+        if (currentShownToolTip != null) {
+            Control? control = currentShownToolTip.CurrentlyAdornedControl;
+            Debug.Assert(control != null);
+
+            if (GetMoveWithCursor(control!)) {
+                currentShownToolTip.UpdatePosition();
+            }
+        }
+    }
+
     private static void OnTipTypeChanged(Control control, Type? oldTipType, Type? newTipType) {
         if (newTipType != null) {
-            if (!toolTipControlCache.TryGetValue(newTipType, out Control? rip)) {
-                rip = (Control) Activator.CreateInstance(newTipType)! ?? throw new InvalidOperationException("Wut");
-                toolTipControlCache[newTipType] = rip = new ToolTipControlEx(rip);
+            if (!toolTipControlCache.TryGetValue(newTipType, out Control? tip)) {
+                tip = (Control) Activator.CreateInstance(newTipType)! ?? throw new InvalidOperationException("Wut");
+                toolTipControlCache[newTipType] = tip = new ToolTipControlEx(tip);
             }
 
             bool isOpen = ToolTip.GetIsOpen(control);
             if (isOpen)
                 ToolTip.SetIsOpen(control, false);
 
-            ToolTip.SetTip(control, rip);
+            ToolTip.SetTip(control, tip);
 
             if (isOpen)
                 ToolTip.SetIsOpen(control, true);
@@ -69,56 +96,81 @@ public static class ToolTipEx {
         }
     }
 
-    private static void OnIsToolTipOpenChanged(Control control, AvaloniaPropertyChangedEventArgs<bool> e) {
-    }
+    private static void OnTipChanged(Control control, object? oldTip, object? newTip) {
+        if (newTip != null) {
+            ToolTipControlEx tip = new ToolTipControlEx(newTip);
+            bool isOpen = ToolTip.GetIsOpen(control);
+            if (isOpen)
+                ToolTip.SetIsOpen(control, false);
 
-    private static Control GetOrCreateTipControl(Type tipType) {
-        if (!toolTipControlCache.TryGetValue(tipType, out Control? tip)) {
-            tip = (Control) Activator.CreateInstance(tipType)! ?? throw new InvalidOperationException("Wut");
-            toolTipControlCache[tipType] = tip = new ToolTipControlEx(tip);
+            ToolTip.SetTip(control, tip);
+
+            if (isOpen)
+                ToolTip.SetIsOpen(control, true);
         }
+        else {
+            if (ToolTip.GetIsOpen(control)) {
+                ToolTip.SetIsOpen(control, false);
+            }
 
-        return tip;
+            ToolTip.SetTip(control, null);
+        }
     }
 
     private class ToolTipControlEx : ToolTip {
         private static readonly PropertyInfo AdornedControlProperty = typeof(ToolTip).GetProperty("AdornedControl", BindingFlags.Instance | BindingFlags.NonPublic)!;
-        // private static readonly MethodInfo UpdatePositionMethod = typeof(Popup).GetMethod("HandlePositionChange", BindingFlags.Instance | BindingFlags.NonPublic)!;
+        private static readonly MethodInfo UpdatePositionMethod = typeof(Popup).GetMethod("HandlePositionChange", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
         protected override Type StyleKeyOverride => typeof(ToolTip);
 
         private Control? AdornedControl => (Control?) AdornedControlProperty.GetValue(this);
 
-        private Control? lastAdornedControl;
+        public Control? CurrentlyAdornedControl { get; private set; }
 
-        public ToolTipControlEx(Control content) {
+        public ToolTipControlEx(object content) {
             this.Content = content;
+
+            Style style = new Style((x) => x.OfType<TextBlock>()) {
+                Setters = { new Setter(TextBlock.TextWrappingProperty, TextWrapping.Wrap) }
+            };
+            this.Styles.Add(style);
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
             base.OnAttachedToVisualTree(e);
             this.EnsureOnClosedInvoked();
 
-            if (this.Content is IToolTipControl tipControl) {
-                Control? adorned = this.AdornedControl;
-                if (adorned != null) {
-                    this.lastAdornedControl = adorned;
+            Debug.Assert(currentShownToolTip == null);
+            currentShownToolTip = this;
+
+            Control? adorned = this.AdornedControl;
+            if (adorned != null) {
+                this.CurrentlyAdornedControl = adorned;
+                if (this.Content is IToolTipControl tipControl) {
                     tipControl.OnOpened(adorned, DataManager.GetFullContextData(adorned));
                 }
             }
-            
+
             // ApplicationPFX.Instance.Dispatcher.Post(() => {
             //     if (this.Parent is Popup popup)
             //         UpdatePositionMethod.Invoke(popup, []);
             // }, DispatchPriority.ApplicationIdle);
         }
 
-        private void EnsureOnClosedInvoked() {
-            if (this.lastAdornedControl != null) {
-                if (this.Content is IToolTipControl tipControl)
-                    tipControl.OnClosed(this.lastAdornedControl);
+        public void UpdatePosition() {
+            if (this.Parent is Popup popup)
+                UpdatePositionMethod.Invoke(popup, []);
+        }
 
-                this.lastAdornedControl = null;
+        private void EnsureOnClosedInvoked() {
+            if (this.CurrentlyAdornedControl != null) {
+                Debug.Assert(currentShownToolTip == this);
+                currentShownToolTip = null;
+
+                if (this.Content is IToolTipControl tipControl)
+                    tipControl.OnClosed(this.CurrentlyAdornedControl);
+
+                this.CurrentlyAdornedControl = null;
             }
         }
 
