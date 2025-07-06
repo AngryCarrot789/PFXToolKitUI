@@ -18,9 +18,12 @@
 // 
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 
 namespace PFXToolKitUI.Avalonia.Utils;
+
+public delegate void ModelTypeControlRegistryTypeRegisteredEventHandler(object sender, Type modelType, Delegate constructor);
 
 /// <summary>
 /// A model type to control instance registry
@@ -29,33 +32,64 @@ namespace PFXToolKitUI.Avalonia.Utils;
 public class ModelTypeControlRegistry<TControl> where TControl : Control {
     private readonly Dictionary<Type, Func<TControl>> constructors;
 
+    public event ModelTypeControlRegistryTypeRegisteredEventHandler? TypeRegistered;
+    
     public ModelTypeControlRegistry() {
         this.constructors = new Dictionary<Type, Func<TControl>>();
     }
 
     public void RegisterType(Type modelType, Func<TControl> constructor) {
         this.constructors[modelType] = constructor;
+        this.TypeRegistered?.Invoke(this, modelType, constructor);
     }
 
-    public TControl NewInstance(Type modelType) {
-        if (modelType == null) {
-            throw new ArgumentNullException(nameof(modelType));
-        }
+    // public TControl NewInstance(Type modelType) {
+    //     if (modelType == null) {
+    //         throw new ArgumentNullException(nameof(modelType));
+    //     }
+    //
+    //     // Just try to find a base control type. It should be found first try unless I forgot to register a new control type
+    //     bool hasLogged = false;
+    //     for (Type? type = modelType; type != null; type = type.BaseType) {
+    //         if (this.constructors.TryGetValue(type, out Func<TControl>? func)) {
+    //             return func();
+    //         }
+    //
+    //         if (!hasLogged) {
+    //             hasLogged = true;
+    //             Debugger.Break();
+    //             Debug.WriteLine("Could not find control for resource type on first try. Scanning base types");
+    //         }
+    //     }
+    //
+    //     throw new Exception("No such content control for resource type: " + modelType.Name);
+    // }
+    
+    public bool TryGetNewInstance(Type modelType, [NotNullWhen(true)] out TControl? control) {
+        return (control = this.NewInstanceInternal(modelType, false)) != null;
+    }
 
-        // Just try to find a base control type. It should be found first try unless I forgot to register a new control type
+    public TControl NewInstance(Type modelType, bool logBaseTypeScan = true) {
+        TControl? control = this.NewInstanceInternal(modelType, logBaseTypeScan);
+        return control ?? throw new Exception("No registered control for model type: " + modelType.Name);
+    }
+
+    private TControl? NewInstanceInternal(Type modelType, bool logBaseTypeScan) {
+        ArgumentNullException.ThrowIfNull(modelType);
         bool hasLogged = false;
+        // Just try to find a base control type. It should be found first try unless I forgot to register a new control type
         for (Type? type = modelType; type != null; type = type.BaseType) {
             if (this.constructors.TryGetValue(type, out Func<TControl>? func)) {
                 return func();
             }
 
-            if (!hasLogged) {
+            if (logBaseTypeScan && !hasLogged) {
                 hasLogged = true;
                 Debugger.Break();
-                Debug.WriteLine("Could not find control for resource type on first try. Scanning base types");
+                Debug.WriteLine("Could not find control for model type on first try. Scanning base types");
             }
         }
 
-        throw new Exception("No such content control for resource type: " + modelType.Name);
+        return null;
     }
 }

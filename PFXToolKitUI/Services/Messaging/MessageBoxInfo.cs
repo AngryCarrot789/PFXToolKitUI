@@ -33,7 +33,7 @@ public class MessageBoxInfo {
     private string? yesOkText = "OK";
     private string? noText = "No";
     private string? cancelText = "Cancel";
-    private string? alwaysUseThisResultText = "Always use this options";
+    private string? alwaysUseThisResultText = "Always use this option";
     private bool alwaysUseThisResult = false;
     private bool alwaysUseThisResultUntilAppCloses = true;
     private MessageBoxButton buttons;
