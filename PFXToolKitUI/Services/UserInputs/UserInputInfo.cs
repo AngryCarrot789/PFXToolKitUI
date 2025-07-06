@@ -74,7 +74,7 @@ public abstract class UserInputInfo : ITransferableData {
     /// button, False for the cancel button, null for none. Null is default
     /// </summary>
     public bool? DefaultButton { get; init; }
-
+    
     /// <summary>
     /// Fired when one or more errors change in this user input info. This is listened to by
     /// the GUI to invoke <see cref="HasErrors"/> and update the confirm button

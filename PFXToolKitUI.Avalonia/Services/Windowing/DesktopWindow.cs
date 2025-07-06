@@ -76,7 +76,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
             base.Show(parent);
         }
     }
-    
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_VisualLayerManager = e.NameScope.GetTemplateChild<VisualLayerManager>("PART_VisualLayerManager");
@@ -84,18 +84,17 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     }
 
     protected virtual void OnOpenedCore() {
-        
     }
 
     protected sealed override void OnOpened(EventArgs e) {
         if (this.IsClosed || this.IsOpen) {
             throw new InvalidOperationException($"Invalid state. IsClosed = {this.IsClosed}, IsOpen = {this.IsOpen}");
         }
-        
+
         this.StopRendering();
         this.IsClosed = false;
         this.IsOpen = true;
-        
+
         // if (this.Content is Layoutable control) {
         //     this.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
         //     Size dsSize = control.DesiredSize;
@@ -106,8 +105,17 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
         // }
 
         this.OnOpenedCore();
+        // {
+        //     SizeToContent s2c = this.SizeToContent;
+        //     if (this.IsSet(WidthProperty))
+        //         s2c &= ~SizeToContent.Width;
+        //     if (this.IsSet(HeightProperty))
+        //         s2c &= ~SizeToContent.Height;
+        //     this.SizeToContent = s2c;
+        // }
+
         base.OnOpened(e);
-        
+
         this.InvalidateMeasure();
         this.InvalidateArrange();
         this.UpdateLayout();
@@ -125,7 +133,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
         }
 
         this.StartRendering();
-        
+
         Dispatcher.UIThread.Invoke(() => this.SizeToContent = SizeToContent.Manual, DispatcherPriority.Loaded);
     }
 
@@ -148,7 +156,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
 
         this.IsOpen = false;
         this.IsClosed = true;
-        
+
         base.OnClosed(e);
 
         this.WindowClosed?.Invoke(this);

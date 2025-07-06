@@ -30,6 +30,17 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     private readonly IBinder<DoubleUserInputInfo> labelBBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelBChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelB));
     private readonly IBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextAChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextA), b => b.Model.TextA = b.Control.GetValue(TextBox.TextProperty) ?? "");
     private readonly IBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextBChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextB), b => b.Model.TextB = b.Control.GetValue(TextBox.TextProperty) ?? "");
+
+    private readonly IBinder<DoubleUserInputInfo> linesABinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.VisualLineCountAChanged), b => {
+        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.VisualLineCountA);
+        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.VisualLineCountA);
+    });
+
+    private readonly IBinder<DoubleUserInputInfo> linesBBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.VisualLineCountBChanged), b => {
+        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.VisualLineCountB);
+        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.VisualLineCountB);
+    });
+
     private readonly IBinder<DoubleUserInputInfo> footerBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
     private UserInputDialogView? myDialog;
     private DoubleUserInputInfo? myData;
@@ -39,8 +50,8 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         this.labelABinder.AttachControl(this.PART_LabelA);
         this.labelBBinder.AttachControl(this.PART_LabelB);
         this.textABinder.AttachControl(this.PART_TextBoxA);
-        this.textBBinder.AttachControl(this.PART_TextBoxB);
         this.footerBinder.AttachControl(this.PART_FooterTextBlock);
+        Binders.AttachControls(this.PART_TextBoxB, this.textBBinder, this.linesABinder, this.linesBBinder);
 
         this.PART_TextBoxA.KeyDown += this.OnAnyTextFieldKeyDown;
         this.PART_TextBoxB.KeyDown += this.OnAnyTextFieldKeyDown;
@@ -55,11 +66,7 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     public void Connect(UserInputDialogView dialog, UserInputInfo info) {
         this.myDialog = dialog;
         this.myData = (DoubleUserInputInfo) info;
-        this.labelABinder.AttachModel(this.myData);
-        this.labelBBinder.AttachModel(this.myData);
-        this.textABinder.AttachModel(this.myData);
-        this.textBBinder.AttachModel(this.myData);
-        this.footerBinder.AttachModel(this.myData);
+        Binders.AttachModels(this.myData, this.labelABinder, this.labelBBinder, this.textABinder, this.textBBinder, this.linesABinder, this.linesBBinder, this.footerBinder);
         this.myData.LabelAChanged += this.OnLabelAChanged;
         this.myData.LabelBChanged += this.OnLabelBChanged;
         this.myData.FooterChanged += this.OnFooterChanged;
@@ -73,11 +80,7 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     }
 
     public void Disconnect() {
-        this.labelABinder.DetachModel();
-        this.labelBBinder.DetachModel();
-        this.textABinder.DetachModel();
-        this.textBBinder.DetachModel();
-        this.footerBinder.DetachModel();
+        Binders.DetachModels(this.labelABinder, this.labelBBinder, this.textABinder, this.textBBinder, this.linesABinder, this.linesBBinder, this.footerBinder);
         this.myData!.LabelAChanged -= this.OnLabelAChanged;
         this.myData!.LabelBChanged -= this.OnLabelBChanged;
         this.myData!.FooterChanged -= this.OnFooterChanged;

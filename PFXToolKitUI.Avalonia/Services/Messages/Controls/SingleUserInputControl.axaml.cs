@@ -30,6 +30,11 @@ namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 public partial class SingleUserInputControl : UserControl, IUserInputContent {
     private readonly IBinder<SingleUserInputInfo> labelBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LabelChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Label));
     private readonly IBinder<SingleUserInputInfo> textBinder = new AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo>(TextBox.TextProperty, nameof(SingleUserInputInfo.TextChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.Text), b => b.Model.Text = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly IBinder<SingleUserInputInfo> linesBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.VisualLineCountChanged), b => {
+        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.VisualLineCount);
+        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.VisualLineCount);
+    });
+    
     private readonly IBinder<SingleUserInputInfo> footerBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
     private UserInputDialogView? myDialog;
     private SingleUserInputInfo? myData;
@@ -38,6 +43,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         this.InitializeComponent();
         this.labelBinder.AttachControl(this.PART_Label);
         this.textBinder.AttachControl(this.PART_TextBox);
+        this.linesBinder.AttachControl(this.PART_TextBox);
         this.footerBinder.AttachControl(this.PART_FooterTextBlock);
 
         this.PART_TextBox.KeyDown += this.OnTextFieldKeyDown;
@@ -45,6 +51,9 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
 
     private void OnTextFieldKeyDown(object? sender, KeyEventArgs e) {
         if ((e.Key == Key.Escape || e.Key == Key.Enter) && this.myDialog != null) {
+            if (e.Key != Key.Escape && this.myData!.VisualLineCount > 1)
+                return; // do not auto-close when multi-line since that's just annoying and unusable
+            
             this.myDialog.TryCloseDialog(e.Key != Key.Escape);
         }
     }
@@ -54,7 +63,9 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         this.myData = (SingleUserInputInfo) info;
         this.labelBinder.AttachModel(this.myData);
         this.textBinder.AttachModel(this.myData);
+        this.linesBinder.AttachModel(this.myData);
         this.footerBinder.AttachModel(this.myData);
+        this.PART_TextBox.AcceptsReturn = this.myData.VisualLineCount > 1;
         this.myData.LabelChanged += this.OnLabelChanged;
         this.myData.FooterChanged += this.OnFooterChanged;
         this.myData.TextErrorsChanged += this.UpdateTextErrors;
@@ -66,6 +77,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
     public void Disconnect() {
         this.labelBinder.DetachModel();
         this.textBinder.DetachModel();
+        this.linesBinder.DetachModel();
         this.footerBinder.DetachModel();
         this.myData!.LabelChanged -= this.OnLabelChanged;
         this.myData!.FooterChanged -= this.OnFooterChanged;

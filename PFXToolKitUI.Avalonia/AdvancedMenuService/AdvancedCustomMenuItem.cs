@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -26,6 +27,7 @@ using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
@@ -128,8 +130,16 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
         try {
             await entry.OnExecute(context);
         }
+        catch (OperationCanceledException) {
+            // return;
+        }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            if (Debugger.IsAttached) {
+                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            }
+            else {
+                await IMessageDialogService.Instance.ShowMessage("Error", "An exception occurred while running this operation", e.ToString());
+            }
         }
         finally {
             this.IsExecuting = false;

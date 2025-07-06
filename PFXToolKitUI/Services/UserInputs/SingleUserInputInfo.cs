@@ -29,6 +29,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
 
     private string text;
     private string? label;
+    private int visualLineCount = 1;
 
     /// <summary>
     /// Gets the value the user have typed into the text field
@@ -52,10 +53,23 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     }
 
     /// <summary>
+    /// Gets or sets the amount of visual lines the text input should display. Default is 1,
+    /// meaning only 1 line is shown. A value greater than 1 disables auto-close when pressing return
+    /// </summary>
+    public int VisualLineCount {
+        get => this.visualLineCount;
+        set {
+            if (value < 1) 
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
+            PropertyHelper.SetAndRaiseINE(ref this.visualLineCount, value, this, static t => t.VisualLineCountChanged?.Invoke(t));
+        }
+    }
+
+    /// <summary>
     /// A validation function that is given the current text and a list. If there's problems
     /// with the text, then error messages should be added to the list. 
     /// </summary>
-    public Action<ValidationArgs>? Validate { get; set; }
+    public Action<ValidationArgs>? Validate { get; init; }
 
     /// <summary>
     /// Gets the current list of errors present. This value will either be null, or it will have at least one element
@@ -78,6 +92,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     public event SingleUserInputDataEventHandler? TextChanged;
     public event SingleUserInputDataEventHandler? LabelChanged;
     public event SingleUserInputDataEventHandler? TextErrorsChanged;
+    public event SingleUserInputDataEventHandler? VisualLineCountChanged;
 
     public SingleUserInputInfo(string? defaultText) : this(null, null, null, defaultText) {
     }

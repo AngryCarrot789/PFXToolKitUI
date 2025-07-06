@@ -27,6 +27,7 @@ public delegate void DoubleUserInputDataEventHandler(DoubleUserInputInfo sender)
 public class DoubleUserInputInfo : BaseTextUserInputInfo {
     private string textA, textB = "";
     private string? labelA, labelB;
+    private int visualLineCountA = 1, visualLineCountB = 1;
     private ReadOnlyCollection<string>? textErrorsA, textErrorsB;
     private bool isUpdatingErrorA, isUpdatingErrorB;
     private bool doUpdateBAfterA, doUpdateAAfterB;
@@ -68,16 +69,42 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
         get => this.labelB;
         set => PropertyHelper.SetAndRaiseINE(ref this.labelB, value, this, static t => t.LabelBChanged?.Invoke(t));
     }
+    
+    /// <summary>
+    /// Gets or sets the amount of visual lines the text input A should display. Default is 1.
+    /// A value greater than 1 disables auto-close when pressing return
+    /// </summary>
+    public int VisualLineCountA {
+        get => this.visualLineCountA;
+        set {
+            if (value < 1) 
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
+            PropertyHelper.SetAndRaiseINE(ref this.visualLineCountA, value, this, static t => t.VisualLineCountAChanged?.Invoke(t));
+        }
+    }
+    
+    /// <summary>
+    /// Gets or sets the amount of visual lines the text input B should display. Default is 1.
+    /// A value greater than 1 disables auto-close when pressing return
+    /// </summary>
+    public int VisualLineCountB {
+        get => this.visualLineCountB;
+        set {
+            if (value < 1)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
+            PropertyHelper.SetAndRaiseINE(ref this.visualLineCountB, value, this, static t => t.VisualLineCountBChanged?.Invoke(t));
+        }
+    }
 
     /// <summary>
     /// A validation callback for <see cref="TextA"/>
     /// </summary>
-    public Action<ValidationArgs>? ValidateA { get; set; }
+    public Action<ValidationArgs>? ValidateA { get; init; }
 
     /// <summary>
     /// A validation callback for <see cref="TextB"/>
     /// </summary>
-    public Action<ValidationArgs>? ValidateB { get; set; }
+    public Action<ValidationArgs>? ValidateB { get; init; }
 
     /// <summary>
     /// Gets the error messages with <see cref="TextA"/>. Only non-null
@@ -118,6 +145,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     }
 
     public event DoubleUserInputDataEventHandler? TextAChanged, TextBChanged, LabelAChanged, LabelBChanged;
+    public event DoubleUserInputDataEventHandler? VisualLineCountAChanged, VisualLineCountBChanged;
     public event DoubleUserInputDataEventHandler? TextErrorsAChanged, TextErrorsBChanged;
 
     public DoubleUserInputInfo() {
