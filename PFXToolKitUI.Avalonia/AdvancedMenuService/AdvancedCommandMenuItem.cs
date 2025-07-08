@@ -60,9 +60,9 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         this.UpdateInputGestureText();
     }
 
-    protected override void OnLoaded(RoutedEventArgs e) {
+    protected override void OnLoadedOverride(RoutedEventArgs e) {
         this.UpdateCanExecute();
-        base.OnLoaded(e);
+        base.OnLoadedOverride(e);
         this.UpdateInputGestureText();
     }
 
@@ -77,13 +77,14 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         }
 
         if (CommandManager.Instance.GetCommandById(entry.CommandId) != null) {
-            if (CommandIdToGestureConverter.CommandIdToGesture(entry.CommandId, out string value)) {
+            if (CommandIdToGestureConverter.CommandIdToGesture(entry.CommandId, out string? value)) {
                 this.InputGestureTextBlock.Text = value;
             }
         }
     }
 
     public override void UpdateCanExecute() {
+        base.UpdateCanExecute();
         if (!this.IsLoaded)
             return;
 

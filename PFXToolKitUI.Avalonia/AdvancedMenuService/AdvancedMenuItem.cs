@@ -35,6 +35,13 @@ namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 /// A menu item that participates in the advanced menu service
 /// </summary>
 public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
+    public static readonly StyledProperty<bool> IsVisibilityChangingProperty = AvaloniaProperty.Register<AdvancedMenuItem, bool>(nameof(IsVisibilityChanging), inherits: true);
+
+    public bool IsVisibilityChanging {
+        get => this.GetValue(IsVisibilityChangingProperty);
+        set => this.SetValue(IsVisibilityChangingProperty, value);
+    }
+
     protected override Type StyleKeyOverride => typeof(MenuItem);
 
     /// <summary>
@@ -55,17 +62,30 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     protected Dictionary<int, int>? dynamicInserted;
     private IconControl? myIconControl;
 
-    public AdvancedMenuItem() { }
+    public AdvancedMenuItem() {
+    }
 
-    protected override void OnLoaded(RoutedEventArgs e) {
+    protected sealed override void OnLoaded(RoutedEventArgs e) {
+        this.IsVisibilityChanging = true;
         base.OnLoaded(e);
+        this.OnLoadedOverride(e);
+        this.IsVisibilityChanging = false;
+    }
+
+    protected sealed override void OnUnloaded(RoutedEventArgs e) {
+        this.IsVisibilityChanging = true;
+        base.OnUnloaded(e);
+        this.OnUnloadedOverride(e);
+        this.IsVisibilityChanging = false;
+    }
+    
+    protected virtual void OnLoadedOverride(RoutedEventArgs e) {
         BaseContextEntry.InternalOnBecomeVisible(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
         AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
         Dispatcher.UIThread.InvokeAsync(() => AdvancedMenuService.NormaliseSeparators(this), DispatcherPriority.Loaded);
     }
 
-    protected override void OnUnloaded(RoutedEventArgs e) {
-        base.OnUnloaded(e);
+    protected virtual void OnUnloadedOverride(RoutedEventArgs e) {
         BaseContextEntry.InternalOnBecomeHidden(this.Entry!);
         AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
     }
@@ -134,7 +154,14 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Entry = null;
     }
 
-    private void OnCanExecuteChanged(BaseContextEntry baseContextEntry) => this.UpdateCanExecute();
+    private void OnCanExecuteChanged(BaseContextEntry baseContextEntry) {
+        this.UpdateCanExecute();
+
+        if (!this.IsVisibilityChanging) {
+            AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
+            Dispatcher.UIThread.InvokeAsync(() => AdvancedMenuService.NormaliseSeparators(this), DispatcherPriority.Loaded);
+        }
+    }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
@@ -151,6 +178,13 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     public virtual void UpdateCanExecute() {
+        if (!this.IsVisibilityChanging) {
+            foreach (object? item in this.Items) {
+                if (item is AdvancedMenuItem menuItem && menuItem.IsLoaded) {
+                    menuItem.UpdateCanExecute();
+                }
+            }
+        }
     }
 
     public void StoreDynamicGroup(DynamicGroupPlaceholderContextObject groupPlaceholder, int index) {

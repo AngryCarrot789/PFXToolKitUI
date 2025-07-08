@@ -20,9 +20,8 @@
 using System.Diagnostics;
 using System.Reflection;
 using PFXToolKitUI.AdvancedMenuService;
-using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Bindings.Events;
+namespace PFXToolKitUI.Utils.Events;
 
 /// <summary>
 /// An event relay that is similar to <see cref="SimpleEventRelay"/> but treats a parameter as the sender

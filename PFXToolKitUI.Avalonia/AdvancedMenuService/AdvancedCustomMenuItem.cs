@@ -74,8 +74,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
     }
 
     public override void UpdateCanExecute() {
-        if (!this.IsLoaded)
-            return;
+        if (!this.IsLoaded) return;
 
         if (this.IsExecuting) {
             this.CanExecute = false;
@@ -89,9 +88,9 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
         }
     }
 
-    protected override void OnLoaded(RoutedEventArgs e) {
+    protected override void OnLoadedOverride(RoutedEventArgs e) {
+        base.OnLoadedOverride(e);
         this.UpdateCanExecute();
-        base.OnLoaded(e);
     }
 
     protected override void OnClick(RoutedEventArgs e) {

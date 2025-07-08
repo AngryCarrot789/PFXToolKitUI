@@ -21,8 +21,8 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using PFXToolKitUI.Avalonia.Bindings.Events;
 using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings.ComboBoxes;
 

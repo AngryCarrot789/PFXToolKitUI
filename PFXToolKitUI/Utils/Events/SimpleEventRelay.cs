@@ -18,9 +18,8 @@
 // 
 
 using System.Reflection;
-using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Bindings.Events;
+namespace PFXToolKitUI.Utils.Events;
 
 /// <summary>
 /// A struct that generates an event handler (in the form of an action) from almost any event

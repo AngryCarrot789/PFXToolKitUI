@@ -24,23 +24,15 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
-namespace PFXToolKitUI.Avalonia.Bindings.Events;
+namespace PFXToolKitUI.Avalonia.Bindings;
 
 internal interface IRelayEventHandler {
     void OnEventFired();
 }
 
 internal static class EventRelayBinderUtils {
-    private readonly struct EventInfoKey(Type ownerType, string eventName) : IEquatable<EventInfoKey> {
-        public readonly Type OwnerType = ownerType;
-        public readonly string EventName = eventName;
-        public bool Equals(EventInfoKey other) => this.OwnerType == other.OwnerType && this.EventName == other.EventName;
-        public override bool Equals(object? obj) => obj is EventInfoKey other && this.Equals(other);
-        public override int GetHashCode() => HashCode.Combine(this.OwnerType, this.EventName);
-        public override string ToString() => $"{this.OwnerType.Name}#{this.EventName}";
-    }
-
     // Only modified on main thread by binder constructors
     private static readonly Dictionary<EventInfoKey, SenderEventRelay> modelTypeToEventRelayMap;
 

@@ -18,7 +18,7 @@
 // 
 
 using Avalonia;
-using PFXToolKitUI.Avalonia.Bindings.Events;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 

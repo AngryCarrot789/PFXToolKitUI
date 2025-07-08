@@ -23,7 +23,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Interactivity;
 using Avalonia.Markup.Xaml.Styling;
 using Avalonia.Threading;
-using PFXToolKitUI.Avalonia.Bindings.Events;
+using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Configurations;
 using PFXToolKitUI.Avalonia.Icons;
 using PFXToolKitUI.Avalonia.Services;
