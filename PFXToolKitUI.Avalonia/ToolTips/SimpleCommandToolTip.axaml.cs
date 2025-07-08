@@ -29,7 +29,7 @@ public partial class SimpleCommandToolTip : UserControl, IToolTipControl {
     public static readonly AttachedProperty<string?> CommandIdProperty = AvaloniaProperty.RegisterAttached<SimpleCommandToolTip, Control, string?>("CommandId");
 
     public SimpleCommandToolTip() {
-        InitializeComponent();
+        this.InitializeComponent();
     }
 
     static SimpleCommandToolTip() {

@@ -272,6 +272,7 @@ public abstract class ApplicationPFX : IServiceable {
 
         manager.Register("commands.mainWindow.OpenEditorSettings", new OpenApplicationSettingsCommand());
         manager.Register("commands.application.AboutApplicationCommand", new AboutApplicationCommand());
+        manager.Register("commands.application.ShowLogsCommand", new ShowLogsCommand());
 
         // Config managers
         manager.Register("commands.shortcuts.AddKeyStrokeToShortcut", new AddKeyStrokeToShortcutUsingDialogCommand());

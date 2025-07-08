@@ -64,11 +64,6 @@ public partial class ConfigurationPanelControl : UserControl {
         this.InitializeComponent();
         this.PART_ConfigurationTree.SelectionMode = SelectionMode.Single;
         this.PART_ConfigurationTree.SelectionChanged += this.OnTreeSelectionChanged;
-        this.PART_LoadingBorder.Loaded += this.PART_LoadingBorderOnLoaded;
-    }
-
-    private void PART_LoadingBorderOnLoaded(object? sender, RoutedEventArgs e) {
-        Debug.WriteLine("hi!");
     }
 
     static ConfigurationPanelControl() {

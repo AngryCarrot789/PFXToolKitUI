@@ -27,15 +27,15 @@ namespace PFXToolKitUI.AdvancedMenuService;
 /// </summary>
 public class CustomLambdaContextEntry : CustomContextEntry {
     private readonly Func<IContextData, Task> execute;
-    private readonly Predicate<IContextData> canExecute;
+    private readonly Predicate<IContextData>? canExecute;
     
-    public CustomLambdaContextEntry(string displayName, Func<IContextData, Task> execute, Predicate<IContextData> canExecute) : base(displayName, null) {
+    public CustomLambdaContextEntry(string displayName, Func<IContextData, Task> execute, Predicate<IContextData>? canExecute) : base(displayName, null) {
         this.execute = execute;
         this.canExecute = canExecute;
     }
 
     public override bool CanExecute(IContextData context) {
-        return this.canExecute(context);
+        return this.canExecute == null || this.canExecute(context);
     }
 
     public override Task OnExecute(IContextData context) {

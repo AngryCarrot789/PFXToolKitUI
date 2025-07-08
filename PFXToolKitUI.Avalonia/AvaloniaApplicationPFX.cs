@@ -117,6 +117,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         manager.RegisterConstant<IInputStrokeQueryDialogService>(new InputStrokeDialogsImpl());
         manager.RegisterConstant<BrushManager>(new BrushManagerImpl());
         manager.RegisterConstant<ToolbarButtonFactory>(new ToolbarButtonFactoryImpl());
+        manager.RegisterConstant<ILogViewService>(new LogViewServiceImpl());
     }
 
     protected override async Task OnSetupApplication(IApplicationStartupProgress progress) {

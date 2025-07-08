@@ -17,12 +17,14 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia.Controls;
+namespace PFXToolKitUI.Logging;
 
-namespace PFXToolKitUI.Avalonia.Themes.Configurations;
-
-public partial class ThemeInheritanceIndicatorToolTip : UserControl {
-    public ThemeInheritanceIndicatorToolTip() {
-        this.InitializeComponent();
-    }
+/// <summary>
+/// A service for showing a window which presents the logs
+/// </summary>
+public interface ILogViewService {
+    /// <summary>
+    /// Shows the logs window
+    /// </summary>
+    Task ShowLogsWindow();
 }

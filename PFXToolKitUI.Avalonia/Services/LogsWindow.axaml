@@ -1,0 +1,21 @@
+﻿<w:DesktopWindow xmlns="https://github.com/avaloniaui"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:w="clr-namespace:PFXToolKitUI.Avalonia.Services.Windowing"
+                 xmlns:l="clr-namespace:PFXToolKitUI.Avalonia.Services"
+                 mc:Ignorable="d"
+                 x:Class="PFXToolKitUI.Avalonia.Services.LogsWindow"
+                 Title="Logs"
+                 Width="900" Height="700">
+    <Grid RowDefinitions="*,1,180">
+        <l:LogEntryListBox x:Name="PART_ListBox" Grid.Row="0"
+                           Background="{DynamicResource ABrush.Tone2.Background.Static}"
+                           SelectionMode="Single"
+                           FontFamily="{StaticResource FontOxanium}"/>
+        <TextBox x:Name="PART_StackTrace" Grid.Row="2"
+                 Background="{DynamicResource ABrush.Tone4.Background.Static}"
+                 IsReadOnly="True"
+                 FontFamily="{StaticResource FontOxanium}"/>
+    </Grid>
+</w:DesktopWindow>
