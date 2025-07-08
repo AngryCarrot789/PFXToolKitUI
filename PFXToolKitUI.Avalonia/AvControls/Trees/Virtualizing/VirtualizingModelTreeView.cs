@@ -17,11 +17,39 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using Avalonia.Controls;
+
 namespace PFXToolKitUI.Avalonia.AvControls.Trees.Virtualizing;
 
 /// <summary>
 /// A tree view that uses a model-view connection, and supports virtualization of tree items. Only visible items will exist
 /// </summary>
-public class VirtualizingModelTreeView {
-    // TODO: implement :-)
+public class VirtualizingModelTreeView : ListBox {
+    public VirtualizingModelTreeView() {
+        // VirtualizingStackPanel panel = new VirtualizingStackPanel();
+    }
+
+    protected override void ContainerIndexChangedOverride(Control container, int oldIndex, int newIndex) {
+        base.ContainerIndexChangedOverride(container, oldIndex, newIndex);
+    }
+
+    protected override void ContainerForItemPreparedOverride(Control container, object? item, int index) {
+        base.ContainerForItemPreparedOverride(container, item, index);
+    }
+
+    protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey) {
+        return base.NeedsContainerOverride(item, index, out recycleKey);
+    }
+
+    protected override void ClearContainerForItemOverride(Control element) {
+        base.ClearContainerForItemOverride(element);
+    }
+
+    protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey) {
+        return base.CreateContainerForItemOverride(item, index, recycleKey);
+    }
+
+    protected override void PrepareContainerForItemOverride(Control container, object? item, int index) {
+        base.PrepareContainerForItemOverride(container, item, index);
+    }
 }
