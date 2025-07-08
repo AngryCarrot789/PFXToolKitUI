@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -207,7 +208,7 @@ public partial class ActivityStatusBarControl : UserControl {
             await CommandManager.Instance.Execute("commands.pfx.ShowActivityListCommand", DataManager.GetFullContextData(this));
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
         }
         finally {
             this.isExecutingShowActivityListCmd = false;

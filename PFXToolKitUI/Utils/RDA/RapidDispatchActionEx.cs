@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
+
 namespace PFXToolKitUI.Utils.RDA;
 
 public abstract class RapidDispatchActionExBase {
@@ -85,7 +87,7 @@ public abstract class RapidDispatchActionExBase {
         }
 
         if (exception != null) {
-            this.dispatcher.Post(() => throw exception);
+            this.dispatcher.Post(() => ExceptionDispatchInfo.Throw(exception));
             return;
         }
 

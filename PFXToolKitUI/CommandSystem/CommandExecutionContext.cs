@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils;
 
@@ -58,7 +59,7 @@ public class CommandExecutionContext {
             await this.CommandManager.Execute(this.CommandId, this.Command, this.ContextData, this.IsUserInitiated);
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
         }
 
         if (this.onCompleted != null) {
@@ -75,7 +76,7 @@ public class CommandExecutionContext {
             this.onCompleted = null;
 
             if (list.TryGetException(out Exception? exception)) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw exception, DispatchPriority.Send);
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(exception), DispatchPriority.Send);
             }
         }
     }

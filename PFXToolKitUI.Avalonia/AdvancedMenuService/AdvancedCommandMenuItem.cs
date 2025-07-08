@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -133,7 +134,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
                 await CommandManager.Instance.Execute(cmdId, context);
             }
             catch (Exception e) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
             finally {
                 this.IsExecuting = false;
@@ -148,7 +149,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
             await CommandManager.Instance.Execute(cmdId, context);
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
         }
     }
 }

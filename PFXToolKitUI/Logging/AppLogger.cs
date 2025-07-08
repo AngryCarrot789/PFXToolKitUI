@@ -52,7 +52,7 @@ public class AppLogger {
     /// <returns></returns>
     public void FlushEntriesAMT() {
         List<LogEntry> newEntries = new List<LogEntry>();
-        for (int i = 0; i < 50 && this.queuedEntries.TryDequeue(out var entry); i++) {
+        for (int i = 0; i < 50 && this.queuedEntries.TryDequeue(out LogEntry? entry); i++) {
             newEntries.Add(entry);
         }
 
@@ -73,13 +73,12 @@ public class AppLogger {
     }
 
     private static bool CanonicalizeLine(ref string line) {
-        int strlen;
         if (string.IsNullOrEmpty(line))
             return false;
 
-        if (line[(strlen = line.Length) - 1] == '\n') {
-            int offset = (strlen > 1 && line[strlen - 2] == '\r' ? 2 : 1);
-            line = line.AsSpan(0, strlen - offset).Trim().ToString();
+        if (line[line.Length - 1] == '\n') {
+            int offset = line.Length > 1 && line[line.Length - 2] == '\r' ? 2 : 1;
+            line = line.AsSpan(0, line.Length - offset).Trim().ToString();
         }
         else {
             line = line.Trim();

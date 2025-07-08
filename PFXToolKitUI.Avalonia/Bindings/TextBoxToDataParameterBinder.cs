@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
 using Avalonia.Controls;
 using Avalonia.Data;
 using Avalonia.Input;
@@ -165,7 +166,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             }
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             return;
         }
         finally {
@@ -180,7 +181,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseAvaloniaPropertyBinde
             this.UpdateControl();
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
         }
     }
 }

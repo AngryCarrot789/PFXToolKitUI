@@ -80,10 +80,15 @@ public interface IDispatcher {
     void Post(Action action, DispatchPriority priority = DispatchPriority.Default);
 
     /// <summary>
-    /// Process all queued events at and above the given priority
+    /// Process all queued events at and above the given priority. Once the task is complete,
+    /// there will (most likely) be no more operations scheduled at and above the priority.
+    /// <para>
+    /// This is implemented by dispatching an empty action into <see cref="InvokeAsync"/> with
+    /// the given priority. A non-async version of this method does not necessarily make sense
+    /// </para>
     /// </summary>
-    /// <param name="priority"></param>
-    /// <returns></returns>
+    /// <param name="priority">The priority to process at and above</param>
+    /// <returns>A task</returns>
     Task Process(DispatchPriority priority);
 
     /// <summary>

@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 
 namespace PFXToolKitUI.Utils.RDA;
 
@@ -139,6 +140,9 @@ public abstract class RateLimitedDispatchActionBase {
             }
             catch (Exception e) {
                 exception = e;
+                Debugger.Break();
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
+                return;
             }
             finally {
                 // This sets CONTINUE to false, indicating that there is no more work required.
@@ -168,12 +172,6 @@ public abstract class RateLimitedDispatchActionBase {
                     // RUNNING will still be present
                     this.state = myState & ~S_EXECUTING;
                 }
-            }
-
-            if (exception != null) {
-                // post error to application, causing it to crash.
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw exception, DispatchPriority.Send);
-                return;
             }
 
             lastExecTime = Time.GetSystemTicks();
@@ -234,13 +232,28 @@ public abstract class RateLimitedDispatchActionBase {
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
         // No need to use async, since we can just directly access the DispatcherOperation's task,
         // which will become completed after the callback returns
-        return new RateLimitedDispatchAction(() => dispatcher.InvokeAsync(callback, priority), minInterval);
+        return new RateLimitedDispatchAction(async () => {
+            try {
+                await dispatcher.InvokeAsync(callback, priority);
+            }
+            catch (Exception e) {
+                dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
+            }
+        }, minInterval);
     }
 
     public static RateLimitedDispatchAction<T> ForDispatcherSync<T>(Action<T> callback, TimeSpan minInterval, IDispatcher dispatcher, DispatchPriority priority) where T : class {
         ArgumentNullException.ThrowIfNull(callback, nameof(callback));
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
-        return new RateLimitedDispatchAction<T>((t) => dispatcher.InvokeAsync(() => callback(t), priority), minInterval);
+        return new RateLimitedDispatchAction<T>(async (t) => {
+            try {
+                await dispatcher.InvokeAsync(() => callback(t), priority);
+            }
+            catch (Exception e) {
+                dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
+            }
+            
+        }, minInterval);
     }
 
     public static RateLimitedDispatchAction ForDispatcherAsync(Func<Task> callback, TimeSpan minInterval, IDispatcher dispatcher, DispatchPriority priority) {
@@ -248,10 +261,10 @@ public abstract class RateLimitedDispatchActionBase {
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
         return new RateLimitedDispatchAction(async () => {
             try {
-                await dispatcher.InvokeAsync(callback, priority);
+                await await dispatcher.InvokeAsync(callback, priority);
             }
             catch (Exception e) {
-                dispatcher.Post(() => throw new Exception("Exception while awaiting operation", e));
+                dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
         }, minInterval);
     }
@@ -261,10 +274,10 @@ public abstract class RateLimitedDispatchActionBase {
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
         return new RateLimitedDispatchAction<T>(async (t) => {
             try {
-                await dispatcher.InvokeAsync(() => callback(t), priority);
+                await await dispatcher.InvokeAsync(() => callback(t), priority);
             }
             catch (Exception e) {
-                dispatcher.Post(() => throw new Exception("Exception while awaiting operation", e));
+                dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
         }, minInterval);
     }

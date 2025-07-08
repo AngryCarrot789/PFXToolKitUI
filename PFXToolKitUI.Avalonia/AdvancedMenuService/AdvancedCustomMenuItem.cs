@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -135,7 +136,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
         }
         catch (Exception e) {
             if (Debugger.IsAttached) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
             else {
                 await IMessageDialogService.Instance.ShowMessage("Error", "An exception occurred while running this operation", e.ToString());

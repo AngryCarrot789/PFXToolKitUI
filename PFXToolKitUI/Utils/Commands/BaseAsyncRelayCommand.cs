@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
+
 namespace PFXToolKitUI.Utils.Commands;
 
 /// <summary>
@@ -80,7 +82,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
             await this.ExecuteAsync(parameter);
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
         }
     }
 
@@ -111,7 +113,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
                 // ignored
             }
             catch (Exception e) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
             finally {
                 this.isRunningState = 0;

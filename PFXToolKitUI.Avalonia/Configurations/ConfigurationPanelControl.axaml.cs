@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;
@@ -215,7 +216,7 @@ public partial class ConfigurationPanelControl : UserControl {
         }
         catch (Exception ex) {
             await IMessageDialogService.Instance.ShowMessage("Error", "Error unloading settings properties", ex.ToString());
-            ApplicationPFX.Instance.Dispatcher.Post(() => throw ex, DispatchPriority.Send);
+            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(ex), DispatchPriority.Send);
         }
 
         // Manager being set to null, so set selected page's tree node
@@ -237,7 +238,7 @@ public partial class ConfigurationPanelControl : UserControl {
             }
             catch (Exception ex) {
                 await IMessageDialogService.Instance.ShowMessage("Error", "Error loading settings properties", ex.ToString());
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw ex, DispatchPriority.Send);
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(ex), DispatchPriority.Send);
             }
 
             this.ActiveContext!.OnCreated();

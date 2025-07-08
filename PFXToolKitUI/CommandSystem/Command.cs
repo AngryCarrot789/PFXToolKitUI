@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Services.Messaging;
 
@@ -130,7 +131,7 @@ public abstract class Command {
             // }
 
             if (Debugger.IsAttached) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => throw e, DispatchPriority.Send);
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
             else {
                 try {

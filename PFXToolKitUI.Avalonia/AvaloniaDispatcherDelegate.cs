@@ -36,13 +36,9 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
         this.dispatcher = dispatcher;
     }
 
-    public bool CheckAccess() {
-        return this.dispatcher.CheckAccess();
-    }
+    public bool CheckAccess() => this.dispatcher.CheckAccess();
 
-    public void VerifyAccess() {
-        this.dispatcher.VerifyAccess();
-    }
+    public void VerifyAccess() => this.dispatcher.VerifyAccess();
 
     public void Invoke(Action action, DispatchPriority priority) {
         if (priority == DispatchPriority.Send && this.dispatcher.CheckAccess()) {
@@ -60,38 +56,20 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
     }
 
     public async Task InvokeAsync(Action action, DispatchPriority priority, CancellationToken token = default) {
-        DispatcherOperation operation = this.dispatcher.InvokeAsync(action, ToAvaloniaPriority(priority), token);
-        try {
-            await operation;
-        }
-        finally {
-            if (!token.IsCancellationRequested && operation.Status == DispatcherOperationStatus.Aborted) {
-                Debugger.Break();
-            }
-        }
+        await this.dispatcher.InvokeAsync(action, ToAvaloniaPriority(priority), token);
     }
 
     public async Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority, CancellationToken token = default) {
-        DispatcherOperation<T> operation = this.dispatcher.InvokeAsync(function, ToAvaloniaPriority(priority), token);
-        try {
-            return await operation;
-        }
-        finally {
-            if (!token.IsCancellationRequested && operation.Status == DispatcherOperationStatus.Aborted) {
-                Debugger.Break();
-            }
-        }
+        return await this.dispatcher.InvokeAsync(function, ToAvaloniaPriority(priority), token);
     }
 
     public void Post(Action action, DispatchPriority priority = DispatchPriority.Default) {
         this.dispatcher.Post(action, ToAvaloniaPriority(priority));
     }
 
-    public async Task Process(DispatchPriority priority) => await this.InvokeAsync(EmptyAction, priority);
+    public Task Process(DispatchPriority priority) => this.InvokeAsync(EmptyAction, priority);
 
-    public void InvokeShutdown() {
-        this.dispatcher.InvokeShutdown();
-    }
+    public void InvokeShutdown() => this.dispatcher.InvokeShutdown();
 
     private static DispatcherPriority ToAvaloniaPriority(DispatchPriority priority) {
         return Unsafe.As<DispatchPriority, DispatcherPriority>(ref priority);
