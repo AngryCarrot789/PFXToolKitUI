@@ -72,17 +72,24 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     }
 
     /// <summary>
-    /// Executes this async command. This is async void, so it may return before the actual
-    /// command has finished executing. <see cref="ExecuteAsync"/> is recommended for that reason,
-    /// because this function just calls that
+    /// Executes this async command. This is async void, so it may return before the actual command has
+    /// finished executing. <see cref="ExecuteAsync"/> is recommended if awaiting is required.
     /// </summary>
     /// <param name="parameter">The parameter passed to this command</param>
+    // ReSharper disable once AsyncVoidMethod
     public sealed override async void Execute(object? parameter) {
+        if (Interlocked.CompareExchange(ref this.isRunningState, 1, 0) != 0) {
+            return;
+        }
+
+        // Since we cannot notify caller of exceptions throw (we're async void), the only
+        // thing we can do is post them back to the main thread.
         try {
-            await this.ExecuteAsync(parameter);
+            await this.InvokeAsyncImpl(parameter);
         }
         catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
+            ExceptionDispatchInfo exceptInfo = ExceptionDispatchInfo.Capture(e);
+            ApplicationPFX.Instance.Dispatcher.Post(() => exceptInfo.Throw(), DispatchPriority.Send);
         }
     }
 
@@ -100,29 +107,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     // Slight optimisation by not using async for ExecuteAsync, so that a state machine isn't needed
     public async Task ExecuteAsync(object? parameter) {
         if (Interlocked.CompareExchange(ref this.isRunningState, 1, 0) == 0) {
-            bool completedBeforeAwait = false;
-            try {
-                Task task = this.ExecuteCoreAsync(parameter);
-                if (!(completedBeforeAwait = task.IsCompleted)) {
-                    // Only raise the CanExecuteChanged event when we've entered true async 
-                    this.RaiseCanExecuteChanged();
-                    await task;
-                }
-            }
-            catch (OperationCanceledException) {
-                // ignored
-            }
-            catch (Exception e) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
-            }
-            finally {
-                this.isRunningState = 0;
-            }
-
-            // completedBeforeAwait is false even on exception or cancellation, so unless
-            // the task immediately completes, we always raise the event.
-            if (!completedBeforeAwait)
-                this.RaiseCanExecuteChanged();
+            await this.InvokeAsyncImpl(parameter);
         }
     }
 
@@ -136,19 +121,40 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     /// <param name="parameter">The parameter passed to this command</param>
     public async Task<bool> TryExecuteAsync(object? parameter) {
         if (this.CanExecute(parameter) && Interlocked.CompareExchange(ref this.isRunningState, 1, 0) == 0) {
-            try {
-                this.RaiseCanExecuteChanged();
-                await this.ExecuteCoreAsync(parameter);
-            }
-            finally {
-                this.isRunningState = 0;
-            }
-
-            this.RaiseCanExecuteChanged();
+            await this.InvokeAsyncImpl(parameter);
             return true;
         }
 
         return false;
+    }
+    
+    private async Task InvokeAsyncImpl(object? parameter) {
+        bool completedBeforeAwait = false;
+        try {
+            Task task = this.ExecuteCoreAsync(parameter);
+            if (!(completedBeforeAwait = task.IsCompleted)) {
+                this.RaiseCanExecuteChanged();
+            }
+            
+            await task;
+        }
+        catch (OperationCanceledException) {
+            // ignored
+        }
+        finally {
+            this.isRunningState = 0;
+            // completedBeforeAwait is false even on exception or cancellation, so unless
+            // the task immediately completes, we always raise the event.
+            if (!completedBeforeAwait) {
+                try {
+                    this.RaiseCanExecuteChanged();
+                }
+                catch (Exception e) {
+                    ExceptionDispatchInfo exceptInfo = ExceptionDispatchInfo.Capture(e);
+                    ApplicationPFX.Instance.Dispatcher.Post(() => exceptInfo.Throw(), DispatchPriority.Send);
+                }
+            }
+        }
     }
 
     /// <summary>
