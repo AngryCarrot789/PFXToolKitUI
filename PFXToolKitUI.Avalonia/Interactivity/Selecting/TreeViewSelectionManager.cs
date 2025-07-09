@@ -20,6 +20,7 @@
 using System.Collections;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
+using Avalonia.Collections;
 using Avalonia.Controls;
 using PFXToolKitUI.Interactivity;
 
@@ -163,8 +164,13 @@ public class TreeViewSelectionManager<T> : IListSelectionManager<T> where T : cl
             return;
         }
 
-        foreach (T item in items.ToList()) {
-            this.Select(item);
+        if (this.myTree.SelectedItems is AvaloniaList<T> selectedItems) {
+            selectedItems.AddRange(items.ToList());
+        }
+        else {
+            foreach (T item in items.ToList()) {
+                this.Select(item);
+            }
         }
     }
 
@@ -181,8 +187,13 @@ public class TreeViewSelectionManager<T> : IListSelectionManager<T> where T : cl
             return;
         }
 
-        foreach (T item in items) {
-            this.Unselect(item);
+        if (this.myTree.SelectedItems is AvaloniaList<T> selectedItems) {
+            selectedItems.RemoveAll(items.ToList());
+        }
+        else {
+            foreach (T item in items.ToList()) {
+                this.Unselect(item);
+            }
         }
     }
 
