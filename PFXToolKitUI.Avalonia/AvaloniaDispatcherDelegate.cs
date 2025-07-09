@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia.Threading;
 
@@ -70,7 +71,49 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
 
     public void InvokeShutdown() => this.dispatcher.InvokeShutdown();
 
+    public IDispatcherTimer CreateTimer(DispatchPriority priority) {
+        ConstructorInfo ctor = typeof(DispatcherTimer).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, [typeof(DispatcherPriority), typeof(Dispatcher)], null)
+                               ?? throw new Exception("Missing constructor for Avalonia DispatcherTimer");
+        DispatcherTimer timer = (DispatcherTimer) ctor.Invoke([ToAvaloniaPriority(priority), this.dispatcher]);
+        return new DispatcherTimerDelegate(timer, this);
+    }
+
     private static DispatcherPriority ToAvaloniaPriority(DispatchPriority priority) {
         return Unsafe.As<DispatchPriority, DispatcherPriority>(ref priority);
+    }
+
+    private class DispatcherTimerDelegate : IDispatcherTimer {
+        private readonly DispatcherTimer timer;
+        private readonly AvaloniaDispatcherDelegate dispatcher;
+
+        public IDispatcher Dispatcher => this.dispatcher;
+
+        public bool IsEnabled {
+            get => this.timer.IsEnabled;
+            set => this.timer.IsEnabled = value;
+        }
+
+        public TimeSpan Interval {
+            get => this.timer.Interval;
+            set => this.timer.Interval = value;
+        }
+
+        public event EventHandler? Tick {
+            add => this.timer.Tick += value;
+            remove => this.timer.Tick -= value;
+        }
+
+        public DispatcherTimerDelegate(DispatcherTimer timer, AvaloniaDispatcherDelegate dispatcher) {
+            this.timer = timer;
+            this.dispatcher = dispatcher;
+        }
+
+        public void Start() {
+            this.timer.Start();
+        }
+
+        public void Stop() {
+            this.timer.Stop();
+        }
     }
 }

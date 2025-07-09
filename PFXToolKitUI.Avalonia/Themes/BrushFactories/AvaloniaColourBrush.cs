@@ -21,6 +21,7 @@ using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
+using Avalonia.Skia;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Gradients;
@@ -33,7 +34,8 @@ namespace PFXToolKitUI.Avalonia.Themes.BrushFactories;
 /// </summary>
 public abstract class AvaloniaColourBrush : IColourBrush {
     /// <summary>
-    /// Gets the brush currently associated with this object
+    /// Gets the brush currently associated with this object. For dynamic brushes (<see cref="DynamicAvaloniaColourBrush"/>),
+    /// this value will change if any subscription is active and the application brush it's keyed to changes
     /// </summary>
     public abstract IBrush? Brush { get; }
 }
@@ -45,7 +47,17 @@ public sealed class ConstantAvaloniaColourBrush : AvaloniaColourBrush, IConstant
 
     public ConstantAvaloniaColourBrush(SKColor colour) {
         this.Color = colour;
-        this.Brush = new ImmutableSolidColorBrush(new Color(colour.Alpha, colour.Red, colour.Green, colour.Blue));
+        
+        // TODO: maybe try to further save resources by seeing if the colour represents known brushes
+        if (colour == SKColors.Transparent)
+            this.Brush = (ImmutableSolidColorBrush) Brushes.Transparent;
+        else
+            this.Brush = new ImmutableSolidColorBrush(new Color(colour.Alpha, colour.Red, colour.Green, colour.Blue));
+    }
+    
+    public ConstantAvaloniaColourBrush(IImmutableSolidColorBrush brush) {
+        this.Color = brush.Color.ToSKColor();
+        this.Brush = (ImmutableSolidColorBrush) brush;
     }
 }
 

@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
@@ -17,10 +17,18 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Themes;
+namespace PFXToolKitUI;
 
-/// <summary>
-/// Represents a UI brush. This interface must ONLY be implemented by classes in PFXToolKitUI's Avalonia
-/// project (unless absolutely certain it will never see your custom implementation)
-/// </summary>
-public interface IColourBrush;
+public interface IDispatcherTimer {
+    IDispatcher Dispatcher { get; }
+
+    bool IsEnabled { get; set; }
+
+    TimeSpan Interval { get; set; }
+
+    event EventHandler? Tick;
+
+    public void Start();
+
+    public void Stop();
+}

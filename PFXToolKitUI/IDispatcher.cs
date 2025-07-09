@@ -95,4 +95,9 @@ public interface IDispatcher {
     /// Notifies the application to shutdown
     /// </summary>
     void InvokeShutdown();
+
+    /// <summary>
+    /// Creates a dispatcher timer
+    /// </summary>
+    IDispatcherTimer CreateTimer(DispatchPriority priority);
 }
