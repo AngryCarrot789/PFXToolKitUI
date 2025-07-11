@@ -40,7 +40,7 @@ public enum ResetBehavior {
 /// An optimised observable collection. This class is not thread safe; manual synchronization required
 /// </summary>
 /// <typeparam name="T">Type of value to store</typeparam>
-public class ObservableList<T> : Collection<T>, IObservableList<T> {
+public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     public const ResetBehavior DefaultResetBehavior = ResetBehavior.Reset;
 
     private readonly List<T> myItems;
