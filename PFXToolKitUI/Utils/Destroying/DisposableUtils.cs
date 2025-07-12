@@ -229,14 +229,87 @@ public static class DisposableUtils {
             disposable = null;
         }
     }
+
+    public static void DisposeAfter<T>(T? disposable, Action<T> action) where T : class, IDisposable {
+        if (disposable == null) return;
+
+        ArgumentNullException.ThrowIfNull(action);
+        
+        using ErrorList errorList = new ErrorList("One or more exceptions while disposing object", true, true);
+        try {
+            action(disposable);
+        }
+        catch (Exception e) {
+            errorList.Add(e);
+        }
+
+        try {
+            disposable.Dispose();
+        }
+        catch (Exception e) {
+            errorList.Add(e);
+        }
+    }
+
+    public static void DisposeAfter<T>(T? disposable, Action<T> action1, Action<T> action2) where T : class, IDisposable {
+        if (disposable == null) return;
+
+        ArgumentNullException.ThrowIfNull(action1);
+        ArgumentNullException.ThrowIfNull(action2);
+
+        using ErrorList errorList = new ErrorList("One or more exceptions while disposing object", true, true);
+        try {
+            action1(disposable);
+        }
+        catch (Exception e) {
+            errorList.Add(e);
+        }
+
+        try {
+            action2(disposable);
+        }
+        catch (Exception e) {
+            errorList.Add(e);
+        }
+        
+        try {
+            disposable.Dispose();
+        }
+        catch (Exception e) {
+            errorList.Add(e);
+        }
+    }
     
+    public static void DisposeAfter(IDisposable? disposable, params Action<IDisposable>[] actions) {
+        if (disposable == null) return;
+
+        ArgumentNullException.ThrowIfNull(actions);
+
+        using ErrorList errorList = new ErrorList("One or more exceptions while disposing object", true, true);
+        foreach (Action<IDisposable> action in actions) {
+            try {
+                action(disposable);
+            }
+            catch (Exception e) {
+                errorList.Add(e);
+            }   
+        }
+        
+        try {
+            disposable.Dispose();
+        }
+        catch (Exception e) {
+            errorList.Add(e);
+        }
+    }
+
     /// <summary>
     /// Dispose an array of disposables and set them to null
     /// </summary>
     /// <param name="array">The disposables</param>
     /// <param name="canThrow">True to allow the disposable to throw, False to swallow the exception and never throw</param>
     public static void DisposeArray(IDisposable?[] array, bool canThrow = true) {
-        using ErrorList list = new ErrorList("Exception while disposing one or more objects", true, true);
+        using ErrorList list = new ErrorList("One or more exceptions while disposing object", true, true);
         for (int i = 0; i < array.Length; i++) {
             try {
                 array[i]?.Dispose();
