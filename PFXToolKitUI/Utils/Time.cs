@@ -132,9 +132,9 @@ public static class Time {
     /// </summary>
     /// <param name="delay">The exact number of milliseconds to sleep for</param>
     public static void SleepFor(long delay) {
-        if (delay > 20) {
+        if (delay > 18) {
             // average windows thread-slice time == 15~ millis
-            Thread.Sleep((int) (delay - 20));
+            Thread.Sleep((int) (delay - 18));
         }
 
         long nextTick = GetSystemMillis() + delay;
@@ -146,14 +146,14 @@ public static class Time {
     public static double TicksToMillis(double ticks) => ticks / TICK_PER_MILLIS_D;
 
     public static async Task DelayForAsync(TimeSpan delay, CancellationToken cancellation) {
-        double ms = delay.TotalMilliseconds;
+        int ms = (int) delay.TotalMilliseconds;
         
-        if (ms > 20.0) {
+        if (ms >= 18) {
             // average windows thread-slice time == 15~ millis
-            await Task.Delay((int) (ms - 20), cancellation);
+            await Task.Delay(ms - 18, cancellation);
         }
 
-        double nextTick = Stopwatch.GetTimestamp() / (double) TICK_PER_MILLIS + ms;
+        double nextTick = Stopwatch.GetTimestamp() / (double) TICK_PER_MILLIS + delay.TotalMilliseconds;
         double temp;
         while ((temp = GetSystemMillis() - nextTick) < -0.05 /* say 50 micros to do continuations to reschedule */) {
             // do nothing but loop for the rest of the duration, for precise timing
