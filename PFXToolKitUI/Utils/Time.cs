@@ -144,4 +144,21 @@ public static class Time {
     }
 
     public static double TicksToMillis(double ticks) => ticks / TICK_PER_MILLIS_D;
+
+    public static async Task DelayForAsync(TimeSpan delay, CancellationToken cancellation) {
+        double ms = delay.TotalMilliseconds;
+        
+        if (ms > 20.0) {
+            // average windows thread-slice time == 15~ millis
+            await Task.Delay((int) (ms - 20), cancellation);
+        }
+
+        double nextTick = Stopwatch.GetTimestamp() / (double) TICK_PER_MILLIS + ms;
+        double temp;
+        while ((temp = GetSystemMillis() - nextTick) < -0.05 /* say 50 micros to do continuations to reschedule */) {
+            // do nothing but loop for the rest of the duration, for precise timing
+            if (temp < 2.0)
+                await Task.Yield();
+        }
+    }
 }

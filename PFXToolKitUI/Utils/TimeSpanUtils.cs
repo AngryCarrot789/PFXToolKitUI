@@ -27,7 +27,7 @@ namespace PFXToolKitUI.Utils;
 /// </summary>
 public static class TimeSpanUtils {
     // Modified version of https://stackoverflow.com/a/47702311
-    private static readonly Regex regex = new Regex(@"^\s*((?<hours>\d+)h\s*)?((?<minutes>\d+)m\s*)?((?<seconds>\d+)s\s*)?((?<millis>\d+)ms\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.RightToLeft);
+    private static readonly Regex regex = new Regex(@"^\s*((?<hours>\d+)h\s*)?((?<minutes>\d+)m\s*)?((?<seconds>\d+)s\s*)?((?<millis>\d+)ms\s*)?((?<micros>\d+)us\s*)?$", RegexOptions.ExplicitCapture | RegexOptions.Compiled | RegexOptions.CultureInvariant | RegexOptions.RightToLeft);
     public const long MaxMicros = long.MaxValue / TimeSpan.TicksPerMicrosecond;
     public const long MinMicros = long.MinValue / TimeSpan.TicksPerMicrosecond;
 
@@ -53,32 +53,39 @@ public static class TimeSpanUtils {
         timeSpan = TimeSpan.Zero;
 
         Match m = regex.Match(input);
-        int? hrs = m.Groups["hours"].Success ? int.Parse(m.Groups["hours"].Value) : null;
-        if (hrs.HasValue && hrs.Value < 0) {
-            errorMessage = "Hours cannot be negative";
+        Group group;
+        int? hrs = (group = m.Groups["hours"]).Success && int.TryParse(m.Groups["hours"].Value, out int tmpVal) ? tmpVal : null;
+        if ((hrs.HasValue && hrs.Value < 0) || (group.Success && !hrs.HasValue)) {
+            errorMessage = hrs.HasValue ? "Hours cannot be negative" : "Invalid Hours";
             return false;
         }
 
-        int? mins = m.Groups["minutes"].Success ? int.Parse(m.Groups["minutes"].Value) : null;
-        if (mins.HasValue && mins.Value < 0) {
-            errorMessage = "Minutes cannot be negative";
+        int? mins = (group = m.Groups["minutes"]).Success && int.TryParse(m.Groups["minutes"].Value, out tmpVal) ? tmpVal : null;
+        if ((mins.HasValue && mins.Value < 0) || (group.Success && !mins.HasValue)) {
+            errorMessage = mins.HasValue ? "Minutes cannot be negative" : "Invalid Minutes";
             return false;
         }
 
-        int? secs = m.Groups["seconds"].Success ? int.Parse(m.Groups["seconds"].Value) : null;
-        if (secs.HasValue && secs.Value < 0) {
-            errorMessage = "Seconds cannot be negative";
+        int? secs = (group = m.Groups["seconds"]).Success && int.TryParse(m.Groups["seconds"].Value, out tmpVal) ? tmpVal : null;
+        if ((secs.HasValue && secs.Value < 0) || (group.Success && !secs.HasValue)) {
+            errorMessage = secs.HasValue ? "Seconds cannot be negative" : "Invalid Seconds";
             return false;
         }
 
-        int? millis = m.Groups["millis"].Success ? int.Parse(m.Groups["millis"].Value) : null;
-        if (millis.HasValue && millis.Value < 0) {
-            errorMessage = "Milliseconds cannot be negative";
+        int? millis = (group = m.Groups["millis"]).Success && int.TryParse(m.Groups["millis"].Value, out tmpVal) ? tmpVal : null;
+        if ((millis.HasValue && millis.Value < 0) || (group.Success && !millis.HasValue)) {
+            errorMessage = millis.HasValue ? "Milliseconds cannot be negative" : "Invalid Milliseconds";
+            return false;
+        }
+        
+        int? micros = (group = m.Groups["micros"]).Success && int.TryParse(m.Groups["micros"].Value, out tmpVal) ? tmpVal : null;
+        if ((micros.HasValue && micros.Value < 0) || (group.Success && !micros.HasValue)) {
+            errorMessage = micros.HasValue ? "Microseconds cannot be negative" : "Invalid Microseconds";
             return false;
         }
 
-        if (!hrs.HasValue && !mins.HasValue && !secs.HasValue && !millis.HasValue) {
-            if (NumberUtils.TryParseHexOrRegular(input, out uint value)) {
+        if (!hrs.HasValue && !mins.HasValue && !secs.HasValue && !millis.HasValue && !micros.HasValue) {
+            if (uint.TryParse(input, out uint value)) {
                 errorMessage = null;
                 timeSpan = TimeSpan.FromMilliseconds(value);
                 return true;
@@ -88,7 +95,7 @@ public static class TimeSpanUtils {
             return false;
         }
 
-        long totalMicros = (((long) (hrs ?? 0) * 3600 + (long) (mins ?? 0) * 60 + (secs ?? 0)) * 1000 + (millis ?? 0)) * 1000;
+        long totalMicros = (((long) (hrs ?? 0) * 3600 + (long) (mins ?? 0) * 60 + (secs ?? 0)) * 1000 + (millis ?? 0)) * 1000 + (micros ?? 0);
         if (totalMicros < minMicros || totalMicros < MinMicros) {
             errorMessage = minMicros >= 0 ? "Negative time is not allowed" : "Duration is too small. Minimum is " + (Math.Max(minMicros, MinMicros) / 1000) + " milliseconds.";
             return false;
@@ -110,9 +117,9 @@ public static class TimeSpanUtils {
 
     public static List<string> ConvertToStringList(TimeSpan span, bool useLongSuffix) {
         List<string> output = new List<string>();
-        long hours = ((long) span.Days * 24) + span.Hours;
+        double hours = span.Days * 24.0 + span.Hours;
         if (hours > 0)
-            output.Add(hours + (useLongSuffix ? (" hour" + (hours == 1 ? "" : "s")) : "h"));
+            output.Add(Math.Round(hours, 1) + (useLongSuffix ? (" hour" + (DoubleUtils.AreClose(hours, 1.0) ? "" : "s")) : "h"));
         if (span.Minutes > 0)
             output.Add(span.Minutes + (useLongSuffix ? (" minute" + Lang.S(span.Minutes)) : "m"));
         if (span.Seconds > 0)
