@@ -61,12 +61,13 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
         this.itemMap = new ModelControlDictionary<TModel, ModelBasedListBoxItem<TModel>>();
     }
 
-    protected void AddModel(TModel model) {
-        this.InsertModel(this.Items.Count, model);
-    }
+    protected void AddModel(TModel model) => this.InsertModelAt(this.Items.Count, model);
 
-    protected void InsertModel(int index, TModel model) {
-        ModelBasedListBoxItem<TModel> control = this.itemCache?.Count > 0 ? this.itemCache.Pop() : this.CreateItem();
+    protected void InsertModelAt(int index, TModel model) {
+        this.InsertModelAtInternal(index, model, this.itemCache?.Count > 0 ? this.itemCache.Pop() : this.CreateItem());
+    }
+    
+    private void InsertModelAtInternal(int index, TModel model, ModelBasedListBoxItem<TModel> control) {
         this.itemMap.AddMapping(model, control);
         this.OnAddingItemToList(control, model);
         this.Items.Insert(index, control);
@@ -75,21 +76,28 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
 
     protected void RemoveModelAt(int index) {
         ModelBasedListBoxItem<TModel> control = (ModelBasedListBoxItem<TModel>) this.Items[index]!;
-        TModel model = control.Model!;
-        this.itemMap.RemoveMapping(model, control);
-        this.OnRemovingItemFromList(control, model);
-        this.Items.RemoveAt(index);
-        this.OnRemovedItemFromList(control, model);
+        this.RemoveModelAtInternal(index, control);
         if (this.itemCache != null && this.itemCache.Count < this.MaxCacheSize) {
             this.itemCache.Push(control);
         }
+    }
+    
+    private void RemoveModelAtInternal(int index, ModelBasedListBoxItem<TModel> control) {
+        TModel model = control.Model!;
+        this.OnRemovingItemFromList(control, model);
+        this.itemMap.RemoveMapping(model, control);
+        this.Items.RemoveAt(index);
+        this.OnRemovedItemFromList(control, model);
     }
 
     protected void MoveModel(int oldIndex, int newIndex) {
         ModelBasedListBoxItem<TModel> control = (ModelBasedListBoxItem<TModel>) this.Items[oldIndex]!;
         TModel model = control.Model!;
-        this.RemoveModelAt(oldIndex);
-        this.InsertModel(newIndex, model);
+        bool isSelected = control.IsSelected;
+        this.RemoveModelAtInternal(oldIndex, control);
+        this.InsertModelAtInternal(newIndex, model, control);
+        if (isSelected)
+            control.IsSelected = true;
     }
 
     protected void ClearModels() {
@@ -106,7 +114,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
 
     private void OnItemsAdded(IObservableList<TModel> list, int index, IList<TModel> items) {
         foreach (TModel model in items) {
-            this.InsertModel(index++, model);
+            this.InsertModelAt(index++, model);
         }
     }
 
@@ -118,7 +126,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
 
     private void OnItemReplaced(IObservableList<TModel> list, int index, TModel oldItem, TModel newItem) {
         this.RemoveModelAt(index);
-        this.InsertModel(index, newItem);
+        this.InsertModelAt(index, newItem);
     }
 
     private void OnItemMoved(IObservableList<TModel> list, int oldIdx, int newIdx, TModel item) {
@@ -128,23 +136,26 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     /// <summary>
     /// Sets up event handlers for the list to automatically add/remove/replace/move models and then adds all the models to this list box
     /// </summary>
-    /// <param name="list">The list to observe</param>
-    public void SetItemsSource(IObservableList<TModel>? list) {
-        if (this.observableList != null) {
-            this.observableList.ItemsAdded -= this.OnItemsAdded;
-            this.observableList.ItemsRemoved -= this.OnItemsRemoved;
-            this.observableList.ItemReplaced -= this.OnItemReplaced;
-            this.observableList.ItemMoved -= this.OnItemMoved;
+    /// <param name="newList">The list to observe</param>
+    public void SetItemsSource(IObservableList<TModel>? newList) {
+        IObservableList<TModel>? oldList = this.observableList;
+        this.observableList = null;
+        
+        if (oldList != null) {
+            oldList.ItemsAdded -= this.OnItemsAdded;
+            oldList.ItemsRemoved -= this.OnItemsRemoved;
+            oldList.ItemReplaced -= this.OnItemReplaced;
+            oldList.ItemMoved -= this.OnItemMoved;
             this.observableList = null;
             this.ClearModels();
         }
 
-        if ((this.observableList = list) != null) {
-            this.AddModels(list!);
-            list!.ItemsAdded += this.OnItemsAdded;
-            list.ItemsRemoved += this.OnItemsRemoved;
-            list.ItemReplaced += this.OnItemReplaced;
-            list.ItemMoved += this.OnItemMoved;
+        if (newList != null) {
+            this.AddModels(this.observableList = newList);
+            newList.ItemsAdded += this.OnItemsAdded;
+            newList.ItemsRemoved += this.OnItemsRemoved;
+            newList.ItemReplaced += this.OnItemReplaced;
+            newList.ItemMoved += this.OnItemMoved;
         }
     }
 
@@ -167,6 +178,8 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
         Debug.Assert(control.Model == model);
         control.InternalOnRemovedFromList();
         Debug.Assert(control.Model == null);
+        
+        control.ClearValue(IsSelectedProperty);
     }
 
     protected abstract ModelBasedListBoxItem<TModel> CreateItem();

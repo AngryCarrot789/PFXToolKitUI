@@ -147,7 +147,13 @@ public static class CollectionUtils {
             consumer(value);
         }
     }
-
+    
+    public static void ForEach<T, TParam>(this IEnumerable<T> enumerable, TParam param, Action<T, TParam> consumer) {
+        foreach (T value in enumerable) {
+            consumer(value, param);
+        }
+    }
+    
     public static void ForEachThenClear<T>(this ICollection<T> list, Action<T> consumer) {
         using (ErrorList stack = new ErrorList("An exception occurred while enumerating one or more items before clearing the collection")) {
             int i = 0;
@@ -483,21 +489,6 @@ public static class CollectionUtils {
         }
         else {
             list.SetValueAtIndex(index, updater(list.GetValueAtIndex(index)));
-        }
-    }
-    
-    /// <summary>
-    /// Obtains a lock, adds the source list's items to a new list, releases the lock and returns the new list.
-    /// </summary>
-    /// <param name="lockObject">The lock to obtain before processing the items</param>
-    /// <param name="source">The item source</param>
-    /// <typeparam name="T">The type of item</typeparam>
-    /// <returns>A new list containing all items in the source list after the lock is obtained</returns>
-    public static List<T> AtomicGetAndClear<T>(object lockObject, ICollection<T> source) {
-        lock (lockObject) {
-            List<T> completions = source.ToList();
-            source.Clear();
-            return completions;
         }
     }
 }

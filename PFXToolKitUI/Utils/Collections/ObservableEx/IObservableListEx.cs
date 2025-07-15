@@ -19,7 +19,7 @@
 
 namespace PFXToolKitUI.Utils.Collections.ObservableEx;
 
-public delegate void ObservableListExChangedEventHandler<T>(IObservableListEx<T> list, ObservableListChangedEventArgs<T> e);
+public delegate void ObservableListExChangedEventHandler<T>(IObservableListEx<T> sender, ObservableListChangedEventArgs<T> e);
 
 /// <summary>
 /// A list implementation that invokes a series of events when the collection changes

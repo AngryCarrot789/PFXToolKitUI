@@ -30,11 +30,11 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
     public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
     public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
-    public event ObservableListSingleItemEventHandler<T>? BeforeItemMoved;
+    public event ObservableListMoveEventHandler<T>? BeforeItemMoved;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsAdded;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? ItemReplaced;
-    public event ObservableListSingleItemEventHandler<T>? ItemMoved;
+    public event ObservableListMoveEventHandler<T>? ItemMoved;
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
     public ReadOnlyObservableList(IObservableList<T> list) : base(list) {

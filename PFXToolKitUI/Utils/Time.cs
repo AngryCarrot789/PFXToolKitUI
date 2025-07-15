@@ -145,18 +145,25 @@ public static class Time {
 
     public static double TicksToMillis(double ticks) => ticks / TICK_PER_MILLIS_D;
 
+    /// <summary>
+    /// Asynchronous delay for a precision amount of time. When sleeping for anything less than 17 milliseconds,
+    /// <see cref="Task.Delay(int)"/> isn't used, therefore, this method is effectively blocking
+    /// </summary>
+    /// <param name="delay"></param>
+    /// <param name="cancellation"></param>
     public static async Task DelayForAsync(TimeSpan delay, CancellationToken cancellation) {
+        double nextTick = Stopwatch.GetTimestamp() / (double) TICK_PER_MILLIS + delay.TotalMilliseconds;
         int ms = (int) delay.TotalMilliseconds;
         
-        if (ms >= 18) {
+        if (ms > 16) {
             // average windows thread-slice time == 15~ millis
-            await Task.Delay(ms - 18, cancellation);
+            await Task.Delay(ms - 16, cancellation);
         }
 
-        double nextTick = Stopwatch.GetTimestamp() / (double) TICK_PER_MILLIS + delay.TotalMilliseconds;
         double temp;
         while ((temp = GetSystemMillis() - nextTick) < -0.05 /* say 50 micros to do continuations to reschedule */) {
             // do nothing but loop for the rest of the duration, for precise timing
+            cancellation.ThrowIfCancellationRequested();
             if (temp < 2.0)
                 await Task.Yield();
         }

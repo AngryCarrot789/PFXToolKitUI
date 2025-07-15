@@ -27,7 +27,7 @@ public delegate void ObservableListBeforeRemovedEventHandler<T>(IObservableList<
 
 public delegate void ObservableListMultipleItemsEventHandler<T>(IObservableList<T> list, int index, IList<T> items);
 
-public delegate void ObservableListSingleItemEventHandler<T>(IObservableList<T> list, int oldIndex, int newIndex, T item);
+public delegate void ObservableListMoveEventHandler<T>(IObservableList<T> list, int oldIndex, int newIndex, T item);
 
 public delegate void ObservableListReplaceEventHandler<T>(IObservableList<T> list, int index, T oldItem, T newItem);
 
@@ -37,13 +37,13 @@ public delegate void ObservableListReplaceEventHandler<T>(IObservableList<T> lis
 /// <typeparam name="T"></typeparam>
 public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <summary>
-    /// An event fired when an item is about to be added. This is fired multiple times but before any item is added
-    /// when adding multiple items. This can be used for pre-checks and throwing an exception when those checks fail.
+    /// An event fired when one or more items are about to be added. This can be used for pre-checks
+    /// and throwing an exception when those checks fail.
     /// </summary>
     public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
     
     /// <summary>
-    /// An event fired when an item is about to be removed.
+    /// An event fired when one or more items are about to be removed.
     /// </summary>
     public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
     
@@ -55,7 +55,7 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <summary>
     /// An event fired when an item is about to be moved from one index to another
     /// </summary>
-    public event ObservableListSingleItemEventHandler<T>? BeforeItemMoved;
+    public event ObservableListMoveEventHandler<T>? BeforeItemMoved;
     
     /// <summary>
     /// An event fired when one or more items are inserted into the list.
@@ -83,5 +83,5 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <summary>
     /// An event fired when an item is moved from one index to another
     /// </summary>
-    event ObservableListSingleItemEventHandler<T> ItemMoved;
+    event ObservableListMoveEventHandler<T> ItemMoved;
 }

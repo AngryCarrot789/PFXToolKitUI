@@ -61,9 +61,8 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     private readonly object stateLock = new object();
     private volatile Exception? exception;
 
-    private readonly LinkedList<TaskCompletionSource> completionNotifications = [];
-
-    private CancellationTokenSource? actualCts;
+    private volatile TaskCompletionSource? myTcs;
+    private volatile CancellationTokenSource? actualCts;
     private bool isOwnerOfActivity;
     
     private CancellationTokenSource? myPauseOrCancelSource;
@@ -515,16 +514,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             return; // task became completed
         }
         
-        LinkedListNode<TaskCompletionSource> node;
-        lock (this.completionNotifications) {
-            if (this.state >= TASK_STATE.COMPLETED_2) {
-                return; // task became completed
-            }
-
-            node = this.completionNotifications.AddLast(new TaskCompletionSource());
-        }
-
-        await node.Value.Task.ConfigureAwait(false);
+        await (this.myTcs?.Task ?? Task.CompletedTask).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -558,16 +548,8 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         }
         finally {
             this.state = TASK_STATE.COMPLETED_2;
-
-            List<TaskCompletionSource> items;
-            lock (this.completionNotifications) {
-                items = this.completionNotifications.ToList();
-                this.completionNotifications.Clear();
-            }
-
-            foreach (TaskCompletionSource tcs in items) {
-                tcs.TrySetResult();
-            }
+            this.myTcs!.TrySetResult();
+            this.myTcs = null;
         }
     }
 
@@ -586,6 +568,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         lock (this.stateLock) {
             this.state = TASK_STATE.RUNNING;
             this.myPauseOrCancelSource = new CancellationTokenSource();
+            this.myTcs = new TaskCompletionSource();
         }
 
         CancellationToken pauseOrCancelToken = this.myPauseOrCancelSource.Token;

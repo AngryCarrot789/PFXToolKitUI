@@ -113,8 +113,8 @@ public class ActivityTask {
     }
 
     /// <summary>
-    /// An event fired when <see cref="PausableTask"/> changes, because it was run via <see cref="AdvancedPausableTask.RunWithCurrentActivity"/>.
-    /// This event is fired from a task thread, so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/> if they need to
+    /// An event fired when <see cref="PausableTask"/> changes. This event is fired from a task thread,
+    /// so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/> if they need to
     /// </summary>
     public event ActivityTaskPausableTaskChangedEventHandler? PausableTaskChanged;
     

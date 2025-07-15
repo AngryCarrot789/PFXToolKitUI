@@ -57,7 +57,7 @@ public static class ObservableItemProcessorEx {
             this.OnItemRemoved = itemRemoved;
         }
 
-        private void OnCollectionChanged(IObservableListEx<T> list, ObservableListChangedEventArgs<T> e) {
+        private void OnCollectionChanged(IObservableListEx<T> sender, ObservableListChangedEventArgs<T> e) {
             switch (e.Action) {
                 case ObservableListCollectionChangedAction.Add:
                     if (this.OnItemAdded != null) {
@@ -65,14 +65,14 @@ public static class ObservableItemProcessorEx {
                             this.OnItemAdded(item);
                     }
 
-                break;
+                    break;
                 case ObservableListCollectionChangedAction.Remove:
                     if (this.OnItemRemoved != null) {
                         foreach (T item in e.OldItems)
                             this.OnItemRemoved(item);
                     }
 
-                break;
+                    break;
                 case ObservableListCollectionChangedAction.Replace:
                     if (this.OnItemRemoved != null) {
                         foreach (T item in e.OldItems)
@@ -84,7 +84,7 @@ public static class ObservableItemProcessorEx {
                             this.OnItemAdded(item);
                     }
 
-                break;
+                    break;
                 case ObservableListCollectionChangedAction.Move: break;
                 case ObservableListCollectionChangedAction.Reset:
                     if (this.OnItemRemoved != null) {
@@ -92,7 +92,7 @@ public static class ObservableItemProcessorEx {
                             this.OnItemRemoved(item);
                     }
 
-                break;
+                    break;
                 default: throw new ArgumentOutOfRangeException();
             }
         }

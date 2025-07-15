@@ -40,7 +40,7 @@ public delegate void CommandEventHandler(Command command, CommandEventArgs e);
 /// </para>
 /// </summary>
 public abstract class Command {
-    private volatile int isExecuting;
+    private volatile int executingCount;
     internal string? registeredCommandId;
 
     /// <summary>
@@ -53,7 +53,7 @@ public abstract class Command {
     /// <summary>
     /// Gets whether the command is currently executing. Only changes on the main thread
     /// </summary>
-    public bool IsExecuting => this.isExecuting != 0;
+    public bool IsExecuting => this.executingCount != 0;
 
     public string RegisteredCommandId => this.registeredCommandId ?? throw new Exception("Command is not registered");
     
@@ -100,9 +100,9 @@ public abstract class Command {
 
         int executing;
         if (this.AllowMultipleExecutions) {
-            executing = Interlocked.Increment(ref this.isExecuting) - 0;
+            executing = Interlocked.Increment(ref this.executingCount) - 0;
         }
-        else if ((executing = Interlocked.CompareExchange(ref this.isExecuting, 1, 0)) != 0) {
+        else if ((executing = Interlocked.CompareExchange(ref this.executingCount, 1, 0)) != 0) {
             await this.OnAlreadyExecuting(args);
             return;
         }
@@ -131,6 +131,7 @@ public abstract class Command {
             // }
 
             if (Debugger.IsAttached) {
+                Debugger.Break();
                 ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
             else {
@@ -143,7 +144,7 @@ public abstract class Command {
             }
         }
         finally {
-            int value = Interlocked.Decrement(ref this.isExecuting);
+            int value = Interlocked.Decrement(ref this.executingCount);
             if (value < 0)
                 Debugger.Break();
 
