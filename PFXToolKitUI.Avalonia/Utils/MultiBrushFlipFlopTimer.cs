@@ -65,13 +65,15 @@ public class MultiBrushFlipFlopTimer : FlipFlopTimer {
             if (exchange.LowBrush is DynamicAvaloniaColourBrush dLowBrush)
                 lowBrushSubscription = dLowBrush.Subscribe(obj => {
                     Debug.Assert(this.subscriptions != null);
-                    if (!this.IsHigh) exchange.Target.SetValue(exchange.Property, obj);
+                    if (!this.IsHigh)
+                        exchange.Target.SetValue(exchange.Property, obj);
                 });
 
             if (exchange.HighBrush is DynamicAvaloniaColourBrush dHighBrush)
                 highBrushSubscription = dHighBrush.Subscribe(obj => {
                     Debug.Assert(this.subscriptions != null);
-                    if (this.IsHigh) exchange.Target.SetValue(exchange.Property, obj);
+                    if (this.IsHigh)
+                        exchange.Target.SetValue(exchange.Property, obj);
                 });
 
             this.subscriptions[i] = (lowBrushSubscription, highBrushSubscription);
@@ -85,7 +87,8 @@ public class MultiBrushFlipFlopTimer : FlipFlopTimer {
     /// changes if previously subscribed in <see cref="SetTarget"/>
     /// </summary>
     public void ClearTarget() {
-        if (this.subscriptions == null) return;
+        if (this.subscriptions == null)
+            return;
 
         foreach ((IDisposable?, IDisposable?) entry in this.subscriptions) {
             entry.Item1?.Dispose();
@@ -101,7 +104,8 @@ public class MultiBrushFlipFlopTimer : FlipFlopTimer {
     }
 
     private void UpdateBrushes(bool isHigh) {
-        if (this.subscriptions == null) return;
+        if (this.subscriptions == null)
+            return;
 
         foreach (BrushExchange exchange in this.exchanges) {
             exchange.Target.SetValue(exchange.Property, isHigh ? ((AvaloniaColourBrush?) exchange.HighBrush)?.Brush : ((AvaloniaColourBrush?) exchange.LowBrush)?.Brush);

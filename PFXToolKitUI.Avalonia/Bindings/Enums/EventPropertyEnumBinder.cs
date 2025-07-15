@@ -37,12 +37,12 @@ public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum>, IRelayEvent
     public override bool IsAttached => this.Model != null;
 
     public EventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum> getter, Action<object, TEnum> setter) {
-        this.eventRelay = EventRelayBinderUtils.GetEventRelay(modelType, eventName);
+        this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(modelType, eventName);
         this.setter = setter;
         this.getter = getter;
     }
     
-    void IRelayEventHandler.OnEventFired() => this.OnModelEnumChanged();
+    void IRelayEventHandler.OnEvent(object sender) => this.OnModelEnumChanged();
     
     private void OnModelEnumChanged() {
         if (this.Model == null)
@@ -56,7 +56,7 @@ public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum>, IRelayEvent
         if (this.Model != null)
             throw new InvalidOperationException("Already attached");
         
-        EventRelayBinderUtils.OnAttached(this.Model = model, this, this.eventRelay);
+        EventRelayStorage.UIStorage.AddHandler(this.Model = model, this, this.eventRelay);
         this.UpdateControls(this.getter(model));
     }
 
@@ -64,7 +64,7 @@ public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum>, IRelayEvent
         if (this.Model == null)
             throw new InvalidOperationException("Not attached");
 
-        EventRelayBinderUtils.OnDetached(this.Model!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.RemoveHandler(this.Model!, this, this.eventRelay);
         this.Model = null;
     }
 

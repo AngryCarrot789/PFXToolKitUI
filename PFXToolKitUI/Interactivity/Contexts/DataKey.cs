@@ -70,10 +70,10 @@ public abstract class DataKey {
     }
 
     public override bool Equals(object? obj) {
-        if (obj == null) return false;
+        if (obj == null)
+            return false;
         if (ReferenceEquals(this, obj))
             return true;
-        
         return obj is DataKey key && this.Equals(key);
     }
 

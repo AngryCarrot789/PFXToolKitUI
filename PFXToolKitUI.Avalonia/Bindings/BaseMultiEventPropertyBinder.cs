@@ -50,13 +50,13 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
     protected BaseMultiEventPropertyBinder(params string[] eventNames) {
         this.autoEventHelpers = new SenderEventRelay[eventNames.Length];
         for (int i = 0; i < eventNames.Length; i++) {
-            this.autoEventHelpers[i] = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventNames[i]);
+            this.autoEventHelpers[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]);
         }
 
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
     
-    void IRelayEventHandler.OnEventFired() => this.OnAnyEventFired();
+    void IRelayEventHandler.OnEvent(object sender) => this.OnAnyEventFired();
 
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
@@ -90,11 +90,11 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
 
     protected override void OnAttached() {
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayBinderUtils.OnAttached(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, aeh);
     }
 
     protected override void OnDetached() {
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayBinderUtils.OnDetached(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, aeh);
     }
 }

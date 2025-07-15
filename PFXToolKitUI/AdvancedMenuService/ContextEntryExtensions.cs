@@ -100,39 +100,32 @@ public static class ContextEntryExtensions {
         entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, [eventName], onUpdate).OnCapturedContextChanged;
         return entry;
     }
-    
+
     public static BaseContextEntry AddContextValueChangeHandlerWithEvents<T>(this BaseContextEntry entry, DataKey<T> key, string[] eventNames, Action<BaseContextEntry, T?> onUpdate) where T : class {
         entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, eventNames, onUpdate).OnCapturedContextChanged;
         return entry;
     }
-    
+
     public static BaseContextEntry AddCanExecuteChangeUpdaterForEvent<T>(this BaseContextEntry entry, DataKey<T> key, string eventName) where T : class {
         entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateCanExecute<T>(entry, key, [eventName]).OnCapturedContextChanged;
         return entry;
     }
-    
+
     public static BaseContextEntry AddCanExecuteChangeUpdaterForEvents<T>(this BaseContextEntry entry, DataKey<T> key, string[] eventNames) where T : class {
         entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateCanExecute<T>(entry, key, eventNames).OnCapturedContextChanged;
         return entry;
     }
 
-    private interface ISpecializedChangeHandler {
-        static readonly Dictionary<EventInfoKey, SenderEventRelay> cachedEventRelayMap = new Dictionary<EventInfoKey, SenderEventRelay>();
-        static readonly ConcurrentDictionary<object, HybridDictionary> attachedInstanceMap = new ConcurrentDictionary<object, HybridDictionary>();
-
-        void OnContextValueEventRaised();
-    }
-
-    private abstract class BaseSpecializedChangeHandler<T> : ISpecializedChangeHandler where T : class {
+    private abstract class BaseSpecializedChangeHandler<T> : IRelayEventHandler where T : class {
         protected readonly BaseContextEntry Entry;
         protected T? CurrentValue => this.currentValue;
-        
+
         private T? currentValue;
         private readonly DataKey<T> key;
         private readonly string[] eventNames;
         private SenderEventRelay[]? relays;
         private RapidDispatchActionEx? rda;
-        
+
         protected BaseSpecializedChangeHandler(BaseContextEntry entry, DataKey<T> key, string[] eventNames) {
             this.Entry = entry;
             this.key = key;
@@ -143,33 +136,33 @@ public static class ContextEntryExtensions {
             Debug.Assert(this.Entry == sender);
             if (newCtx == null || !this.key.TryGetContext(newCtx, out T? newValue)) {
                 if (this.currentValue != null) {
-                    foreach (SenderEventRelay relay in this.relays!) 
-                        OnDetached(this.currentValue, this, relay);
+                    foreach (SenderEventRelay relay in this.relays!)
+                        EventRelayStorage.UIStorage.RemoveHandler(this.currentValue, this, relay);
                     this.currentValue = null;
                     this.Update();
                 }
             }
             else if (!Equals(this.currentValue, newValue)) {
                 if (this.relays != null && this.currentValue != null) {
-                    foreach (SenderEventRelay relay in this.relays!) 
-                        OnDetached(this.currentValue, this, relay);
+                    foreach (SenderEventRelay relay in this.relays!)
+                        EventRelayStorage.UIStorage.RemoveHandler(this.currentValue, this, relay);
                 }
 
                 if (this.relays == null) {
                     this.relays = new SenderEventRelay[this.eventNames.Length];
                     for (int i = 0; i < this.eventNames.Length; i++) {
-                        this.relays[i] = GetEventRelay(this.key.DataType, this.eventNames[i]);
+                        this.relays[i] = EventRelayStorage.UIStorage.GetEventRelay(this.key.DataType, this.eventNames[i]);
                     }
                 }
-                
+
                 this.currentValue = newValue;
                 this.Update();
-                foreach (SenderEventRelay relay in this.relays!) 
-                    OnAttached(newValue, this, relay);
+                foreach (SenderEventRelay relay in this.relays!)
+                    EventRelayStorage.UIStorage.AddHandler(newValue, this, relay);
             }
         }
 
-        public void OnContextValueEventRaised() {
+        public void OnEvent(object sender) {
             if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
                 this.Update();
             }
@@ -181,11 +174,11 @@ public static class ContextEntryExtensions {
 
         protected abstract void Update();
     }
-    
+
     private class SpecializedChangeHandler_Callback<T> : BaseSpecializedChangeHandler<T> where T : class {
         private readonly Action<BaseContextEntry, T?> onUpdate;
 
-        public SpecializedChangeHandler_Callback(BaseContextEntry entry, DataKey<T> key, string[] eventNames, Action<BaseContextEntry, T?> onUpdate) 
+        public SpecializedChangeHandler_Callback(BaseContextEntry entry, DataKey<T> key, string[] eventNames, Action<BaseContextEntry, T?> onUpdate)
             : base(entry, key, eventNames) {
             this.onUpdate = onUpdate;
         }
@@ -194,74 +187,11 @@ public static class ContextEntryExtensions {
             this.onUpdate(this.Entry, this.CurrentValue);
         }
     }
-    
+
     private class SpecializedChangeHandler_UpdateCanExecute<T> : BaseSpecializedChangeHandler<T> where T : class {
         public SpecializedChangeHandler_UpdateCanExecute(BaseContextEntry entry, DataKey<T> key, string[] eventNames) : base(entry, key, eventNames) {
         }
 
         protected override void Update() => this.Entry.RaiseCanExecuteChanged();
-    }
-
-    private static SenderEventRelay GetEventRelay(Type modelType, string eventName) {
-        Debug.Assert(ApplicationPFX.Instance.Dispatcher.CheckAccess());
-
-        EventInfoKey infoKey = new EventInfoKey(modelType, eventName);
-        if (ISpecializedChangeHandler.cachedEventRelayMap.TryGetValue(infoKey, out SenderEventRelay relay)) {
-            return relay;
-        }
-
-        return ISpecializedChangeHandler.cachedEventRelayMap[infoKey] = SenderEventRelay.Create(eventName, modelType, OnModelEventFired, eventName);
-    }
-
-    private static void OnAttached(object model, ISpecializedChangeHandler binder, SenderEventRelay relay) {
-        Debug.Assert(ApplicationPFX.Instance.Dispatcher.CheckAccess());
-
-        HybridDictionary eventToHandlerList = ISpecializedChangeHandler.attachedInstanceMap.GetOrAdd(model, _ => new HybridDictionary(caseInsensitive: false));
-        ISpecializedChangeHandler[]? array = (ISpecializedChangeHandler[]?) eventToHandlerList[relay.EventName];
-        if (array == null) {
-            relay.AddEventHandler(model);
-            eventToHandlerList[relay.EventName] = new[] { binder };
-        }
-        else {
-            eventToHandlerList[relay.EventName] = ArrayUtils.Add(array, binder);
-        }
-    }
-
-    private static void OnDetached(object model, ISpecializedChangeHandler binder, SenderEventRelay relay) {
-        Debug.Assert(ApplicationPFX.Instance.Dispatcher.CheckAccess());
-
-        HybridDictionary eventToHandlerList = ISpecializedChangeHandler.attachedInstanceMap[model];
-        ISpecializedChangeHandler[] array = (ISpecializedChangeHandler[]) eventToHandlerList[relay.EventName]!;
-        Debug.Assert(array != null);
-
-        int idx = ArrayUtils.IndexOf_RefType(array, binder);
-        Debug.Assert(idx != -1);
-
-        if (array.Length == 1) {
-            relay.RemoveEventHandler(model); // no more binders listen to event, so remove handler
-            eventToHandlerList.Remove(relay.EventName); // remove the list to open possibility to remove model from attachedInstanceMap
-            if (eventToHandlerList.Count == 0) {
-                // prevent memory leak. the model should always be removed as soon as all binders using it are detached.
-                bool removed = ISpecializedChangeHandler.attachedInstanceMap.TryRemove(model, out HybridDictionary? removedInnerMap);
-                Debug.Assert(removed && removedInnerMap == eventToHandlerList);
-            }
-        }
-        else {
-            eventToHandlerList[relay.EventName] = ArrayUtils.RemoveAt(array, idx);
-        }
-    }
-
-    // Note: this can be invoked from any thread
-    private static void OnModelEventFired(object _sender, object _eventName) {
-        // assert _eventName is string;
-        if (ISpecializedChangeHandler.attachedInstanceMap.TryGetValue(_sender, out HybridDictionary? dictionary)) {
-            ISpecializedChangeHandler[]? handlers = (ISpecializedChangeHandler[]?) dictionary[_eventName];
-            if (handlers != null) {
-                Debug.Assert(handlers.Length > 0);
-                foreach (ISpecializedChangeHandler handler in handlers) {
-                    handler.OnContextValueEventRaised();
-                }
-            }
-        }
     }
 }

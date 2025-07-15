@@ -56,7 +56,9 @@ public class AppLogger {
             newEntries.Add(entry);
         }
 
-        if (newEntries.Count < 1) return;
+        if (newEntries.Count < 1) {
+            return;
+        }
 
         const int EntryLimit = 500;
         int excess = this.entries.Count + newEntries.Count;
@@ -64,7 +66,7 @@ public class AppLogger {
             this.entries.RemoveRange(0, excess - EntryLimit);
 
         this.entries.AddRange(newEntries);
-        
+
         if (!this.queuedEntries.IsEmpty)
             this.delayedFlush.InvokeAsync();
     }

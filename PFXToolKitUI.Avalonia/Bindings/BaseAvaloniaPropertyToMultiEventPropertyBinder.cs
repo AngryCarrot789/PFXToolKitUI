@@ -36,7 +36,7 @@ public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : B
     protected BaseAvaloniaPropertyToMultiEventPropertyBinder(AvaloniaProperty? property, params string[] eventNames) : base(property) {
         this.autoEventHelpers = new SenderEventRelay[eventNames.Length];
         for (int i = 0; i < eventNames.Length; i++) {
-            this.autoEventHelpers[i] = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventNames[i]);
+            this.autoEventHelpers[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]);
         }
     }
 
@@ -48,14 +48,14 @@ public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : B
     protected override void OnAttached() {
         base.OnAttached();
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayBinderUtils.OnAttached(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, aeh);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayBinderUtils.OnDetached(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, aeh);
     }
 
-    void IRelayEventHandler.OnEventFired() => this.OnModelValueChanged();
+    void IRelayEventHandler.OnEvent(object sender) => this.OnModelValueChanged();
 }

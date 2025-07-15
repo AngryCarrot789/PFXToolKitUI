@@ -231,10 +231,11 @@ public static class DisposableUtils {
     }
 
     public static void DisposeAfter<T>(T? disposable, Action<T> action) where T : class, IDisposable {
-        if (disposable == null) return;
+        if (disposable == null)
+            return;
 
         ArgumentNullException.ThrowIfNull(action);
-        
+
         using ErrorList errorList = new ErrorList("One or more exceptions while disposing object", true, true);
         try {
             action(disposable);
@@ -252,7 +253,8 @@ public static class DisposableUtils {
     }
 
     public static void DisposeAfter<T>(T? disposable, Action<T> action1, Action<T> action2) where T : class, IDisposable {
-        if (disposable == null) return;
+        if (disposable == null)
+            return;
 
         ArgumentNullException.ThrowIfNull(action1);
         ArgumentNullException.ThrowIfNull(action2);
@@ -271,7 +273,7 @@ public static class DisposableUtils {
         catch (Exception e) {
             errorList.Add(e);
         }
-        
+
         try {
             disposable.Dispose();
         }
@@ -279,9 +281,10 @@ public static class DisposableUtils {
             errorList.Add(e);
         }
     }
-    
+
     public static void DisposeAfter(IDisposable? disposable, params Action<IDisposable>[] actions) {
-        if (disposable == null) return;
+        if (disposable == null)
+            return;
 
         ArgumentNullException.ThrowIfNull(actions);
 
@@ -292,9 +295,9 @@ public static class DisposableUtils {
             }
             catch (Exception e) {
                 errorList.Add(e);
-            }   
+            }
         }
-        
+
         try {
             disposable.Dispose();
         }

@@ -48,11 +48,11 @@ public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventH
     public DispatchPriority DispatchPriority { get; init; } = DispatchPriority.Normal;
 
     protected BaseEventBinder(string eventName) {
-        this.eventRelay = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventName);
+        this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName);
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
 
-    void IRelayEventHandler.OnEventFired() => this.OnModelValueChanged();
+    void IRelayEventHandler.OnEvent(object sender) => this.OnModelValueChanged();
     
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
@@ -85,10 +85,10 @@ public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventH
     }
 
     protected override void OnAttached() {
-        EventRelayBinderUtils.OnAttached(this.myModel!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, this.eventRelay);
     }
 
     protected override void OnDetached() {
-        EventRelayBinderUtils.OnDetached(this.myModel!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, this.eventRelay);
     }
 }

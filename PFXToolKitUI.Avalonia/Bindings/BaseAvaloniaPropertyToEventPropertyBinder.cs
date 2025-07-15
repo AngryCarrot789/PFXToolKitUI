@@ -34,7 +34,7 @@ public abstract class BaseAvaloniaPropertyToEventPropertyBinder<TModel> : BaseAv
     }
 
     protected BaseAvaloniaPropertyToEventPropertyBinder(AvaloniaProperty? property, string eventName) : base(property) {
-        this.eventRelay = EventRelayBinderUtils.GetEventRelay(typeof(TModel), eventName);
+        this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName);
     }
 
     /// <summary>
@@ -42,15 +42,15 @@ public abstract class BaseAvaloniaPropertyToEventPropertyBinder<TModel> : BaseAv
     /// </summary>
     protected virtual void OnModelValueChanged() => this.UpdateControl();
 
-    void IRelayEventHandler.OnEventFired() => this.OnModelValueChanged();
+    void IRelayEventHandler.OnEvent(object sender) => this.OnModelValueChanged();
     
     protected override void OnAttached() {
         base.OnAttached();
-        EventRelayBinderUtils.OnAttached(this.myModel!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, this.eventRelay);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        EventRelayBinderUtils.OnDetached(this.myModel!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, this.eventRelay);
     }
 }

@@ -34,13 +34,15 @@ public abstract class DataCommand<A> : Command {
     }
 
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a)) return Executability.Invalid;
+        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a))
+            return Executability.Invalid;
 
         return this.CanExecuteOverride(a, e);
     }
 
     protected override Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a)) return Task.CompletedTask;
+        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a))
+            return Task.CompletedTask;
 
         return this.ExecuteCommandAsync(a, e);
     }
@@ -66,15 +68,19 @@ public abstract class DataCommand<A, B> : Command {
     }
 
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a)) return Executability.Invalid;
-        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b)) return Executability.Invalid;
+        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a))
+            return Executability.Invalid;
+        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b))
+            return Executability.Invalid;
 
         return this.CanExecuteOverride(a, b, e);
     }
 
     protected override Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a)) return Task.CompletedTask;
-        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b)) return Task.CompletedTask;
+        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a))
+            return Task.CompletedTask;
+        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b))
+            return Task.CompletedTask;
 
         return this.ExecuteCommandAsync(a, b, e);
     }
@@ -103,17 +109,23 @@ public abstract class DataCommand<A, B, C> : Command {
     }
 
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a)) return Executability.Invalid;
-        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b)) return Executability.Invalid;
-        if (!this.dataKeyC.TryGetContext(e.ContextData, out C? c)) return Executability.Invalid;
+        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a))
+            return Executability.Invalid;
+        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b))
+            return Executability.Invalid;
+        if (!this.dataKeyC.TryGetContext(e.ContextData, out C? c))
+            return Executability.Invalid;
 
         return this.CanExecuteOverride(a, b, c, e);
     }
 
     protected override Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a)) return Task.CompletedTask;
-        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b)) return Task.CompletedTask;
-        if (!this.dataKeyC.TryGetContext(e.ContextData, out C? c)) return Task.CompletedTask;
+        if (!this.dataKeyA.TryGetContext(e.ContextData, out A? a))
+            return Task.CompletedTask;
+        if (!this.dataKeyB.TryGetContext(e.ContextData, out B? b))
+            return Task.CompletedTask;
+        if (!this.dataKeyC.TryGetContext(e.ContextData, out C? c))
+            return Task.CompletedTask;
 
         return this.ExecuteCommandAsync(a, b, c, e);
     }

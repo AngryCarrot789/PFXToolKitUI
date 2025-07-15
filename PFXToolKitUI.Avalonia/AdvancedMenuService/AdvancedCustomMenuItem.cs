@@ -74,17 +74,17 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
     }
 
     public override void UpdateCanExecute() {
-        if (!this.IsLoaded) return;
-
-        if (this.IsExecuting) {
-            this.CanExecute = false;
-        }
-        else if (this.Entry is CustomContextEntry entry) {
-            IContextData ctx = this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance;
-            this.CanExecute = entry.CanExecute(ctx);
-        }
-        else {
-            this.CanExecute = false;
+        if (this.IsLoaded) {
+            if (this.IsExecuting) {
+                this.CanExecute = false;
+            }
+            else if (this.Entry is CustomContextEntry entry) {
+                IContextData ctx = this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance;
+                this.CanExecute = entry.CanExecute(ctx);
+            }
+            else {
+                this.CanExecute = false;
+            }
         }
     }
 

@@ -46,12 +46,12 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
     public object? Model { get; private set; }
 
     public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum?> getter, Action<object, TEnum> setter) {
-        this.eventRelay = EventRelayBinderUtils.GetEventRelay(modelType, eventName);
+        this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(modelType, eventName);
         this.setter = setter;
         this.getter = getter;
     }
 
-    void IRelayEventHandler.OnEventFired() => this.OnModelEnumChanged();
+    void IRelayEventHandler.OnEvent(object sender) => this.OnModelEnumChanged();
 
     private void OnModelEnumChanged() {
         if (this.Model == null)
@@ -77,7 +77,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
         this.Model = model;
         this.enumInfo = info;
         this.Control.PropertyChanged += this.OnControlPropertyChanged;
-        EventRelayBinderUtils.OnAttached(this.Model!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.AddHandler(this.Model!, this, this.eventRelay);
 
         this.isUpdatingControl = true;
         this.Control!.Items.Clear();
@@ -104,7 +104,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
             throw new InvalidOperationException("Not attached");
 
         this.Control.PropertyChanged -= this.OnControlPropertyChanged;
-        EventRelayBinderUtils.OnDetached(this.Model!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.RemoveHandler(this.Model!, this, this.eventRelay);
         this.Control = null;
         this.Model = null;
         this.enumInfo = null;

@@ -26,7 +26,7 @@ using PFXToolKitUI.Avalonia.Utils;
 namespace PFXToolKitUI.Avalonia.AvControls;
 
 public class ShortcutLabel : TemplatedControl {
-    public static readonly StyledProperty<string?> NoShortcutTextProperty = AvaloniaProperty.Register<ShortcutLabel, string?>(nameof(NoShortcutText), defaultValue:"No Shortcuts");
+    public static readonly StyledProperty<string?> NoShortcutTextProperty = AvaloniaProperty.Register<ShortcutLabel, string?>(nameof(NoShortcutText), defaultValue: "No Shortcuts");
     public static readonly StyledProperty<string?> CommandIdProperty = AvaloniaProperty.Register<ShortcutLabel, string?>(nameof(CommandId));
 
     /// <summary>
@@ -71,7 +71,8 @@ public class ShortcutLabel : TemplatedControl {
     }
 
     private void UpdateText() {
-        if (this.PART_Text == null) return;
+        if (this.PART_Text == null)
+            return;
 
         string? commandId = this.CommandId;
         if (string.IsNullOrWhiteSpace(commandId)) {

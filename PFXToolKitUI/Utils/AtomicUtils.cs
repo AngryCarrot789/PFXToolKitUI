@@ -52,9 +52,11 @@ public static class AtomicUtils {
     }
 
     public static T? AddWhen<T>(ICollection<T> collection, Func<bool> canAdd, Func<T> constructor) where T : class {
-        if (!canAdd()) return null;
+        if (!canAdd())
+            return null;
         lock (collection) {
-            if (!canAdd()) return null;
+            if (!canAdd())
+                return null;
 
             T result = constructor();
             collection.Add(result);
@@ -79,7 +81,7 @@ public static class AtomicUtils {
             }
         }
     }
-    
+
     public static bool TryAddWhen<T, TParam>(ICollection<T> collection, TParam predicateParameter, Predicate<TParam> canAdd, Func<T> constructor, [MaybeNullWhen(false)] out T result) {
         if (!canAdd(predicateParameter)) {
             result = default;
