@@ -38,10 +38,11 @@ public class FlipFlopTimer {
     public TimeSpan Interval {
         get => this.interval;
         set {
-            if (TimeSpanUtils.IsOutOfRangeForDelay(value, out string? errorMessage))
-                throw new ArgumentOutOfRangeException(nameof(value), value, errorMessage);
-            if (value.TotalMilliseconds < 1.0)
+            double totalMs = value.TotalMilliseconds;
+            if (totalMs < 1.0)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Total milliseconds must be >= 1");
+            if (totalMs > int.MaxValue)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Total milliseconds too large");
 
             PropertyHelper.SetAndRaiseINE(ref this.interval, value, this, static t => t.IntervalChanged?.Invoke(t));
 
@@ -66,12 +67,14 @@ public class FlipFlopTimer {
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Must cannot be negative");
             PropertyHelper.SetAndRaiseINE(ref this.levelChangesToStop, value, this, static t => t.IntervalToAutoStopChanged?.Invoke(t));
 
-            if (this.IsEnabled && this.totalChangesSinceStart >= value) {
-                this.DisableForLevelLimitReached();
-            }
-            else if (this.isDisabledForLevelChangeLimit && this.IsEnabled) {
-                this.isDisabledForLevelChangeLimit = false;
-                this.timer?.Start();
+            if (this.IsEnabled) {
+                if (this.totalChangesSinceStart >= value) {
+                    this.DisableForLevelLimitReached();
+                }
+                else if (this.isDisabledForLevelChangeLimit) {
+                    this.isDisabledForLevelChangeLimit = false;
+                    this.timer?.Start();
+                }
             }
         }
     }
@@ -134,7 +137,7 @@ public class FlipFlopTimer {
             if (this.timer == null) {
                 this.timer = ApplicationPFX.Instance.Dispatcher.CreateTimer(DispatchPriority.Normal);
                 this.timer.Interval = this.Interval;
-                this.timer.Tick += this.OnTickFlashText;
+                this.timer.Tick += this.OnTimerTicked;
             }
 
             if (this.highState == -1) this.highState = newState ? 1 : 0;
@@ -150,7 +153,7 @@ public class FlipFlopTimer {
         this.OnIsHighChanged(this.IsHigh);
     }
 
-    private void OnTickFlashText(object? sender, EventArgs e) {
+    private void OnTimerTicked(object? sender, EventArgs e) {
         if (this.highState == -1) {
             return; // disabled... somehow
         }

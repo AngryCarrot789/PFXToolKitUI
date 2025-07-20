@@ -29,10 +29,12 @@ public static class NumberUtils {
     private static readonly char[] HEX_CHARS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'];
     public static readonly byte[] HEX_CHARS_ASCII = "0123456789ABCDEF"u8.ToArray();
 
-    // Ladies and gentlemen, what the fuck     |    NOT NULL NULLABLE??   |
-    private static void NumberStyleFromIntInput([NotNull] ref string? input, out NumberStyles style) {
-        if (input != null && input.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase)) {
-            input = input.Substring(2);
+    private static void NumberStyleFromIntInput(ref string? input, out NumberStyles style) {
+        if (input != null) {
+            if (input.StartsWith("0x", StringComparison.Ordinal))
+                input = input.Substring(2);
+            else if (input.StartsWith("-0x", StringComparison.Ordinal))
+                input = input.Substring(3);
             style = NumberStyles.HexNumber;
         }
         else {
@@ -50,9 +52,9 @@ public static class NumberUtils {
         return T.TryParse(input, style, provider, out result);
     }
 
-    public static T ParseHexOrRegular<T>(string input, IFormatProvider? provider = null) where T : struct, IBinaryInteger<T> {
+    public static T ParseHexOrRegular<T>(string? input, IFormatProvider? provider = null) where T : struct, IBinaryInteger<T> {
         NumberStyleFromIntInput(ref input, out NumberStyles style);
-        return T.Parse(input, style, provider);
+        return T.Parse(input!, style, provider);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -107,7 +109,7 @@ public static class NumberUtils {
                 bytes = null;
                 return false;
             }
-            
+
             dstBuffer[j] = (byte) ((HexCharToInt(ch1) << 4) | HexCharToInt(ch2));
         }
 

@@ -19,16 +19,37 @@
 
 namespace PFXToolKitUI;
 
+/// <summary>
+/// A timer that runs the <see cref="Tick"/> callback every <see cref="Interval"/> time, on the dispatcher thread
+/// </summary>
 public interface IDispatcherTimer {
+    /// <summary>
+    /// The dispatcher this timer is running on
+    /// </summary>
     IDispatcher Dispatcher { get; }
 
+    /// <summary>
+    /// Gets or sets if the timer is running.
+    /// </summary>
     bool IsEnabled { get; set; }
 
+    /// <summary>
+    /// Gets or sets the callback interval
+    /// </summary>
     TimeSpan Interval { get; set; }
 
+    /// <summary>
+    /// The callback fired on the dispatcher's thread
+    /// </summary>
     event EventHandler? Tick;
 
+    /// <summary>
+    /// Starts the timer. This is equivalent to setting <see cref="IsEnabled"/> to true
+    /// </summary>
     public void Start();
 
+    /// <summary>
+    /// Stops the timer. This is equivalent to setting <see cref="IsEnabled"/> to false
+    /// </summary>
     public void Stop();
 }
