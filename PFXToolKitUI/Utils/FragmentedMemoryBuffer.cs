@@ -91,7 +91,7 @@ public class FragmentedMemoryBuffer {
             if (leftEnd > leftStart) {
                 int leftLen = (int) (leftEnd - leftStart);
                 byte[] leftData = new byte[leftLen];
-                f.Data.CopyTo(leftData, leftLen);
+                f.Data.AsSpan(0, leftLen).CopyTo(leftData.AsSpan(0, leftLen));
                 keepFrags.Add(new Fragment(leftStart, leftData));
             }
 
