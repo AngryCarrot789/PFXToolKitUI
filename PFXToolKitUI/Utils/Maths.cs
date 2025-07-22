@@ -150,6 +150,11 @@ public static class Maths {
     public static bool WillUnderflow(int a, int b) => b < 0 && a < int.MinValue - b;
     public static bool WillUnderflow(long a, long b) => b < 0 && a < long.MinValue - b;
 
+    public static uint ClampOverflow(uint a, uint b) => WillOverflow(a, b) ? (uint.MaxValue - a) : (a + b);
+    public static ulong ClampOverflow(ulong a, ulong b) => WillOverflow(a, b) ? (ulong.MaxValue - a) : (a + b);
+    public static int ClampOverflow(int a, int b) => WillOverflow(a, b) ? (int.MaxValue - a) : (a + b);
+    public static long ClampOverflow(long a, long b) => WillOverflow(a, b) ? (long.MaxValue - a) : (a + b);
+    
     // https://stackoverflow.com/a/51099524/11034928
     public static int GetDigitCount(ulong v) {
         // could optimise similar to a binary search, but hopefully the JIT will help out
