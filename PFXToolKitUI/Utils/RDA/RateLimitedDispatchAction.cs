@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Utils.RDA;
 /// The base class for a rate-limited dispatch action
 /// </summary>
 public abstract class RateLimitedDispatchActionBase {
-    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromMicroseconds(250);
+    protected static readonly TimeSpan DefaultTimeout = TimeSpan.FromMilliseconds(250);
 
     protected const int S_CONTINUE = 1; // Keeps the task running
     protected const int S_RUNNING = 2; // Whether the task is running
