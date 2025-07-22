@@ -121,7 +121,7 @@ public static class TextIncrement {
             textNumber = 1;
 
         ulong num = (ulong) textNumber;
-        ulong max = Maths.WillOverflow(num, count) ? ulong.MaxValue : num + count;
+        ulong max = Maths.WillAdditionOverflow(num, count) ? ulong.MaxValue : num + count;
 
         // This is probably over-optimised... this is just for concatenating a string and ulong
         // in the most efficient way possible. 23 = 3 (for ' ' + '(' + ')' chars) + 20 (for ulong.MaxValue representation)

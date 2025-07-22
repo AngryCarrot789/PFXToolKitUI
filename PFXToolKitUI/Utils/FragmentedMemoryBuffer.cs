@@ -20,7 +20,7 @@
 namespace PFXToolKitUI.Utils;
 
 /// <summary>
-/// A class used to store memory in fragments, with support for addressing with ulong
+/// An array of elements stored in fragments, indexable by <see cref="ulong"/>. Automatically de-fragments and splits fragments when writing/reading data
 /// </summary>
 public class FragmentedMemoryBuffer {
     private List<Fragment> myFragments;
@@ -38,7 +38,7 @@ public class FragmentedMemoryBuffer {
         ulong length = (ulong) buffer.Length;
         if (length == 0)
             return;
-        if (Maths.WillOverflow(address, length))
+        if (Maths.WillAdditionOverflow(address, length))
             throw new InvalidOperationException("Writing the buffer results in the address overflowing");
 
         List<Fragment> overlapping = new List<Fragment>();
@@ -70,9 +70,9 @@ public class FragmentedMemoryBuffer {
     public void Clear(ulong offset, ulong count) {
         if (count == 0)
             return;
-        if (Maths.WillOverflow(offset, count))
+        if (Maths.WillAdditionOverflow(offset, count))
             count = ulong.MaxValue - offset;
-        
+
         ulong end = offset + count;
         List<Fragment> keepFrags = new List<Fragment>();
         foreach (Fragment f in this.myFragments) {
@@ -107,53 +107,30 @@ public class FragmentedMemoryBuffer {
         this.myFragments = keepFrags.OrderBy(f => f.Address).ToList();
     }
 
-    public int Read(ulong offset, Span<byte> buffer) {
-        // foreach ((ulong bufOffset, byte[] bufData) in this.cachedMemory) {
-        //     ulong bufEnd = bufOffset + (ulong) bufData.Length;
-        //
-        //     // No overlap
-        //     if (offset >= bufEnd || offset + (ulong) buffer.Length <= bufOffset)
-        //         continue;
-        //
-        //     // Compute intersection
-        //     ulong start = Math.Max(offset, bufOffset);
-        //     ulong end = Math.Min(offset + (ulong) buffer.Length, bufEnd);
-        //
-        //     int copyStart = (int) (start - bufOffset);
-        //     int destStart = (int) (start - offset);
-        //     int length = (int) (end - start);
-        //
-        //     bufData.AsSpan(copyStart, length).CopyTo(buffer.Slice(destStart, length));
-        //     bytesRead += length;
-        // }
-
-
-        if (buffer.Length == 0) {
+    public int Read(ulong offset, Span<byte> buffer, List<(ulong, ulong)>? affectedRanges = null) {
+        if (buffer.Length == 0)
             return 0;
-        }
+        if (Maths.WillAdditionOverflow(offset, buffer.Length))
+            throw new InvalidOperationException("Reading the buffer results in the address overflowing");
 
-        ulong readStart = offset;
-        ulong readEnd = offset + (ulong) buffer.Length;
-        if (readEnd < offset)
-            readEnd = ulong.MaxValue;
-
-        int totalCopied = 0;
+        ulong offsetEnd = offset + (ulong) buffer.Length;
+        int cbTotalRead = 0;
         foreach (Fragment frag in this.myFragments) {
-            ulong fragStart = frag.Address;
-            ulong bufEnd = frag.End;
-            if (bufEnd > readStart && fragStart < readEnd) {
-                ulong start = Math.Max(readStart, fragStart);
-                ulong end = Math.Min(readEnd, bufEnd);
+            ulong fragEnd = frag.End;
+            if (fragEnd > offset && frag.Address < offsetEnd) {
+                ulong start = Math.Max(offset, frag.Address);
+                ulong end = Math.Min(offsetEnd, fragEnd);
                 int length = (int) (end - start);
-                int srcIndex = (int) (start - fragStart);
-                int destIndex = (int) (start - readStart);
+                int srcIndex = (int) (start - frag.Address);
+                int destIndex = (int) (start - offset);
 
                 frag.Data.AsSpan(srcIndex, length).CopyTo(buffer.Slice(destIndex, length));
-                totalCopied += length;
+                affectedRanges?.Add(((ulong) destIndex, (ulong) length));
+                cbTotalRead += length;
             }
         }
 
-        return totalCopied;
+        return cbTotalRead;
     }
 
     public override string ToString() {

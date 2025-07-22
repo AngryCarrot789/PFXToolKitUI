@@ -143,18 +143,32 @@ public static class Maths {
 
     public static int CeilShr(int v, int s) => (v + (1 << s) - 1) >> s;
 
-    public static bool WillOverflow(uint a, uint b) => b != 0 && a > uint.MaxValue - b;
-    public static bool WillOverflow(ulong a, ulong b) => b != 0 && a > ulong.MaxValue - b;
-    public static bool WillOverflow(int a, int b) => b > 0 && a > int.MaxValue - b;
-    public static bool WillOverflow(long a, long b) => b > 0 && a > long.MaxValue - b;
-    public static bool WillUnderflow(int a, int b) => b < 0 && a < int.MinValue - b;
-    public static bool WillUnderflow(long a, long b) => b < 0 && a < long.MinValue - b;
+    public static bool WillAdditionOverflow(uint a, uint b) => a > (uint.MaxValue - b);
 
-    public static uint ClampOverflow(uint a, uint b) => WillOverflow(a, b) ? (uint.MaxValue - a) : (a + b);
-    public static ulong ClampOverflow(ulong a, ulong b) => WillOverflow(a, b) ? (ulong.MaxValue - a) : (a + b);
-    public static int ClampOverflow(int a, int b) => WillOverflow(a, b) ? (int.MaxValue - a) : (a + b);
-    public static long ClampOverflow(long a, long b) => WillOverflow(a, b) ? (long.MaxValue - a) : (a + b);
+    public static bool WillAdditionOverflow(uint a, int b) => b < 0 ? (b == int.MinValue || a < (uint) -b) : (a > uint.MaxValue - (uint) b);
+
+    public static bool WillAdditionOverflow(ulong a, ulong b) => a > (ulong.MaxValue - b);
+
+    public static bool WillAdditionOverflow(ulong a, long b) => b < 0 ? (b == long.MinValue || a < (ulong) -b) : (a > ulong.MaxValue - (ulong) b);
+
+    public static bool WillAdditionOverflow(int a, int b) => (b > 0 && a > int.MaxValue - b) || (b < 0 && a < int.MinValue - b);
+
+    public static bool WillAdditionOverflow(long a, long b) => (b > 0 && a > long.MaxValue - b) || (b < 0 && a < long.MinValue - b);
+
+    public static uint SumAndClampOverflow(uint a, int b) {
+        if (b >= 0)
+            return (uint) b > (uint.MaxValue - a) ? uint.MaxValue /* clamp overflow */ : (a + (uint) b);
+        uint s = (uint) -b;
+        return s > a ? 0 /* clamp underflow */ : (a - s);
+    }
     
+    public static ulong SumAndClampOverflow(ulong a, long b) {
+        if (b >= 0)
+            return (ulong) b > (ulong.MaxValue - a) ? ulong.MaxValue /* clamp overflow */ : (a + (ulong) b);
+        ulong s = (ulong) -b;
+        return s > a ? 0 /* clamp underflow */ : (a - s);
+    }
+
     // https://stackoverflow.com/a/51099524/11034928
     public static int GetDigitCount(ulong v) {
         // could optimise similar to a binary search, but hopefully the JIT will help out
