@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
+
 namespace PFXToolKitUI.Utils;
 
 /// <summary>
@@ -42,16 +44,18 @@ public class FragmentedMemoryBuffer {
             throw new InvalidOperationException("Writing the buffer results in the address overflowing");
 
         List<Fragment> overlapping = new List<Fragment>();
+        List<Fragment> keepList = new List<Fragment>();
         foreach (Fragment fragment in this.myFragments) {
             if (Fragment.OverlapsOrTouches(address, length, fragment)) {
                 overlapping.Add(fragment);
             }
+            else {
+                keepList.Add(fragment);
+            }
         }
 
-        overlapping = overlapping.OrderBy(f => f.Address).ToList();
-        foreach (Fragment frag in overlapping) {
-            this.myFragments.Remove(frag);
-        }
+        Debug.Assert(overlapping.OrderBy(f => f.Address).SequenceEqual(overlapping));
+        // overlapping = overlapping.OrderBy(f => f.Address).ToList();
 
         ulong start = overlapping.Count != 0 ? Math.Min(address, overlapping[0].Address) : address;
         ulong end = overlapping.Count != 0 ? Math.Max(address + length, overlapping[overlapping.Count - 1].End) : address + length;
@@ -62,9 +66,8 @@ public class FragmentedMemoryBuffer {
         }
 
         buffer.CopyTo(mergedData.AsSpan((int) (address - start)));
-
-        this.myFragments.Add(new Fragment(start, mergedData));
-        this.myFragments = this.myFragments.OrderBy(f => f.Address).ToList();
+        keepList.Add(new Fragment(start, mergedData));
+        this.myFragments = keepList.OrderBy(f => f.Address).ToList();
     }
 
     public void Clear(ulong offset, ulong count) {
@@ -137,18 +140,21 @@ public class FragmentedMemoryBuffer {
         return $"Fragments: {string.Join(", ", this.myFragments.Select(f => $"[{f.Address}-{f.End})"))}";
     }
 
-    private class Fragment {
-        public readonly ulong Address;
-        public readonly byte[] Data;
+    private readonly struct Fragment(ulong address, byte[] data) : IEquatable<Fragment>, IComparable<Fragment> {
+        public readonly ulong Address = address;
+        public readonly byte[] Data = data;
         public ulong End => this.Address + (ulong) this.Data.Length;
 
-        public Fragment(ulong address, byte[] data) {
-            this.Address = address;
-            this.Data = data;
+        public static bool OverlapsOrTouches(ulong address, ulong count, Fragment other) {
+            return (address + count) >= other.Address && other.End >= address;
         }
 
-        public static bool OverlapsOrTouches(ulong address, ulong count, Fragment other) {
-            return !((address + count) < other.Address || other.End < address);
-        }
+        public bool Equals(Fragment other) => this.Address == other.Address && this.Data.Equals(other.Data);
+
+        public override bool Equals(object? obj) => obj is Fragment other && this.Equals(other);
+
+        public override int GetHashCode() => HashCode.Combine(this.Address, this.Data);
+
+        public int CompareTo(Fragment other) => this.Address.CompareTo(other.Address);
     }
 }
