@@ -128,7 +128,7 @@ public class FragmentedMemoryBuffer {
                 int destIndex = (int) (start - offset);
 
                 frag.Data.AsSpan(srcIndex, length).CopyTo(buffer.Slice(destIndex, length));
-                affectedRanges?.Add(((ulong) destIndex, (ulong) length));
+                affectedRanges?.Add((offset + (ulong) destIndex, (ulong) length));
                 cbTotalRead += length;
             }
         }
