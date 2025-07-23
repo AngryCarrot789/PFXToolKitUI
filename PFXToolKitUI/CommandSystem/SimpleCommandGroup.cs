@@ -23,10 +23,10 @@ namespace PFXToolKitUI.CommandSystem;
 /// A command group that overrides <see cref="Command.CanExecuteCore"/> to return an executability state based on the available context
 /// </summary>
 public class SimpleCommandGroup : CommandGroup {
-    private readonly HashSet<string> required;
-    private readonly HashSet<string> any;
+    private readonly HashSet<string>? required;
+    private readonly HashSet<string>? any;
 
-    private SimpleCommandGroup(HashSet<string> required, HashSet<string> any) {
+    private SimpleCommandGroup(HashSet<string>? required, HashSet<string>? any) {
         this.required = required;
         this.any = any;
     }
@@ -50,7 +50,7 @@ public class SimpleCommandGroup : CommandGroup {
         return isValid ? Executability.Valid : Executability.Invalid;
     }
 
-    private bool HasAllKeys(CommandEventArgs e) => this.required.All(key => e.ContextData.ContainsKey(key));
+    private bool HasAllKeys(CommandEventArgs e) => this.required?.Count < 1 || this.required!.All(key => e.ContextData.ContainsKey(key));
 
-    private bool HasAnyKey(CommandEventArgs e) => this.any.Any(key => e.ContextData.ContainsKey(key));
+    private bool HasAnyKey(CommandEventArgs e) => this.any?.Count < 1 || this.any!.Any(key => e.ContextData.ContainsKey(key));
 }

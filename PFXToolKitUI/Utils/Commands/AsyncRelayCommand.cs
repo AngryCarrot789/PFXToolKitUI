@@ -26,7 +26,7 @@ public class AsyncRelayCommand : BaseAsyncRelayCommand {
     private readonly Func<Task> execute;
     private readonly Func<bool>? canExecute;
 
-    public AsyncRelayCommand(Func<Task> execute, Func<bool> canExecute = null) {
+    public AsyncRelayCommand(Func<Task> execute, Func<bool>? canExecute = null) {
         if (execute == null) {
             throw new ArgumentNullException(nameof(execute), "Execute callback cannot be null");
         }
@@ -58,7 +58,7 @@ public class AsyncRelayCommand<T> : BaseAsyncRelayCommand {
     /// </summary>
     public bool ConvertParameter { get; set; }
 
-    public AsyncRelayCommand(Func<T?, Task> execute, Func<T?, bool> canExecute = null, bool convertParameter = true, bool isParamRequired = false) {
+    public AsyncRelayCommand(Func<T?, Task> execute, Func<T?, bool>? canExecute = null, bool convertParameter = true, bool isParamRequired = false) {
         if (execute == null) {
             throw new ArgumentNullException(nameof(execute), "Execute callback cannot be null");
         }

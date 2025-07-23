@@ -144,7 +144,7 @@ public sealed class PersistentStorageManager {
             try {
                 fileStream = File.OpenRead(configFilePath);
             }
-            catch (Exception e) {
+            catch {
                 missingConfigSets?.Add(areaEntry.Key);
                 continue;
             }

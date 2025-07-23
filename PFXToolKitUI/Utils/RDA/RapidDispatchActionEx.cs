@@ -29,7 +29,7 @@ public abstract class RapidDispatchActionExBase {
 
     // allows debugger breakpoint to match this. Field, so the debugger knows
     // there are no possible side effects (hopefully??? Am I thinking too hard?)
-    public readonly string DebugId;
+    public readonly string? DebugId;
 
     private volatile int myState; // The current state
     private readonly object stateLock; // A guard when reading/writing the state
@@ -48,7 +48,7 @@ public abstract class RapidDispatchActionExBase {
     /// <param name="callback">The callback action</param>
     /// <param name="priority">The dispatcher priority</param>
     /// <param name="debugId">A debugging ID</param>
-    protected RapidDispatchActionExBase(IDispatcher dispatcher, DispatchPriority priority, string debugId) {
+    protected RapidDispatchActionExBase(IDispatcher dispatcher, DispatchPriority priority, string? debugId) {
         this.dispatcher = dispatcher;
         this.DebugId = debugId;
         this.Priority = priority;
@@ -161,23 +161,23 @@ public abstract class RapidDispatchActionExBase {
 public sealed class RapidDispatchActionEx : RapidDispatchActionExBase, IDispatchAction {
     private readonly Func<Task> callback;
 
-    private RapidDispatchActionEx(IDispatcher dispatcher, Func<Task> callback, DispatchPriority priority, string debugId) : base(dispatcher, priority, debugId) {
+    private RapidDispatchActionEx(IDispatcher dispatcher, Func<Task> callback, DispatchPriority priority, string? debugId) : base(dispatcher, priority, debugId) {
         this.callback = callback;
     }
 
-    public static RapidDispatchActionEx ForSync(Action callback, string debugId = null) =>
+    public static RapidDispatchActionEx ForSync(Action callback, string? debugId = null) =>
         ForSync(callback, DispatchPriority.Normal, debugId);
 
-    public static RapidDispatchActionEx ForSync(Action callback, DispatchPriority priority, string debugId = null) =>
+    public static RapidDispatchActionEx ForSync(Action callback, DispatchPriority priority, string? debugId = null) =>
         ForSync(callback, ApplicationPFX.Instance.Dispatcher, priority, debugId);
 
-    public static RapidDispatchActionEx ForSync(Action callback, IDispatcher dispatcher, string debugId = null) =>
+    public static RapidDispatchActionEx ForSync(Action callback, IDispatcher dispatcher, string? debugId = null) =>
         ForSync(callback, dispatcher, DispatchPriority.Normal, debugId);
 
     /// <summary>
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs a non-async callback
     /// </summary>
-    public static RapidDispatchActionEx ForSync(Action callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
+    public static RapidDispatchActionEx ForSync(Action callback, IDispatcher dispatcher, DispatchPriority priority, string? debugId = null) {
         ArgumentNullException.ThrowIfNull(callback, nameof(callback));
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 
@@ -187,19 +187,19 @@ public sealed class RapidDispatchActionEx : RapidDispatchActionExBase, IDispatch
         }, priority, debugId);
     }
 
-    public static RapidDispatchActionEx ForAsync(Func<Task> callback, string debugId = null) =>
+    public static RapidDispatchActionEx ForAsync(Func<Task> callback, string? debugId = null) =>
         ForAsync(callback, DispatchPriority.Normal, debugId);
 
-    public static RapidDispatchActionEx ForAsync(Func<Task> callback, DispatchPriority priority, string debugId = null) =>
+    public static RapidDispatchActionEx ForAsync(Func<Task> callback, DispatchPriority priority, string? debugId = null) =>
         ForAsync(callback, ApplicationPFX.Instance.Dispatcher, priority, debugId);
 
-    public static RapidDispatchActionEx ForAsync(Func<Task> callback, IDispatcher dispatcher, string debugId = null) =>
+    public static RapidDispatchActionEx ForAsync(Func<Task> callback, IDispatcher dispatcher, string? debugId = null) =>
         ForAsync(callback, dispatcher, DispatchPriority.Normal, debugId);
 
     /// <summary>
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs an async callback
     /// </summary>
-    public static RapidDispatchActionEx ForAsync(Func<Task> callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
+    public static RapidDispatchActionEx ForAsync(Func<Task> callback, IDispatcher dispatcher, DispatchPriority priority, string? debugId = null) {
         ArgumentNullException.ThrowIfNull(callback, nameof(callback));
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 
@@ -224,19 +224,19 @@ public sealed class RapidDispatchActionEx<T> : RapidDispatchActionExBase, IDispa
     private readonly object paramLock;
     private T? parameter;
 
-    private RapidDispatchActionEx(IDispatcher dispatcher, Func<T, Task> callback, DispatchPriority priority, string debugId) : base(dispatcher, priority, debugId) {
+    private RapidDispatchActionEx(IDispatcher dispatcher, Func<T, Task> callback, DispatchPriority priority, string? debugId) : base(dispatcher, priority, debugId) {
         this.callback = callback;
         this.paramLock = new object();
     }
 
-    public static RapidDispatchActionEx<T> ForSync(Action<T> callback, DispatchPriority priority, string debugId = null) {
+    public static RapidDispatchActionEx<T> ForSync(Action<T> callback, DispatchPriority priority, string? debugId = null) {
         return ForSync(callback, ApplicationPFX.Instance.Dispatcher, priority, debugId);
     }
 
     /// <summary>
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs a non-async callback
     /// </summary>
-    public static RapidDispatchActionEx<T> ForSync(Action<T> callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
+    public static RapidDispatchActionEx<T> ForSync(Action<T> callback, IDispatcher dispatcher, DispatchPriority priority, string? debugId = null) {
         ArgumentNullException.ThrowIfNull(callback, nameof(callback));
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 
@@ -249,14 +249,14 @@ public sealed class RapidDispatchActionEx<T> : RapidDispatchActionExBase, IDispa
     /// <summary>
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs an async callback
     /// </summary>
-    public static RapidDispatchActionEx<T> ForAsync(Func<T, Task> callback, DispatchPriority priority, string debugId = null) {
+    public static RapidDispatchActionEx<T> ForAsync(Func<T, Task> callback, DispatchPriority priority, string? debugId = null) {
         return ForAsync(callback, ApplicationPFX.Instance.Dispatcher, priority, debugId);
     }
 
     /// <summary>
     /// Creates an instance of <see cref="RapidDispatchActionEx"/> that runs an async callback
     /// </summary>
-    public static RapidDispatchActionEx<T> ForAsync(Func<T, Task> callback, IDispatcher dispatcher, DispatchPriority priority, string debugId = null) {
+    public static RapidDispatchActionEx<T> ForAsync(Func<T, Task> callback, IDispatcher dispatcher, DispatchPriority priority, string? debugId = null) {
         ArgumentNullException.ThrowIfNull(callback, nameof(callback));
         ArgumentNullException.ThrowIfNull(dispatcher, nameof(dispatcher));
 

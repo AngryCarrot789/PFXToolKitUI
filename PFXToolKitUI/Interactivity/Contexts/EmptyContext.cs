@@ -18,6 +18,7 @@
 // 
 
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 
 namespace PFXToolKitUI.Interactivity.Contexts;
 
@@ -36,8 +37,8 @@ public sealed class EmptyContext : IContextData {
 
     public EmptyContext() { }
 
-    bool IContextData.TryGetContext(string key, out object value) {
-        value = default;
+    bool IContextData.TryGetContext(string key, [NotNullWhen(true)] out object? value) {
+        value = null;
         return false;
     }
 

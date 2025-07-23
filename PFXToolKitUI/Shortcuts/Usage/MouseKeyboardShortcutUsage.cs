@@ -25,7 +25,7 @@ public class MouseKeyboardShortcutUsage : IKeyboardShortcutUsage, IMouseShortcut
     private readonly MouseKeyboardShortcut shortcut;
     // private int clickCounter;
 
-    private LinkedListNode<IInputStroke> currentStroke;
+    private LinkedListNode<IInputStroke>? currentStroke;
     public LinkedList<IInputStroke> Strokes { get; }
 
     public IKeyboardShortcut KeyboardShortcut => this.shortcut;
@@ -44,11 +44,11 @@ public class MouseKeyboardShortcutUsage : IKeyboardShortcutUsage, IMouseShortcut
 
     public IInputStroke PreviousStroke { get; private set; }
 
-    public IInputStroke CurrentStroke => this.currentStroke?.Value;
+    public IInputStroke CurrentStroke => this.currentStroke!.Value;
 
     public IEnumerable<IInputStroke> RemainingStrokes {
         get {
-            LinkedListNode<IInputStroke> stroke = this.currentStroke;
+            LinkedListNode<IInputStroke>? stroke = this.currentStroke;
             while (stroke != null) {
                 yield return stroke.Value;
                 stroke = stroke.Next;
@@ -63,8 +63,8 @@ public class MouseKeyboardShortcutUsage : IKeyboardShortcutUsage, IMouseShortcut
     public MouseKeyboardShortcutUsage(MouseKeyboardShortcut shortcut) {
         this.shortcut = shortcut;
         this.Strokes = new LinkedList<IInputStroke>(shortcut.InputStrokes);
-        this.currentStroke = this.Strokes.First.Next;
-        this.PreviousStroke = this.Strokes.First.Value;
+        this.currentStroke = this.Strokes.First!.Next;
+        this.PreviousStroke = this.Strokes.First!.Value;
     }
 
     public bool OnKeyStroke(in KeyStroke stroke) {
@@ -115,7 +115,7 @@ public class MouseKeyboardShortcutUsage : IKeyboardShortcutUsage, IMouseShortcut
     }
 
     private void ProgressCurrentStroke() {
-        this.PreviousStroke = this.currentStroke.Value;
+        this.PreviousStroke = this.currentStroke!.Value;
         this.currentStroke = this.currentStroke.Next;
     }
 }

@@ -22,7 +22,7 @@ using PFXToolKitUI.Shortcuts.Inputs;
 namespace PFXToolKitUI.Shortcuts.Usage;
 
 public class MouseShortcutUsage : IMouseShortcutUsage {
-    private LinkedListNode<MouseStroke> currentStroke;
+    private LinkedListNode<MouseStroke>? currentStroke;
     // private int clickCounter;
 
     public IMouseShortcut MouseShortcut { get; }
@@ -39,11 +39,11 @@ public class MouseShortcutUsage : IMouseShortcutUsage {
 
     public IInputStroke PreviousStroke { get; private set; }
 
-    public IInputStroke CurrentStroke => this.currentStroke?.Value;
+    public IInputStroke CurrentStroke => this.currentStroke!.Value;
 
     public IEnumerable<IInputStroke> RemainingStrokes {
         get {
-            LinkedListNode<MouseStroke> stroke = this.currentStroke;
+            LinkedListNode<MouseStroke>? stroke = this.currentStroke;
             while (stroke != null) {
                 yield return stroke.Value;
                 stroke = stroke.Next;
@@ -58,8 +58,8 @@ public class MouseShortcutUsage : IMouseShortcutUsage {
     public MouseShortcutUsage(IMouseShortcut shortcut) {
         this.MouseShortcut = shortcut;
         this.Strokes = new LinkedList<MouseStroke>(shortcut.MouseStrokes);
-        this.currentStroke = this.Strokes.First.Next;
-        this.PreviousStroke = this.Strokes.First.Value;
+        this.currentStroke = this.Strokes.First!.Next;
+        this.PreviousStroke = this.Strokes.First!.Value;
     }
 
     public bool OnMouseStroke(in MouseStroke stroke) {

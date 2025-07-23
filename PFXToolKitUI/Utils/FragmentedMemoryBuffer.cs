@@ -41,12 +41,12 @@ public class FragmentedMemoryBuffer {
         if (length == 0)
             return;
         if (Maths.WillAdditionOverflow(address, length))
-            throw new InvalidOperationException("Writing the buffer results in the address overflowing");
+            throw new InvalidOperationException($"Writing the buffer results in the address overflowing ({address} + {length}))");
 
         List<Fragment> overlapping = new List<Fragment>();
         List<Fragment> keepList = new List<Fragment>();
         foreach (Fragment fragment in this.myFragments) {
-            if (Fragment.OverlapsOrTouches(address, length, fragment)) {
+            if ((address + length) >= fragment.Address && fragment.End >= address) {
                 overlapping.Add(fragment);
             }
             else {
@@ -54,7 +54,7 @@ public class FragmentedMemoryBuffer {
             }
         }
 
-        Debug.Assert(overlapping.OrderBy(f => f.Address).SequenceEqual(overlapping));
+        Debug.Assert(overlapping.Count == 0 || overlapping.OrderBy(f => f.Address).SequenceEqual(overlapping));
         // overlapping = overlapping.OrderBy(f => f.Address).ToList();
 
         ulong start = overlapping.Count != 0 ? Math.Min(address, overlapping[0].Address) : address;
@@ -144,10 +144,6 @@ public class FragmentedMemoryBuffer {
         public readonly ulong Address = address;
         public readonly byte[] Data = data;
         public ulong End => this.Address + (ulong) this.Data.Length;
-
-        public static bool OverlapsOrTouches(ulong address, ulong count, Fragment other) {
-            return (address + count) >= other.Address && other.End >= address;
-        }
 
         public bool Equals(Fragment other) => this.Address == other.Address && this.Data.Equals(other.Data);
 

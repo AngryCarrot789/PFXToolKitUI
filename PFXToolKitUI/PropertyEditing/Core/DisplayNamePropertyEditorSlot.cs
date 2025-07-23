@@ -71,7 +71,7 @@ public class DisplayNamePropertyEditorSlot : PropertyEditorSlot {
         this.DisplayNameChanged?.Invoke(this);
     }
 
-    private void OnDisplayNameChanged(IDisplayName sender, string oldName, string newName) {
+    private void OnDisplayNameChanged(IDisplayName sender, string? oldName, string? newName) {
         if (this.isProcessingValueChange)
             return;
         if (this.DisplayName != sender.DisplayName) {

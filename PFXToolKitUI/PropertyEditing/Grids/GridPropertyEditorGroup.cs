@@ -25,8 +25,8 @@ public delegate void GridPropertyEditorGroupEventHandler(GridPropertyEditorGroup
 
 public class GridPropertyEditorGroup : SimplePropertyEditorGroup {
     private readonly Dictionary<BasePropertyEditorObject, (int, int)> PropObjLocation;
-    private List<GridColumnDefinition> columns;
-    private List<GridRowDefinition> rows;
+    private List<GridColumnDefinition> columns = new List<GridColumnDefinition>();
+    private List<GridRowDefinition> rows = new List<GridRowDefinition>();
 
     public List<GridColumnDefinition> Columns {
         get => this.columns;

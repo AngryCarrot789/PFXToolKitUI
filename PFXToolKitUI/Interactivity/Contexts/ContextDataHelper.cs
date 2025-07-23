@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
+
 namespace PFXToolKitUI.Interactivity.Contexts;
 
 public static class ContextDataHelper {
@@ -114,28 +116,29 @@ public static class ContextDataHelper {
     }
 
     public static bool ContainsAny(this IContextData data, IEnumerable<string> keys, bool resultWhenEmpty = true) {
-        using (IEnumerator<string> enumerator = keys.GetEnumerator()) {
-            if (!enumerator.MoveNext())
-                return resultWhenEmpty;
-            do {
-                if (data.ContainsKey(enumerator.Current))
-                    return true;
-            } while (enumerator.MoveNext());
+        using IEnumerator<string> enumerator = keys.GetEnumerator();
+        if (!enumerator.MoveNext())
+            return resultWhenEmpty;
+        do {
+            if (data.ContainsKey(enumerator.Current))
+                return true;
+        } while (enumerator.MoveNext());
 
-            return false;
-        }
+        return false;
     }
 
-    public static bool TryGetAll<T1, T2>(this IContextData data, DataKey<T1> keyA, DataKey<T2> keyB, out T1 a, out T2 b) {
+    public static bool TryGetAll<T1, T2>(this IContextData data, DataKey<T1> keyA, DataKey<T2> keyB, [NotNullWhen(true)] out T1? a, [NotNullWhen(true)] out T2? b) {
         if (keyA.TryGetContext(data, out a) && keyB.TryGetContext(data, out b))
             return true;
+        a = default;
         b = default;
         return false;
     }
 
-    public static bool TryGetAll<T1, T2, T3>(this IContextData data, DataKey<T1> keyA, DataKey<T2> keyB, DataKey<T3> keyC, out T1 a, out T2 b, out T3 c) {
+    public static bool TryGetAll<T1, T2, T3>(this IContextData data, DataKey<T1> keyA, DataKey<T2> keyB, DataKey<T3> keyC, [NotNullWhen(true)] out T1? a, [NotNullWhen(true)] out T2? b, [NotNullWhen(true)] out T3? c) {
         if (keyA.TryGetContext(data, out a) && keyB.TryGetContext(data, out b) && keyC.TryGetContext(data, out c))
             return true;
+        a = default;
         b = default;
         c = default;
         return false;

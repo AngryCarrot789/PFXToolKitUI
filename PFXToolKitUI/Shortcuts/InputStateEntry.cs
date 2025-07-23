@@ -30,13 +30,13 @@ public class InputStateEntry : IKeyMapEntry {
     private bool? isPressAndRelease;
     private bool? isToggleBehaviour;
 
-    public ShortcutManager Manager => this.Parent?.Manager;
+    public ShortcutManager Manager => this.Parent.Manager;
 
     public ShortcutGroupEntry Parent { get; }
 
-    public string? Name { get; }
+    public string Name { get; }
 
-    public string? FullPath { get; }
+    public string FullPath { get; }
 
     public string? DisplayName { get; set; }
 
@@ -113,8 +113,8 @@ public class InputStateEntry : IKeyMapEntry {
         this.Parent = groupEntry ?? throw new ArgumentNullException(nameof(groupEntry), "Collection cannot be null");
         this.Name = name;
         this.FullPath = groupEntry.GetPathForName(name);
-        this.ActivationStroke = activationStroke;
-        this.DeactivationStroke = deactivationStroke;
+        this.activationStroke = activationStroke;
+        this.deactivationStroke = deactivationStroke;
     }
 
     /// <summary>

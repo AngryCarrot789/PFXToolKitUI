@@ -576,7 +576,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             this.continueAttempts = -1;
             await (this.firstTask = this.RunFirst(pauseOrCancelToken));
         }
-        catch (OperationCanceledException e) {
+        catch (OperationCanceledException) {
             if (this.pauseState == PAUSE_STATE.REQUESTED && !this.IsCancellationRequested) {
                 await this.OnPausedInternalAsync(false);
             }
@@ -649,7 +649,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
                 Interlocked.Increment(ref this.continueAttempts);
                 await (this.continueTask = this.Continue(pauseOrCancelToken));
             }
-            catch (OperationCanceledException e) {
+            catch (OperationCanceledException) {
                 if (this.pauseState == PAUSE_STATE.REQUESTED && !this.IsCancellationRequested) {
                     await this.OnPausedInternalAsync(false);
                     continue;

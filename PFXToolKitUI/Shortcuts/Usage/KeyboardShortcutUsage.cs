@@ -22,8 +22,7 @@ using PFXToolKitUI.Shortcuts.Inputs;
 namespace PFXToolKitUI.Shortcuts.Usage;
 
 public class KeyboardShortcutUsage : IKeyboardShortcutUsage {
-    private LinkedListNode<KeyStroke> currentStroke;
-    private LinkedListNode<KeyStroke> previousStroke;
+    private LinkedListNode<KeyStroke>? currentStroke;
 
     public IKeyboardShortcut KeyboardShortcut { get; }
 
@@ -39,11 +38,11 @@ public class KeyboardShortcutUsage : IKeyboardShortcutUsage {
 
     public IInputStroke PreviousStroke { get; private set; }
 
-    public IInputStroke CurrentStroke => this.currentStroke?.Value;
+    public IInputStroke CurrentStroke => this.currentStroke!.Value;
 
     public IEnumerable<IInputStroke> RemainingStrokes {
         get {
-            LinkedListNode<KeyStroke> stroke = this.currentStroke;
+            LinkedListNode<KeyStroke>? stroke = this.currentStroke;
             while (stroke != null) {
                 yield return stroke.Value;
                 stroke = stroke.Next;
@@ -58,8 +57,8 @@ public class KeyboardShortcutUsage : IKeyboardShortcutUsage {
     public KeyboardShortcutUsage(IKeyboardShortcut shortcut) {
         this.KeyboardShortcut = shortcut;
         this.Strokes = new LinkedList<KeyStroke>(shortcut.KeyStrokes);
-        this.currentStroke = this.Strokes.First.Next;
-        this.PreviousStroke = this.Strokes.First.Value;
+        this.currentStroke = this.Strokes.First!.Next;
+        this.PreviousStroke = this.Strokes.First!.Value;
     }
 
     public bool OnKeyStroke(in KeyStroke stroke) {

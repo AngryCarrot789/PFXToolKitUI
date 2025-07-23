@@ -51,7 +51,7 @@ public class InheritanceMultiMap<T> {
         }
 
         List<Type> types = new List<Type> { key };
-        for (Type type = key.BaseType; type != null; type = type.BaseType) {
+        for (Type? type = key.BaseType; type != null; type = type.BaseType) {
             if (this.items.TryGetValue(type, out entry)) {
                 return this.BakeType(entry, types);
             }

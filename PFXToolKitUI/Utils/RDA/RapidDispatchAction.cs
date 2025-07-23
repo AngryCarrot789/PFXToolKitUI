@@ -17,19 +17,23 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
+
 namespace PFXToolKitUI.Utils.RDA;
 
 /// <summary>
 /// The base class for a regular RDA implementation
 /// </summary>
+[DebuggerDisplay("{GetType().Name} [{DebugId}]")]
 public abstract class RapidDispatchActionBase {
-    public readonly string DebugId; // allows debugger breakpoint to match this
+    public readonly string? DebugId; // allows debugger breakpoint to match this
+    
     private readonly Action doExecuteCallback;
     private bool isScheduled;
 
     public DispatchPriority Priority { get; }
 
-    protected RapidDispatchActionBase(DispatchPriority priority, string debugId = null) {
+    protected RapidDispatchActionBase(DispatchPriority priority, string? debugId = null) {
         this.DebugId = debugId;
         this.Priority = priority;
         this.doExecuteCallback = this.DoExecute;
@@ -77,10 +81,10 @@ public abstract class RapidDispatchActionBase {
 public sealed class RapidDispatchAction : RapidDispatchActionBase, IDispatchAction {
     private readonly Action callback;
 
-    public RapidDispatchAction(Action callback, string debugId = null) : this(callback, DispatchPriority.Normal, debugId) {
+    public RapidDispatchAction(Action callback, string? debugId = null) : this(callback, DispatchPriority.Normal, debugId) {
     }
 
-    public RapidDispatchAction(Action callback, DispatchPriority priority, string debugId = null) : base(priority, debugId) {
+    public RapidDispatchAction(Action callback, DispatchPriority priority, string? debugId = null) : base(priority, debugId) {
         this.callback = callback;
     }
 
@@ -104,10 +108,10 @@ public sealed class RapidDispatchAction<T> : RapidDispatchActionBase, IDispatchA
     private readonly Action<T> callback;
     private T? parameter;
 
-    public RapidDispatchAction(Action<T> callback, string debugId = null) : this(callback, DispatchPriority.Normal, debugId) {
+    public RapidDispatchAction(Action<T> callback, string? debugId = null) : this(callback, DispatchPriority.Normal, debugId) {
     }
 
-    public RapidDispatchAction(Action<T> callback, DispatchPriority priority, string debugId = null) : base(priority, debugId) {
+    public RapidDispatchAction(Action<T> callback, DispatchPriority priority, string? debugId = null) : base(priority, debugId) {
         this.callback = callback ?? throw new ArgumentNullException(nameof(callback));
     }
 

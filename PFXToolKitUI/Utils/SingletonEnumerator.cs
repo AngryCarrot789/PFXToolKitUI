@@ -27,7 +27,7 @@ public class SingletonEnumerator<T> : IEnumerator<T> {
     // should this throw if hasMovedNext is false?
     public T Current { get; }
 
-    object IEnumerator.Current => this.Current;
+    object IEnumerator.Current => this.Current!;
 
     public SingletonEnumerator(T value) {
         this.Current = value;

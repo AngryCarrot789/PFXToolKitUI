@@ -30,13 +30,15 @@ public class DeleteSelectedDialogResultEntriesCommand : Command {
         return Executability.Invalid;
     }
 
-    protected override async Task ExecuteCommandAsync(CommandEventArgs e) {
+    protected override Task ExecuteCommandAsync(CommandEventArgs e) {
         if (!IPersistentDialogResultConfigurationPageUI.DataKey.TryGetContext(e.ContextData, out IPersistentDialogResultConfigurationPageUI? ui)) {
-            return;
+            return Task.CompletedTask;
         }
 
         foreach (PersistentDialogResultViewModel vm in ui.SelectionManager.SelectedItemList) {
             vm.SetButtonToNull();
         }
+
+        return Task.CompletedTask;
     }
 }

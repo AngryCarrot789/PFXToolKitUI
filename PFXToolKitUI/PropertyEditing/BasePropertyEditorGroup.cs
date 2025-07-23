@@ -28,7 +28,7 @@ public delegate void PropertyEditorGroupChildMovedEventHandler(BasePropertyEdito
 
 public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
     private readonly List<BasePropertyEditorObject> propObjs;
-    private string displayName;
+    private string? displayName;
     private bool isExpanded = true; // expand by default
 
     /// <summary>
@@ -39,7 +39,7 @@ public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
     /// <summary>
     /// Gets or sets this group's display name
     /// </summary>
-    public string DisplayName {
+    public string? DisplayName {
         get => this.displayName;
         set => PropertyHelper.SetAndRaiseINE(ref this.displayName, value, this, static t => t.DisplayNameChanged?.Invoke(t));
     }
@@ -105,8 +105,7 @@ public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
     public virtual void AddItem(BasePropertyEditorObject propObj) => this.InsertItem(this.propObjs.Count, propObj);
 
     public virtual void InsertItem(int index, BasePropertyEditorObject propObj) {
-        if (propObj == null)
-            throw new ArgumentNullException(nameof(propObj));
+        ArgumentNullException.ThrowIfNull(propObj);
         if (!this.IsPropertyEditorObjectAcceptable(propObj))
             throw new ArgumentException("The specific property editor object is not allowed: " + propObj);
         this.propObjs.Insert(index, propObj);

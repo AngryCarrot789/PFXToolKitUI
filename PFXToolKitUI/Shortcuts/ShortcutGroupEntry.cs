@@ -286,12 +286,12 @@ public sealed class ShortcutGroupEntry : IKeyMapEntry {
         return root;
     }
 
-    public ShortcutEntry GetShortcutByName(string name) {
+    public ShortcutEntry? GetShortcutByName(string name) {
         ValidateName(name);
         return this.mapToItem.TryGetValue(name, out object? value) ? value as ShortcutEntry : null;
     }
 
-    public ShortcutEntry GetShortcutByPath(string path) {
+    public ShortcutEntry? GetShortcutByPath(string path) {
         if (string.IsNullOrWhiteSpace(path)) {
             return null;
         }
@@ -300,17 +300,17 @@ public sealed class ShortcutGroupEntry : IKeyMapEntry {
         return split == -1 ? this.GetShortcutByName(path) : this.GetShortcutByPath(path.Split(SeparatorChar));
     }
 
-    public ShortcutEntry GetShortcutByPath(string[] path) {
+    public ShortcutEntry? GetShortcutByPath(string[] path) {
         return this.GetShortcutByPath(path, 0, path.Length);
     }
 
-    public ShortcutEntry GetShortcutByPath(string[] path, int startIndex, int endIndex) {
+    public ShortcutEntry? GetShortcutByPath(string[]? path, int startIndex, int endIndex) {
         if (path == null || (endIndex - startIndex) == 0) {
             return null;
         }
 
         ValidatePathBounds(path, startIndex, endIndex);
-        ShortcutGroupEntry root = this;
+        ShortcutGroupEntry? root = this;
         int groupEndIndex = endIndex - 1;
         for (int i = startIndex; i < groupEndIndex; i++) {
             if ((root = root.GetGroupByName(path[i])) == null) {

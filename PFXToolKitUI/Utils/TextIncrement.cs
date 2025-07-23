@@ -168,7 +168,7 @@ public static class TextIncrement {
     /// <param name="length">The length of the random id</param>
     /// <param name="loop">Maximum number of times to generate a random ID before throwing, default is 32</param>
     /// <returns>True if the <see cref="accept"/> predicate accepted the output string before the loop counter reached 0</returns>
-    public static unsafe bool GetRandomDisplayName(Predicate<string> accept, string src, int srcIndex, out string output, int length = 20, int loop = 32) {
+    public static unsafe bool GetRandomDisplayName(Predicate<string> accept, string src, int srcIndex, [NotNullWhen(true)] out string? output, int length = 20, int loop = 32) {
         Random random = new Random();
         Span<char> chars = stackalloc char[length];
         while (loop > 0) {

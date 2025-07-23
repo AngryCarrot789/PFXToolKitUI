@@ -37,7 +37,11 @@ public interface IDynamicColourBrush : IColourBrush {
 
     /// <summary>
     /// An event fired when the underlying brush content change (typically caused
-    /// by the application theme changing, or maybe the user modified the specific brush)
+    /// by the application theme changing, or maybe the user modified the specific brush).
+    /// <para>
+    /// This will only be fired when the UI has subscribed to changes,
+    /// since listening to resource changes is expensive
+    /// </para>
     /// </summary>
     event DynamicColourBrushChangedEventHandler? BrushChanged;
 }

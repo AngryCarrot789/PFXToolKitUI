@@ -58,7 +58,7 @@ public class SuspendableObservableList<T> : ObservableList<T> {
     public SuspendEventToken SuspendEvents() => new SuspendEventToken(this);
 
     public struct SuspendEventToken : IDisposable {
-        private SuspendableObservableList<T> list;
+        private SuspendableObservableList<T>? list;
 
         public SuspendEventToken(SuspendableObservableList<T> list) {
             this.list = list;
