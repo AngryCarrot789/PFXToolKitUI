@@ -25,27 +25,27 @@ namespace PFXToolKitUI.Utils.Events;
 /// </summary>
 /// <typeparam name="T">The type of value to wrap</typeparam>
 public class LazyStateHelper<T> where T : class {
-    public delegate void StateAutoHelperValueChangedEventHandler(LazyStateHelper<T> sender, T? oldValueA, T? newValueA);
+    public delegate void StateAutoHelperValueChangedEventHandler(LazyStateHelper<T> sender, Optional<T> oldValueA, Optional<T> newValueA);
 
     public delegate void StateAutoHelperIsEnabledChangedEventHandler(LazyStateHelper<T> sender);
 
     private readonly Action<T, bool> onIsEnabledChanged;
-    private T? value;
+    private Optional<T> value;
     private bool isEnabled;
 
-    public T? Value {
+    public Optional<T> Value {
         get => this.value;
         set {
-            T? oldValue = this.value;
-            if (!EqualityComparer<T?>.Default.Equals(oldValue, value)) {
-                if (oldValue != null && this.isEnabled)
-                    this.onIsEnabledChanged(oldValue, false);
+            Optional<T> oldValue = this.value;
+            if (!oldValue.Equals(value)) {
+                if (oldValue.HasValue && this.isEnabled)
+                    this.onIsEnabledChanged(oldValue.Value, false);
 
                 this.value = value;
                 this.ValueChanged?.Invoke(this, oldValue, value);
 
-                if (value != null && this.isEnabled)
-                    this.onIsEnabledChanged(value, true);
+                if (value.HasValue && this.isEnabled)
+                    this.onIsEnabledChanged(value.Value, true);
             }
         }
     }
@@ -57,8 +57,8 @@ public class LazyStateHelper<T> where T : class {
                 this.isEnabled = value;
                 this.IsEnabledChanged?.Invoke(this);
 
-                if (this.value != null) {
-                    this.onIsEnabledChanged(this.value, value);
+                if (this.value.HasValue) {
+                    this.onIsEnabledChanged(this.value.Value, value);
                 }
             }
         }

@@ -58,13 +58,11 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
     private Panel? PART_ActionPanel;
     private Border? PART_HeaderBorder;
     private ObservableItemProcessorIndexing<NotificationCommand>? processor;
-    private readonly LazyStateHelper<MultiBrushFlipFlopTimer> alertFlipFlop;
-
+    private readonly LazyHelper2<MultiBrushFlipFlopTimer, bool> alertFlipFlop;
     private Animation? animation;
-    private NotificationAlertMode myAlertMode;
 
     public NotificationListBoxItem() {
-        this.alertFlipFlop = new LazyStateHelper<MultiBrushFlipFlopTimer>((v, state) => v.IsEnabled = state);
+        this.alertFlipFlop = new LazyHelper2<MultiBrushFlipFlopTimer, bool>((a, b, enabled) => a.IsEnabled = enabled && b);
     }
 
     static NotificationListBoxItem() {
@@ -151,12 +149,12 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
-        this.alertFlipFlop.Value!.EnableTargets();
+        this.alertFlipFlop.Value1.Value.EnableTargets();
     }
 
     protected override void OnUnloaded(RoutedEventArgs e) {
         base.OnUnloaded(e);
-        this.alertFlipFlop.Value!.ClearTarget();
+        this.alertFlipFlop.Value1.Value.ClearTarget();
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
@@ -167,7 +165,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         this.PART_ActionPanel = e.NameScope.GetTemplateChild<Panel>("PART_ActionPanel");
         this.PART_HeaderBorder = e.NameScope.GetTemplateChild<Border>("PART_HeaderBorder");
         
-        this.alertFlipFlop.Value = new MultiBrushFlipFlopTimer(TimeSpan.FromMilliseconds(500), [
+        this.alertFlipFlop.Value1 = new MultiBrushFlipFlopTimer(TimeSpan.FromMilliseconds(500), [
             new BrushExchange(this.PART_HeaderBorder, BackgroundProperty, ConstantAvaloniaColourBrush.Transparent, new ConstantAvaloniaColourBrush(Brushes.Yellow)),
             new BrushExchange(this.PART_HeaderBorder, ForegroundProperty, DynamicForegroundBrush, new ConstantAvaloniaColourBrush(Brushes.Black)),
         ]) { StartHigh = true };
@@ -197,7 +195,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             (control as INotificationContent)?.OnShown();
         }
         
-        this.alertFlipFlop.IsEnabled = this.Model.AlertMode != NotificationAlertMode.None;
+        this.alertFlipFlop.Value2 = this.Model.AlertMode != NotificationAlertMode.None;
     }
 
     protected override void OnRemovingFromList() {
@@ -209,7 +207,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
         this.Model!.CaptionChanged -= this.ModelOnCaptionChanged;
         
-        this.alertFlipFlop.IsEnabled = false;
+        this.alertFlipFlop.Value2 = default;
     }
 
     protected override void OnRemovedFromList() {
@@ -242,7 +240,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
     }
     
     private void OnAlertModeChanged(Notification sender) {
-        this.alertFlipFlop.IsEnabled = sender.AlertMode != NotificationAlertMode.None;
+        this.alertFlipFlop.Value2 = sender.AlertMode != NotificationAlertMode.None;
     }
 
     // Note: the buttons are added/removed when the actual notification is added to/removed from the notification list box.
