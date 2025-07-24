@@ -29,7 +29,9 @@ using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Icons;
 
-public class GeometryIconImpl : AbstractAvaloniaIcon {
+public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
+    public IEnumerable<GeometryEntry> GeometryEntries => this.Elements.Select(x => x.entry);
+
     private readonly GeometryEntryRef[] Elements;
     public readonly StretchMode Stretch;
     private Geometry?[]? geometries;

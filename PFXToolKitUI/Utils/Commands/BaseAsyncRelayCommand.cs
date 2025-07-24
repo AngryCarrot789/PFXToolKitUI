@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 
 namespace PFXToolKitUI.Utils.Commands;
@@ -91,6 +92,10 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
             ExceptionDispatchInfo exceptInfo = ExceptionDispatchInfo.Capture(e);
             ApplicationPFX.Instance.Dispatcher.Post(() => exceptInfo.Throw(), DispatchPriority.Send);
         }
+        finally {
+            Debug.Assert(this.isRunningState == 0);
+            this.isRunningState = 0;
+        }
     }
 
     // The 2 functions below have almost the same copied code in order to give a slightly cleaner
@@ -107,7 +112,13 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     // Slight optimisation by not using async for ExecuteAsync, so that a state machine isn't needed
     public async Task ExecuteAsync(object? parameter) {
         if (Interlocked.CompareExchange(ref this.isRunningState, 1, 0) == 0) {
-            await this.InvokeAsyncImpl(parameter);
+            try {
+                await this.InvokeAsyncImpl(parameter);
+            }
+            finally {
+                Debug.Assert(this.isRunningState == 0);
+                this.isRunningState = 0;
+            }
         }
     }
 
@@ -121,8 +132,14 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     /// <param name="parameter">The parameter passed to this command</param>
     public async Task<bool> TryExecuteAsync(object? parameter) {
         if (this.CanExecute(parameter) && Interlocked.CompareExchange(ref this.isRunningState, 1, 0) == 0) {
-            await this.InvokeAsyncImpl(parameter);
-            return true;
+            try {
+                await this.InvokeAsyncImpl(parameter);
+                return true;
+            }
+            finally {
+                Debug.Assert(this.isRunningState == 0);
+                this.isRunningState = 0;
+            }
         }
 
         return false;

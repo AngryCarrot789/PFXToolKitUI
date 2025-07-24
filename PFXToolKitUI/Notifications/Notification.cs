@@ -35,6 +35,7 @@ public abstract class Notification {
     private CancellationTokenSource? ctsAutoHide;
     private IContextData? ctxData;
     private TimeSpan autoHideDelay = TimeSpan.FromSeconds(5);
+    private NotificationAlertMode alertMode;
 
     /// <summary>
     /// Gets or sets the text displayed in the notification's header
@@ -107,6 +108,18 @@ public abstract class Notification {
             }
         }
     }
+
+    /// <summary>
+    /// Gets or sets the alert mode
+    /// </summary>
+    public NotificationAlertMode AlertMode {
+        get => this.alertMode;
+        set => PropertyHelper.SetAndRaiseINE(ref this.alertMode, value, this, static t => t.AlertModeChanged?.Invoke(t));
+    }
+
+    // Notification.alarmMode -- remove this line
+    public delegate void NotificationAlarmModeChangedEventHandler(Notification sender);
+    public event NotificationAlarmModeChangedEventHandler? AlertModeChanged;
 
     public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
 

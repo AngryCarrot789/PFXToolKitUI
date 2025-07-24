@@ -46,6 +46,14 @@ public partial class ActivityStatusBarControl : UserControl {
             ], 
             stretch: StretchMode.Uniform);
     
+    public static readonly Icon CancelIconInverted =
+        IconManager.Instance.RegisterGeometryIcon(
+            nameof(CancelIconInverted),
+            [
+                new GeometryEntry("m.0005 1.9789q-0-.3411.2388-.5798l1.1599-1.1598q.2388-.2388.5799-.2388.3411-0 .5799.2388l2.5077 2.507 2.5077-2.507q.2388-.2388.5799-.2388.3411-0 .5799.2388l1.1599 1.1598Q10.1336 1.6378 10.1336 1.9789t-.2388.5799l-2.5077 2.507L9.8949 7.5726Q10.1337 7.8114 10.1337 8.1524t-.2388.5799l-1.1599 1.1598q-.2388.2386-.58.2387-.3411 0-.58-.2387l-2.5077-2.507-2.5077 2.507q-.2388.2386-.58.2387-.3411 0-.58-.2387l-1.1599-1.1598q-.2388-.2388-.2388-.5799t.2388-.5798L2.7469 5.0658.2392 2.5588q-.2388-.2388-.2388-.5799z", BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone0.Background.Static")),
+            ], 
+            stretch: StretchMode.Uniform);
+    
     public static readonly Icon ContinueActivityIcon =
         IconManager.Instance.RegisterGeometryIcon(
             nameof(ContinueActivityIcon),

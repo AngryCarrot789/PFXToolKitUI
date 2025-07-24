@@ -41,6 +41,8 @@ public abstract class AvaloniaColourBrush : IColourBrush {
 }
 
 public sealed class ConstantAvaloniaColourBrush : AvaloniaColourBrush, IConstantColourBrush {
+    public static IColourBrush Transparent { get; } = new ConstantAvaloniaColourBrush(Brushes.Transparent);
+    
     public override ImmutableSolidColorBrush Brush { get; }
 
     public SKColor Color { get; }

@@ -68,7 +68,7 @@ public class FlipFlopTimer {
             PropertyHelper.SetAndRaiseINE(ref this.levelChangesToStop, value, this, static t => t.IntervalToAutoStopChanged?.Invoke(t));
 
             if (this.IsEnabled) {
-                if (this.totalChangesSinceStart >= value) {
+                if (this.totalChangesSinceStart >= value && value != 0) {
                     this.DisableForLevelLimitReached();
                 }
                 else if (this.isDisabledForLevelChangeLimit) {
@@ -162,7 +162,7 @@ public class FlipFlopTimer {
         this.OnIsHighChanged(this.IsHigh);
             
         // We process the change, even if levelChangesToStop is 1
-        if (++this.totalChangesSinceStart >= this.levelChangesToStop) {
+        if (++this.totalChangesSinceStart >= this.levelChangesToStop && this.levelChangesToStop != 0) {
             this.DisableForLevelLimitReached();
         }
     }

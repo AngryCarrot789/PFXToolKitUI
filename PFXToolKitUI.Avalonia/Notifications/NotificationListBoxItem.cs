@@ -24,20 +24,27 @@ using Avalonia.Animation.Easings;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
+using Avalonia.Interactivity;
+using Avalonia.Media;
 using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 using PFXToolKitUI.Avalonia.Bindings;
+using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Notifications;
 using PFXToolKitUI.Tasks;
+using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Notifications;
 
 public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
+    public static readonly IDynamicColourBrush DynamicForegroundBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Foreground.Static");
+    
     public static readonly ModelControlRegistry<Notification, Control> ModelControlRegistry;
 
     public static readonly StyledProperty<string?> CaptionProperty = AvaloniaProperty.Register<NotificationListBoxItem, string?>(nameof(Caption));
@@ -49,11 +56,15 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
     private Button? PART_Close;
     private Panel? PART_ActionPanel;
+    private Border? PART_HeaderBorder;
     private ObservableItemProcessorIndexing<NotificationCommand>? processor;
+    private readonly LazyStateHelper<MultiBrushFlipFlopTimer> alertFlipFlop;
 
     private Animation? animation;
+    private NotificationAlertMode myAlertMode;
 
     public NotificationListBoxItem() {
+        this.alertFlipFlop = new LazyStateHelper<MultiBrushFlipFlopTimer>((v, state) => v.IsEnabled = state);
     }
 
     static NotificationListBoxItem() {
@@ -64,7 +75,13 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
     protected override void OnPointerEntered(PointerEventArgs e) {
         base.OnPointerEntered(e);
-        this.Model?.CancelAutoHide();
+        if (this.Model != null) {
+            if (this.Model.AlertMode == NotificationAlertMode.UntilUserInteraction) {
+                this.Model.AlertMode = NotificationAlertMode.None;
+            }
+            
+            this.Model.CancelAutoHide();
+        }
     }
 
     protected override void OnPointerExited(PointerEventArgs e) {
@@ -132,12 +149,29 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         }
     }
 
+    protected override void OnLoaded(RoutedEventArgs e) {
+        base.OnLoaded(e);
+        this.alertFlipFlop.Value!.EnableTargets();
+    }
+
+    protected override void OnUnloaded(RoutedEventArgs e) {
+        base.OnUnloaded(e);
+        this.alertFlipFlop.Value!.ClearTarget();
+    }
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_Close = e.NameScope.GetTemplateChild<Button>("PART_Close");
         this.PART_Close.Click += (sender, args) => this.Model?.Close();
 
         this.PART_ActionPanel = e.NameScope.GetTemplateChild<Panel>("PART_ActionPanel");
+        this.PART_HeaderBorder = e.NameScope.GetTemplateChild<Border>("PART_HeaderBorder");
+        
+        this.alertFlipFlop.Value = new MultiBrushFlipFlopTimer(TimeSpan.FromMilliseconds(500), [
+            new BrushExchange(this.PART_HeaderBorder, BackgroundProperty, ConstantAvaloniaColourBrush.Transparent, new ConstantAvaloniaColourBrush(Brushes.Yellow)),
+            new BrushExchange(this.PART_HeaderBorder, ForegroundProperty, DynamicForegroundBrush, new ConstantAvaloniaColourBrush(Brushes.Black)),
+        ]) { StartHigh = true };
+        
         this.processor?.AddExistingItems();
     }
 
@@ -149,6 +183,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         this.Caption = this.Model!.Caption ?? "";
         this.Model.CaptionChanged += this.ModelOnCaptionChanged;
         this.Model.IsAutoHideActiveChanged += this.OnIsAutoHideActiveChanged;
+        this.Model.AlertModeChanged += OnAlertModeChanged;
         if (this.Model.IsAutoHideActive) {
             this.OnIsAutoHideActiveChanged(this.Model);
         }
@@ -161,6 +196,8 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             this.Content = control;
             (control as INotificationContent)?.OnShown();
         }
+        
+        this.alertFlipFlop.IsEnabled = this.Model.AlertMode != NotificationAlertMode.None;
     }
 
     protected override void OnRemovingFromList() {
@@ -171,6 +208,8 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         this.processor!.Dispose();
 
         this.Model!.CaptionChanged -= this.ModelOnCaptionChanged;
+        
+        this.alertFlipFlop.IsEnabled = false;
     }
 
     protected override void OnRemovedFromList() {
@@ -201,6 +240,10 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             this.animation.RunAsync(this, sender.CancellationToken);
         }
     }
+    
+    private void OnAlertModeChanged(Notification sender) {
+        this.alertFlipFlop.IsEnabled = sender.AlertMode != NotificationAlertMode.None;
+    }
 
     // Note: the buttons are added/removed when the actual notification is added to/removed from the notification list box.
     // This is only done so that we can cache hyperlinks. Even though the IBinders aren't that expensive, it's still good to do
@@ -211,7 +254,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
     private void OnCommandRemoved(object sender, int index, NotificationCommand item) {
         if (this.PART_ActionPanel != null) {
-            NotificationHyperlinkButton button = (NotificationHyperlinkButton) this.PART_ActionPanel!.Children[index]; 
+            NotificationHyperlinkButton button = (NotificationHyperlinkButton) this.PART_ActionPanel!.Children[index];
             this.PART_ActionPanel!.Children.RemoveAt(index);
             NotificationHyperlinkButton.PushCachedButton(button);
         }
@@ -228,6 +271,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         protected override Type StyleKeyOverride => typeof(HyperlinkButton);
 
         private readonly IBinder<NotificationCommand> textBinder = new EventUpdateBinder<NotificationCommand>(nameof(NotificationCommand.TextChanged), (b) => ((NotificationHyperlinkButton) b.Control).Content = b.Model.Text);
+
         private readonly IBinder<NotificationCommand> toolTipBinder = new EventUpdateBinder<NotificationCommand>(nameof(NotificationCommand.ToolTipChanged), (b) => {
             if (!string.IsNullOrEmpty(b.Model.ToolTip)) {
                 TextBlock tb = new TextBlock {
@@ -298,13 +342,21 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             public void OnButtonAttachedToVT() {
                 this.cmd = button.myCurrentCommand!;
                 Debug.Assert(this.cmd != null);
-                
+
                 this.cmd.CanExecuteChanged += this.OnCanExecuteChanged;
+                
+                // When another notification is shown in the same call frame as a notification command being executed,
+                // if the pressed notification's button is cached then re-used in the newly shown notification,
+                // it will be stuck disabled because it's still technically running when CanExecute is queried.
+                
+                // So, schedule update at some point in the future.
+                // Using BeforeRender so that the user won't see it flicker as disabled then enabled next frame
+                ApplicationPFX.Instance.Dispatcher.Post(this.RaiseCanExecuteChanged, DispatchPriority.BeforeRender);
             }
 
             public void OnButtonDetachedFromVT() {
                 Debug.Assert(this.cmd != null);
-                
+
                 this.cmd!.CanExecuteChanged -= this.OnCanExecuteChanged;
             }
         }

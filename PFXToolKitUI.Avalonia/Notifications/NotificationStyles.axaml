@@ -23,7 +23,10 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}">
                     <DockPanel VerticalSpacing="2">
-                        <Border BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1" DockPanel.Dock="Top" Height="21">
+                        <Border x:Name="PART_HeaderBorder" 
+                                BorderBrush="{TemplateBinding BorderBrush}" 
+                                BorderThickness="0,0,0,1" 
+                                DockPanel.Dock="Top" Height="21">
                             <DockPanel>
                                 <!-- <Button x:Name="PART_Close" Content="X" DockPanel.Dock="Right" Padding="6,2" Background="Transparent" BorderThickness="0"/> -->
 
