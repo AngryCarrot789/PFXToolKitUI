@@ -30,12 +30,12 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, I
     /// </summary>
     /// <param name="eventName">The name of the model's event</param>
     /// <param name="getText">A getter to fetch the model's value as raw text for the text box</param>
-    /// <param name="updateModel">
+    /// <param name="parseAndUpdate">
     /// A function which tries to update the model's value from the text box's text. Returns true on success,
     /// returns false when the text box contains invalid data (and it's assumed it shows a dialog too).
     /// When this returns false, the text box's text is re-selected (if <see cref="FocusTextBoxOnError"/> is true)
     /// </param>
-    public TextBoxToEventPropertyBinder(string eventName, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task<bool>> updateModel) : base(updateModel) {
+    public TextBoxToEventPropertyBinder(string eventName, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate) : base(parseAndUpdate) {
         this.getText = getText;
         this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName);
     }

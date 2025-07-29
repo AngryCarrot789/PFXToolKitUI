@@ -30,7 +30,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
     public delegate void ValueConfirmedEventHandler(BaseTextBoxBinder<TModel> sender, string oldText);
 
-    private readonly Func<IBinder<TModel>, string, Task<bool>> updateModel;
+    private readonly Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate;
     private bool isHandlingChangeModel;
 
     /// <summary>
@@ -58,13 +58,13 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     /// </summary>
     /// <param name="eventName">The name of the model's event</param>
     /// <param name="getText">A getter to fetch the model's value as raw text for the text box</param>
-    /// <param name="updateModel">
+    /// <param name="parseAndUpdate">
     /// A function which tries to update the model's value from the text box's text. Returns true on success,
     /// returns false when the text box contains invalid data (and it's assumed it shows a dialog too).
     /// When this returns false, the text box's text is re-selected (if <see cref="FocusTextBoxOnError"/> is true)
     /// </param>
-    public BaseTextBoxBinder(Func<IBinder<TModel>, string, Task<bool>> updateModel) {
-        this.updateModel = updateModel;
+    public BaseTextBoxBinder(Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate) {
+        this.parseAndUpdate = parseAndUpdate;
     }
 
     protected abstract string GetTextCore();
@@ -144,7 +144,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     /// <summary>
     /// Updates our model based on what's present in the text block
     /// </summary>
-    public async void OnHandleUpdateModel() {
+    private async void OnHandleUpdateModel() {
         try {
             if (this.isHandlingChangeModel || !base.IsFullyAttached) {
                 return;
@@ -158,7 +158,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
             bool oldIsEnabled = control.IsEnabled;
             control.IsEnabled = false;
-            bool success = await this.updateModel(this, text);
+            bool success = await this.parseAndUpdate(this, text);
             control.IsEnabled = oldIsEnabled;
             this.UpdateControl();
             if (!success && this.FocusTextBoxOnError)

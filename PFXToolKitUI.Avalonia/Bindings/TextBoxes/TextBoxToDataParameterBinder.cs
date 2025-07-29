@@ -29,10 +29,21 @@ namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
 /// <typeparam name="TModel">Type of model</typeparam>
 /// <typeparam name="T">The type of value</typeparam>
 public class TextBoxToDataParameterBinder<TModel, T> : BaseTextBoxBinder<TModel> where TModel : class, ITransferableData {
-    public DataParameter? Parameter { get; }
+    private static readonly Func<IBinder<TModel>, string, Task<bool>> ParseAndUpdateValue = async (binder, text) => {
+        TextBoxToDataParameterBinder<TModel, T> instance = (TextBoxToDataParameterBinder<TModel, T>) binder;
+        Optional<T> result = await instance.parseValue(instance, text);
+        if (result.HasValue) {
+            instance.Parameter.SetValue(instance.Model, result.Value);
+            return true;
+        }
 
-    private readonly Func<T, string?>? ParamToProp;
-    private readonly Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> Convert;
+        return false;
+    };
+    
+    public DataParameter<T> Parameter { get; }
+
+    private readonly Func<T, string?>? convertToString;
+    private readonly Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> parseValue;
 
     /// <summary>
     /// Fired when <see cref="BaseBinder{TModel}.UpdateControl"/> is invoked (which is called
@@ -44,31 +55,23 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseTextBoxBinder<TModel>
     /// Creates a new data parameter property binder
     /// </summary>
     /// <param name="parameter">The data parameter, used to listen to model value changes</param>
-    /// <param name="parameterToProperty">Converts the parameter value to an appropriate property value (e.g. double to string)</param>
-    /// <param name="convert">
+    /// <param name="convertToString">Converts the parameter value to an appropriate property value (e.g. double to string)</param>
+    /// <param name="parseValue">
     /// Converts the text box string value back to the parameter value. This function
     /// can show dialogs and then return default on failure to convert back, and also
     /// re-selects the text box when <see cref="FocusTextBoxOnError"/> is true
     /// </param>
-    public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? parameterToProperty, Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> convert, Action<TextBoxToDataParameterBinder<TModel, T>>? postUpdateControl = null)
-        : base(async (binder, txt) => {
-            Optional<T> result = await convert((TextBoxToDataParameterBinder<TModel, T>) binder, txt);
-            if (result.HasValue) {
-                ((DataParameter<T>) ((TextBoxToDataParameterBinder<TModel, T>) binder).Parameter!).SetValue(binder.Model, result.Value);
-                return true;
-            }
-
-            return false;
-        }) {
+    public TextBoxToDataParameterBinder(DataParameter<T> parameter, Func<T, string?>? convertToString, Func<TextBoxToDataParameterBinder<TModel, T>, string, Task<Optional<T>>> parseValue, Action<TextBoxToDataParameterBinder<TModel, T>>? postUpdateControl = null)
+        : base(ParseAndUpdateValue) {
         this.Parameter = parameter;
-        this.ParamToProp = parameterToProperty;
-        this.Convert = convert;
+        this.convertToString = convertToString;
+        this.parseValue = parseValue;
         this.ControlUpdated = postUpdateControl;
     }
 
     protected override string GetTextCore() {
-        T newValue = ((DataParameter<T>) this.Parameter!).GetValue(this.Model);
-        return (this.ParamToProp != null ? this.ParamToProp(newValue) : newValue?.ToString()) ?? "";
+        T newValue = this.Parameter.GetValue(this.Model);
+        return (this.convertToString != null ? this.convertToString(newValue) : newValue?.ToString()) ?? "";
     }
 
     protected override void UpdateControlOverride() {
@@ -82,11 +85,11 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseTextBoxBinder<TModel>
 
     protected override void OnAttached() {
         base.OnAttached();
-        this.Parameter?.AddValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
+        this.Parameter.AddValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        this.Parameter?.RemoveValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
+        this.Parameter.RemoveValueChangedHandler(this.Model, this.OnDataParameterValueChanged);
     }
 }
