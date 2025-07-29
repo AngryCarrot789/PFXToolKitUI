@@ -40,7 +40,7 @@ public delegate void TaskManagerTaskEventHandler(ActivityManager activityManager
 /// using CancellationTokenSource cts = new CancellationTokenSource();
 /// byte[] bytes = await ActivityManager.Instance.RunTask(async () => {
 ///     ActivityTask task = ActivityManager.Instance.CurrentTask;
-///     IActivityProgress progress = task.Progress;
+///     DefaultProgressTracker progress = task.Progress;
 ///     progress.Caption = "Produce data";
 ///     {
 ///         progress.Text = "Reading data from server...";
@@ -97,7 +97,7 @@ public sealed class ActivityManager : IDisposable {
 
     public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, progress, null, creationOptions);
 
-    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new DefaultProgressTracker(), cts, creationOptions);
+    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new ConcurrentActivityProgress(), cts, creationOptions);
 
     public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) {
         return ActivityTask.InternalStartActivity(this, action, progress, cts, creationOptions);
@@ -107,7 +107,7 @@ public sealed class ActivityManager : IDisposable {
 
     public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, progress, null, creationOptions);
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new DefaultProgressTracker(), cts, creationOptions);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new ConcurrentActivityProgress(), cts, creationOptions);
 
     public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) {
         return ActivityTask<T>.InternalStartActivity(this, action, progress, cts, creationOptions);

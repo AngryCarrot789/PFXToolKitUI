@@ -32,8 +32,11 @@ public interface IMessageDialogService {
     /// <param name="caption">The window titlebar message</param>
     /// <param name="message">The main message content</param>
     /// <param name="buttons">The buttons to show</param>
-    /// <param name="defaultButton"></param>
-    /// <param name="persistentDialogName"></param>
+    /// <param name="defaultButton">The default selected button. Default is none</param>
+    /// <param name="persistentDialogName">
+    /// A unique ID for this type of message dialog that allows the user to specify to remember 
+    /// their selection and use the same result next time without showing the dialog
+    /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
     Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null);
 
@@ -44,8 +47,11 @@ public interface IMessageDialogService {
     /// <param name="header">A message presented in bold above the message, a less concise caption but still short</param>
     /// <param name="message">The main message content</param>
     /// <param name="buttons">The buttons to show</param>
-    /// <param name="defaultButton"></param>
-    /// <param name="persistentDialogName"></param>
+    /// <param name="defaultButton">The default selected button. Default is none</param>
+    /// <param name="persistentDialogName">
+    /// A unique ID for this type of message dialog that allows the user to specify to remember 
+    /// their selection and use the same result next time without showing the dialog
+    /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
     Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null);
 

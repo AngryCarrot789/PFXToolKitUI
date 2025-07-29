@@ -22,7 +22,7 @@ namespace PFXToolKitUI.Tasks;
 public delegate void ActivityProgressEventHandler(IActivityProgress tracker);
 
 /// <summary>
-/// An interface for an object used to track progression of an activity
+/// Used to track progression of an activity
 /// </summary>
 public interface IActivityProgress {
     /// <summary>

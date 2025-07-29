@@ -23,6 +23,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Input.Platform;
 using Avalonia.Layout;
+using Avalonia.Platform;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.Controls;
@@ -55,6 +56,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
 
     private VisualLayerManager? PART_VisualLayerManager;
     private Panel? PART_TitleBarPanel;
+    private Window? myPlacedCenteredToOverride;
 
     public IClipboardService? ClipboardService { get; }
 
@@ -67,6 +69,38 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
         this.ClipboardService = clip != null ? new ClipboardServiceImpl(clip) : null;
         DataManager.GetContextData(this).Set(IDesktopWindow.DataKey, this);
     }
+
+    /// <summary>
+    /// Sets this window to be placed centric to the given window. If we are not open yet, this will be processed when we become shown.
+    /// </summary>
+    /// <param name="window"></param>
+    public void PlaceCenteredTo(Window window) {
+        if (this.IsOpen) {
+            Thickness vlmMargin = this.PART_VisualLayerManager!.Margin;
+            Size desiredSize = this.DesiredSize.Inflate(vlmMargin);
+            Size parentSize = window.Bounds.Size;
+            double x = (parentSize.Width - desiredSize.Width) / 2;
+            double y = (parentSize.Height - desiredSize.Height) / 2;
+            PixelPoint newPosition = window.Position + new PixelPoint((int) x, (int) y);
+
+            Screen? screen = this.Screens.ScreenFromWindow(window) ?? this.Screens.ScreenFromPoint(window.Position);
+            if (screen != null) {
+                PixelRect constraint = screen.WorkingArea;
+                double maxX = constraint.Right - desiredSize.Width;
+                double maxY = constraint.Bottom - desiredSize.Height;
+                if (constraint.X <= maxX)
+                    newPosition = newPosition.WithX((int) Math.Floor(Math.Clamp(newPosition.X, constraint.X, maxX)));
+                if (constraint.Y <= maxY)
+                    newPosition = newPosition.WithY((int) Math.Floor(Math.Clamp(newPosition.Y, constraint.Y, maxY)));
+            }
+
+            this.Position = newPosition;
+        }
+        else {
+            this.myPlacedCenteredToOverride = window;
+        }
+    }
+
 
     public void Show(DesktopWindow? parent) {
         if (parent == null) {
@@ -94,47 +128,30 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
         this.StopRendering();
         this.IsClosed = false;
         this.IsOpen = true;
-
-        // if (this.Content is Layoutable control) {
-        //     this.Measure(new Size(double.PositiveInfinity, double.PositiveInfinity));
-        //     Size dsSize = control.DesiredSize;
-        //     if (!this.IsSet(WidthProperty))
-        //         this.Width = dsSize.Width;
-        //     if (!this.IsSet(HeightProperty))
-        //         this.Height = dsSize.Height;
-        // }
-
+        
         this.OnOpenedCore();
-        // {
-        //     SizeToContent s2c = this.SizeToContent;
-        //     if (this.IsSet(WidthProperty))
-        //         s2c &= ~SizeToContent.Width;
-        //     if (this.IsSet(HeightProperty))
-        //         s2c &= ~SizeToContent.Height;
-        //     this.SizeToContent = s2c;
-        // }
-
         base.OnOpened(e);
-
         this.InvalidateMeasure();
         this.InvalidateArrange();
         this.UpdateLayout();
 
-        if (this.WindowStartupLocation == WindowStartupLocation.CenterOwner && this.Owner is Window owner) {
-            Thickness vtlMargin = this.PART_VisualLayerManager!.Margin;
-            Size desiredSize = this.DesiredSize;
-            desiredSize = new Size(
-                desiredSize.Width + vtlMargin.Left + vtlMargin.Right,
-                desiredSize.Height + vtlMargin.Top + vtlMargin.Bottom);
-
-            Size ownerSize = owner.Bounds.Size;
-            Size size = (ownerSize / 2) - (desiredSize / 2);
-            this.Position = owner.Position + new PixelPoint((int) size.Width, (int) size.Height);
-        }
+        this.UpdatePlacement();
 
         this.StartRendering();
 
-        Dispatcher.UIThread.Invoke(() => this.SizeToContent = SizeToContent.Manual, DispatcherPriority.Loaded);
+        Dispatcher.UIThread.Invoke(void () => {
+            this.SizeToContent = SizeToContent.Manual;
+        }, DispatcherPriority.Loaded);
+    }
+
+    private void UpdatePlacement() {
+        if (this.myPlacedCenteredToOverride != null) {
+            this.PlaceCenteredTo(this.myPlacedCenteredToOverride);
+            this.myPlacedCenteredToOverride = null;
+        }
+        else if (this.WindowStartupLocation == WindowStartupLocation.CenterOwner && this.Owner is Window owner) {
+            this.PlaceCenteredTo(owner);
+        }
     }
 
     protected override async Task<bool> OnClosingAsync(WindowCloseReason reason) {

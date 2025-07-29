@@ -83,7 +83,7 @@
 
                                 <DataGridTemplateColumn Header="Is only persistent until app closes" Width="210">
                                     <DataTemplate DataType="{x:Type dd:PersistentDialogResultViewModel}">
-                                        <CheckBox IsChecked="{Binding FuckYouAvaloniaJustFuckingWorkProperly, Mode=TwoWay}"/>
+                                        <CheckBox IsChecked="{Binding IsPersistentOnlyUntilAppCloses, Mode=TwoWay}"/>
                                     </DataTemplate>
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>

@@ -182,15 +182,15 @@ public partial class ActivityStatusBarControl : UserControl {
     }
 
     private void OnActivityTaskTextChanged(IActivityProgress? tracker) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_TaskBodyText.Text = tracker?.Text ?? "", DispatchPriority.Loaded);
+        this.PART_TaskBodyText.Text = tracker?.Text ?? "";
     }
 
     private void OnPrimaryActionCompletionValueChanged(CompletionState? state) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_ActiveBgProgress.Value = state?.TotalCompletion ?? 0.0, DispatchPriority.Loaded);
+        this.PART_ActiveBgProgress.Value = state?.TotalCompletion ?? 0.0;
     }
 
     private void OnActivityTaskIndeterminateChanged(IActivityProgress? tracker) {
-        ApplicationPFX.Instance.Dispatcher.Invoke(() => this.PART_ActiveBgProgress.IsIndeterminate = tracker?.IsIndeterminate ?? false, DispatchPriority.Loaded);
+        this.PART_ActiveBgProgress.IsIndeterminate = tracker?.IsIndeterminate ?? false;
     }
     
     private void PART_CancelActivityButton_OnClick(object? sender, RoutedEventArgs e) {

@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Runtime.ExceptionServices;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Services.Messaging;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -172,6 +173,6 @@ public abstract class Command {
     }
 
     protected virtual Task OnExecutionException(CommandEventArgs args, Exception e) {
-        return IMessageDialogService.Instance.ShowMessage("Command Error", "An exception occurred while executing command", e.ToString());
+        return LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", e);
     }
 }

@@ -21,8 +21,11 @@ using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.Tasks;
 
-public class DefaultProgressTracker : IActivityProgress {
-    private readonly object dataLock = new object(); // only really used as a memory barrier
+/// <summary>
+/// Concurrent implementation of <see cref="IActivityProgress"/>
+/// </summary>
+public class ConcurrentActivityProgress : IActivityProgress {
+    private readonly Lock dataLock = new Lock(); // only really used as a memory barrier
     private bool isIndeterminate;
     private string? headerText;
     private string? descriptionText;
@@ -37,7 +40,7 @@ public class DefaultProgressTracker : IActivityProgress {
                 this.isIndeterminate = value;
             }
 
-            this.updateIsIndeterminateRda?.InvokeAsync();
+            this.updateIsIndeterminateRda.InvokeAsync();
         }
     }
 
@@ -50,7 +53,7 @@ public class DefaultProgressTracker : IActivityProgress {
                 this.headerText = value;
             }
 
-            this.updateCaptionRda?.InvokeAsync();
+            this.updateCaptionRda.InvokeAsync();
         }
     }
 
@@ -64,7 +67,7 @@ public class DefaultProgressTracker : IActivityProgress {
                 this.isTextUpdated = false;
             }
 
-            this.updateTextRda?.InvokeAsync();
+            this.updateTextRda.InvokeAsync();
         }
     }
 
@@ -84,10 +87,10 @@ public class DefaultProgressTracker : IActivityProgress {
 
     public CompletionState CompletionState { get; }
     
-    public DefaultProgressTracker() : this(DispatchPriority.Loaded) {
+    public ConcurrentActivityProgress() : this(DispatchPriority.Loaded) {
     }
 
-    public DefaultProgressTracker(DispatchPriority eventDispatchPriority) {
+    public ConcurrentActivityProgress(DispatchPriority eventDispatchPriority) {
         this.eventDispatchPriority = eventDispatchPriority;
         this.updateIsIndeterminateRda = RapidDispatchActionEx.ForSync(() => this.IsIndeterminateChanged?.Invoke(this), eventDispatchPriority);
         this.updateCaptionRda = RapidDispatchActionEx.ForSync(() => this.CaptionChanged?.Invoke(this), eventDispatchPriority);

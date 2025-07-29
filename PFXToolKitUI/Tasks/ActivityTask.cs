@@ -184,7 +184,7 @@ public class ActivityTask {
     }
 
     internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions, AdvancedPausableTask? pausableTask = null) {
-        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DefaultProgressTracker(), cts) { myInternalPausableTask = pausableTask };
+        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new ConcurrentActivityProgress(), cts) { myInternalPausableTask = pausableTask };
         if (pausableTask != null)
             pausableTask.activity = task;
         return InternalStartActivityImpl(task, creationOptions);
@@ -217,7 +217,7 @@ public class ActivityTask<T> : ActivityTask {
     }
 
     internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions) {
-        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new DefaultProgressTracker(), cts), creationOptions);
+        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new ConcurrentActivityProgress(), cts), creationOptions);
     }
 
     /// <inheritdoc cref="ActivityTask.GetAwaiter"/>

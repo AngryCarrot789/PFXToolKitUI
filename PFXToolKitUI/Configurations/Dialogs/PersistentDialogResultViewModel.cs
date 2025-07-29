@@ -25,7 +25,7 @@ using PFXToolKitUI.Services.Messaging.Configurations;
 namespace PFXToolKitUI.Configurations.Dialogs;
 
 public class PersistentDialogResultViewModel : INotifyPropertyChanged {
-    private bool fuckYouAvaloniaJustFuckingWorkProperly;
+    private bool isPersistentOnlyUntilAppCloses;
     
     public PersistentDialogResult PersistentDialogResult { get; }
 
@@ -33,11 +33,11 @@ public class PersistentDialogResultViewModel : INotifyPropertyChanged {
 
     public MessageBoxResult? Button { get; private set; }
 
-    public bool FuckYouAvaloniaJustFuckingWorkProperly {
-        get => this.fuckYouAvaloniaJustFuckingWorkProperly;
+    public bool IsPersistentOnlyUntilAppCloses {
+        get => this.isPersistentOnlyUntilAppCloses;
         set {
-            this.fuckYouAvaloniaJustFuckingWorkProperly = value;
-            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.FuckYouAvaloniaJustFuckingWorkProperly)));
+            this.isPersistentOnlyUntilAppCloses = value;
+            this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(this.IsPersistentOnlyUntilAppCloses)));
         }
     }
 
@@ -47,7 +47,7 @@ public class PersistentDialogResultViewModel : INotifyPropertyChanged {
         this.PersistentDialogResult = persistentDialogResult;
         this.PersistentDialogResult.IsPersistentOnlyUntilAppClosesChanged += this.OnIsPersistentOnlyUntilAppClosesChanged;
         this.PersistentDialogResult.ButtonChanged += this.OnButtonChanged;
-        this.fuckYouAvaloniaJustFuckingWorkProperly = persistentDialogResult.IsPersistentOnlyUntilAppCloses;
+        this.isPersistentOnlyUntilAppCloses = persistentDialogResult.IsPersistentOnlyUntilAppCloses;
         this.Button = persistentDialogResult.Button;
     }
 
@@ -56,7 +56,7 @@ public class PersistentDialogResultViewModel : INotifyPropertyChanged {
     }
 
     private void OnIsPersistentOnlyUntilAppClosesChanged(PersistentDialogResult sender) {
-        this.FuckYouAvaloniaJustFuckingWorkProperly = sender.IsPersistentOnlyUntilAppCloses;
+        this.IsPersistentOnlyUntilAppCloses = sender.IsPersistentOnlyUntilAppCloses;
     }
     
     private void OnButtonChanged(PersistentDialogResult sender) {

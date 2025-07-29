@@ -28,7 +28,7 @@ using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Services.Messaging;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
@@ -138,7 +138,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
                 ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
             else {
-                await IMessageDialogService.Instance.ShowMessage("Error", "An exception occurred while running this operation", e.ToString());
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", e);
             }
         }
         finally {

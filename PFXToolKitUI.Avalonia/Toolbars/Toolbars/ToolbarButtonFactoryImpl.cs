@@ -122,7 +122,7 @@ public abstract class AbstractAvaloniaButtonElement : AbstractAvaloniaToolBarEle
         }
     }
 
-    private void OnInheritedContextChangedImmediately(object sender, RoutedEventArgs e) {
+    private void OnInheritedContextChangedImmediately(object? sender, RoutedEventArgs e) {
         this.ContextInvalidated?.Invoke(this);
     }
 }

@@ -52,7 +52,7 @@ public class PersistentDialogResultConfigurationPage : ConfigurationPage {
 
     public override ValueTask Apply(List<ApplyChangesFailureEntry>? errors) {
         foreach (PersistentDialogResultViewModel vm in this.myList) {
-            vm.PersistentDialogResult.SetButton(vm.Button, vm.FuckYouAvaloniaJustFuckingWorkProperly, false);
+            vm.PersistentDialogResult.SetButton(vm.Button, vm.IsPersistentOnlyUntilAppCloses, false);
         }
 
         PersistentDialogResultConfiguration.Instance.StorageManager.SaveArea(PersistentDialogResultConfiguration.Instance);
