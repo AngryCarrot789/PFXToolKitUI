@@ -23,7 +23,7 @@ using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 
 namespace PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer.Enums;
 
-public class EnumDataParameterPropertyEditorSlotControl<TEnum> : BaseEnumDataParameterPropertyEditorSlotControlEx where TEnum : struct, Enum {
+public class EnumDataParameterPropertyEditorSlotControl<TEnum> : BaseEnumDataParameterPropertyEditorSlotControlEx where TEnum : unmanaged, Enum {
     // TODO: maybe add a property in the slot for the type of
     // control to use? combobox, radiobuttons, etc.
 

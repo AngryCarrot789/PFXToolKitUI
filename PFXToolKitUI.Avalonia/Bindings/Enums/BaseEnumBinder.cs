@@ -22,7 +22,7 @@ using Avalonia.Interactivity;
 
 namespace PFXToolKitUI.Avalonia.Bindings.Enums;
 
-public abstract class BaseEnumBinder<TEnum> where TEnum : struct, Enum {
+public abstract class BaseEnumBinder<TEnum> where TEnum : unmanaged, Enum {
     private readonly Dictionary<RadioButton, TEnum> buttonToState; // all radio buttons
     private readonly Dictionary<TEnum, List<RadioButton>> stateToButtons; // maps enum to radio buttons
     private bool isAttaching, isUpdatingControls; // we track when updating controls to prevent possible stack overflow exception in weird setups.

@@ -84,7 +84,7 @@ public abstract class BasePropertyEditorSlotControl : TemplatedControl {
         Registry.RegisterType<DisplayNamePropertyEditorSlot>(() => new DisplayNamePropertyEditorSlotControl());
     }
 
-    public static void RegisterEnumControl<TEnum, TSlot>() where TEnum : struct, Enum where TSlot : DataParameterEnumPropertyEditorSlot<TEnum> {
+    public static void RegisterEnumControl<TEnum, TSlot>() where TEnum : unmanaged, Enum where TSlot : DataParameterEnumPropertyEditorSlot<TEnum> {
         Registry.RegisterType<TSlot>(() => new EnumDataParameterPropertyEditorSlotControl<TEnum>());
     }
 

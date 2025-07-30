@@ -24,7 +24,7 @@ namespace PFXToolKitUI.Avalonia.Bindings.Enums;
 /// <summary>
 /// A class which helps bind radio buttons to an enum property
 /// </summary>
-public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum>, IRelayEventHandler where TEnum : struct, Enum {
+public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum>, IRelayEventHandler where TEnum : unmanaged, Enum {
     private readonly Action<object, TEnum> setter;
     private readonly Func<object, TEnum> getter;
     private readonly SenderEventRelay eventRelay;

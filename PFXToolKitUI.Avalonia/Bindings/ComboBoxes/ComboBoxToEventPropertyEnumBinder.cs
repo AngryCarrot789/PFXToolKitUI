@@ -22,12 +22,13 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings.ComboBoxes;
 
-public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where TEnum : struct, Enum {
-    private static readonly ReadOnlyCollection<TEnum> ENUM_VALUES = DataParameterEnumInfo<TEnum>.EnumValues;
+public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where TEnum : unmanaged, Enum {
+    private static readonly ReadOnlyCollection<TEnum> ENUM_VALUES = EnumInfo<TEnum>.EnumValues;
 
     private readonly Action<object, TEnum> setter;
     private readonly Func<object, TEnum?> getter;

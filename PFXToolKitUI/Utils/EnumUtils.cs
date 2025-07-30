@@ -18,48 +18,28 @@
 // 
 
 using System.Runtime.CompilerServices;
-using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 
 namespace PFXToolKitUI.Utils;
 
 public static class EnumUtils {
     public static bool IsValid<T>(T value) where T : unmanaged, Enum {
-        T min = DataParameterEnumInfo<T>.MinValue;
-        T max = DataParameterEnumInfo<T>.MaxValue;
-        
-        long val64 = Unsafe.As<T, long>(ref value);
-        long min64 = Unsafe.As<T, long>(ref min);
-        long max64 = Unsafe.As<T, long>(ref max);
-        return val64 >= min64 && val64 <= max64;
+        if (EnumInfo<T>.IsUnsigned) {
+            ulong val64 = EnumInfo<T>.GetUnsignedValue(value);
+            ulong min64 = EnumInfo<T>.GetUnsignedValue(EnumInfo<T>.MinValue);
+            ulong max64 = EnumInfo<T>.GetUnsignedValue(EnumInfo<T>.MaxValue);
+            return val64 >= min64 && val64 <= max64;
+        }
+        else {
+            long val64 = EnumInfo<T>.GetSignedValue(value);
+            long min64 = EnumInfo<T>.GetSignedValue(EnumInfo<T>.MinValue);
+            long max64 = EnumInfo<T>.GetSignedValue(EnumInfo<T>.MaxValue);
+            return val64 >= min64 && val64 <= max64;
+        }
     }
 
     public static void Validate<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : unmanaged, Enum {
         if (!IsValid(value)) {
-            throw new ArgumentOutOfRangeException(paramName ?? nameof(value), value, $"Enum value is out of range. Must be between {DataParameterEnumInfo<T>.MinValue} and {DataParameterEnumInfo<T>.MaxValue}");
+            throw new ArgumentOutOfRangeException(paramName ?? nameof(value), value, $"Enum value is out of range. Must be between {EnumInfo<T>.MinValue} and {EnumInfo<T>.MaxValue}");
         }
-    }
-
-    public static long GetSignedValue<TEnum>(TEnum value, Type underlyingType) where TEnum : struct, Enum {
-        if (underlyingType == typeof(sbyte))
-            return Unsafe.As<TEnum, sbyte>(ref value);
-        if (underlyingType == typeof(short))
-            return Unsafe.As<TEnum, short>(ref value);
-        if (underlyingType == typeof(int))
-            return Unsafe.As<TEnum, int>(ref value);
-        if (underlyingType == typeof(long))
-            return Unsafe.As<TEnum, long>(ref value);
-        throw new ArgumentOutOfRangeException(nameof(value));
-    }
-    
-    public static ulong GetUnsignedValue<TEnum>(TEnum value, Type underlyingType) where TEnum : struct, Enum {
-        if (underlyingType == typeof(byte))
-            return Unsafe.As<TEnum, byte>(ref value);
-        if (underlyingType == typeof(ushort))
-            return Unsafe.As<TEnum, ushort>(ref value);
-        if (underlyingType == typeof(uint))
-            return Unsafe.As<TEnum, uint>(ref value);
-        if (underlyingType == typeof(ulong))
-            return Unsafe.As<TEnum, ulong>(ref value);
-        throw new ArgumentOutOfRangeException(nameof(value));
     }
 }

@@ -23,7 +23,7 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 
-public class DataParameterEnumPropertyEditorSlot<TEnum> : DataParameterPropertyEditorSlot where TEnum : struct, Enum {
+public class DataParameterEnumPropertyEditorSlot<TEnum> : DataParameterPropertyEditorSlot where TEnum : unmanaged, Enum {
     public readonly DataParameterEnumInfo<TEnum>? TranslationInfo;
 
     /// <summary>
@@ -36,8 +36,8 @@ public class DataParameterEnumPropertyEditorSlot<TEnum> : DataParameterPropertyE
     public TEnum Value {
         get => this.value;
         set {
-            if (!DataParameterEnumInfo<TEnum>.EnumValuesSet.Contains(value))
-                value = DataParameterEnumInfo<TEnum>.DefaultValue;
+            if (!EnumInfo<TEnum>.EnumValuesSet.Contains(value))
+                value = default;
 
             if (EqualityComparer<TEnum>.Default.Equals(value, this.value))
                 return;
@@ -52,7 +52,7 @@ public class DataParameterEnumPropertyEditorSlot<TEnum> : DataParameterPropertyE
         }
     }
 
-    public TEnum? DefaultValue => ReferenceEquals(this.AllowedValues, DataParameterEnumInfo<TEnum>.EnumValues) ? DataParameterEnumInfo<TEnum>.DefaultValue : this.AllowedValues.FirstOrDefault();
+    public TEnum? DefaultValue => ReferenceEquals(this.AllowedValues, EnumInfo<TEnum>.EnumValues) ? default : this.AllowedValues.FirstOrDefault();
 
     public new DataParameter<TEnum> Parameter => (DataParameter<TEnum>) base.Parameter;
 
@@ -60,11 +60,11 @@ public class DataParameterEnumPropertyEditorSlot<TEnum> : DataParameterPropertyE
 
     public DataParameterEnumPropertyEditorSlot(DataParameter<TEnum> parameter, Type applicableType, string displayName, IEnumerable<TEnum>? values = null, DataParameterEnumInfo<TEnum>? translationInfo = null) : base(parameter, applicableType, displayName) {
         this.TranslationInfo = translationInfo;
-        this.AllowedValues = values != null ? values.Distinct().ToList().AsReadOnly() : DataParameterEnumInfo<TEnum>.EnumValues;
+        this.AllowedValues = values != null ? values.Distinct().ToList().AsReadOnly() : EnumInfo<TEnum>.EnumValues;
     }
 
     public override void QueryValueFromHandlers() {
-        TEnum? val = CollectionUtils.GetEqualValue(this.Handlers, (x) => this.Parameter.GetValue((ITransferableData) x), out TEnum? d) ? d : default;
-        this.value = val.HasValue && DataParameterEnumInfo<TEnum>.EnumValuesSet.Contains(val.Value) ? val.Value : DataParameterEnumInfo<TEnum>.DefaultValue;
+        TEnum? val = CollectionUtils.GetEqualValue(this.Handlers, (x) => this.Parameter.GetValue((ITransferableData) x), out TEnum? d) ? d : null;
+        this.value = val.HasValue && EnumInfo<TEnum>.EnumValuesSet.Contains(val.Value) ? val.Value : default;
     }
 }

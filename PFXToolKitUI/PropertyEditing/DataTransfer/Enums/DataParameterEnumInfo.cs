@@ -27,13 +27,7 @@ namespace PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 /// Information about an enum set
 /// </summary>
 /// <typeparam name="TEnum">Type of enum</typeparam>
-public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
-    public static readonly TEnum DefaultValue;
-    public static readonly TEnum MinValue, MaxValue;
-    public static readonly ReadOnlyCollection<TEnum> EnumValues;
-    public static readonly IReadOnlySet<TEnum> EnumValuesSet;
-    public static readonly ReadOnlyCollection<TEnum> EnumValuesOrderedByName;
-
+public class DataParameterEnumInfo<TEnum> where TEnum : unmanaged, Enum {
     /// <summary>
     /// Returns a list of allowed enum values which are also mapped to a readable string name
     /// </summary>
@@ -85,71 +79,11 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
         this.TextList = this.AllowedEnumList.Select(x => x.Item2).ToList().AsReadOnly();
     }
 
-    static DataParameterEnumInfo() {
-        DefaultValue = default;
-        EnumValues = Enum.GetValues<TEnum>().ToList().AsReadOnly();
-        EnumValuesSet = new HashSet<TEnum>(EnumValues);
-        EnumValuesOrderedByName = EnumValues.OrderBy(x => x.ToString()).ToList().AsReadOnly();
-
-        if (EnumValues.Count < 1) {
-            MinValue = MaxValue = DefaultValue;
-        }
-        else {
-            Type type = Enum.GetUnderlyingType(typeof(TEnum));
-            if (type == typeof(byte) || type == typeof(ushort) || type == typeof(uint) || type == typeof(ulong)) {
-                TEnum value = EnumValues[0];
-                ulong val64 = EnumUtils.GetUnsignedValue(value, type);
-                
-                TEnum eMin = value, eMax = value;
-                ulong iMin = val64, iMax = val64;
-                for (int i = 1; i < EnumValues.Count; i++) {
-                    value = EnumValues[i];
-                    val64 = EnumUtils.GetUnsignedValue(value, type);
-                    if (val64 < iMin) {
-                        iMin = val64;
-                        eMin = value;
-                    }
-                    else if (val64 > iMax) {
-                        iMax = val64;
-                        eMax = value;
-                    }
-                }
-
-                MinValue = eMin;
-                MaxValue = eMax;
-            }
-            else {
-                // Apparently float and double types are technically supported but not compilable
-                Debug.Assert(type == typeof(sbyte) || type == typeof(short) || type == typeof(int) || type == typeof(long));
-                TEnum value = EnumValues[0];
-                long val64 = EnumUtils.GetSignedValue(value, type);
-                
-                TEnum eMin = value, eMax = value;
-                long iMin = val64, iMax = val64;
-                for (int i = 1; i < EnumValues.Count; i++) {
-                    value = EnumValues[i];
-                    val64 = EnumUtils.GetSignedValue(value, type);
-                    if (val64 < iMin) {
-                        iMin = val64;
-                        eMin = value;
-                    }
-                    else if (val64 > iMax) {
-                        iMax = val64;
-                        eMax = value;
-                    }
-                }
-
-                MinValue = eMin;
-                MaxValue = eMax;
-            }
-        }
-    }
-
     /// <summary>
     /// Returns enum info for all enum constants of the enum type
     /// </summary>
     public static DataParameterEnumInfo<TEnum> All() {
-        return new DataParameterEnumInfo<TEnum>(EnumValues);
+        return new DataParameterEnumInfo<TEnum>(EnumInfo<TEnum>.EnumValues);
     }
 
     /// <summary>
@@ -157,7 +91,7 @@ public class DataParameterEnumInfo<TEnum> where TEnum : struct, Enum {
     /// </summary>
     /// <param name="enumToTextMap"></param>
     public static DataParameterEnumInfo<TEnum> All(IReadOnlyDictionary<TEnum, string> enumToTextMap) {
-        return new DataParameterEnumInfo<TEnum>(EnumValues, enumToTextMap);
+        return new DataParameterEnumInfo<TEnum>(EnumInfo<TEnum>.EnumValues, enumToTextMap);
     }
 
     /// <summary>

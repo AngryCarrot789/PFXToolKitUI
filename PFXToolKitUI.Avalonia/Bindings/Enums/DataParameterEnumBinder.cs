@@ -24,7 +24,7 @@ namespace PFXToolKitUI.Avalonia.Bindings.Enums;
 /// <summary>
 /// A class which helps bind radio buttons to an enum data parameter
 /// </summary>
-public class DataParameterEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum : struct, Enum {
+public class DataParameterEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum : unmanaged, Enum {
     /// <summary>
     /// Gets or sets the active transferable data owner
     /// </summary>

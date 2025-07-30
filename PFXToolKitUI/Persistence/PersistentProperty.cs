@@ -128,7 +128,7 @@ public abstract class PersistentProperty {
     /// <typeparam name="TEnum">The enum type</typeparam>
     /// <typeparam name="TOwner">The owner of the property</typeparam>
     /// <returns>The property, which you can store as a public static readonly field</returns>
-    public static PersistentProperty<TEnum> RegisterEnum<TEnum, TOwner>(string name, TEnum defaultValue, Func<TOwner, TEnum> getValue, Action<TOwner, TEnum> setValue, bool canSaveDefault) where TEnum : struct, Enum where TOwner : PersistentConfiguration {
+    public static PersistentProperty<TEnum> RegisterEnum<TEnum, TOwner>(string name, TEnum defaultValue, Func<TOwner, TEnum> getValue, Action<TOwner, TEnum> setValue, bool canSaveDefault) where TEnum : unmanaged, Enum where TOwner : PersistentConfiguration {
         PersistentPropertyEnum<TEnum> property = new PersistentPropertyEnum<TEnum>(defaultValue, (x) => getValue((TOwner) x), (x, y) => setValue((TOwner) x, y), canSaveDefault);
         RegisterCore(property, name, typeof(TOwner));
         return property;
@@ -255,7 +255,7 @@ public abstract class PersistentProperty {
         }
     }
 
-    private class PersistentPropertyEnum<T> : PersistentProperty<T> where T : struct, Enum {
+    private class PersistentPropertyEnum<T> : PersistentProperty<T> where T : unmanaged, Enum {
         private readonly string defaultText;
         private readonly bool canSaveDefault;
 
