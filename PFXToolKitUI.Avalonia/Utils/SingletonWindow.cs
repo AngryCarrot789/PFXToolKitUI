@@ -40,13 +40,15 @@ public sealed class SingletonWindow {
     }
 
     public void ShowOrActivate() {
-        if (this.window == null || !this.window.IsOpen) {
+        if (this.window == null) {
             this.window = this.factory();
             this.window.Closed += this.OnWindowClosed;
             
             this.system.Register(this.window).Show();
         }
         else {
+            Debug.Assert(this.window.IsOpen);
+            
             this.window.Activate();
         }
     }

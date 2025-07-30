@@ -58,8 +58,8 @@ public class SimpleButtonCommandUsage : CommandUsage {
     }
 
     private void DoOnIsExecutingChanged(Command theCmd, CommandEventArgs commandEventArgs) {
-        this.OnIsExecutingChanged(false);
         theCmd.ExecutingChanged -= this.DoOnIsExecutingChanged;
+        this.OnIsExecutingChanged(false);
     }
 
     /// <summary>
