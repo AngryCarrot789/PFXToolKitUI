@@ -66,6 +66,6 @@ public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
         }
 
         IContextData data = DataManager.GetFullContextData(this.Control);
-        return CommandManager.Instance.Execute(this.CommandId, cmd, data);
+        return CommandManager.Instance.Execute(cmd, data);
     }
 }

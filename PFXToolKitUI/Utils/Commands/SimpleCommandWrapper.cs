@@ -93,6 +93,6 @@ public class SimpleCommandWrapper : BaseAsyncRelayCommand {
         }
 
         IContextData ctx = this.GetContextData(parameter);
-        return this.manager.Execute(this.commandId, command, ctx);
+        return this.manager.Execute(command, ctx);
     }
 }

@@ -163,13 +163,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
             // completedBeforeAwait is false even on exception or cancellation, so unless
             // the task immediately completes, we always raise the event.
             if (!completedBeforeAwait) {
-                try {
-                    this.RaiseCanExecuteChanged();
-                }
-                catch (Exception e) {
-                    ExceptionDispatchInfo exceptInfo = ExceptionDispatchInfo.Capture(e);
-                    ApplicationPFX.Instance.Dispatcher.Post(() => exceptInfo.Throw(), DispatchPriority.Send);
-                }
+                this.RaiseCanExecuteChanged();
             }
         }
     }

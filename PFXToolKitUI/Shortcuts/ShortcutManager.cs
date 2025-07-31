@@ -215,7 +215,7 @@ public abstract class ShortcutManager {
             return false;
         }
 
-        CommandManager.Instance.Execute(shortcutEntry.CommandId!, command, inputProcessor.ProvideCurrentContextInternal()!);
+        CommandManager.Instance.Execute(command, inputProcessor.ProvideCurrentContextInternal()!);
         return true;
     }
 

@@ -27,7 +27,7 @@ public delegate void DoubleUserInputDataEventHandler(DoubleUserInputInfo sender)
 public class DoubleUserInputInfo : BaseTextUserInputInfo {
     private string textA, textB = "";
     private string? labelA, labelB;
-    private int visualLineCountA = 1, visualLineCountB = 1;
+    private int lineCountHintA = 1, lineCountHintB = 1;
     private ReadOnlyCollection<string>? textErrorsA, textErrorsB;
     private bool isUpdatingErrorA, isUpdatingErrorB;
     private bool doUpdateBAfterA, doUpdateAAfterB;
@@ -71,28 +71,28 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     }
     
     /// <summary>
-    /// Gets or sets the amount of visual lines the text input A should display. Default is 1.
-    /// A value greater than 1 disables auto-close when pressing return
+    /// Gets or sets a hint for the amount of visual lines the text input A should display. 
+    /// Default is 1. A value greater than 1 disables auto-close when pressing return
     /// </summary>
-    public int VisualLineCountA {
-        get => this.visualLineCountA;
+    public int LineCountHintA {
+        get => this.lineCountHintA;
         set {
             if (value < 1) 
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
-            PropertyHelper.SetAndRaiseINE(ref this.visualLineCountA, value, this, static t => t.VisualLineCountAChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref this.lineCountHintA, value, this, static t => t.LineCountHintAChanged?.Invoke(t));
         }
     }
     
     /// <summary>
-    /// Gets or sets the amount of visual lines the text input B should display. Default is 1.
-    /// A value greater than 1 disables auto-close when pressing return
+    /// Gets or sets a hint for the amount of visual lines the text input B should display. 
+    /// Default is 1. A value greater than 1 disables auto-close when pressing return
     /// </summary>
-    public int VisualLineCountB {
-        get => this.visualLineCountB;
+    public int LineCountHintB {
+        get => this.lineCountHintB;
         set {
             if (value < 1)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
-            PropertyHelper.SetAndRaiseINE(ref this.visualLineCountB, value, this, static t => t.VisualLineCountBChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref this.lineCountHintB, value, this, static t => t.LineCountHintBChanged?.Invoke(t));
         }
     }
 
@@ -145,7 +145,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     }
 
     public event DoubleUserInputDataEventHandler? TextAChanged, TextBChanged, LabelAChanged, LabelBChanged;
-    public event DoubleUserInputDataEventHandler? VisualLineCountAChanged, VisualLineCountBChanged;
+    public event DoubleUserInputDataEventHandler? LineCountHintAChanged, LineCountHintBChanged;
     public event DoubleUserInputDataEventHandler? TextErrorsAChanged, TextErrorsBChanged;
 
     public DoubleUserInputInfo() {

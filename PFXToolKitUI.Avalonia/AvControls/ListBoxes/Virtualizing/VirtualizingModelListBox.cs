@@ -18,13 +18,18 @@
 // 
 
 using System.Diagnostics;
+using System.Reflection;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Controls.Templates;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes.Virtualizing;
 
 public abstract class VirtualizingModelListBox : ListBox {
+    private static readonly FieldInfo FIELD_ignoreContainerSelectionChanged = typeof(SelectingItemsControl).GetField("_ignoreContainerSelectionChanged", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    
     protected VirtualizingModelListBox() {
         this.ItemsPanel = new FuncTemplate<Panel?>(() => new VirtualizingStackPanel());
     }
@@ -64,6 +69,16 @@ public abstract class VirtualizingModelListBox : ListBox {
         VirtualizingModelListBoxItem LBI = (VirtualizingModelListBoxItem) element;
         Debug.Assert(LBI.Model != null);
 
+        try
+        {
+            FIELD_ignoreContainerSelectionChanged.SetValue(this, BoolBox.True);
+            element.ClearValue(IsSelectedProperty);
+        }
+        finally
+        {
+            FIELD_ignoreContainerSelectionChanged.SetValue(this, BoolBox.False);
+        }
+        
         LBI.InternalOnRemovingFromList();
         LBI.InternalOnRemovedFromList();
         LBI.Model = null;

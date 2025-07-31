@@ -31,14 +31,14 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     private readonly IBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextAChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextA), b => b.Model.TextA = b.Control.GetValue(TextBox.TextProperty) ?? "");
     private readonly IBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextBChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextB), b => b.Model.TextB = b.Control.GetValue(TextBox.TextProperty) ?? "");
 
-    private readonly IBinder<DoubleUserInputInfo> linesABinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.VisualLineCountAChanged), b => {
-        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.VisualLineCountA);
-        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.VisualLineCountA);
+    private readonly IBinder<DoubleUserInputInfo> linesABinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LineCountHintAChanged), b => {
+        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.LineCountHintA);
+        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.LineCountHintA);
     });
 
-    private readonly IBinder<DoubleUserInputInfo> linesBBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.VisualLineCountBChanged), b => {
-        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.VisualLineCountB);
-        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.VisualLineCountB);
+    private readonly IBinder<DoubleUserInputInfo> linesBBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LineCountHintBChanged), b => {
+        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.LineCountHintB);
+        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.LineCountHintB);
     });
 
     private readonly IBinder<DoubleUserInputInfo> footerBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));

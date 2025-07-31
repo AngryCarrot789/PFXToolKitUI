@@ -18,7 +18,6 @@
 // 
 
 using System.Collections.ObjectModel;
-using System.Diagnostics;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.PropertyEditing.DataTransfer.Enums;

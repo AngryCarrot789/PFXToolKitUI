@@ -73,13 +73,15 @@ public abstract class BaseRelayCommand : IRelayCommand {
     public virtual void RaiseCanExecuteChanged() {
         if (this.CanExecuteChanged != null) {
             if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
-                this.CanExecuteChanged?.Invoke(this, EventArgs.Empty);
+                this.RaiseCanExecuteChangedInternal();
             }
             else {
-                ApplicationPFX.Instance.Dispatcher.Invoke(() => this.CanExecuteChanged?.Invoke(this, EventArgs.Empty));
+                ApplicationPFX.Instance.Dispatcher.Post(this.RaiseCanExecuteChangedInternal);
             }
         }
     }
+    
+    private void RaiseCanExecuteChangedInternal() => this.CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
     /// A helper function for converting a command parameter to a generic type. This will return null if the parameter is null

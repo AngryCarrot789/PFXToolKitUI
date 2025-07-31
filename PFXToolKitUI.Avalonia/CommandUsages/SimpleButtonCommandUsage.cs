@@ -45,7 +45,7 @@ public class SimpleButtonCommandUsage : CommandUsage {
             return;
         }
 
-        CommandManager.Instance.Execute(this.CommandId, command, DataManager.GetFullContextData(this.Control!));
+        CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!));
         if (!command.AllowMultipleExecutions && command.IsExecuting) {
             // IsExecuting cannot change in this scope. Reason: The command uses true async (e.g. Task.Delay)
             // and therefore the dispatcher is used to jump back to the main thread (sync context)

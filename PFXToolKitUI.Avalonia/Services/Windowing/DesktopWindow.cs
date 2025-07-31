@@ -77,17 +77,17 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     public void PlaceCenteredTo(Window window) {
         if (this.IsOpen) {
             Thickness vlmMargin = this.PART_VisualLayerManager!.Margin;
-            Size desiredSize = this.DesiredSize.Inflate(vlmMargin);
+            Size size = this.Bounds.Size.Inflate(vlmMargin);
             Size parentSize = window.Bounds.Size;
-            double x = (parentSize.Width - desiredSize.Width) / 2;
-            double y = (parentSize.Height - desiredSize.Height) / 2;
+            double x = (parentSize.Width - size.Width) / 2;
+            double y = (parentSize.Height - size.Height) / 2;
             PixelPoint newPosition = window.Position + new PixelPoint((int) x, (int) y);
 
             Screen? screen = this.Screens.ScreenFromWindow(window) ?? this.Screens.ScreenFromPoint(window.Position);
             if (screen != null) {
                 PixelRect constraint = screen.WorkingArea;
-                double maxX = constraint.Right - desiredSize.Width;
-                double maxY = constraint.Bottom - desiredSize.Height;
+                double maxX = constraint.Right - size.Width;
+                double maxY = constraint.Bottom - size.Height;
                 if (constraint.X <= maxX)
                     newPosition = newPosition.WithX((int) Math.Floor(Math.Clamp(newPosition.X, constraint.X, maxX)));
                 if (constraint.Y <= maxY)
@@ -141,6 +141,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
 
         Dispatcher.UIThread.Invoke(void () => {
             this.SizeToContent = SizeToContent.Manual;
+            this.UpdatePlacement();
         }, DispatcherPriority.Loaded);
     }
 

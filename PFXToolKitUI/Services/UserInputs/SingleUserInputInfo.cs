@@ -29,7 +29,8 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
 
     private string text;
     private string? label;
-    private int visualLineCount = 1;
+    private int lineCountHint = 1;
+    private int minimumDialogWidthHint = -1;
 
     /// <summary>
     /// Gets the value the user have typed into the text field
@@ -53,18 +54,26 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     }
 
     /// <summary>
-    /// Gets or sets the amount of visual lines the text input should display. Default is 1,
+    /// Gets or sets a hint for the amount of visual lines the text input should display. Default is 1,
     /// meaning only 1 line is shown. A value greater than 1 disables auto-close when pressing return
     /// </summary>
-    public int VisualLineCount {
-        get => this.visualLineCount;
+    public int LineCountHint {
+        get => this.lineCountHint;
         set {
             if (value < 1) 
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
-            PropertyHelper.SetAndRaiseINE(ref this.visualLineCount, value, this, static t => t.VisualLineCountChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref this.lineCountHint, value, this, static t => t.LineCountHintChanged?.Invoke(t));
         }
     }
 
+    /// <summary>
+    /// Gets or sets a hint for the minimum width of the dialog. Default is -1, meaning no hint
+    /// </summary>
+    public int MinimumDialogWidthHint {
+        get => this.minimumDialogWidthHint;
+        set => PropertyHelper.SetAndRaiseINE(ref this.minimumDialogWidthHint, value, this, static t => t.MinimumDialogWidthHintChanged?.Invoke(t));
+    }
+    
     /// <summary>
     /// A validation function that is given the current text and a list. If there's problems
     /// with the text, then error messages should be added to the list. 
@@ -92,7 +101,8 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     public event SingleUserInputDataEventHandler? TextChanged;
     public event SingleUserInputDataEventHandler? LabelChanged;
     public event SingleUserInputDataEventHandler? TextErrorsChanged;
-    public event SingleUserInputDataEventHandler? VisualLineCountChanged;
+    public event SingleUserInputDataEventHandler? LineCountHintChanged;
+    public event SingleUserInputDataEventHandler? MinimumDialogWidthHintChanged;
 
     public SingleUserInputInfo(string? defaultText) : this(null, null, null, defaultText) {
     }

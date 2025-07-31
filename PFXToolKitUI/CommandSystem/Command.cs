@@ -37,7 +37,7 @@ public delegate void CommandEventHandler(Command command, CommandEventArgs e);
 /// work, but they can also be used by things like buttons
 /// </para>
 /// <para>
-/// These commands can be executed through the <see cref="CommandManager.Execute(string,Command,IContextData,bool)"/> function
+/// These commands can be executed through the <see cref="CommandManager.Execute(Command,IContextData,bool)"/> function
 /// </para>
 /// </summary>
 public abstract class Command {

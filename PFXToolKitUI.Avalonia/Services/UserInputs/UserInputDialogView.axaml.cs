@@ -92,9 +92,15 @@ public partial class UserInputDialogView : UserControl {
         this.Window = (DesktopWindow) (TopLevel.GetTopLevel(this) ?? throw new Exception("No top level present"));
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowOpened();
+            
+            PixelSize bounds = content.GetMinimumBounds();
+            if (bounds.Width > 0)
+                this.Window.MinWidth = bounds.Width;
+            if (bounds.Height > 0)
+                this.Window.MinHeight = bounds.Height;
         }
     }
-    
+
     internal void OnWindowClosed() {
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowClosed();

@@ -127,25 +127,14 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the command threw ane exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public async Task Execute(string commandId, IContextData context, bool isUserInitiated = true) {
+    public Task Execute(string commandId, IContextData context, bool isUserInitiated = true) {
         ValidateId(commandId);
         ValidateContext(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            await command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+            return command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
         }
-    }
 
-    /// <summary>
-    /// Executes the command with the given (optional) command ID
-    /// </summary>
-    /// <param name="commandId">The target command id</param>
-    /// <param name="command"></param>
-    /// <param name="context"></param>
-    /// <param name="isUserInitiated"></param>
-    public async Task Execute(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
-        ValidateId(commandId);
-        ValidateContext(context);
-        await command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -155,9 +144,9 @@ public sealed class CommandManager {
     /// <param name="context"></param>
     /// <param name="isUserInitiated"></param>
     /// <returns></returns>
-    public async Task Execute(Command command, IContextData context, bool isUserInitiated = true) {
+    public Task Execute(Command command, IContextData context, bool isUserInitiated = true) {
         ValidateContext(context);
-        await command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+        return command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
     }
 
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {

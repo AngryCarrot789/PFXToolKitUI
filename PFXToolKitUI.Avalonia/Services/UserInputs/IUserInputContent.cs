@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using Avalonia;
 using PFXToolKitUI.Services.UserInputs;
 
 namespace PFXToolKitUI.Avalonia.Services.UserInputs;
@@ -45,4 +46,6 @@ public interface IUserInputContent {
     /// Fired when the window closes. Is not called when we become disconnected from a UserInputDialogView whose window is open.
     /// </summary>
     void OnWindowClosed();
+
+    PixelSize GetMinimumBounds() => PixelSize.Empty;
 }
