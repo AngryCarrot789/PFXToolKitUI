@@ -37,6 +37,7 @@ public interface IRelayEventHandler {
 
 /// <summary>
 /// Used as storage space for cached event relays and manages all object instances that may cause event to be fired.
+/// The default is <see cref="UIStorage"/>. Whether a new instance is needed is completely empirical
 /// </summary>
 public sealed class EventRelayStorage {
     /// <summary>

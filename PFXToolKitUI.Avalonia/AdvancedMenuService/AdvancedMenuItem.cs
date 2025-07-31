@@ -178,11 +178,16 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     public virtual void UpdateCanExecute() {
-        if (!this.IsVisibilityChanging) {
-            foreach (object? item in this.Items) {
-                if (item is AdvancedMenuItem menuItem && menuItem.IsLoaded) {
-                    menuItem.UpdateCanExecute();
-                }
+        if (this.IsVisibilityChanging) {
+            // True when processing OnLoaded/OnUnloaded, in which case, stuff is going crazy at the moment,
+            // so don't do potentially useless calculations if an items will be cleared very soon, especially
+            // since this method is recursive
+            return;
+        }
+
+        foreach (object? item in this.Items) {
+            if (item is AdvancedMenuItem menuItem && menuItem.IsLoaded) {
+                menuItem.UpdateCanExecute();
             }
         }
     }

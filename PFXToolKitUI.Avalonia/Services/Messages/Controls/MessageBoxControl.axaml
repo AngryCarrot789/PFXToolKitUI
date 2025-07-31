@@ -4,6 +4,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Services"
+             xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
         <StackPanel x:Name="PART_MessageContainer" DockPanel.Dock="Top" Margin="10,10,10,0">
@@ -18,7 +19,7 @@
             <DockPanel>
                 <StackPanel x:Name="PART_AUTRPanel" DockPanel.Dock="Left" Margin="5,0,0,0" VerticalAlignment="Center">
                     <CheckBox x:Name="PART_AlwaysUseThisResult" Content="Always use this result"/>
-                    <CheckBox x:Name="PART_AUTR_UntilAppCloses" Content="Only until app closes"/>
+                    <CheckBox x:Name="PART_AUTR_UntilAppCloses" Content="Only until program closes" tt:ToolTipEx.Tip="When un-selected, the result is saved after closing the program. The result can be reset in the preferences"/>
                 </StackPanel>
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" Margin="0,0,10,0" Spacing="10">
                     <Button x:Name="PART_YesOkButton" Content="Yes" MinWidth="72" Height="24" Padding="8,1" CornerRadius="3" FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}">

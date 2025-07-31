@@ -85,8 +85,9 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
 
     public override void UpdateCanExecute() {
         base.UpdateCanExecute();
-        if (!this.IsLoaded)
+        if (!this.IsLoaded) {
             return;
+        }
 
         if (this.IsExecuting) {
             this.CanExecute = false;

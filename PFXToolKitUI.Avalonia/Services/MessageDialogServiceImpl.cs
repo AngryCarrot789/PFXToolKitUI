@@ -82,7 +82,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
                 window.MessageBoxData = null;
 
                 MessageBoxResult trueResult = result ?? MessageBoxResult.None;
-                if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult) {
+                if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && trueResult != MessageBoxResult.None) {
                     PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(trueResult, info.AlwaysUseThisResultUntilAppCloses);
                 }
 

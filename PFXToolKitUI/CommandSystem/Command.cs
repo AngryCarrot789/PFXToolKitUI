@@ -40,9 +40,13 @@ public delegate void CommandEventHandler(Command command, CommandEventArgs e);
 /// These commands can be executed through the <see cref="CommandManager.Execute(Command,IContextData,bool)"/> function
 /// </para>
 /// </summary>
+[DebuggerDisplay("Command ({RegisteredCommandId}), Executing: {IsExecuting}, AllowMultipleExecutions: {AllowMultipleExecutions}")]
 public abstract class Command {
     private volatile int executingCount;
     internal string? registeredCommandId;
+    
+    // Used to track issues of commands staying permanently executing
+    private volatile Task? theLastRunTask;
 
     /// <summary>
     /// An event fired when this command's executing state changes. This is fired on the main thread
@@ -101,7 +105,7 @@ public abstract class Command {
 
         int executing;
         if (this.AllowMultipleExecutions) {
-            executing = Interlocked.Increment(ref this.executingCount) - 0;
+            executing = Interlocked.Increment(ref this.executingCount);
         }
         else if ((executing = Interlocked.CompareExchange(ref this.executingCount, 1, 0)) != 0) {
             await this.OnAlreadyExecuting(args);
@@ -120,7 +124,7 @@ public abstract class Command {
         }
 
         try {
-            await (this.ExecuteCommandAsync(args) ?? Task.CompletedTask);
+            await (this.theLastRunTask = this.ExecuteCommandAsync(args) ?? Task.CompletedTask);
         }
         catch (OperationCanceledException) {
             // ignored
@@ -157,6 +161,8 @@ public abstract class Command {
                     Debugger.Break();
                 }
             }
+
+            this.theLastRunTask = null;
         }
     }
 
