@@ -144,7 +144,7 @@ public abstract class ApplicationPFX : IServiceable {
         if (instance == null)
             throw new InvalidOperationException("Application instance has not been setup.");
 
-        await progress.ProgressAndSynchroniseAsync("Setup", 0.01);
+        await progress.ProgressAndWaitForRender("Setup", 0.01);
 
         // App initialisation takes a big chunk of the startup
         // phase, so it has a healthy dose of range available
@@ -152,7 +152,7 @@ public abstract class ApplicationPFX : IServiceable {
             // Let the app crash in debug mode so that the IDE can spot the exception
             try {
                 instance.StartupPhase = ApplicationStartupPhase.PreLoad;
-                await progress.ProgressAndSynchroniseAsync("Loading services");
+                await progress.ProgressAndWaitForRender("Loading services");
                 using (progress.CompletionState.PushCompletionRange(0.0, 0.2)) {
                     instance.RegisterServices(instance.ServiceManager);
                 }
@@ -160,12 +160,12 @@ public abstract class ApplicationPFX : IServiceable {
                 string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), instance.GetApplicationName(), "Options");
                 instance.ServiceManager.RegisterConstant(new PersistentStorageManager(storageDir));
 
-                await progress.ProgressAndSynchroniseAsync("Loading commands");
+                await progress.ProgressAndWaitForRender("Loading commands");
                 using (progress.CompletionState.PushCompletionRange(0.2, 0.4)) {
                     instance.RegisterCommands(CommandManager.Instance);
                 }
 
-                await progress.ProgressAndSynchroniseAsync("Loading keymap...");
+                await progress.ProgressAndWaitForRender("Loading keymap...");
                 using (progress.CompletionState.PushCompletionRange(0.4, 0.6)) {
                     string keymapFilePath = Path.GetFullPath("Keymap.xml");
                     if (File.Exists(keymapFilePath)) {
@@ -183,12 +183,12 @@ public abstract class ApplicationPFX : IServiceable {
                 }
 
                 instance.StartupPhase = ApplicationStartupPhase.Loading;
-                await progress.ProgressAndSynchroniseAsync("Loading application", 0.8);
+                await progress.ProgressAndWaitForRender("Loading application", 0.8);
                 using (progress.CompletionState.PushCompletionRange(0.8, 1.0)) {
                     await instance.OnSetupApplication(progress);
                 }
 
-                await progress.SynchroniseAsync();
+                await progress.WaitForRender();
             }
             catch (Exception ex) {
                 Console.WriteLine("Exception during setup:" + Environment.NewLine + ex.GetToString());
@@ -201,7 +201,7 @@ public abstract class ApplicationPFX : IServiceable {
             }
         }
 
-        await progress.ProgressAndSynchroniseAsync("Loading plugins");
+        await progress.ProgressAndWaitForRender("Loading plugins");
         using (progress.CompletionState.PushCompletionRange(0.7, 0.8)) {
             List<PluginLoadException> exceptions = new List<PluginLoadException>();
             instance.PluginLoader.LoadCorePlugins(exceptions);
@@ -229,14 +229,14 @@ public abstract class ApplicationPFX : IServiceable {
                 await IMessageDialogService.Instance.ShowMessage("Errors", "One or more exceptions occurred while loading plugins", string.Join(Environment.NewLine + Environment.NewLine, exceptions));
             }
 
-            await progress.ProgressAndSynchroniseAsync("Initialising plugins...", 0.5);
+            await progress.ProgressAndWaitForRender("Initialising plugins...", 0.5);
             instance.PluginLoader.RegisterCommands(CommandManager.Instance);
             instance.PluginLoader.RegisterServices();
             await instance.OnPluginsLoaded();
         }
 
         {
-            await progress.ProgressAndSynchroniseAsync("Loading configurations...");
+            await progress.ProgressAndWaitForRender("Loading configurations...");
             PersistentStorageManager psm = instance.PersistentStorageManager;
 
             instance.RegisterConfigurations();
@@ -245,7 +245,7 @@ public abstract class ApplicationPFX : IServiceable {
             await psm.LoadAllAsync(null, false);
         }
 
-        await progress.ProgressAndSynchroniseAsync("Finalizing startup...", 0.99);
+        await progress.ProgressAndWaitForRender("Finalizing startup...", 0.99);
         {
             instance.StartupPhase = ApplicationStartupPhase.FullyLoaded;
             await instance.OnApplicationFullyLoaded();

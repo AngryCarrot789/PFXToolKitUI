@@ -7,12 +7,12 @@
     <StackPanel Spacing="5" Focusable="False">
         <TextBlock x:Name="PART_LabelA" Text="Label Here" Padding="0,5"/>
         <TextBox x:Name="PART_TextBoxA" Padding="5,5" VerticalContentAlignment="Center"
-                 Background="{DynamicResource ABrush.Tone2.Border.Static}"
+                 Background="{DynamicResource ABrush.Tone4.Background.Static}"
                  Text="Text Here" Focusable="True" TabIndex="0"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
         <TextBlock x:Name="PART_LabelB" Text="Label Here" Padding="0,5"/>
         <TextBox x:Name="PART_TextBoxB" Padding="5,5" VerticalContentAlignment="Center"
-                 Background="{DynamicResource ABrush.Tone2.Border.Static}"
+                 Background="{DynamicResource ABrush.Tone4.Background.Static}"
                  Text="Text Here" Focusable="True" TabIndex="1"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 

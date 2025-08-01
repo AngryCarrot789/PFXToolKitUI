@@ -32,9 +32,9 @@
     <Color x:Key="ABrush.Tone1.Border.Static.Color">#ffa4a4a4</Color>
     <Color x:Key="ABrush.Tone2.Background.Static.Color">#ffffffff</Color>
     <Color x:Key="ABrush.Tone2.Border.Static.Color">#C9C9C9</Color>
-    <Color x:Key="ABrush.Tone3.Background.Static.Color">#fff7f7f7</Color>
+    <Color x:Key="ABrush.Tone3.Background.Static.Color">#fff9f9f8</Color>
     <Color x:Key="ABrush.Tone3.Border.Static.Color">#CACACA</Color>
-    <Color x:Key="ABrush.Tone4.Background.Static.Color">#DBDBDB</Color>
+    <Color x:Key="ABrush.Tone4.Background.Static.Color">#ffebebe8</Color>
     <Color x:Key="ABrush.Tone4.Border.Static.Color">#ff3f3f3f</Color>
     <Color x:Key="ABrush.Tone4.Background.MouseOver.Color">#CACACA</Color>
     <Color x:Key="ABrush.Tone4.Border.MouseOver.Color">#C0C0C0</Color>
@@ -46,7 +46,7 @@
     <Color x:Key="ABrush.Tone4.Border.Selected.Inactive.Color">#C9C9C9</Color>
     <Color x:Key="ABrush.Tone4.Background.Disabled.Color">#AFAFAF</Color>
     <Color x:Key="ABrush.Tone4.Border.Disabled.Color">#A5A5A5</Color>
-    <Color x:Key="ABrush.Tone5.Background.Static.Color">#D6D6D6</Color>
+    <Color x:Key="ABrush.Tone5.Background.Static.Color">#ffeaeaea</Color>
     <Color x:Key="ABrush.Tone5.Border.Static.Color">#ff3f3f3f</Color>
     <Color x:Key="ABrush.Tone5.Background.MouseOver.Color">#BFBFBF</Color>
     <Color x:Key="ABrush.Tone5.Border.MouseOver.Color">#B5B5B5</Color>

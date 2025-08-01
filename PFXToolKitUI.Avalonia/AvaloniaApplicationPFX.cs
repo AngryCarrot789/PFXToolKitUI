@@ -123,7 +123,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
     protected override async Task OnSetupApplication(IApplicationStartupProgress progress) {
         await base.OnSetupApplication(progress);
         
-        await progress.ProgressAndSynchroniseAsync("Loading themes...");
+        await progress.ProgressAndWaitForRender("Loading themes...");
         ((ThemeManagerImpl) this.ServiceManager.GetService<ThemeManager>()).SetupBuiltInThemes();
     }
 

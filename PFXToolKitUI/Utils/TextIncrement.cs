@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PFXToolKitUI.Utils;
@@ -46,18 +47,18 @@ public static class TextIncrement {
         }
 
         HashSet<string> available = new HashSet<string>(inputs);
-        if (!GetIncrementableString((x) => !available.Contains(x), input, out string? output, canAcceptInitialInput: canAcceptInitialInput))
+        if (!GetIncrementableString((x) => !available.Contains(x), input, out string? output, checkInitialInput: canAcceptInitialInput))
             output = input; // wtf? 1.8 sextillion or something attempts and we failed?
-        
+
         return output;
     }
 
-    public static bool GetNumbered(string? input, out string? left, out long number) {
+    public static bool GetNumbered(string? input, [NotNullWhen(true)] out string? left, out long number) {
         if (GetNumberedRaw(input, out left, out string? bracketed) && long.TryParse(bracketed, out number)) {
             return true;
         }
 
-        number = default;
+        number = 0;
         return false;
     }
 
@@ -80,7 +81,7 @@ public static class TextIncrement {
             left = "";
             bracketed = input.Substring(1, input.Length - 2);
         }
-        
+
         else if (long.TryParse(input.AsSpan(indexA + 1, indexB - indexA - 1), out _) || ulong.TryParse(input.AsSpan(indexA + 1, indexB - indexA - 1), out _)) {
             left = input.Substring(0, indexA - 1);
             bracketed = input.JSubstring(indexA + 1, indexB);
@@ -98,52 +99,54 @@ public static class TextIncrement {
 
     /// <summary>
     /// Generates a string, where a bracketed number is added after the given text. That number
-    /// is incremented a maximum of <see cref="count"/> times (if there is no original bracket or it is
-    /// currently at 0, it would end at 100 (inclusive) when <see cref="count"/> is 100). This is done
+    /// is incremented a maximum of <see cref="maxNumber"/> times (if there is no original bracket or it is
+    /// currently at 0, it would end at 100 (inclusive) when <see cref="maxNumber"/> is 100). This is done
     /// repeatedly until the given predicate accepts the output string
     /// </summary>
-    /// <param name="accept">Whether the output parameter can be accepted or not</param>
+    /// <param name="canAcceptText">Whether the output parameter can be accepted or not</param>
     /// <param name="input">Original text</param>
-    /// <param name="output">A string that the <see cref="accept"/> predicate accepted</param>
-    /// <param name="count">Max number of times to increment until the entry does not exist. <see cref="ulong.MaxValue"/> by default</param>
-    /// <returns>True if the <see cref="accept"/> predicate accepted the output string before the loop counter reached 0</returns>
-    /// <exception cref="ArgumentOutOfRangeException">The <see cref="count"/> parameter is zero</exception>
+    /// <param name="output">A string that the <see cref="canAcceptText"/> predicate accepted</param>
+    /// <param name="checkInitialInput">When tru, first checks if <see cref="input"/> is non-null and if <see cref="canAcceptText"/> accepts it</param>
+    /// <param name="maxNumber">Max number of times to increment until the entry does not exist. <see cref="ulong.MaxValue"/> by default</param>
+    /// <returns>True if the <see cref="canAcceptText"/> predicate accepted the output string before the loop counter reached 0</returns>
+    /// <exception cref="ArgumentOutOfRangeException">The <see cref="maxNumber"/> parameter is zero</exception>
     /// <exception cref="ArgumentException">The <see cref="input"/> parameter is null or empty</exception>
-    public static bool GetIncrementableString(Predicate<string> accept, string input, [NotNullWhen(true)] out string? output, ulong count = ulong.MaxValue, bool canAcceptInitialInput = true) {
-        if (count < 1)
-            throw new ArgumentOutOfRangeException(nameof(count), "Count must not be zero");
-        if (string.IsNullOrEmpty(input))
-            throw new ArgumentException("Input cannot be null or empty", nameof(input));
-        if (canAcceptInitialInput && accept(input))
-            return (output = input) != null; // one liner ;) always returns true
+    public static bool GetIncrementableString(Predicate<string> canAcceptText, string? input, [NotNullWhen(true)] out string? output, bool checkInitialInput, ulong maxNumber = ulong.MaxValue) {
+        if (maxNumber < 1)
+            throw new ArgumentOutOfRangeException(nameof(maxNumber), nameof(maxNumber) + " cannot be zero");
 
-        if (!GetNumbered(input, out string? content, out long textNumber) || textNumber < 1)
+        if (checkInitialInput && input != null && canAcceptText(input)) {
+            output = input;
+            return true;
+        }
+
+        if (!GetNumbered(input, out string? content, out long textNumber) || textNumber < 1) {
+            content = input ?? "";
             textNumber = 1;
+        }
 
         ulong num = (ulong) textNumber;
-        ulong max = Maths.WillAdditionOverflow(num, count) ? ulong.MaxValue : num + count;
+        ulong max = Maths.SumAndClampOverflow(num, maxNumber);
 
-        // This is probably over-optimised... this is just for concatenating a string and ulong
-        // in the most efficient way possible. 23 = 3 (for ' ' + '(' + ')' chars) + 20 (for ulong.MaxValue representation)
-        // hello (69) | len = 10, index = 7, j = 9, j+1 = 10 (passed to new string())
-        content ??= input;
         int index = content.Length;
-        char[] chars = new char[index + 23];
-        content.CopyTo(0, chars, 0, index);
-        chars[index] = ' ';
-        chars[index + 1] = '(';
+        Span<char> charSpan = stackalloc char[index + 3 /* ' ' + '(' + ')' */ + 20 /* max chars for ulong representation */];
+
+        if (index > 0)
+            content.AsSpan(0, index).CopyTo(charSpan);
+        
+        charSpan[index] = ' ';
+        charSpan[index + 1] = '(';
         index += 2;
         for (ulong i = num; i < max; i++) {
-            // int len = TextIncrement.GetChars(i, chars, index);
-            // int j = index + len; // val.Length
-            string val = i.ToString();
-            val.CopyTo(0, chars, index, val.Length);
-            int j = index + val.Length;
-            chars[j] = ')';
-            // TODO: stack allocate string instead of heap allocate? probably not in NS2.0 :(
-            // or maybe use some really really unsafe reflection/pointer manipulation
-            output = new string(chars, 0, j + 1);
-            if (accept(output)) {
+            if (!i.TryFormat(charSpan.Slice(index), out int cchNumber)) {
+                Debug.Fail("Huh?");
+                continue;
+            }
+
+            int j = index + cchNumber;
+            charSpan[j] = ')';
+            output = charSpan.Slice(0, j + 1).ToString();
+            if (canAcceptText(output)) {
                 return true;
             }
         }
@@ -151,7 +154,7 @@ public static class TextIncrement {
         output = null;
         return false;
     }
-
+    
     /// <summary>
     /// Generates a completely randomised ID that is accepted by a predicate
     /// <para>
@@ -204,11 +207,11 @@ public static class TextIncrement {
         string? fileName = Path.GetFileName(filePath);
         if (!string.IsNullOrEmpty(fileName)) {
             // checks if the predicate accepts the raw fileName
-            if (GetIncrementableString(accept, fileName, out output, incrementCounter))
+            if (GetIncrementableString(accept, fileName, out output, true, incrementCounter))
                 return true;
         }
 
-        if (GetIncrementableString(accept, filePath, out output, incrementCounter))
+        if (GetIncrementableString(accept, filePath, out output, true, incrementCounter))
             return true;
 
         return GetRandomDisplayName(accept, fileName + "_", fileName.Length + 1, out output, 16, 128);

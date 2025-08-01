@@ -73,8 +73,11 @@ public abstract class Theme {
 
     /// <summary>
     /// Sets a theme colour to the given brush. This method may trigger UI rendering if
-    /// the theme key is in use. Using this method is not recommended since the brush may
-    /// not have any solid colour associated with it, though this might be fine for the specific key
+    /// the theme key is in use.
+    /// <para>
+    /// Using this method is not recommended since the brush may not have any solid colour
+    /// associated with it, though this might be fine for the specific key
+    /// </para>
     /// </summary>
     /// <param name="key">The key</param>
     /// <param name="colour">The new brush</param>

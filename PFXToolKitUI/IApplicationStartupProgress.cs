@@ -34,20 +34,24 @@ public interface IApplicationStartupProgress {
 
     /// <summary>
     /// Updates the action (if non-null) and sets the current progress (if non-null)
-    /// and then returns a task that completes once the UI has been rendered
+    /// and then awaits <see cref="WaitForRender"/>
     /// </summary>
     /// <param name="action">New <see cref="ActionText"/> if non-null</param>
     /// <param name="newProgress">Value passed to <see cref="Tasks.CompletionState.SetProgress"/> if non-null</param>
     /// <returns>A task completed once rendered</returns>
-    Task ProgressAndSynchroniseAsync(string? action, double? newProgress = default);
+    Task ProgressAndWaitForRender(string? action, double? newProgress = null);
 
-    Task SynchroniseAsync();
+    /// <summary>
+    /// Returns a task that completes once the UI has been rendered with the current <see cref="ActionText"/> and <see cref="CompletionState"/>
+    /// </summary>
+    /// <returns></returns>
+    Task WaitForRender();
 }
 
 public class EmptyApplicationStartupProgress : IApplicationStartupProgress {
     public string? ActionText { get; set; }
 
     public CompletionState CompletionState { get; } = new SimpleCompletionState();
-    public Task ProgressAndSynchroniseAsync(string? action, double? newProgress) => Task.CompletedTask;
-    public Task SynchroniseAsync() => Task.CompletedTask;
+    public Task ProgressAndWaitForRender(string? action, double? newProgress) => Task.CompletedTask;
+    public Task WaitForRender() => Task.CompletedTask;
 }

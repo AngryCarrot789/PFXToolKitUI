@@ -155,6 +155,13 @@ public static class Maths {
 
     public static bool WillAdditionOverflow(long a, long b) => (b > 0 && a > long.MaxValue - b) || (b < 0 && a < long.MinValue - b);
 
+    /// <summary>
+    /// Adds a signed value to an unsigned int. If the addition results in overflow, the value is
+    /// clamped to <see cref="uint.MaxValue"/>. If the addition results in underflow, the value is clamped to 0
+    /// </summary>
+    /// <param name="a">The left operand</param>
+    /// <param name="b">The right operand</param>
+    /// <returns>The summation result, clamped between the minimum and maximum values for the uint type</returns>
     public static uint SumAndClampOverflow(uint a, int b) {
         if (b >= 0)
             return (uint) b > (uint.MaxValue - a) ? uint.MaxValue /* clamp overflow */ : (a + (uint) b);
@@ -162,11 +169,38 @@ public static class Maths {
         return s > a ? 0 /* clamp underflow */ : (a - s);
     }
     
+    /// <summary>
+    /// Adds two unsigned integers, returning <see cref="uint.MaxValue"/> if the addition results in overflow
+    /// </summary>
+    /// <param name="a">The left operand</param>
+    /// <param name="b">The right operand</param>
+    /// <returns>The summation result, or <see cref="uint.MaxValue"/></returns>
+    public static ulong SumAndClampOverflow(uint a, uint b) {
+        return b > (uint.MaxValue - a) ? uint.MaxValue : (a + b);
+    }
+    
+    /// <summary>
+    /// Adds a signed value to an unsigned long. If the addition results in overflow, the value is
+    /// clamped to <see cref="ulong.MaxValue"/>. If the addition results in underflow, the value is clamped to 0
+    /// </summary>
+    /// <param name="a">The left operand</param>
+    /// <param name="b">The right operand</param>
+    /// <returns>The summation result, clamped between the minimum and maximum values for the ulong type</returns>
     public static ulong SumAndClampOverflow(ulong a, long b) {
         if (b >= 0)
             return (ulong) b > (ulong.MaxValue - a) ? ulong.MaxValue /* clamp overflow */ : (a + (ulong) b);
         ulong s = (ulong) -b;
         return s > a ? 0 /* clamp underflow */ : (a - s);
+    }
+    
+    /// <summary>
+    /// Adds two unsigned longs, returning <see cref="ulong.MaxValue"/> if the addition results in overflow
+    /// </summary>
+    /// <param name="a">The left operand</param>
+    /// <param name="b">The right operand</param>
+    /// <returns>The summation result, or <see cref="ulong.MaxValue"/></returns>
+    public static ulong SumAndClampOverflow(ulong a, ulong b) {
+        return b > (ulong.MaxValue - a) ? ulong.MaxValue : (a + b);
     }
 
     // https://stackoverflow.com/a/51099524/11034928

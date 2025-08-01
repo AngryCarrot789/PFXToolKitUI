@@ -60,7 +60,7 @@ public class CreateThemeCommand : Command {
             info.Footer = "Changes to the current theme will be reverted and applied to the new theme instead";
         }
 
-        info.Text = TextIncrement.GetIncrementableString((x) => theme.ThemeManager.GetTheme(x) == null, theme.Name, out string? value) ? value : theme.Name;
+        info.Text = TextIncrement.GetIncrementableString((x) => theme.ThemeManager.GetTheme(x) == null, theme.Name, out string? value, true) ? value : theme.Name;
         if (await IUserInputDialogService.Instance.ShowInputDialogAsync(info) != true) {
             return;
         }
