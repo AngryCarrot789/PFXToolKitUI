@@ -71,6 +71,11 @@ public sealed class ServiceManager {
         }
 
         if (entry.isLazyEntry) {
+            if (!canCreate) {
+                service = null;
+                return false;
+            }
+            
             service = ((Func<object>) entry.value)();
             Debug.Assert(serviceType.IsInstanceOfType(service), "New service instance is incompatible with target type");
             this.services[serviceType] = new ServiceEntry(false, service);
