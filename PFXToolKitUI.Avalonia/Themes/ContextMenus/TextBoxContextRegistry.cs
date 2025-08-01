@@ -30,14 +30,14 @@ public static class TextBoxContextRegistry {
 
     static TextBoxContextRegistry() {
         FixedContextGroup group = Registry.GetFixedGroup("general");
-        group.AddEntry(new TextBoxContextEntry("Undo", (t) => t.Undo(), TextBox.CanUndoProperty) {InputGestureText = "CTRL + Z"});
-        group.AddEntry(new TextBoxContextEntry("Redo", (t) => t.Redo(), TextBox.CanRedoProperty) {InputGestureText = "CTRL + Y"});
+        group.AddEntry(new TextBoxContextEntry("Undo", (t) => t.Undo(), TextBox.CanUndoProperty) {InputGestureText = "CTRL+Z"});
+        group.AddEntry(new TextBoxContextEntry("Redo", (t) => t.Redo(), TextBox.CanRedoProperty) {InputGestureText = "CTRL+Y or CTRL+SHIFT+Z"});
         group.AddSeparator();
-        group.AddEntry(new TextBoxContextEntry("Cut", (t) => t.Cut(), TextBox.CanCutProperty) {InputGestureText = "CTRL + X"});
-        group.AddEntry(new TextBoxContextEntry("Copy", (t) => t.Copy(), TextBox.CanCopyProperty) {InputGestureText = "CTRL + C"});
-        group.AddEntry(new TextBoxContextEntry("Paste", (t) => t.Paste(), TextBox.CanPasteProperty) {InputGestureText = "CTRL + V"});
+        group.AddEntry(new TextBoxContextEntry("Cut", (t) => t.Cut(), TextBox.CanCutProperty) {InputGestureText = "CTRL+X"});
+        group.AddEntry(new TextBoxContextEntry("Copy", (t) => t.Copy(), TextBox.CanCopyProperty) {InputGestureText = "CTRL+C"});
+        group.AddEntry(new TextBoxContextEntry("Paste", (t) => t.Paste(), TextBox.CanPasteProperty) {InputGestureText = "CTRL+V"});
         group.AddSeparator();
-        group.AddEntry(new TextBoxContextEntry("Select All", (t) => t.SelectAll(), null) {InputGestureText = "CTRL + A"});
+        group.AddEntry(new TextBoxContextEntry("Select All", (t) => t.SelectAll(), null) {InputGestureText = "CTRL+A"});
         group.AddSeparator();
         group.AddEntry(new TextBoxContextEntry("Clear Text", (t) => t.Clear(), null));
     }

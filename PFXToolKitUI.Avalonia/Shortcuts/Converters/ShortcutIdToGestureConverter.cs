@@ -83,7 +83,11 @@ public class ShortcutIdToGestureConverter : IValueConverter {
     }
 
     public static string ToString(ShortcutEntry shortcutEntry) {
-        return string.Join("+", shortcutEntry.Shortcut.InputStrokes.Select(ToString));
+        return ToString(shortcutEntry.Shortcut.InputStrokes);
+    }
+    
+    public static string ToString(IEnumerable<IInputStroke> inputStrokes) {
+        return string.Join("+", inputStrokes.Select(ToString));
     }
 
     public static string ToString(IInputStroke stroke) {
