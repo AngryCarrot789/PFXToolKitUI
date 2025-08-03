@@ -62,6 +62,27 @@ public static class EnumInfo<TEnum> where TEnum : unmanaged, Enum {
             default: throw new Exception("EnumInfo class uninitialized");
         }
     }
+    
+    public static bool IsValid(TEnum value) {
+        if (IsUnsigned) {
+            ulong val64 = GetUnsignedValue(value);
+            ulong min64 = GetUnsignedValue(MinValue);
+            ulong max64 = GetUnsignedValue(MaxValue);
+            if (val64 >= min64 && val64 <= max64) {
+                return EnumValues.Contains(value);
+            }
+        }
+        else {
+            long val64 = GetSignedValue(value);
+            long min64 = GetSignedValue(MinValue);
+            long max64 = GetSignedValue(MaxValue);
+            if (val64 >= min64 && val64 <= max64) {
+                return EnumValues.Contains(value);
+            }
+        }
+
+        return false;
+    }
 
     static EnumInfo() {
         EnumValues = Enum.GetValues<TEnum>().ToList().AsReadOnly();

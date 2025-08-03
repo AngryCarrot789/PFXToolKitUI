@@ -23,18 +23,7 @@ namespace PFXToolKitUI.Utils;
 
 public static class EnumUtils {
     public static bool IsValid<T>(T value) where T : unmanaged, Enum {
-        if (EnumInfo<T>.IsUnsigned) {
-            ulong val64 = EnumInfo<T>.GetUnsignedValue(value);
-            ulong min64 = EnumInfo<T>.GetUnsignedValue(EnumInfo<T>.MinValue);
-            ulong max64 = EnumInfo<T>.GetUnsignedValue(EnumInfo<T>.MaxValue);
-            return val64 >= min64 && val64 <= max64;
-        }
-        else {
-            long val64 = EnumInfo<T>.GetSignedValue(value);
-            long min64 = EnumInfo<T>.GetSignedValue(EnumInfo<T>.MinValue);
-            long max64 = EnumInfo<T>.GetSignedValue(EnumInfo<T>.MaxValue);
-            return val64 >= min64 && val64 <= max64;
-        }
+        return EnumInfo<T>.IsValid(value);
     }
 
     public static void Validate<T>(T value, [CallerArgumentExpression(nameof(value))] string? paramName = null) where T : unmanaged, Enum {

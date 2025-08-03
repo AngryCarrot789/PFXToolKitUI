@@ -70,13 +70,13 @@ public sealed class ActivityManager : IDisposable {
     // private readonly ThreadLocal<ActivityTask> threadToTask;
     private readonly AsyncLocal<ActivityTask?> threadToTask;
     private readonly List<ActivityTask> tasks;
-    private readonly object locker;
+    private readonly Lock lockObj = new Lock();
 
     /// <summary>
     /// Fired when a task is started. This is fired on the main thread
     /// </summary>
     public event TaskManagerTaskEventHandler? TaskStarted;
-    
+
     /// <summary>
     /// Fired when a task is completed in any way. Fired on the main thread
     /// </summary>
@@ -90,7 +90,6 @@ public sealed class ActivityManager : IDisposable {
     public ActivityManager() {
         this.threadToTask = new AsyncLocal<ActivityTask?>();
         this.tasks = new List<ActivityTask>();
-        this.locker = new object();
     }
 
     public ActivityTask RunTask(Func<Task> action, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, (CancellationTokenSource?) null, creationOptions);
@@ -155,7 +154,7 @@ public sealed class ActivityManager : IDisposable {
     // Main Thread
 
     internal static void InternalOnTaskStarted(ActivityManager activityManager, ActivityTask task) {
-        lock (activityManager.locker) {
+        lock (activityManager.lockObj) {
             int index = activityManager.tasks.Count;
             activityManager.tasks.Insert(index, task);
             activityManager.TaskStarted?.Invoke(activityManager, task, index);
@@ -166,7 +165,7 @@ public sealed class ActivityManager : IDisposable {
 
     internal static void InternalOnTaskCompleted(ActivityManager activityManager, ActivityTask task, int state) {
         ActivityTask.InternalComplete(task, state);
-        lock (activityManager.locker) {
+        lock (activityManager.lockObj) {
             int index = activityManager.tasks.IndexOf(task);
             if (index == -1) {
                 Debug.WriteLine("[FATAL] Completed activity task did not exist in this task manager's internal task list");

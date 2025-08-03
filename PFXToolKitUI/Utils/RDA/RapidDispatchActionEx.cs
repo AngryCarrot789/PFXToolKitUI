@@ -32,7 +32,7 @@ public abstract class RapidDispatchActionExBase {
     public readonly string? DebugId;
 
     private volatile int myState; // The current state
-    private readonly object stateLock; // A guard when reading/writing the state
+    private readonly Lock stateLock; // A guard when reading/writing the state
 
     private readonly Action doExecuteCallback;
     private readonly IDispatcher dispatcher; // the dispatcher that owns this RDA
@@ -52,7 +52,7 @@ public abstract class RapidDispatchActionExBase {
         this.dispatcher = dispatcher;
         this.DebugId = debugId;
         this.Priority = priority;
-        this.stateLock = new object();
+        this.stateLock = new Lock();
         this.doExecuteCallback = this.DoExecuteAsync;
     }
 
@@ -221,12 +221,12 @@ public sealed class RapidDispatchActionEx : RapidDispatchActionExBase, IDispatch
 /// <typeparam name="T">The type of parameter</typeparam>
 public sealed class RapidDispatchActionEx<T> : RapidDispatchActionExBase, IDispatchAction<T> {
     private readonly Func<T, Task> callback;
-    private readonly object paramLock;
+    private readonly Lock paramLock;
     private T? parameter;
 
     private RapidDispatchActionEx(IDispatcher dispatcher, Func<T, Task> callback, DispatchPriority priority, string? debugId) : base(dispatcher, priority, debugId) {
         this.callback = callback;
-        this.paramLock = new object();
+        this.paramLock = new Lock();
     }
 
     public static RapidDispatchActionEx<T> ForSync(Action<T> callback, DispatchPriority priority, string? debugId = null) {

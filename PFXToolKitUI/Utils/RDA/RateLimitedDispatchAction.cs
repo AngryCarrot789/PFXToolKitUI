@@ -33,7 +33,7 @@ public abstract class RateLimitedDispatchActionBase {
     protected const int S_EXECUTING = 4; // Whether we're executing the callback
     protected const int S_CONTINUE_CRITICAL = 8; // InvokeAsync was called while executing
 
-    protected readonly object stateLock; // Used to guard state modifications
+    protected readonly Lock stateLock; // Used to guard state modifications
     protected volatile int state; // Stores the current state of this object
     private long lastExecutionTime; // The time at which the callback execution completed
     private long minIntervalTicks; // The minimum interval per callbacks
@@ -66,7 +66,7 @@ public abstract class RateLimitedDispatchActionBase {
             throw new ArgumentOutOfRangeException(nameof(minimumInterval), "Minimum interval must represent zero or more time");
 
         this.MinimumInterval = minimumInterval;
-        this.stateLock = new object();
+        this.stateLock = new Lock();
     }
 
     /// <summary>

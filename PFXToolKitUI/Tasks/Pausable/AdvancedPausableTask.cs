@@ -58,7 +58,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
 
     internal ActivityTask? activity;
     private volatile Task? firstTask, continueTask;
-    private readonly object stateLock = new object();
+    private readonly Lock stateLock = new Lock();
     private volatile Exception? exception;
 
     private volatile TaskCompletionSource? myTcs;

@@ -214,7 +214,7 @@ public static class ValueAccessors {
     }
 
     private class FastStartupValueAccessor<TValue> : ValueAccessor<TValue> {
-        private readonly object locker = new object();
+        private readonly Lock locker = new Lock();
         private int isExpression;
         private int count;
         private ValueAccessor<TValue> accessor;
@@ -231,7 +231,7 @@ public static class ValueAccessors {
         private void CheckUpgrade() {
             if (this.isExpression == 0) {
                 lock (this.locker) {
-                    if (this.isExpression == 0 && ++this.count > 10) {
+                    if (this.isExpression == 0 && ++this.count > 100) {
                         Interlocked.Exchange(ref this.isExpression, 1);
                         this.accessor = LinqExpression<TValue>(this.ownerType, this.propertyOrFieldName);
                     }
