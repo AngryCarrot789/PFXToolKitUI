@@ -112,6 +112,16 @@ public static class ContextEntryExtensions {
         entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateCanExecute<T>(entry, key, eventNames).OnCapturedContextChanged;
         return entry;
     }
+    
+    public static BaseContextEntry AddIsCheckedChangeUpdaterForEvent<T>(this BaseContextEntry entry, DataKey<T> key, string eventName) where T : class {
+        entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateIsChecked<T>(entry, key, [eventName]).OnCapturedContextChanged;
+        return entry;
+    }
+
+    public static BaseContextEntry AddIsCheckedChangeUpdaterForEvents<T>(this BaseContextEntry entry, DataKey<T> key, string[] eventNames) where T : class {
+        entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateIsChecked<T>(entry, key, eventNames).OnCapturedContextChanged;
+        return entry;
+    }
 
     private abstract class BaseSpecializedChangeHandler<T> : IRelayEventHandler where T : class {
         protected readonly BaseContextEntry Entry;
@@ -190,5 +200,12 @@ public static class ContextEntryExtensions {
         }
 
         protected override void Update() => this.Entry.RaiseCanExecuteChanged();
+    }
+    
+    private class SpecializedChangeHandler_UpdateIsChecked<T> : BaseSpecializedChangeHandler<T> where T : class {
+        public SpecializedChangeHandler_UpdateIsChecked(BaseContextEntry entry, DataKey<T> key, string[] eventNames) : base(entry, key, eventNames) {
+        }
+
+        protected override void Update() => this.Entry.RaiseIsCheckedChanged();
     }
 }

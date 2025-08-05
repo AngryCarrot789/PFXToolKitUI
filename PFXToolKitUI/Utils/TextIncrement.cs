@@ -47,7 +47,7 @@ public static class TextIncrement {
         }
 
         HashSet<string> available = new HashSet<string>(inputs);
-        if (!GetIncrementableString((x) => !available.Contains(x), input, out string? output, checkInitialInput: canAcceptInitialInput))
+        if (!GetIncrementableString((x) => !available.Contains(x), input, out string? output, canUseInitialInput: canAcceptInitialInput))
             output = input; // wtf? 1.8 sextillion or something attempts and we failed?
 
         return output;
@@ -106,16 +106,16 @@ public static class TextIncrement {
     /// <param name="canAcceptText">Whether the output parameter can be accepted or not</param>
     /// <param name="input">Original text</param>
     /// <param name="output">A string that the <see cref="canAcceptText"/> predicate accepted</param>
-    /// <param name="checkInitialInput">When tru, first checks if <see cref="input"/> is non-null and if <see cref="canAcceptText"/> accepts it</param>
+    /// <param name="canUseInitialInput">When tru, first checks if <see cref="input"/> is non-null and if <see cref="canAcceptText"/> accepts it</param>
     /// <param name="maxNumber">Max number of times to increment until the entry does not exist. <see cref="ulong.MaxValue"/> by default</param>
     /// <returns>True if the <see cref="canAcceptText"/> predicate accepted the output string before the loop counter reached 0</returns>
     /// <exception cref="ArgumentOutOfRangeException">The <see cref="maxNumber"/> parameter is zero</exception>
     /// <exception cref="ArgumentException">The <see cref="input"/> parameter is null or empty</exception>
-    public static bool GetIncrementableString(Predicate<string> canAcceptText, string? input, [NotNullWhen(true)] out string? output, bool checkInitialInput, ulong maxNumber = ulong.MaxValue) {
+    public static bool GetIncrementableString(Predicate<string> canAcceptText, string? input, [NotNullWhen(true)] out string? output, bool canUseInitialInput, ulong maxNumber = ulong.MaxValue) {
         if (maxNumber < 1)
             throw new ArgumentOutOfRangeException(nameof(maxNumber), nameof(maxNumber) + " cannot be zero");
 
-        if (checkInitialInput && input != null && canAcceptText(input)) {
+        if (canUseInitialInput && input != null && canAcceptText(input)) {
             output = input;
             return true;
         }

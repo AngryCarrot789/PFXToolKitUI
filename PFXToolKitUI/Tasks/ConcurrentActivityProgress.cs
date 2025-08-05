@@ -29,7 +29,7 @@ public class ConcurrentActivityProgress : IActivityProgress {
     private bool isIndeterminate;
     private string? headerText;
     private string? descriptionText;
-    private volatile bool isTextUpdated = true;
+    private volatile bool isTextClean = true;
 
     public bool IsIndeterminate {
         get => this.isIndeterminate;
@@ -64,7 +64,7 @@ public class ConcurrentActivityProgress : IActivityProgress {
                 if (this.descriptionText == value)
                     return;
                 this.descriptionText = value;
-                this.isTextUpdated = false;
+                this.isTextClean = false;
             }
 
             this.updateTextRda.InvokeAsync();
@@ -74,7 +74,7 @@ public class ConcurrentActivityProgress : IActivityProgress {
     /// <summary>
     /// Returns true when the text change has been processed on the main thread
     /// </summary>
-    public bool HasTextUpdated => this.isTextUpdated;
+    public bool IsTextClean => this.isTextClean;
 
     public event ActivityProgressEventHandler? IsIndeterminateChanged;
     public event ActivityProgressEventHandler? CaptionChanged;
@@ -95,7 +95,7 @@ public class ConcurrentActivityProgress : IActivityProgress {
         this.updateIsIndeterminateRda = RapidDispatchActionEx.ForSync(() => this.IsIndeterminateChanged?.Invoke(this), eventDispatchPriority);
         this.updateCaptionRda = RapidDispatchActionEx.ForSync(() => this.CaptionChanged?.Invoke(this), eventDispatchPriority);
         this.updateTextRda = RapidDispatchActionEx.ForSync(() => {
-            this.isTextUpdated = true;
+            this.isTextClean = true;
             this.TextChanged?.Invoke(this);
         }, eventDispatchPriority);
         this.CompletionState = new ConcurrentCompletionState(eventDispatchPriority);

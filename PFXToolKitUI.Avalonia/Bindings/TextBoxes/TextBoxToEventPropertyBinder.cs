@@ -23,7 +23,7 @@ namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
 
 public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, IRelayEventHandler where TModel : class {
     private readonly Func<IBinder<TModel>, string> getText;
-    private readonly SenderEventRelay eventRelay;
+    private readonly SenderEventRelay[] eventRelay;
 
     /// <summary>
     /// Initialises the <see cref="TextBoxToEventPropertyBinder{TModel}"/> object
@@ -37,7 +37,22 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, I
     /// </param>
     public TextBoxToEventPropertyBinder(string eventName, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate) : base(parseAndUpdate) {
         this.getText = getText;
-        this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName);
+        this.eventRelay = [EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName)];
+    }
+    
+    /// <summary>
+    /// Initialises the <see cref="TextBoxToEventPropertyBinder{TModel}"/> object
+    /// </summary>
+    /// <param name="eventNames">The name of the events that trigger <see cref="BaseBinder{TModel}.UpdateControl"/></param>
+    /// <param name="getText">A getter to fetch the model's value as raw text for the text box</param>
+    /// <param name="parseAndUpdate">
+    /// A function which tries to update the model's value from the text box's text. Returns true on success,
+    /// returns false when the text box contains invalid data (and it's assumed it shows a dialog too).
+    /// When this returns false, the text box's text is re-selected (if <see cref="FocusTextBoxOnError"/> is true)
+    /// </param>
+    public TextBoxToEventPropertyBinder(string[] eventNames, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate) : base(parseAndUpdate) {
+        this.getText = getText;
+        this.eventRelay = eventNames.Select(name => EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), name)).ToArray();
     }
     
     void IRelayEventHandler.OnEvent(object sender) => this.UpdateControl();
@@ -46,11 +61,13 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, I
     
     protected override void OnAttached() {
         base.OnAttached();
-        EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, this.eventRelay);
+        foreach (SenderEventRelay relay in this.eventRelay)
+            EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, relay);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, this.eventRelay);
+        foreach (SenderEventRelay relay in this.eventRelay)
+            EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, relay);
     }
 }

@@ -130,8 +130,15 @@ public class ActivityTask {
         this.cancellationTokenSource = cancellationTokenSource;
         this.CancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;
     }
+    
+    protected void ValidateNotStarted() {
+        if (this.state != 0)
+            throw new InvalidOperationException("An activity task cannot be restarted");
+    }
 
     protected virtual Task CreateTask(TaskCreationOptions creationOptions) {
+        this.ValidateNotStarted();
+        
         // We don't provide the cancellation token, because we want to handle it
         // separately. Awaiting this activity task should never throw an exception
         return Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap();
@@ -224,6 +231,7 @@ public class ActivityTask<T> : ActivityTask {
     public new TaskAwaiter<T?> GetAwaiter() => this.Task.GetAwaiter();
 
     protected override Task CreateTask(TaskCreationOptions creationOptions) {
+        this.ValidateNotStarted();
         return System.Threading.Tasks.Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap().ContinueWith(x => this.Result, TaskContinuationOptions.ExecuteSynchronously);
     }
 

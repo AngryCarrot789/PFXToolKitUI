@@ -70,6 +70,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         base.OnLoaded(e);
         this.OnLoadedOverride(e);
         this.IsVisibilityChanging = false;
+        
+        this.OnIsCheckedFunctionChanged(this.Entry!);
     }
 
     protected sealed override void OnUnloaded(RoutedEventArgs e) {
@@ -122,6 +124,17 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         }
 
         this.Entry.CanExecuteChanged += this.OnCanExecuteChanged;
+        this.Entry.IsCheckedFunctionChanged += this.OnIsCheckedFunctionChanged;
+        this.Entry.IsCheckedChanged += this.UpdateIsChecked;
+    }
+
+    private void OnIsCheckedFunctionChanged(BaseContextEntry sender) {
+        this.ToggleType = sender.IsCheckedFunction != null ? MenuItemToggleType.CheckBox : MenuItemToggleType.None;
+        this.UpdateIsChecked(sender);
+    }
+    
+    private void UpdateIsChecked(BaseContextEntry sender) {
+        this.IsChecked = sender.IsCheckedFunction != null && sender.IsCheckedFunction(sender);
     }
 
     public virtual void OnRemoving() {
@@ -136,6 +149,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Entry!.DescriptionChanged -= this.OnEntryDescriptionChanged;
         this.Entry!.IconChanged -= this.OnEntryIconChanged;
         this.Entry!.CanExecuteChanged -= this.OnCanExecuteChanged;
+        this.Entry!.IsCheckedFunctionChanged -= this.OnIsCheckedFunctionChanged;
+        this.Entry!.IsCheckedChanged -= this.UpdateIsChecked;
 
         if (this.myIconControl != null) {
             this.myIconControl.Icon = null;

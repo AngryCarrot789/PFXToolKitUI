@@ -42,6 +42,7 @@ public abstract class BaseContextEntry : IContextObject {
     private Icon? icon;
     private bool isInUse;
     private IContextData? capturedContext;
+    private Predicate<BaseContextEntry>? isCheckedFunction;
 
     /// <summary>
     /// Gets or sets the header of the menu item
@@ -85,10 +86,26 @@ public abstract class BaseContextEntry : IContextObject {
         set => PropertyHelper.SetAndRaiseINE(ref this.capturedContext, value, this, static (t, o, n) => t.CapturedContextChanged?.Invoke(t, o, n));
     }
 
+    /// <summary>
+    /// Gets or sets a function that specifies if this context entry is checked or not. Can be refreshed via 
+    /// </summary>
+    public Predicate<BaseContextEntry>? IsCheckedFunction {
+        get => this.isCheckedFunction;
+        set {
+            if (this.isCheckedFunction != value) {
+                this.isCheckedFunction = value;
+                this.IsCheckedFunctionChanged?.Invoke(this);
+                this.RaiseIsCheckedChanged();
+            }
+        }
+    }
+
     public event BaseContextEntryEventHandler? DisplayNameChanged;
     public event BaseContextEntryEventHandler? DescriptionChanged;
     public event BaseContextEntryIconChangedEventHandler? IconChanged;
     public event BaseContextEntryCapturedContextChangedEventHandler? CapturedContextChanged;
+    public event BaseContextEntryEventHandler? IsCheckedFunctionChanged;
+    public event BaseContextEntryEventHandler? IsCheckedChanged;
 
     /// <summary>
     /// Fired when the executability of this entry as a command has changed. This
@@ -110,6 +127,10 @@ public abstract class BaseContextEntry : IContextObject {
     /// Raises the <see cref="CanExecuteChanged"/> event 
     /// </summary>
     public void RaiseCanExecuteChanged() => this.CanExecuteChanged?.Invoke(this);
+
+    public void RaiseIsCheckedChanged() {
+        this.IsCheckedChanged?.Invoke(this);
+    }
 
     public static void InternalOnBecomeVisible(BaseContextEntry entry, IContextData capturedContext) {
         ArgumentNullException.ThrowIfNull(entry);
