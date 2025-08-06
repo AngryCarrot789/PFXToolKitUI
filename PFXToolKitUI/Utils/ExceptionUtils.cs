@@ -250,4 +250,14 @@ public static class ExceptionUtils {
             return false;
         }
     }
+
+    public static string GetFullMessageChain(Exception root, string join = ": ") {
+        StringBuilder sb = new StringBuilder();
+        sb.Append(root.Message);
+        for (Exception? e = root.InnerException; e != null; e = e.InnerException) {
+            sb.Append(join).Append(e.Message);
+        }
+
+        return sb.ToString();
+    }
 }
