@@ -17,8 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-// #define MEASURE_INHERITANCE_CACHE_HITS_MISSES
-
 using System.Diagnostics;
 using System.Reflection;
 using Avalonia;

@@ -17,8 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-// #define MEASURE_INHERITANCE_CACHE_HITS_MISSES
-
 using Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Interactivity.Contexts;
