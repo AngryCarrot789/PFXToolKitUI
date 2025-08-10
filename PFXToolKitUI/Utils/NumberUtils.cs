@@ -22,6 +22,7 @@ using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Text;
 
 namespace PFXToolKitUI.Utils;
 
@@ -118,4 +119,12 @@ public static class NumberUtils {
     }
 
     public static bool IsCharValidHex(char c) => StringUtils.Digit(c, 16) != -1;
+
+    public static string ConvertStringToHex(string input, Encoding encoding) {
+        byte[] bytes = encoding.GetBytes(input);
+        StringBuilder sb = new StringBuilder(bytes.Length * 2);
+        foreach (byte b in bytes)
+            sb.Append(b.ToString("X2"));
+        return sb.ToString();
+    }
 }
