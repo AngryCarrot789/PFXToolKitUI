@@ -55,23 +55,30 @@
             </ControlTemplate>
         </Setter>
     </ControlTheme>
+    
     <ControlTheme x:Key="{x:Type ams:CaptionSeparator}" TargetType="{x:Type ams:CaptionSeparator}">
         <Setter Property="Focusable" Value="False"/>
         <Setter Property="Background" Value="{DynamicResource ABrush.Tone7.Border.Static}"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Tone8.Border.Static}"/>
         <Setter Property="Margin" Value="5,2"/>
         <Setter Property="Template">
-            <ControlTemplate>
-                <Grid ColumnDefinitions="Auto,5,*">
+            <ControlTemplate TargetType="{x:Type ams:CaptionSeparator}">
+                <Grid ColumnDefinitions="Auto,Auto,5,*">
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            CornerRadius="{TemplateBinding CornerRadius}"
+                            Grid.Column="0" Height="1" Width="22" Margin="0,0,3,0" 
+                            VerticalAlignment="Center" IsVisible="{TemplateBinding UseIconTrayPadding}"/>
                     <TextBlock Text="{TemplateBinding Text}"
-                               Padding="0,0,5,0" Grid.Column="0"
+                               Padding="0,0,5,0" Grid.Column="1"
                                Foreground="{TemplateBinding Foreground}"
                                FontWeight="Bold"/>
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
                             CornerRadius="{TemplateBinding CornerRadius}"
-                            Grid.Column="2" Height="1" VerticalAlignment="Center"/>
+                            Grid.Column="3" Height="1" VerticalAlignment="Center"/>
                 </Grid>
             </ControlTemplate>
         </Setter>

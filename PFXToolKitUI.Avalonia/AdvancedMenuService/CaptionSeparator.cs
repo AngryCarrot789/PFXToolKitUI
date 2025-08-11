@@ -18,17 +18,25 @@
 // 
 
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Interactivity;
 using PFXToolKitUI.AdvancedMenuService;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
 public class CaptionSeparator : TemplatedControl, IAdvancedEntryConnection {
     public static readonly StyledProperty<string?> TextProperty = AvaloniaProperty.Register<CaptionSeparator, string?>(nameof(Text));
+    public static readonly StyledProperty<bool> UseIconTrayPaddingProperty = AvaloniaProperty.Register<CaptionSeparator, bool>(nameof(UseIconTrayPadding));
 
     public string? Text {
         get => this.GetValue(TextProperty);
         set => this.SetValue(TextProperty, value);
+    }
+    
+    public bool UseIconTrayPadding {
+        get => this.GetValue(UseIconTrayPaddingProperty);
+        set => this.SetValue(UseIconTrayPaddingProperty, value);
     }
 
     public CaptionEntry? Entry { get; private set; }
@@ -36,10 +44,16 @@ public class CaptionSeparator : TemplatedControl, IAdvancedEntryConnection {
     IContextObject? IAdvancedEntryConnection.Entry => this.Entry;
 
     public CaptionSeparator() {
+        this.Focusable = false;
+    }
+
+    protected override void OnLoaded(RoutedEventArgs e) {
+        base.OnLoaded(e);
     }
 
     public void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, IContextObject entry) {
         this.Entry = (CaptionEntry) entry;
+        this.UseIconTrayPadding = menu is Menu;
     }
 
     public void OnAdded() {

@@ -132,7 +132,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.ToggleType = sender.IsCheckedFunction != null ? MenuItemToggleType.CheckBox : MenuItemToggleType.None;
         this.UpdateIsChecked(sender);
     }
-    
+
     private void UpdateIsChecked(BaseContextEntry sender) {
         this.IsChecked = sender.IsCheckedFunction != null && sender.IsCheckedFunction(sender);
     }
@@ -257,4 +257,13 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     private void OnEntryDisplayNameChanged(BaseContextEntry sender) => this.Header = sender.DisplayName;
+
+    protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey) {
+        if (item is MenuItem || item is Separator || item is CaptionSeparator) {
+            recycleKey = null;
+            return false;
+        }
+
+        return base.NeedsContainerOverride(item, index, out recycleKey);
+    }
 }

@@ -38,6 +38,16 @@ public class ContextCapturingMenu : Menu {
 
     public ContextCapturingMenu() {
     }
+    
+    protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey) {
+        if (item is MenuItem || item is Separator || item is CaptionSeparator) {
+            recycleKey = null;
+            return false;
+        }
+
+        recycleKey = DefaultRecycleKey;
+        return true;
+    }
 
     public override void Close() {
         bool wasOpen = this.IsOpen;
