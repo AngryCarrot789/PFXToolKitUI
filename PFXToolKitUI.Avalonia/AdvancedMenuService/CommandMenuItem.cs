@@ -22,6 +22,7 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
+using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Avalonia.Utils;
@@ -127,7 +128,7 @@ public class CommandMenuItem : MenuItem {
         else {
             IContextData? context = this.loadedContextData;
             string? cmdId = this.CommandId;
-            Executability state = !string.IsNullOrWhiteSpace(cmdId) && context != null ? CommandManager.Instance.CanExecute(cmdId, context, true) : Executability.Invalid;
+            Executability state = !string.IsNullOrWhiteSpace(cmdId) && context != null ? CommandManager.Instance.CanExecute(cmdId, context) : Executability.Invalid;
             this.CanExecute = state == Executability.Valid;
             this.IsVisible = state != Executability.Invalid;
         }
@@ -153,9 +154,15 @@ public class CommandMenuItem : MenuItem {
         // disable execution while executing command
         this.CanExecute = false;
         base.OnClick(e);
+
+        ContextRegistry? sourceMenu = null;
+        if (VisualTreeUtils.FindLogicalParent<AdvancedContextMenu>(this) is AdvancedContextMenu menu) {
+            sourceMenu = menu.MyContextRegistry;
+        }
+        
         Dispatcher.UIThread.Post(async void () => {
             try {
-                await AdvancedCommandMenuItem.ExecuteCommandAndHandleError(cmdId, context);
+                await AdvancedCommandMenuItem.ExecuteCommandAndHandleError(cmdId, context, sourceMenu);
             }
             catch {
                 // ignored, should be handled above

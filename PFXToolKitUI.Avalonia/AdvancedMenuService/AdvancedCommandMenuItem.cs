@@ -51,6 +51,8 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
 
     protected override bool IsEnabledCore => base.IsEnabledCore && this.CanExecute;
 
+    protected ContextRegistry? SourceContextMenu => this.OwnerMenu is AdvancedContextMenu menu ? menu.MyContextRegistry : null;
+
     public AdvancedCommandMenuItem() {
     }
 
@@ -95,7 +97,9 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         else {
             IContextData? ctx = this.OwnerMenu?.CapturedContext;
             string? cmdId = this.Entry?.CommandId;
-            Executability state = !string.IsNullOrWhiteSpace(cmdId) && ctx != null ? CommandManager.Instance.CanExecute(cmdId, ctx, true) : Executability.Invalid;
+            Executability state = !string.IsNullOrWhiteSpace(cmdId) && ctx != null
+                ? CommandManager.Instance.CanExecute(cmdId, ctx, this.SourceContextMenu)
+                : Executability.Invalid;
             this.CanExecute = state == Executability.Valid;
             this.IsVisible = state != Executability.Invalid;
         }
@@ -131,9 +135,10 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
             return false;
         }
 
+        ContextRegistry? sourceMenu = this.SourceContextMenu;
         Dispatcher.UIThread.Post(async void () => {
             try {
-                await CommandManager.Instance.Execute(cmdId, context);
+                await CommandManager.Instance.Execute(cmdId, context, sourceMenu);
             }
             catch (Exception e) {
                 ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
@@ -146,9 +151,9 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         return true;
     }
 
-    public static async Task ExecuteCommandAndHandleError(string cmdId, IContextData context) {
+    public static async Task ExecuteCommandAndHandleError(string cmdId, IContextData context, ContextRegistry? sourceContextMenu) {
         try {
-            await CommandManager.Instance.Execute(cmdId, context);
+            await CommandManager.Instance.Execute(cmdId, context, sourceContextMenu);
         }
         catch (Exception e) {
             ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);

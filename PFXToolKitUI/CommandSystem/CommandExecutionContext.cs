@@ -56,7 +56,7 @@ public class CommandExecutionContext {
 
     public async void Execute() {
         try {
-            await this.CommandManager.Execute(this.Command, this.ContextData, this.IsUserInitiated);
+            await this.CommandManager.Execute(this.Command, this.ContextData, null, this.IsUserInitiated);
         }
         catch (Exception e) {
             ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);

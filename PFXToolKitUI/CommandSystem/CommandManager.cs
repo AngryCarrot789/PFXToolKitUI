@@ -19,8 +19,8 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.CommandSystem;
@@ -127,11 +127,11 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the command threw ane exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public Task Execute(string commandId, IContextData context, bool isUserInitiated = true) {
+    public Task Execute(string commandId, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
         ValidateId(commandId);
         ValidateContext(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            return command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+            return command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, sourceContextMenu, isUserInitiated));
         }
 
         return Task.CompletedTask;
@@ -144,9 +144,9 @@ public sealed class CommandManager {
     /// <param name="context"></param>
     /// <param name="isUserInitiated"></param>
     /// <returns></returns>
-    public Task Execute(Command command, IContextData context, bool isUserInitiated = true) {
+    public Task Execute(Command command, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
         ValidateContext(context);
-        return command.InternalExecuteImpl(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+        return command.InternalExecuteImpl(new CommandEventArgs(this, context, sourceContextMenu, isUserInitiated));
     }
 
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
@@ -163,19 +163,19 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the GetPresentation function threw ane exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public Executability CanExecute(string commandId, IContextData context, bool isUserInitiated = true) {
+    public Executability CanExecute(string commandId, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
         ValidateId(commandId);
         ValidateContext(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            return this.CanExecute(command.Command, context, isUserInitiated);
+            return this.CanExecute(command.Command, context, sourceContextMenu, isUserInitiated);
         }
 
         return Executability.Invalid;
     }
 
-    public Executability CanExecute(Command command, IContextData context, bool isUserInitiated = true) {
+    public Executability CanExecute(Command command, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
         ValidateContext(context);
-        return command.CanExecute(new CommandEventArgs(this, context, ShortcutManager.Instance.CurrentlyActivatingShortcut, isUserInitiated));
+        return command.CanExecute(new CommandEventArgs(this, context, sourceContextMenu, isUserInitiated));
     }
 
     /// <summary>

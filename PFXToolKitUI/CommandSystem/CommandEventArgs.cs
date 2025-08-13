@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
 
@@ -45,6 +46,11 @@ public class CommandEventArgs {
     /// Gets the input stroke that caused a command to execute
     /// </summary>
     public IShortcut? Shortcut { get; }
+    
+    /// <summary>
+    /// Gets the context registry for the context menu that caused a command to execute
+    /// </summary>
+    public ContextRegistry? SourceContextMenu { get; }
 
     /// <summary>
     /// Whether this command event was originally caused by a user or not, e.g. via a button/menu click or clicking a check box.
@@ -56,13 +62,14 @@ public class CommandEventArgs {
     /// </summary>
     public bool IsUserInitiated { get; }
 
-    public CommandEventArgs(CommandManager manager, IContextData contextData, IShortcut? shortcut, bool isUserInitiated) {
+    public CommandEventArgs(CommandManager manager, IContextData contextData, ContextRegistry? sourceContextMenu, bool isUserInitiated) {
         if (contextData == null)
             throw new ArgumentNullException(nameof(contextData), "Data context cannot be null");
 
         this.Manager = manager ?? throw new ArgumentNullException(nameof(manager), "Command manager cannot be null");
         this.ContextData = contextData;
-        this.Shortcut = shortcut;
+        this.Shortcut = ShortcutManager.Instance.CurrentlyActivatingShortcut;
+        this.SourceContextMenu = sourceContextMenu;
         this.IsUserInitiated = isUserInitiated;
     }
 }
