@@ -122,9 +122,6 @@ public static class NumberUtils {
 
     public static string ConvertStringToHex(string input, Encoding encoding) {
         byte[] bytes = encoding.GetBytes(input);
-        StringBuilder sb = new StringBuilder(bytes.Length * 2);
-        foreach (byte b in bytes)
-            sb.Append(b.ToString("X2"));
-        return sb.ToString();
+        return BytesToHexAscii(bytes, null);
     }
 }
