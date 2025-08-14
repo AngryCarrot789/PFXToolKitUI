@@ -96,6 +96,8 @@ public static class BaseDarkThemeControlColourMappings {
         ("TextBox.Selection.Inactive",                       "ABrush.ColourfulGlyph.Selected.Inactive"),
         ("TextBox.Selection",                                "ABrush.ColourfulGlyph.Selected"),
         ("TextBox.Error.Border",                             null),
+        ("TextBox.ValueChanged.Low.Border",                  null),
+        ("TextBox.ValueChanged.High.Border",                 null),
         ("ListBox.Static.Background",                        "ABrush.Tone4.Background.Static"),
         ("ListBox.Static.Border",                            "ABrush.Tone4.Border.Static"),
         ("ListBox.Disabled.Background",                      "ABrush.Tone4.Background.Disabled"),

@@ -150,6 +150,7 @@ public sealed class WindowingSystemImpl : WindowingSystem {
     public override DesktopWindow Register(DesktopWindow window, bool setAsMainWindow = false) {
         window.Opened += this.OnWindowOpened;
         window.Closed += this.OnWindowClosed;
+        window.Focusable = true;
         if (setAsMainWindow) {
             DesktopWindow? myMainWindow = this.MainWindow;
             if (myMainWindow != null && myMainWindow.IsOpen)

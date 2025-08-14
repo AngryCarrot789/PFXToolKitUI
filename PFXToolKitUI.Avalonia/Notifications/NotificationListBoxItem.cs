@@ -181,7 +181,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         this.Caption = this.Model!.Caption ?? "";
         this.Model.CaptionChanged += this.ModelOnCaptionChanged;
         this.Model.IsAutoHideActiveChanged += this.OnIsAutoHideActiveChanged;
-        this.Model.AlertModeChanged += OnAlertModeChanged;
+        this.Model.AlertModeChanged += this.OnAlertModeChanged;
         if (this.Model.IsAutoHideActive) {
             this.OnIsAutoHideActiveChanged(this.Model);
         }
@@ -206,6 +206,8 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         this.processor!.Dispose();
 
         this.Model!.CaptionChanged -= this.ModelOnCaptionChanged;
+        this.Model!.IsAutoHideActiveChanged -= this.OnIsAutoHideActiveChanged;
+        this.Model!.AlertModeChanged -= this.OnAlertModeChanged;
         
         this.alertFlipFlop.Value2 = default;
     }

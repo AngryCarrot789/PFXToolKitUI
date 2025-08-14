@@ -93,6 +93,8 @@
     <SolidColorBrush x:Key="TextBox.Selection.Inactive"                       Color="{StaticResource ABrush.ColourfulGlyph.Selected.Inactive.Color}"/>
     <SolidColorBrush x:Key="TextBox.Selection"                                Color="{StaticResource ABrush.ColourfulGlyph.Selected.Color}"/>
     <SolidColorBrush x:Key="TextBox.Error.Border"                             Color="Red"/>
+    <SolidColorBrush x:Key="TextBox.ValueChanged.Low.Border"                  Color="DarkGreen"/>
+    <SolidColorBrush x:Key="TextBox.ValueChanged.High.Border"                 Color="LimeGreen"/>
 
     <SolidColorBrush x:Key="ListBox.Static.Background"                        Color="{StaticResource ABrush.Tone4.Background.Static.Color}"/>
     <SolidColorBrush x:Key="ListBox.Static.Border"                            Color="{StaticResource ABrush.Tone4.Border.Static.Color}"/>

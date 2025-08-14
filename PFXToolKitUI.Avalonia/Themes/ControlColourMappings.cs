@@ -96,6 +96,8 @@ public static class ControlColourMappings {
         ("General/TextBox/Selection (Inactive)",                         "TextBox.Selection.Inactive"),
         ("General/TextBox/Selection",                                    "TextBox.Selection"),
         ("General/TextBox/Border (Error)",                               "TextBox.Error.Border"),
+        ("General/TextBox/Border (Value Changed) (Flashing, low)",       "TextBox.ValueChanged.Low.Border"),
+        ("General/TextBox/Border (Value Changed) (Flashing, high)",      "TextBox.ValueChanged.High.Border"),
         ("General/ListBox/Background",                                   "ListBox.Static.Background"),
         ("General/ListBox/Border",                                       "ListBox.Static.Border"),
         ("General/ListBox/Background (Disabled)",                        "ListBox.Disabled.Background"),
