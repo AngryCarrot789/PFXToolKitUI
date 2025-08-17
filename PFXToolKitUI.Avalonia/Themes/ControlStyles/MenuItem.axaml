@@ -42,11 +42,17 @@
                             <ColumnDefinition Width="Auto" SharedSizeGroup="MenuItemIGT"/>
                             <ColumnDefinition Width="20"/>
                         </Grid.ColumnDefinitions>
-                        <ContentControl Grid.Column="0"
-                                        x:Name="PART_ToggleIconPresenter"
-                                        IsVisible="False"
-                                        Margin="4,2,2,2"
-                                        Width="16" Height="16"/>
+                        <Border x:Name="PART_ToggleBorder" 
+                                BorderBrush="{DynamicResource ABrush.Tone4.Border.Static}" 
+                                BorderThickness="1" 
+                                Width="16" Height="16" 
+                                Margin="4,2,2,2"
+                                Grid.Column="0"
+                                IsVisible="False">
+                            <ContentControl x:Name="PART_ToggleIconPresenter" 
+                                            HorizontalAlignment="Center" 
+                                            VerticalAlignment="Center"/>
+                        </Border>
                         <ContentControl Grid.Column="0"
                                         x:Name="PART_IconPresenter"
                                         Width="16" Height="16"
@@ -131,11 +137,14 @@
             <Setter Property="BorderBrush" Value="{DynamicResource MenuItem.Disabled.Background}"/>
         </Style>
 
-        <Style Selector="^:toggle /template/ ContentControl#PART_ToggleIconPresenter, ^:radio /template/ ContentControl#PART_ToggleIconPresenter">
+        <Style Selector="^:toggle /template/ Border#PART_ToggleBorder, ^:radio /template/ Border#PART_ToggleBorder">
             <Setter Property="IsVisible" Value="True"/>
         </Style>
         <Style Selector="^:toggle /template/ ContentPresenter#PART_IconPresenter, ^:radio /template/ ContentPresenter#PART_IconPresenter">
             <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="^:toggle, ^:radio">
+            <Setter Property="StaysOpenOnClick" Value="True"/>
         </Style>
         <Style Selector="^:checked:toggle /template/ ContentControl#PART_ToggleIconPresenter">
             <Setter Property="Content">

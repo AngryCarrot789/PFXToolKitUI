@@ -200,6 +200,9 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
             return;
         }
 
+        if (this.Entry != null)
+            this.UpdateIsChecked(this.Entry);
+        
         foreach (object? item in this.Items) {
             if (item is AdvancedMenuItem menuItem && menuItem.IsLoaded) {
                 menuItem.UpdateCanExecute();
