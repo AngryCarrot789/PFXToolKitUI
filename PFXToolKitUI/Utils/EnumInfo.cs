@@ -48,12 +48,12 @@ public static class EnumInfo<TEnum> where TEnum : unmanaged, Enum {
             default: throw new Exception("EnumInfo class uninitialized");
         }
     }
-    
+
     public static ulong GetUnsignedValue(TEnum value) {
         if (!IsUnsigned) {
             throw new InvalidOperationException("Underlying enum type is not unsigned");
         }
-        
+
         switch (PrimitiveTypeIndex) {
             case 1:  return Unsafe.As<TEnum, byte>(ref value);
             case 2:  return Unsafe.As<TEnum, ushort>(ref value);
@@ -62,7 +62,51 @@ public static class EnumInfo<TEnum> where TEnum : unmanaged, Enum {
             default: throw new Exception("EnumInfo class uninitialized");
         }
     }
-    
+
+    public static TEnum FromSignedValue(long value) {
+        if (IsUnsigned)
+            throw new InvalidOperationException("Underlying enum type is unsigned");
+
+        switch (PrimitiveTypeIndex) {
+            case 1: {
+                sbyte val = (sbyte) value;
+                return Unsafe.As<sbyte, TEnum>(ref val);
+            }
+            case 2: {
+                short val = (short) value;
+                return Unsafe.As<short, TEnum>(ref val);
+            }
+            case 3: {
+                int val = (int) value;
+                return Unsafe.As<int, TEnum>(ref val);
+            }
+            case 4:  return Unsafe.As<long, TEnum>(ref value);
+            default: throw new Exception("EnumInfo class uninitialized");
+        }
+    }
+
+    public static TEnum FromUnsignedValue(ulong value) {
+        if (!IsUnsigned)
+            throw new InvalidOperationException("Underlying enum type is not unsigned");
+
+        switch (PrimitiveTypeIndex) {
+            case 1: {
+                byte val = (byte) value;
+                return Unsafe.As<byte, TEnum>(ref val);
+            }
+            case 2: {
+                ushort val = (ushort) value;
+                return Unsafe.As<ushort, TEnum>(ref val);
+            }
+            case 3: {
+                uint val = (uint) value;
+                return Unsafe.As<uint, TEnum>(ref val);
+            }
+            case 4:  return Unsafe.As<ulong, TEnum>(ref value);
+            default: throw new Exception("EnumInfo class uninitialized");
+        }
+    }
+
     public static bool IsValid(TEnum value) {
         if (IsUnsigned) {
             ulong val64 = GetUnsignedValue(value);
@@ -100,7 +144,7 @@ public static class EnumInfo<TEnum> where TEnum : unmanaged, Enum {
             PrimitiveTypeIndex = 3;
         else if (type == typeof(long) || type == typeof(ulong))
             PrimitiveTypeIndex = 4;
-        
+
         Debug.Assert(PrimitiveTypeIndex != 0);
 
         // Apparently float and double types are technically supported but not compilable so this should work for non-reflection maybe

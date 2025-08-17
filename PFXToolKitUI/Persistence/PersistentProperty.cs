@@ -19,6 +19,7 @@
 
 using System.Xml;
 using PFXToolKitUI.Persistence.Serialisation;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Persistence;
@@ -128,8 +129,8 @@ public abstract class PersistentProperty {
     /// <typeparam name="TEnum">The enum type</typeparam>
     /// <typeparam name="TOwner">The owner of the property</typeparam>
     /// <returns>The property, which you can store as a public static readonly field</returns>
-    public static PersistentProperty<TEnum> RegisterEnum<TEnum, TOwner>(string name, TEnum defaultValue, Func<TOwner, TEnum> getValue, Action<TOwner, TEnum> setValue, bool canSaveDefault) where TEnum : unmanaged, Enum where TOwner : PersistentConfiguration {
-        PersistentPropertyEnum<TEnum> property = new PersistentPropertyEnum<TEnum>(defaultValue, (x) => getValue((TOwner) x), (x, y) => setValue((TOwner) x, y), canSaveDefault);
+    public static PersistentProperty<TEnum> RegisterEnum<TEnum, TOwner>(string name, TEnum defaultValue, Func<TOwner, TEnum> getValue, Action<TOwner, TEnum> setValue, bool useNumericValue, bool canSaveDefault) where TEnum : unmanaged, Enum where TOwner : PersistentConfiguration {
+        PersistentPropertyEnum<TEnum> property = new PersistentPropertyEnum<TEnum>(defaultValue, (x) => getValue((TOwner) x), (x, y) => setValue((TOwner) x, y), canSaveDefault, useNumericValue);
         RegisterCore(property, name, typeof(TOwner));
         return property;
     }
@@ -256,35 +257,66 @@ public abstract class PersistentProperty {
     }
 
     private class PersistentPropertyEnum<T> : PersistentProperty<T> where T : unmanaged, Enum {
-        private readonly string defaultText;
         private readonly bool canSaveDefault;
+        private readonly bool useNumericValue;
 
-        public PersistentPropertyEnum(T defaultValue, Func<PersistentConfiguration, T> getValue, Action<PersistentConfiguration, T> setValue, bool canSaveDefault = false) : base(defaultValue, getValue, setValue) {
+        public PersistentPropertyEnum(T defaultValue, Func<PersistentConfiguration, T> getValue, Action<PersistentConfiguration, T> setValue, bool canSaveDefault = false, bool useNumericValue = false) : base(defaultValue, getValue, setValue) {
             this.canSaveDefault = canSaveDefault;
-            this.defaultText = Enum.GetName(defaultValue) ?? throw new InvalidOperationException("Default enum value does not exist");
+            this.useNumericValue = useNumericValue;
         }
 
         public override bool Serialize(PersistentConfiguration config, XmlDocument document, XmlElement propertyElement) {
             T value = this.GetValue(config);
-            if (!(Enum.GetName(value) is string text)) {
-                throw new Exception("Current enum value is invalid");
+            if (!this.canSaveDefault && EqualityComparer<T>.Default.Equals(this.DefaultValue, value)) {
+                return false;
             }
 
-            if (this.canSaveDefault || text != this.defaultText) {
-                propertyElement.SetAttribute("enum_value", text);
-                return true;
+            if (this.useNumericValue) {
+                string text = EnumInfo<T>.IsUnsigned
+                    ? EnumInfo<T>.GetUnsignedValue(value).ToString()
+                    : EnumInfo<T>.GetSignedValue(value).ToString();
+                propertyElement.SetAttribute("enum_number", text);
+            }
+            else {
+                if (!(Enum.GetName(value) is string text)) {
+                    throw new Exception("Current enum value is invalid");
+                }
+
+                propertyElement.SetAttribute("enum_name", text);
             }
 
-            return false;
+            return true;
         }
 
         public override void Deserialize(PersistentConfiguration config, XmlElement propertyElement) {
-            if (!(propertyElement.GetAttribute("enum_value") is string text)) {
-                throw new Exception("Missing 'enum_value' attribute");
-            }
+            T value;
+            if (this.useNumericValue) {
+                if (!(propertyElement.GetAttribute("enum_number") is string text)) {
+                    throw new Exception("Missing 'enum_number' attribute");
+                }
 
-            if (!Enum.TryParse(text, out T value)) {
-                throw new Exception("Enum value does not exist: " + text);
+                if (EnumInfo<T>.IsUnsigned) {
+                    if (!ulong.TryParse(text, out ulong value_ul))
+                        throw new Exception("Missing unsigned 'enum_number' value: " + text);
+                    value = EnumInfo<T>.FromUnsignedValue(value_ul);
+                }
+                else {
+                    if (!long.TryParse(text, out long value_sl))
+                        throw new Exception("Missing signed 'enum_number' value: " + text);
+                    value = EnumInfo<T>.FromSignedValue(value_sl);
+                }
+                
+                if (!EnumInfo<T>.IsValid(value))
+                    throw new Exception("Invalid enum value: " + text);
+            }
+            else {
+                if (!(propertyElement.GetAttribute("enum_name") is string text)) {
+                    throw new Exception("Missing 'enum_name' attribute");
+                }
+                
+                if (!Enum.TryParse(text, out value)) {
+                    throw new Exception("Enum value does not exist: " + text);
+                }
             }
 
             this.SetValue(config, value);
