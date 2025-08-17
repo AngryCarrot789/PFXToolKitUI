@@ -241,11 +241,12 @@ public sealed class PersistentStorageManager {
                 }
                 catch (Exception e) {
                     list.Add(e);
+                    property.InternalAssignDefaultValue(config);
                 }
             }
         }
 
-        config.internalIsModified = false;
+        config.internalIsModified = list.Exceptions.Count > 0;
         config.OnLoaded();
     }
 
