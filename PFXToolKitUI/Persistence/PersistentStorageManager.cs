@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Xml;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.Persistence;
 
@@ -31,9 +32,11 @@ public sealed class PersistentStorageManager {
     private readonly List<PersistentConfiguration> allConfigs;
     private readonly Dictionary<string, Dictionary<string, PersistentConfiguration>> myAreas;
     private readonly Dictionary<Type, PersistentConfiguration> configTypeToInstance;
+    private readonly RapidDispatchActionEx rdaSaveAll;
 
     private int saveStackCount;
-    private HashSet<string>? saveAreaStack;
+    private readonly HashSet<string> dirtyConfigAreas = new HashSet<string>();
+    private bool areAllAreasDirty;
 
     /// <summary>
     /// Gets the location of the configuration storage directory
@@ -49,6 +52,11 @@ public sealed class PersistentStorageManager {
         this.myAreas = new Dictionary<string, Dictionary<string, PersistentConfiguration>>();
         this.configTypeToInstance = new Dictionary<Type, PersistentConfiguration>();
         this.StorageDirectory = storageDirectory;
+
+        this.rdaSaveAll = RapidDispatchActionEx.ForAsync(async () => {
+            await Task.Delay(250);
+            await this.SerializeDirtyAreasToFile(true);
+        }, nameof(PersistentStorageManager) + "_SaveAll");
     }
 
     public void BeginSavingStack() {
@@ -125,7 +133,7 @@ public sealed class PersistentStorageManager {
     /// Loads all configurations from the system
     /// </summary>
     public async Task LoadAllAsync(List<string>? missingConfigSets, bool assignDefaultsForUnsavedConfigs) {
-        this.EnsureDirectoryExists();
+        await this.EnsureDirectoryExists();
         using ErrorList errors = new ErrorList("Errors occurred while loading all configurations", false, true);
 
         HashSet<PersistentConfiguration>? unloaded = assignDefaultsForUnsavedConfigs ? this.allConfigs.ToHashSet() : null;
@@ -241,34 +249,60 @@ public sealed class PersistentStorageManager {
         config.OnLoaded();
     }
 
-    public void SaveAll(ErrorList? areaErrors = null) {
-        if (this.saveStackCount != 0) {
-            throw new InvalidOperationException("Save stack is active");
+    public void SaveAll() {
+        this.dirtyConfigAreas.Clear();
+        this.areAllAreasDirty = true;
+        this.rdaSaveAll.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Schedules the configuration to be saved at some point in the future
+    /// </summary>
+    /// <param name="options">The options whose area will be saved</param>
+    public void SaveArea(PersistentConfiguration options) => this.SaveArea(options.Area);
+
+    /// <summary>
+    /// Saves the specific named area. If the area does not exist, nothing will happen.
+    /// </summary>
+    /// <param name="area">The area to save</param>
+    public void SaveArea(string area) {
+        if (!this.areAllAreasDirty)
+            this.dirtyConfigAreas.Add(area);
+
+        this.rdaSaveAll.InvokeAsync();
+    }
+
+    /// <summary>
+    /// Flushes the saved state of configurations
+    /// </summary>
+    public async Task FlushToDisk(bool useAsync) {
+        this.rdaSaveAll.ClearRescheduledState();
+        await this.SerializeDirtyAreasToFile(useAsync);
+    }
+
+    private async Task SerializeDirtyAreasToFile(bool useAsync) {
+        if (this.saveStackCount > 0) {
+            return;
         }
 
-        this.saveAreaStack = null;
-        foreach (string area in this.myAreas.Keys) {
-            this.SaveArea(area, areaErrors);
+        IEnumerable<string> items = this.areAllAreasDirty ? this.myAreas.Keys : this.dirtyConfigAreas;
+        this.dirtyConfigAreas.Clear();
+        this.areAllAreasDirty = false;
+
+        foreach (string area in items) {
+            await this.SerializeAreaToFile(area, useAsync);
         }
     }
 
-    public bool? SaveArea(PersistentConfiguration configuration, ErrorList? areaErrors = null) => this.SaveArea(configuration.Area, areaErrors);
-
-    public bool? SaveArea(string area, ErrorList? areaErrors = null) {
-        if (this.saveStackCount > 0) {
-            (this.saveAreaStack ??= new HashSet<string>()).Add(area);
-            return null;
-        }
-
+    private async Task SerializeAreaToFile(string area, bool useAsync) {
         if (!this.myAreas.TryGetValue(area, out Dictionary<string, PersistentConfiguration>? configSet) || configSet.Count <= 0) {
-            return false;
+            return;
         }
 
         if (!configSet.Values.Any(x => x.internalIsModified)) {
-            return false;
+            return;
         }
 
-        this.EnsureDirectoryExists();
         string configFilePath = Path.GetFullPath(Path.Combine(this.StorageDirectory, area + ".xml"));
         XmlDocument document = new XmlDocument();
 
@@ -280,35 +314,34 @@ public sealed class PersistentStorageManager {
                 SaveConfiguration(config.Value, document, rootElement);
             }
             catch (Exception e) {
-                areaErrors?.Add(e);
+                AppLogger.Instance.WriteLine($"Failed to save area {area}/{config.Key}: " + e.GetToString());
             }
         }
 
-        this.EnsureDirectoryExists();
-        try {
-            document.Save(configFilePath);
+        if (useAsync) {
+            await this.EnsureDirectoryExists();
+            try {
+                await Task.Run(() => document.Save(configFilePath)).ConfigureAwait(false);
+            }
+            catch (Exception e) {
+                AppLogger.Instance.WriteLine($"Failed to save configuration at {configFilePath}: " + e.GetToString());
+            }
         }
-        catch (Exception e) {
-            AppLogger.Instance.WriteLine($"Failed to save configuration at {configFilePath}: " + e.GetToString());
+        else {
+            try {
+                Directory.CreateDirectory(this.StorageDirectory);
+            }
+            catch {
+                // ignored
+            }
+            
+            try {
+                document.Save(configFilePath);
+            }
+            catch (Exception e) {
+                AppLogger.Instance.WriteLine($"Failed to save configuration at {configFilePath}: " + e.GetToString());
+            }
         }
-
-        return true;
-    }
-
-    public void SaveStackedAreas() {
-        if (this.saveStackCount != 0) {
-            throw new InvalidOperationException("Save stack still active");
-        }
-
-        if (this.saveAreaStack == null) {
-            return;
-        }
-
-        foreach (string area in this.saveAreaStack) {
-            this.SaveArea(area);
-        }
-
-        this.saveAreaStack = null;
     }
 
     private static void SaveConfiguration(PersistentConfiguration config, XmlDocument document, XmlElement rootElement) {
@@ -332,12 +365,14 @@ public sealed class PersistentStorageManager {
         }
     }
 
-    private void EnsureDirectoryExists() {
-        try {
-            Directory.CreateDirectory(this.StorageDirectory);
-        }
-        catch {
-            // ignored
-        }
+    private Task EnsureDirectoryExists() {
+        return Task.Run(void () => {
+            try {
+                Directory.CreateDirectory(this.StorageDirectory);
+            }
+            catch {
+                // ignored
+            }
+        });
     }
 }

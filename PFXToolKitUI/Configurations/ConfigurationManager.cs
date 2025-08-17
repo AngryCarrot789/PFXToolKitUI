@@ -52,6 +52,7 @@ public abstract class ConfigurationManager {
         await ApplyPagesRecursive(this.RootEntry, x => x.Apply(errors), Flag_OnlyIfModified);
         if (manager.EndSavingStack()) {
             manager.SaveAll();
+            await manager.FlushToDisk(true);
         }
     }
 

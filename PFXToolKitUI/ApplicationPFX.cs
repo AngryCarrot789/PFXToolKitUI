@@ -349,6 +349,7 @@ public abstract class ApplicationPFX : IServiceable {
         PersistentStorageManager manager = this.PersistentStorageManager;
 
         // Should be inactive at this point realistically, but just in case, clear it all since we're exiting
+        AppLogger.Instance.WriteLine("Saving configs...");
         while (manager.IsSaveStackActive) {
             if (manager.EndSavingStack()) {
                 break;
@@ -356,6 +357,11 @@ public abstract class ApplicationPFX : IServiceable {
         }
 
         manager.SaveAll();
+
+        AppLogger.Instance.WriteLine("Waiting for configs to flush to disk...");
+        Task task =  manager.FlushToDisk(false);
+        Debug.Assert(task.IsCompleted);
+        AppLogger.Instance.WriteLine("Flushed!");
     }
 
     public void EnsureBeforePhase(ApplicationStartupPhase phase) {
