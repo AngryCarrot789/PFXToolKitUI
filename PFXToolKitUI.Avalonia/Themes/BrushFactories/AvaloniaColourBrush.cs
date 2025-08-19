@@ -42,21 +42,21 @@ public abstract class AvaloniaColourBrush : IColourBrush {
 
 public sealed class ConstantAvaloniaColourBrush : AvaloniaColourBrush, IConstantColourBrush {
     public static IColourBrush Transparent { get; } = new ConstantAvaloniaColourBrush(Brushes.Transparent);
-    
+
     public override ImmutableSolidColorBrush Brush { get; }
 
     public SKColor Color { get; }
 
     public ConstantAvaloniaColourBrush(SKColor colour) {
         this.Color = colour;
-        
+
         // TODO: maybe try to further save resources by seeing if the colour represents known brushes
         if (colour == SKColors.Transparent)
             this.Brush = (ImmutableSolidColorBrush) Brushes.Transparent;
         else
             this.Brush = new ImmutableSolidColorBrush(new Color(colour.Alpha, colour.Red, colour.Green, colour.Blue));
     }
-    
+
     public ConstantAvaloniaColourBrush(IImmutableSolidColorBrush brush) {
         this.Color = brush.Color.ToSKColor();
         this.Brush = (ImmutableSolidColorBrush) brush;
@@ -93,13 +93,13 @@ public class StaticAvaloniaColourBrush : AvaloniaColourBrush, IStaticColourBrush
 public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicColourBrush {
     private int usageCounter;
     private List<Action<IBrush?>>? handlers;
-    
+
     public string ThemeKey { get; }
 
     public override IBrush? Brush => this.CurrentBrush;
 
     public int ReferenceCount => this.usageCounter;
-    
+
     /// <summary>
     /// Gets the fully resolved brush
     /// </summary>
@@ -187,19 +187,16 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
 
                 return;
             }
-            else {
-                // Try to convert to an immutable brush in case the user specified a colour key
-                if (value is Color colour) {
-                    // Already have the same colour, and we have an immutable brush,
-                    // so no need to notify handlers of changes
-                    if (this.CurrentBrush is ImmutableSolidColorBrush currBrush && currBrush.Color == colour) {
-                        return;
-                    }
-
-                    AppLogger.Instance.WriteLine($"[{nameof(DynamicAvaloniaColourBrush)}] Found resource with key '{this.ThemeKey}', converted to brush");
-                    this.CurrentBrush = new ImmutableSolidColorBrush(colour);
-                    this.NotifyHandlersBrushChanged();
+            else if (value is Color colour) {
+                // Already have the same colour, and we have an immutable brush, so no need to notify handlers of changes
+                if (this.CurrentBrush is ImmutableSolidColorBrush currBrush && currBrush.Color == colour) {
+                    return;
                 }
+
+                AppLogger.Instance.WriteLine($"[{nameof(DynamicAvaloniaColourBrush)}] Found resource with key '{this.ThemeKey}', converted to brush");
+                this.CurrentBrush = new ImmutableSolidColorBrush(colour);
+                this.NotifyHandlersBrushChanged();
+                return;
             }
         }
 

@@ -29,8 +29,10 @@ public abstract class BaseRelayCommand : IRelayCommand {
     public bool IsEnabled {
         get => this.isEnabled;
         set {
-            this.isEnabled = value;
-            this.RaiseCanExecuteChanged();
+            if (this.isEnabled != value) {
+                this.isEnabled = value;
+                this.RaiseCanExecuteChanged();
+            }
         }
     }
 

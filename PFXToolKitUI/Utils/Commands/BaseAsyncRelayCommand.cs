@@ -46,7 +46,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     /// command or not, due to the fact that the command may finish as soon as this property is fetched.
     /// See <see cref="TryExecuteAsync"/> for a somewhat workaround
     /// </summary>
-    public bool IsRunning => this.isRunningState == 1;
+    public bool IsRunning => this.isRunningState != 0;
 
     protected BaseAsyncRelayCommand() { }
 

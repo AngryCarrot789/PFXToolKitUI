@@ -25,64 +25,43 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 public static class DropUtils {
     private const KeyModifiers ControlShift = KeyModifiers.Control | KeyModifiers.Shift;
 
-    public static EnumDropType GetDropAction(KeyModifiers keyStates, EnumDropType effects) {
+    /// <summary>
+    /// Gets the final intended drop type based on the allowed drop types and the modifier keys pressed
+    /// </summary>
+    /// <param name="modifiers">The pressed modifiers</param>
+    /// <param name="allowedDropTypes">The allowed drop types</param>
+    /// <returns>
+    /// A single drop type based on the modifiers pressed. When no modifiers are pressed,
+    /// the default order is to try and move first, then copy, then link.
+    /// </returns>
+    public static EnumDropType GetDropFromPressedModifiers(KeyModifiers modifiers, EnumDropType allowedDropTypes) {
         // keyStates &= ~MouseButtons; // remove mouse buttons
-        if ((keyStates & ControlShift) == ControlShift && (effects & EnumDropType.Link) == EnumDropType.Link) {
+        if ((modifiers & ControlShift) == ControlShift && (allowedDropTypes & EnumDropType.Link) != 0) {
             return EnumDropType.Link; // Hold CTRL + SHIFT to create link
         }
-        else if ((keyStates & KeyModifiers.Alt) == KeyModifiers.Alt && (effects & EnumDropType.Link) == EnumDropType.Link) {
+        else if ((modifiers & KeyModifiers.Alt) == KeyModifiers.Alt && (allowedDropTypes & EnumDropType.Link) != 0) {
             return EnumDropType.Link; // Hold ALT to create link
         }
-        else if ((keyStates & KeyModifiers.Shift) == KeyModifiers.Shift && (effects & EnumDropType.Move) == EnumDropType.Move) {
+        else if ((modifiers & KeyModifiers.Shift) == KeyModifiers.Shift && (allowedDropTypes & EnumDropType.Move) != 0) {
             return EnumDropType.Move; // Hold SHIFT to move.
         }
-        else if ((keyStates & KeyModifiers.Control) == KeyModifiers.Control && (effects & EnumDropType.Copy) == EnumDropType.Copy) {
+        else if ((modifiers & KeyModifiers.Control) == KeyModifiers.Control && (allowedDropTypes & EnumDropType.Copy) != 0) {
             return EnumDropType.Copy; // Hold CTRL to top
         }
-        else if ((effects & EnumDropType.Move) == EnumDropType.Move) {
-            return EnumDropType.Move; // Try to move by default
-        }
-        else if ((effects & EnumDropType.Copy) == EnumDropType.Copy) {
-            return EnumDropType.Copy; // Try to copy by default
-        }
-        else if ((effects & EnumDropType.Link) == EnumDropType.Link) {
-            return EnumDropType.Link; // Try to link by default
-        }
         else {
-            return EnumDropType.None; // None of the above will work so no drag drop for you :)
-        }
-    }
-
-    private const int EnumNone = 0;
-    private const int EnumAltKey = 1;
-    private const int EnumControlKey = 2;
-    private const int EnumShiftKey = 4;
-    private const int EnumControlShiftKeys = EnumControlKey | EnumShiftKey;
-
-    public static EnumDropType GetDropActionForModKeys(int mods, EnumDropType effects) {
-        if ((mods & EnumControlShiftKeys) == EnumControlShiftKeys && (effects & EnumDropType.Link) == EnumDropType.Link) {
-            return EnumDropType.Link; // Hold CTRL + SHIFT to create link
-        }
-        else if ((mods & EnumAltKey) == EnumAltKey && (effects & EnumDropType.Link) == EnumDropType.Link) {
-            return EnumDropType.Link; // Hold ALT to create link
-        }
-        else if ((mods & EnumShiftKey) == EnumShiftKey && (effects & EnumDropType.Move) == EnumDropType.Move) {
-            return EnumDropType.Move; // Hold SHIFT to move.
-        }
-        else if ((mods & EnumControlKey) == EnumControlKey && (effects & EnumDropType.Copy) == EnumDropType.Copy) {
-            return EnumDropType.Copy; // Hold CTRL to top
-        }
-        else if ((effects & EnumDropType.Move) == EnumDropType.Move) {
-            return EnumDropType.Move; // Try to move by default
-        }
-        else if ((effects & EnumDropType.Copy) == EnumDropType.Copy) {
-            return EnumDropType.Copy; // Try to copy by default
-        }
-        else if ((effects & EnumDropType.Link) == EnumDropType.Link) {
-            return EnumDropType.Link; // Try to link by default
-        }
-        else {
-            return EnumDropType.None; // None of the above will work so no drag drop for you :)
+            // No modifiers press. So by default we will try to move first, then try copy, then finally try link.
+            if ((allowedDropTypes & EnumDropType.Move) != 0) {
+                return EnumDropType.Move; // Try to move by default
+            }
+            else if ((allowedDropTypes & EnumDropType.Copy) != 0) {
+                return EnumDropType.Copy; // Try to copy by default
+            }
+            else if ((allowedDropTypes & EnumDropType.Link) != 0) {
+                return EnumDropType.Link; // Try to link by default
+            }
+            else {
+                return EnumDropType.None; // None of the above will work so no drag drop for you :)
+            }
         }
     }
 }

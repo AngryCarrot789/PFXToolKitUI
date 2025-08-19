@@ -22,6 +22,9 @@ using PFXToolKitUI.Utils.Collections;
 
 namespace PFXToolKitUI.Interactivity;
 
+public delegate EnumDropType ManagedCanDropHandler<in THandler, in TManagedValue>(THandler handler, TManagedValue value, EnumDropType allowedDropType, IContextData ctx);
+public delegate Task ManagedDropHandler<in THandler, in TManagedValue>(THandler handler, TManagedValue value, EnumDropType dropType, IContextData ctx);
+
 /// <summary>
 /// A class that supports basic type-based drag-drop processing. This class contains a dictionary which
 /// maps a droppable object type to another dictionary which maps the handler/target type to the handler functions
@@ -29,11 +32,8 @@ namespace PFXToolKitUI.Interactivity;
 /// <typeparam name="THandler">The base handler type. This is only here to help reduce bugs</typeparam>
 public class DragDropRegistry<THandler> where THandler : class {
     private delegate EnumDropType CustomCanDropDelegate(object target, object drop, EnumDropType dropType, IContextData context);
-
     private delegate Task CustomOnDroppedDelegate(object target, object drop, EnumDropType dropType, IContextData context);
-
     private delegate EnumDropType NativeCanDropDelegate(object target, IDataObjekt drop, EnumDropType dropType, IContextData context);
-
     private delegate Task NativeOnDroppedDelegate(object target, IDataObjekt drop, EnumDropType dropType, IContextData context);
 
     // [dropType -> [handlerType -> func]]
@@ -45,12 +45,12 @@ public class DragDropRegistry<THandler> where THandler : class {
         this.registryNative = new Dictionary<string, InheritanceDictionary<NativeHandlerPair>>();
     }
 
-    public void Register<T, TValue>(
-        Func<T, TValue, EnumDropType, IContextData, EnumDropType> canDrop,
-        Func<T, TValue, EnumDropType, IContextData, Task> onDropped)
-        where T : THandler {
+    public void RegisterManaged<THandlerType, TValue>(
+        ManagedCanDropHandler<THandlerType, TValue> canDrop,
+        ManagedDropHandler<THandlerType, TValue> onDropped)
+        where THandlerType : THandler {
         Type dropType = typeof(TValue);
-        Type handlerType = typeof(T);
+        Type handlerType = typeof(THandlerType);
 
         if (!this.registryCustom.TryGetLocalValue(dropType, out InheritanceDictionary<CustomHandlerPair>? handlerMap)) {
             this.registryCustom[dropType] = handlerMap = new InheritanceDictionary<CustomHandlerPair>();
@@ -59,7 +59,7 @@ public class DragDropRegistry<THandler> where THandler : class {
             throw new Exception("Handler type already registered: " + handlerType.Name);
         }
 
-        handlerMap.SetValue(handlerType, new CustomHandlerPair((h, d, t, c) => canDrop((T) h, (TValue) d, t, c), (h, d, t, c) => onDropped((T) h, (TValue) d, t, c)));
+        handlerMap.SetValue(handlerType, new CustomHandlerPair((h, d, t, c) => canDrop((THandlerType) h, (TValue) d, t, c), (h, d, t, c) => onDropped((THandlerType) h, (TValue) d, t, c)));
     }
 
     public void RegisterNative<T>(
@@ -86,14 +86,14 @@ public class DragDropRegistry<THandler> where THandler : class {
     /// </summary>
     /// <param name="target">Object in which the value is being dragged over</param>
     /// <param name="value">The value being dragged</param>
-    /// <param name="dropType">The drag drop type</param>
+    /// <param name="allowedDropType">The allowed drag drop types</param>
     /// <returns>True if the drag can occur (and show the appropriate icon based on the dropType), otherwise false</returns>
-    public EnumDropType CanDrop(THandler target, object value, EnumDropType dropType, IContextData? context = null) {
+    public EnumDropType CanDrop(THandler target, object value, EnumDropType allowedDropType, IContextData? context = null) {
         context ??= EmptyContext.Instance;
         Type targetType = target.GetType();
         foreach (ITypeEntry<InheritanceDictionary<CustomHandlerPair>> handlerEntry in this.registryCustom.GetLocalValueEnumerable(value.GetType())) {
             foreach (ITypeEntry<CustomHandlerPair> entry in handlerEntry.LocalValue.GetLocalValueEnumerable(targetType)) {
-                EnumDropType dt = entry.LocalValue.CanDrop(target, value, dropType, context);
+                EnumDropType dt = entry.LocalValue.CanDrop(target, value, allowedDropType, context);
                 if (dt != EnumDropType.None) {
                     return dt;
                 }
@@ -135,19 +135,19 @@ public class DragDropRegistry<THandler> where THandler : class {
     /// </summary>
     /// <param name="target">The target object that the value was dropped onto</param>
     /// <param name="value">The dropped CLR object</param>
-    /// <param name="dropType">The type of drop</param>
+    /// <param name="allowedDropType">The allowed drop types</param>
     /// <param name="context">
     /// Additional context for the drop event. This is typically for storing flags and values that are
     /// handled by specific drop targets (e.g. the frame, based on the mouse position, when dropping on a track)
     /// </param>
     /// <returns>True if a drop handler was called, otherwise false</returns>
-    public async Task<bool> OnDropped(THandler target, object value, EnumDropType dropType, IContextData? context = null) {
+    public async Task<bool> OnDropped(THandler target, object value, EnumDropType allowedDropType, IContextData? context = null) {
         context ??= EmptyContext.Instance;
         Type targetType = target.GetType();
         foreach (ITypeEntry<InheritanceDictionary<CustomHandlerPair>> handlerEntry in this.registryCustom.GetLocalValueEnumerable(value.GetType())) {
             foreach (ITypeEntry<CustomHandlerPair> entry in handlerEntry.LocalValue.GetLocalValueEnumerable(targetType)) {
                 CustomHandlerPair pair = entry.LocalValue;
-                EnumDropType dt = pair.CanDrop(target, value, dropType, context);
+                EnumDropType dt = pair.CanDrop(target, value, allowedDropType, context);
                 if (dt != EnumDropType.None) {
                     await pair.OnDropped(target, value, dt, context);
                     return true;
