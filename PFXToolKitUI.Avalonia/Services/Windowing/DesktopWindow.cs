@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
+using System.Reflection;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -36,6 +38,8 @@ namespace PFXToolKitUI.Avalonia.Services.Windowing;
 /// The base class for windows supported by a <see cref="WindowingSystem"/>
 /// </summary>
 public class DesktopWindow : WindowEx, IDesktopWindow {
+    private static readonly FieldInfo FIELD_showingAsDialog = typeof(Window).GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    
     /// <summary>
     /// Gets whether the window is actually open or not. False when not opened or <see cref="IsClosed"/> is true
     /// </summary>
@@ -49,10 +53,9 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     /// <summary>
     /// Gets whether this window is open as a modal dialog
     /// </summary>
-    public bool IsOpenAsDialog { get; private set; }
+    public bool IsOpenAsDialog => (bool) FIELD_showingAsDialog.GetValue(this)!;
 
-    public event DesktopWindowClosingAsyncEventHandler? WindowClosing;
-    public event DesktopWindowClosedEventHandler? WindowClosed;
+    public event DesktopWindowClosingAsyncEventHandler? ClosingAsync;
 
     private VisualLayerManager? PART_VisualLayerManager;
     private Panel? PART_TitleBarPanel;
@@ -121,10 +124,8 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     }
 
     protected sealed override void OnOpened(EventArgs e) {
-        if (this.IsClosed || this.IsOpen) {
-            throw new InvalidOperationException($"Invalid state. IsClosed = {this.IsClosed}, IsOpen = {this.IsOpen}");
-        }
-
+        Debug.Assert(!this.IsClosed && !this.IsOpen, "Unexpected state");
+        
         this.StopRendering();
         this.IsClosed = false;
         this.IsOpen = true;
@@ -156,8 +157,10 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     }
 
     protected override async Task<bool> OnClosingAsync(WindowCloseReason reason) {
+        Debug.Assert(!this.IsClosed && this.IsOpen, "Unexpected state");
+        
         bool isCancelled = false;
-        Delegate[]? handlers = this.WindowClosing?.GetInvocationList();
+        Delegate[]? handlers = this.ClosingAsync?.GetInvocationList();
         if (handlers != null) {
             foreach (Delegate handler in handlers) {
                 isCancelled |= await ((DesktopWindowClosingAsyncEventHandler) handler)(this, reason, isCancelled);
@@ -168,21 +171,12 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     }
 
     protected override void OnClosed(EventArgs e) {
-        if (this.IsClosed || !this.IsOpen) {
-            throw new InvalidOperationException($"Invalid state. IsClosed = {this.IsClosed}, IsOpen = {this.IsOpen}");
-        }
+        Debug.Assert(!this.IsClosed && this.IsOpen, "Unexpected state");
 
         this.IsOpen = false;
         this.IsClosed = true;
 
         base.OnClosed(e);
-
-        this.WindowClosed?.Invoke(this);
-    }
-
-    public new Task<TResult> ShowDialog<TResult>(Window owner) {
-        this.IsOpenAsDialog = true;
-        return base.ShowDialog<TResult>(owner)!;
     }
 
     private class ClipboardServiceImpl : IClipboardService {

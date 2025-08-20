@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -44,8 +46,8 @@ public class WindowEx : Window {
 
     // Override it here so that any window using WindowEx gets the automatic WindowEx style
     protected override Type StyleKeyOverride => typeof(WindowEx);
-
-    private bool isAwaitingClose, isStillAwaiting, userCancelledClose, doFinalClose;
+    
+    private bool isWaitingForClose, isStillWaitingForClose, isCloseCancelledAsync, doFinalClose;
     private Button? PART_ButtonMinimize, PART_ButtonRestore, PART_ButtonMaximize, PART_ButtonClose;
     private DockPanel? PART_TitleBar;
 
@@ -63,6 +65,18 @@ public class WindowEx : Window {
         this.ExtendClientAreaToDecorationsHint = true;
         this.ExtendClientAreaTitleBarHeightHint = -1;
     }
+    
+    // [DllImport("user32.dll")]
+    // private static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, int lParam);
+    // 
+    // private const int WM_NCLBUTTONDOWN = 0xA1;
+    // private const int HTCAPTION = 0x2;
+    // 
+    // // Call in a pointer down event.
+    // public void BeginDrag(int hwnd)
+    // {
+    //     SendMessage(hwnd, WM_NCLBUTTONDOWN, HTCAPTION, 0);
+    // }
 
     static WindowEx() {
     }
@@ -119,49 +133,50 @@ public class WindowEx : Window {
         if (e.Cancel || this.doFinalClose) {
             return;
         }
-
-        if (!this.isStillAwaiting) {
-            if (this.isAwaitingClose) {
+    
+        if (!this.isStillWaitingForClose) {
+            if (this.isWaitingForClose) {
                 // Someone tried to close the window during OnClosingAsync.
                 e.Cancel = true;
             }
             else {
                 this.OnClosingAsyncImpl(e.CloseReason);
-
+    
                 // If OnClosingAsync is still running, then we cancel the
                 // close event, and we set a flag to close on task completed
-                if (this.isAwaitingClose) {
-                    this.isStillAwaiting = true;
+                if (this.isWaitingForClose) {
+                    this.isStillWaitingForClose = true;
                     e.Cancel = true;
                 }
             }
         }
-
-        this.userCancelledClose = false;
+    
+        this.isCloseCancelledAsync = false;
     }
-
+    
     private async void OnClosingAsyncImpl(WindowCloseReason reason) {
-        this.isAwaitingClose = true;
         try {
-            this.userCancelledClose = await this.OnClosingAsync(reason);
+            this.isWaitingForClose = true;
+            this.isCloseCancelledAsync = await this.OnClosingAsync(reason);
         }
         catch (Exception e) {
-            Dispatcher.UIThread.Post(() => throw e);
+            Debug.Fail(e.Message);
+            Dispatcher.UIThread.Post(void () => ExceptionDispatchInfo.Throw(e));
         }
         finally {
-            this.isAwaitingClose = false;
+            this.isWaitingForClose = false;
         }
-
-        bool postClose = this.isStillAwaiting && !this.userCancelledClose;
-        this.isStillAwaiting = false;
-        this.userCancelledClose = false;
-
+    
+        bool postClose = this.isStillWaitingForClose && !this.isCloseCancelledAsync;
+        this.isStillWaitingForClose = false;
+        this.isCloseCancelledAsync = false;
+    
         if (postClose) {
             this.doFinalClose = true;
             Dispatcher.UIThread.Post(this.Close);
         }
     }
-
+    
     /// <summary>
     /// Invoked when this window tries to close. This method supports full async
     /// </summary>

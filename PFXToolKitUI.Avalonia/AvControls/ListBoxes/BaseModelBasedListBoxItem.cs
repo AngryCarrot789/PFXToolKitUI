@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -137,23 +138,22 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
         if (hasMovedY && !this.isMovingBetweenTracks && Math.Abs(mPosDiffRel.Y) >= 1.0d) {
             List<BaseModelBasedListBoxItem> items = this.ListBox!.Items.Cast<BaseModelBasedListBoxItem>().ToList();
             int srcIdx = items.IndexOf(this);
-            foreach (BaseModelBasedListBoxItem item in items) {
-                if (item != this) {
-                    int dstIdx = this.ListBox.Items.IndexOf(item);
-                    if (srcIdx == dstIdx) {
-                        break;
-                    }
-
-                    bool isMovingDown = dstIdx > srcIdx;
-                    Point mPosItemRel2List = e.GetPosition(item);
-                    double threshold = item.Bounds.Height / 2;
-                    if ((isMovingDown && mPosItemRel2List.Y > threshold) || (!isMovingDown && mPosItemRel2List.Y < threshold)) {
-                        this.isMovingBetweenTracks = true;
-                        e.Pointer.Capture(null);
-                        this.ListBox.MoveItemIndex(srcIdx, dstIdx);
-                        e.Handled = true;
-                        break;
-                    }
+            for (int dstIdx = 0; dstIdx < items.Count; dstIdx++) {
+                BaseModelBasedListBoxItem item = items[dstIdx];
+                if (item == this) {
+                    continue;
+                }
+                
+                Debug.Assert(srcIdx != dstIdx);
+                bool isMovingDown = dstIdx > srcIdx;
+                Point mPosItemRel2List = e.GetPosition(item);
+                double threshold = item.Bounds.Height / 2;
+                if ((isMovingDown && mPosItemRel2List.Y > threshold) || (!isMovingDown && mPosItemRel2List.Y < threshold)) {
+                    this.isMovingBetweenTracks = true;
+                    e.Pointer.Capture(null);
+                    this.ListBox.MoveItemIndex(srcIdx, dstIdx);
+                    e.Handled = true;
+                    break;
                 }
             }
         }
