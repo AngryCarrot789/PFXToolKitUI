@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
@@ -29,7 +30,7 @@ namespace PFXToolKitUI.AdvancedMenuService;
 /// </summary>
 public class ContextEntryGroup : BaseContextEntry {
     private bool showDummyItemWhenEmpty = true;
-    
+
     public ObservableList<IContextObject> Items { get; }
 
     /// <summary>
@@ -40,13 +41,31 @@ public class ContextEntryGroup : BaseContextEntry {
         set => PropertyHelper.SetAndRaiseINE(ref this.showDummyItemWhenEmpty, value, this, static t => t.ShowDummyItemWhenEmptyChanged?.Invoke(t));
     }
 
+    /// <summary>
+    /// Gets or sets the unique ID associated with this group. This is relative to the parent entry.
+    /// </summary>
+    public string? UniqueID { get; set; }
+
     public event BaseContextEntryEventHandler? ShowDummyItemWhenEmptyChanged;
 
     public ContextEntryGroup() {
         this.Items = new ObservableList<IContextObject>();
     }
 
-    public ContextEntryGroup(string displayName, string? description = null, Icon? icon = null, StretchMode stretchMode = StretchMode.None) : base(displayName, description, icon) {
+    public ContextEntryGroup(string displayName, string? description = null, Icon? icon = null) : base(displayName, description, icon) {
         this.Items = new ObservableList<IContextObject>();
+    }
+
+    public bool TryGetGroupById(string uniqueId, [NotNullWhen(true)] out ContextEntryGroup? group) {
+        ArgumentException.ThrowIfNullOrEmpty(uniqueId);
+        foreach (IContextObject obj in this.Items) {
+            if (obj is ContextEntryGroup g && g.UniqueID == uniqueId) {
+                group = g;
+                return true;
+            }
+        }
+
+        group = null;
+        return false;
     }
 }
