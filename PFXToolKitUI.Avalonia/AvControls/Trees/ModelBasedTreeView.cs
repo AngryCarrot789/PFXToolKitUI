@@ -32,7 +32,7 @@ public abstract class ModelBasedTreeView : TreeView {
 /// <typeparam name="TModel"></typeparam>
 public abstract class ModelBasedTreeView<TModel> : ModelBasedTreeView where TModel : class {
     private readonly Stack<ModelBasedTreeViewItem<TModel>> itemCache;
-    internal readonly ModelControlDictionary<TModel, ModelBasedTreeViewItem<TModel>> itemMap;
+    internal readonly ModelControlMap<TModel, ModelBasedTreeViewItem<TModel>> itemMap;
     private IObservableList<TModel>? observableList;
 
     /// <summary>
@@ -43,7 +43,7 @@ public abstract class ModelBasedTreeView<TModel> : ModelBasedTreeView where TMod
     protected ModelBasedTreeView(int maxCacheSize = 64) {
         this.MaxCacheSize = maxCacheSize;
         this.itemCache = new Stack<ModelBasedTreeViewItem<TModel>>();
-        this.itemMap = new ModelControlDictionary<TModel, ModelBasedTreeViewItem<TModel>>();
+        this.itemMap = new ModelControlMap<TModel, ModelBasedTreeViewItem<TModel>>();
     }
 
     public ModelBasedTreeViewItem<TModel> GetNodeAt(int index) {

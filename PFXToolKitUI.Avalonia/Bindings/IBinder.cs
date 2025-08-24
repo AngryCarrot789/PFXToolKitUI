@@ -21,6 +21,8 @@ using Avalonia.Controls;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 
+public delegate void BinderEventHandler<TModel>(IBinder<TModel> sender) where TModel : class;
+
 /// <summary>
 /// A non-generic interface for a binder
 /// </summary>
@@ -76,7 +78,16 @@ public interface IBinder<TModel> : IBinder where TModel : class {
     /// Returns true when a model is attached
     /// </summary>
     bool HasModel { get; }
-
+    
+    /// <summary>
+    /// An event fired when a control is attached but no model is attached yet,
+    /// or when the model is detached and the control is still attached.
+    /// <para>
+    /// When using <see cref="SwitchModel"/>, this event is fired when the new model is null and a control is attached
+    /// </para>
+    /// </summary>
+    event BinderEventHandler<TModel> UpdateControlWithoutModel;
+    
     /// <summary>
     /// Attaches both the control and the model to this binder. This is equivalent to
     /// calling <see cref="AttachControl"/> and <see cref="AttachModel"/>.

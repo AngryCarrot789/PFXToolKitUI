@@ -19,7 +19,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace PFXToolKitUI.Avalonia;
+namespace PFXToolKitUI;
 
 /// <summary>
 /// A bi-dictionary that maps a model to a control and vice versa.
@@ -27,7 +27,7 @@ namespace PFXToolKitUI.Avalonia;
 /// </summary>
 /// <typeparam name="TModel">Model type</typeparam>
 /// <typeparam name="TControl">Control type</typeparam>
-public class ModelControlDictionary<TModel, TControl> : IModelControlDictionary<TModel, TControl> where TModel : class where TControl : class {
+public class ModelControlMap<TModel, TControl> : IModelControlMap<TModel, TControl> where TModel : class where TControl : class {
     private Dictionary<TModel, TControl>? modelToControl;
     private Dictionary<TControl, TModel>? controlToModel;
 
@@ -36,7 +36,7 @@ public class ModelControlDictionary<TModel, TControl> : IModelControlDictionary<
 
     public IEnumerable<KeyValuePair<TModel, TControl>> Entries => this.modelToControl ?? Enumerable.Empty<KeyValuePair<TModel, TControl>>();
 
-    public ModelControlDictionary() {
+    public ModelControlMap() {
     }
 
     public void AddMapping(TModel model, TControl control) {

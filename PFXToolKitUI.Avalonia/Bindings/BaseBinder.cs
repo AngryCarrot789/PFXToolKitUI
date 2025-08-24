@@ -45,13 +45,13 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     public TModel Model => this.myModel ?? throw new InvalidOperationException("No model is attached");
 
     Control? IBinder.Debug_Control => this.myControl;
-    
+
     object? IBinder.Debug_Model => this.myModel;
-    
+
     public bool HasControl => this.myControl != null;
 
     public bool HasModel => this.myModel != null;
-    
+
     public bool IsFullyAttached { get; private set; }
 
     public bool IsUpdatingControl { get; protected set; }
@@ -61,7 +61,10 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     /// </summary>
     public string? DebugName { get; set; }
 
-    protected BaseBinder() { }
+    public event BinderEventHandler<TModel>? UpdateControlWithoutModel;
+
+    protected BaseBinder() {
+    }
 
     public void UpdateControl() {
         if (!this.IsFullyAttached) {
@@ -113,10 +116,10 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
         this.myModel = model;
         this.OnModelAttached();
-        
+
         this.myControl = control;
         this.OnControlAttached();
-        
+
         this.AttachInternal();
     }
 
@@ -129,11 +132,14 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
             throw new ArgumentNullException(nameof(control));
 
         this.CheckAttachControl(control);
-        
+
         this.myControl = control;
         this.OnControlAttached();
         if (this.myModel != null) {
             this.AttachInternal();
+        }
+        else {
+            this.UpdateControlWithoutModel?.Invoke(this);
         }
     }
 
@@ -146,7 +152,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
             throw new ArgumentNullException(nameof(model));
 
         this.CheckAttachModel(model);
-        
+
         this.myModel = model;
         this.OnModelAttached();
         if (this.myControl != null) {
@@ -161,7 +167,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         this.TryDetachInternal();
         this.OnModelDetaching();
         this.myModel = null;
-        
+
         this.OnControlDetaching();
         this.myControl = null;
     }
@@ -178,7 +184,14 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     public void DetachModel() {
         if (this.myModel == null)
             throw new InvalidOperationException("No model is attached");
+        
+        this.DetachModelInternal();
+        if (this.myControl != null) {
+            this.UpdateControlWithoutModel?.Invoke(this);
+        }
+    }
 
+    private void DetachModelInternal() {
         this.TryDetachInternal();
         this.OnModelDetaching();
         this.myModel = null;
@@ -191,13 +204,17 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         if (newControl != null)
             this.AttachControl(newControl);
     }
-    
+
     public void SwitchModel(TModel? newModel) {
         if (this.myModel != null)
-            this.DetachModel();
+            this.DetachModelInternal();
 
-        if (newModel != null)
+        if (newModel != null) {
             this.AttachModel(newModel);
+        }
+        else if (this.myControl != null) {
+            this.UpdateControlWithoutModel?.Invoke(this);
+        }
     }
 
     /// <summary>
@@ -214,13 +231,17 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     protected virtual void CheckAttachModel(TModel model) {
     }
 
-    protected virtual void OnModelAttached() { }
+    protected virtual void OnModelAttached() {
+    }
 
-    protected virtual void OnModelDetaching() { }
-    
-    protected virtual void OnControlAttached() { }
+    protected virtual void OnModelDetaching() {
+    }
 
-    protected virtual void OnControlDetaching() { }
+    protected virtual void OnControlAttached() {
+    }
+
+    protected virtual void OnControlDetaching() {
+    }
 
     protected abstract void OnAttached();
 

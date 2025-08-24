@@ -36,10 +36,10 @@ public class ShortcutTreeView : TreeView, IShortcutTreeOrNode, IShortcutTreeElem
         set => this.SetValue(RootEntryProperty, value);
     }
 
-    private readonly ModelControlDictionary<IKeyMapEntry, ShortcutTreeViewItem> itemMap = new ModelControlDictionary<IKeyMapEntry, ShortcutTreeViewItem>();
+    private readonly ModelControlMap<IKeyMapEntry, ShortcutTreeViewItem> itemMap = new ModelControlMap<IKeyMapEntry, ShortcutTreeViewItem>();
     internal readonly Stack<ShortcutTreeViewItem> itemCache;
 
-    public IModelControlDictionary<IKeyMapEntry, ShortcutTreeViewItem> ItemMap => this.itemMap;
+    public IModelControlMap<IKeyMapEntry, ShortcutTreeViewItem> ItemMap => this.itemMap;
 
     ShortcutTreeView? IShortcutTreeOrNode.ShortcutTree => this;
 

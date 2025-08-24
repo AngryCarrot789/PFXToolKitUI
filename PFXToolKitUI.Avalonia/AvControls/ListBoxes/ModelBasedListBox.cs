@@ -29,13 +29,13 @@ namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 /// <typeparam name="TModel">The model type</typeparam>
 public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TModel : class {
     private readonly Stack<ModelBasedListBoxItem<TModel>>? itemCache;
-    private readonly ModelControlDictionary<TModel, ModelBasedListBoxItem<TModel>> itemMap;
+    private readonly ModelControlMap<TModel, ModelBasedListBoxItem<TModel>> itemMap;
     private IObservableList<TModel>? observableList;
 
     /// <summary>
     /// Gets the item map for this list box. This is used to map models to the list box items and vice versa
     /// </summary>
-    public IModelControlDictionary<TModel, ModelBasedListBoxItem<TModel>> ItemMap => this.itemMap;
+    public IModelControlMap<TModel, ModelBasedListBoxItem<TModel>> ItemMap => this.itemMap;
 
     /// <summary>
     /// Gets the selected item's model, or null, if there's no selected item
@@ -58,7 +58,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
     protected ModelBasedListBox(int cacheSize) {
         this.itemCache = cacheSize > 0 ? new Stack<ModelBasedListBoxItem<TModel>>(cacheSize) : null;
         this.MaxCacheSize = cacheSize;
-        this.itemMap = new ModelControlDictionary<TModel, ModelBasedListBoxItem<TModel>>();
+        this.itemMap = new ModelControlMap<TModel, ModelBasedListBoxItem<TModel>>();
     }
 
     protected void AddModel(TModel model) => this.InsertModelAt(this.Items.Count, model);

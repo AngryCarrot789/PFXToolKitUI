@@ -34,10 +34,10 @@ public class ConfigurationTreeView : TreeView, IConfigurationTreeOrNode {
         set => this.SetValue(RootConfigurationEntryProperty, value);
     }
 
-    private readonly ModelControlDictionary<ConfigurationEntry, ConfigurationTreeViewItem> itemMap = new ModelControlDictionary<ConfigurationEntry, ConfigurationTreeViewItem>();
+    private readonly ModelControlMap<ConfigurationEntry, ConfigurationTreeViewItem> itemMap = new ModelControlMap<ConfigurationEntry, ConfigurationTreeViewItem>();
     internal readonly Stack<ConfigurationTreeViewItem> itemCache;
 
-    public IModelControlDictionary<ConfigurationEntry, ConfigurationTreeViewItem> ItemMap => this.itemMap;
+    public IModelControlMap<ConfigurationEntry, ConfigurationTreeViewItem> ItemMap => this.itemMap;
 
     ConfigurationTreeView? IConfigurationTreeOrNode.ResourceTree => this;
 

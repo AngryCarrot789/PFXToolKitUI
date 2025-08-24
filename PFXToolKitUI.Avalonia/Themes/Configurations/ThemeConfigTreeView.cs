@@ -36,10 +36,10 @@ public class ThemeConfigTreeView : TreeView, IThemeConfigEntryTreeOrNode, ITheme
         set => this.SetValue(ThemeConfigurationPageProperty, value);
     }
 
-    private readonly ModelControlDictionary<IThemeTreeEntry, ThemeConfigTreeViewItem> itemMap = new ModelControlDictionary<IThemeTreeEntry, ThemeConfigTreeViewItem>();
+    private readonly ModelControlMap<IThemeTreeEntry, ThemeConfigTreeViewItem> itemMap = new ModelControlMap<IThemeTreeEntry, ThemeConfigTreeViewItem>();
     internal readonly Stack<ThemeConfigTreeViewItem> itemCache;
 
-    public IModelControlDictionary<IThemeTreeEntry, ThemeConfigTreeViewItem> ItemMap => this.itemMap;
+    public IModelControlMap<IThemeTreeEntry, ThemeConfigTreeViewItem> ItemMap => this.itemMap;
 
     ThemeConfigTreeView? IThemeConfigEntryTreeOrNode.ThemeConfigTree => this;
 

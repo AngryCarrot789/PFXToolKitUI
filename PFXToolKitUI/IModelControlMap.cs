@@ -19,16 +19,16 @@
 
 using System.Diagnostics.CodeAnalysis;
 
-namespace PFXToolKitUI.Avalonia;
+namespace PFXToolKitUI;
 
-public interface IModelControlDictionary<TModel, TControl> where TModel : class where TControl : class {
+public interface IModelControlMap<TModel, TControl> where TModel : class where TControl : class {
     /// <summary>
-    /// Gets all of the models in this dictionary
+    /// Gets the models in this dictionary
     /// </summary>
     public IEnumerable<TModel> Models { get; }
 
     /// <summary>
-    /// Gets all of the controls in this dictionary
+    /// Gets the controls in this dictionary
     /// </summary>
     public IEnumerable<TControl> Controls { get; }
 
