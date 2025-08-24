@@ -26,6 +26,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Configurations.Pages;
 using PFXToolKitUI.Avalonia.Configurations.Trees;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Services.Messaging;
 
@@ -165,7 +166,7 @@ public partial class ConfigurationPanelControl : UserControl {
             Tag = entry.FullIdPath
         };
 
-        ToolTip.SetTip(hyperlinkButton, "Navigate to " + (entry.DisplayName ?? entry.FullIdPath ?? "this unnamed entry"));
+        ToolTipEx.SetTip(hyperlinkButton, "Navigate to " + (entry.DisplayName ?? entry.FullIdPath ?? "this unnamed entry"));
         hyperlinkButton.Click += this.OnHyperlinkClicked;
         collection.Add(hyperlinkButton);
     }

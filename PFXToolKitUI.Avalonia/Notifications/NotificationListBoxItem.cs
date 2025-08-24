@@ -279,7 +279,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
                     TextDecorations = []
                 };
 
-                ToolTip.SetTip((NotificationHyperlinkButton) b.Control, tb);
+                ToolTipEx.SetTip((NotificationHyperlinkButton) b.Control, tb);
             }
             else {
                 b.Control.ClearValue(ToolTipEx.TipProperty);

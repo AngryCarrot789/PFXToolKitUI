@@ -30,6 +30,7 @@ using PFXToolKitUI.Avalonia.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Configurations;
@@ -170,7 +171,7 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
 
         if (this.Entry is ThemeConfigEntry configEntry) {
             if (!string.IsNullOrWhiteSpace(configEntry.ThemeKey)) {
-                ToolTip.SetTip(this, configEntry.Description);
+                ToolTipEx.SetTip(this, configEntry.Description);
                 this.myDynamicBrush = (DynamicAvaloniaColourBrush) BrushManager.Instance.GetDynamicThemeBrush(configEntry.ThemeKey);
             }
 

@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.Icons;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.AdvancedMenuService;
@@ -27,7 +28,19 @@ namespace PFXToolKitUI.AdvancedMenuService;
 /// This is different from <see cref="IContextGroup"/>
 /// </summary>
 public class ContextEntryGroup : BaseContextEntry {
+    private bool showDummyItemWhenEmpty = true;
+    
     public ObservableList<IContextObject> Items { get; }
+
+    /// <summary>
+    /// Gets or sets whether to show a dummy item when <see cref="Items"/> is empty
+    /// </summary>
+    public bool ShowDummyItemWhenEmpty {
+        get => this.showDummyItemWhenEmpty;
+        set => PropertyHelper.SetAndRaiseINE(ref this.showDummyItemWhenEmpty, value, this, static t => t.ShowDummyItemWhenEmptyChanged?.Invoke(t));
+    }
+
+    public event BaseContextEntryEventHandler? ShowDummyItemWhenEmptyChanged;
 
     public ContextEntryGroup() {
         this.Items = new ObservableList<IContextObject>();

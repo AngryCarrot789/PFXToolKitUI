@@ -38,6 +38,11 @@ public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseCont
 /// </para>
 /// </summary>
 public abstract class BaseContextEntry : IContextObject {
+    /// <summary>
+    /// Ges the data key used to access the context entry of a menu item or context menu item
+    /// </summary>
+    public static readonly DataKey<BaseContextEntry> DataKey = DataKey<BaseContextEntry>.Create(nameof(BaseContextEntry));
+    
     private string? displayName, description;
     private Icon? icon;
     private bool isInUse;

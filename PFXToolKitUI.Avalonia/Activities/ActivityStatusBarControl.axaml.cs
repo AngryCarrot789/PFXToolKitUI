@@ -23,6 +23,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Tasks;
@@ -236,7 +237,7 @@ public partial class ActivityStatusBarControl : UserControl {
         else {
             this.PART_PlayPauseButton.IsVisible = true;
             this.PART_PlayPauseButton.Icon = task.IsPaused ? ContinueActivityIcon : PauseActivityIcon;
-            ToolTip.SetTip(this.PART_PlayPauseButton, task.IsPaused ? "Continue the task" : "Pause the task");
+            ToolTipEx.SetTip(this.PART_PlayPauseButton, task.IsPaused ? "Continue the task" : "Pause the task");
         }
     }
 }

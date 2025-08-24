@@ -23,6 +23,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Toolbars;
@@ -56,8 +57,8 @@ public abstract class AbstractAvaloniaButtonElement : AbstractAvaloniaToolBarEle
     }
 
     public string? ToolTip {
-        get => (string?) global::Avalonia.Controls.ToolTip.GetTip(this.myButton);
-        set => global::Avalonia.Controls.ToolTip.SetTip(this.myButton, value);
+        get => (string?) ToolTipEx.GetTip(this.myButton);
+        set => ToolTipEx.SetTip(this.myButton, value);
     }
 
     public bool IsEnabled {

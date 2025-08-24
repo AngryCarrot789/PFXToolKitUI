@@ -207,26 +207,31 @@ public abstract class ApplicationPFX : IServiceable {
             instance.PluginLoader.LoadCorePlugins(exceptions);
 
 #if DEBUG
-            // Load plugins in the solution folder
-            string solutionFolder = Path.GetFullPath(@"..\\..\\..\\..\\..\\");
-            string? debugPlugins = null;
-            string? solName = instance.GetSolutionFileName();
-            if (!string.IsNullOrWhiteSpace(solName) && File.Exists(Path.Combine(solutionFolder, solName))) {
-                await instance.PluginLoader.LoadPlugins(Path.Combine(solutionFolder, "Plugins"), exceptions);
+            string? solutionFolder = null;
+            string workingDirectory = Directory.GetCurrentDirectory();
+            for (string? folder = workingDirectory; folder != null; folder = Path.GetDirectoryName(folder)) {
+                foreach (string file in Directory.EnumerateFiles(folder)) {
+                    if (file.EndsWith(".sln")) {
+                        solutionFolder = folder;
+                        break;
+                    }
+                }
             }
 
-            string releasePlugins = Path.GetFullPath("Plugins");
-            if (debugPlugins == null || releasePlugins != debugPlugins) {
-                await instance.PluginLoader.LoadPlugins(releasePlugins, exceptions);
-            }
-#else
-            if (Directory.Exists("Plugins")) {
-                await Instance.PluginLoader.LoadPlugins("Plugins", exceptions);
+            if (solutionFolder != null) {
+                // Load plugins in the solution folder
+                string? solName = instance.GetSolutionFileName();
+                if (!string.IsNullOrWhiteSpace(solName) && File.Exists(Path.Combine(solutionFolder, solName))) {
+                    await instance.PluginLoader.LoadPlugins(Path.Combine(solutionFolder, "Plugins"), exceptions);
+                }
             }
 #endif
+            await Instance.PluginLoader.LoadPlugins("Plugins", exceptions);
 
             if (exceptions.Count > 0) {
-                await IMessageDialogService.Instance.ShowMessage("Errors", "One or more exceptions occurred while loading plugins", string.Join(Environment.NewLine + Environment.NewLine, exceptions));
+                string errorText = string.Join(Environment.NewLine + Environment.NewLine, exceptions);
+                AppLogger.Instance.WriteLine(errorText);
+                await IMessageDialogService.Instance.ShowMessage("Errors", "One or more exceptions occurred while loading plugins. See logs for more info");
             }
 
             await progress.ProgressAndWaitForRender("Initialising plugins...", 0.5);
