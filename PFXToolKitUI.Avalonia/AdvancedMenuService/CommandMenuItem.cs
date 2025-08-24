@@ -128,7 +128,7 @@ public class CommandMenuItem : MenuItem {
         else {
             IContextData? context = this.loadedContextData;
             string? cmdId = this.CommandId;
-            Executability state = !string.IsNullOrWhiteSpace(cmdId) && context != null ? CommandManager.Instance.CanExecute(cmdId, context) : Executability.Invalid;
+            Executability state = !string.IsNullOrWhiteSpace(cmdId) && context != null ? CommandManager.Instance.CanExecute(cmdId, context, null, null) : Executability.Invalid;
             this.CanExecute = state == Executability.Valid;
             this.IsVisible = state != Executability.Invalid;
         }

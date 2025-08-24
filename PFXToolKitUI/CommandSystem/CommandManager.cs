@@ -21,11 +21,9 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils.RDA;
+using PFXToolKitUI.Shortcuts;
 
 namespace PFXToolKitUI.CommandSystem;
-
-public delegate void FocusChangedEventHandler(CommandManager manager, IContextData newFocus);
 
 /// <summary>
 /// A class which manages registered commands and the execution of commands.
@@ -44,7 +42,7 @@ public sealed class CommandManager {
         public CommandEntry(Command command) {
             this.Command = command;
 #if DEBUG
-            this.CreationStackTrace = new StackTrace().ToString();
+            this.CreationStackTrace = new StackTrace(true).ToString();
 #endif
         }
     }
@@ -56,30 +54,10 @@ public sealed class CommandManager {
 
     public IEnumerable<KeyValuePair<string, Command>> Commands => this.commands.Select(x => new KeyValuePair<string, Command>(x.Key, x.Value.Command));
 
-    /// <summary>
-    /// An event fired when the application's focus changes, possibly invalidating the executability state of a command presentation
-    /// </summary>
-    public event FocusChangedEventHandler? FocusChanged {
-        add {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            this.focusChangeHandlerSet.Add(value);
-        }
-        remove {
-            if (value == null)
-                throw new ArgumentNullException(nameof(value));
-            this.focusChangeHandlerSet.Remove(value);
-        }
-    }
-
     private readonly Dictionary<string, CommandEntry> commands;
-    private readonly HashSet<FocusChangedEventHandler> focusChangeHandlerSet;
-    private readonly RapidDispatchAction<Func<IContextData>> focusChangeRaiserRda;
 
     public CommandManager() {
         this.commands = new Dictionary<string, CommandEntry>();
-        this.focusChangeHandlerSet = new HashSet<FocusChangedEventHandler>();
-        this.focusChangeRaiserRda = new RapidDispatchAction<Func<IContextData>>(this.OnFocusChange, DispatchPriority.Background);
     }
 
     /// <summary>
@@ -127,11 +105,11 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the command threw ane exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public Task Execute(string commandId, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
+    public Task Execute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ValidateId(commandId);
         ValidateContext(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            return command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, sourceContextMenu, isUserInitiated));
+            return command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
         }
 
         return Task.CompletedTask;
@@ -144,9 +122,9 @@ public sealed class CommandManager {
     /// <param name="context"></param>
     /// <param name="isUserInitiated"></param>
     /// <returns></returns>
-    public Task Execute(Command command, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
+    public Task Execute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ValidateContext(context);
-        return command.InternalExecuteImpl(new CommandEventArgs(this, context, sourceContextMenu, isUserInitiated));
+        return command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
     }
 
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
@@ -163,43 +141,19 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the GetPresentation function threw ane exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public Executability CanExecute(string commandId, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
+    public Executability CanExecute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ValidateId(commandId);
         ValidateContext(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            return this.CanExecute(command.Command, context, sourceContextMenu, isUserInitiated);
+            return this.CanExecute(command.Command, context, shortcut, contextMenu, isUserInitiated);
         }
 
         return Executability.Invalid;
     }
 
-    public Executability CanExecute(Command command, IContextData context, ContextRegistry? sourceContextMenu = null, bool isUserInitiated = true) {
+    public Executability CanExecute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ValidateContext(context);
-        return command.CanExecute(new CommandEventArgs(this, context, sourceContextMenu, isUserInitiated));
-    }
-
-    /// <summary>
-    /// Invokes all focus change handlers for the given ID. This also invokes global handlers first
-    /// </summary>
-    /// <exception cref="ArgumentNullException">newFocusProvider is null</exception>
-    internal static void InternalOnApplicationFocusChanged(Func<IContextData> newFocusProvider) {
-        if (newFocusProvider == null)
-            throw new ArgumentNullException(nameof(newFocusProvider));
-
-        Instance.focusChangeRaiserRda.InvokeAsync(newFocusProvider);
-    }
-
-    private void OnFocusChange(Func<IContextData> newFocusProvider) {
-        // only calls newFocusProvider if there are handlers
-        if (this.focusChangeHandlerSet.Count >= 1) {
-            IContextData ctx = newFocusProvider();
-            if (ctx == null)
-                throw new Exception("New Focus Context provider gave a null context");
-
-            foreach (FocusChangedEventHandler handler in this.focusChangeHandlerSet) {
-                handler(this, ctx);
-            }
-        }
+        return command.CanExecute(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
     }
 
     public static void ValidateId(string id) {

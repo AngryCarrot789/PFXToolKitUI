@@ -54,7 +54,7 @@ public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
         }
 
         IContextData data = DataManager.GetFullContextData(this.Control);
-        Executability state = CommandManager.Instance.CanExecute(cmd, data);
+        Executability state = CommandManager.Instance.CanExecute(cmd, data, null, null);
         return state == Executability.Valid;
     }
 
@@ -66,6 +66,6 @@ public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
         }
 
         IContextData data = DataManager.GetFullContextData(this.Control);
-        return CommandManager.Instance.Execute(cmd, data);
+        return CommandManager.Instance.Execute(cmd, data, null, null);
     }
 }

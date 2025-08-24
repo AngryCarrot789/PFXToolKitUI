@@ -21,6 +21,8 @@ using System.Windows.Input;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using PFXToolKitUI.AdvancedMenuService;
+using PFXToolKitUI.Avalonia.AdvancedMenuService;
 
 namespace PFXToolKitUI.Avalonia.CommandUsages;
 
@@ -43,6 +45,8 @@ public abstract class ClickableControlHelper {
         get => this.Control.IsVisible;
         set => this.Control.IsVisible = value;
     }
+
+    public virtual ContextRegistry? ContextRegistry => null;
 
     protected ClickableControlHelper(Control obj, Action? onClick = null) {
         this.Control = obj;
@@ -89,6 +93,10 @@ public abstract class ClickableControlHelper {
         public override ICommand? Command {
             get => this.Control.Command;
             set => this.Control.Command = value;
+        }
+
+        public override ContextRegistry? ContextRegistry {
+            get => base.Control is AdvancedMenuItem item && item.OwnerMenu is AdvancedContextMenu menu ? menu.MyContextRegistry : null;
         }
 
         public MenuItemImpl(MenuItem button, Action? onClick = null) : base(button, onClick) {

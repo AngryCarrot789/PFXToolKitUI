@@ -82,7 +82,7 @@ public class SimpleCommandWrapper : BaseAsyncRelayCommand {
         }
 
         IContextData ctx = this.GetContextData(parameter);
-        Executability result = this.manager.CanExecute(command, ctx);
+        Executability result = this.manager.CanExecute(command, ctx, null, null);
         return result == Executability.Valid;
     }
 
@@ -93,6 +93,6 @@ public class SimpleCommandWrapper : BaseAsyncRelayCommand {
         }
 
         IContextData ctx = this.GetContextData(parameter);
-        return this.manager.Execute(command, ctx);
+        return this.manager.Execute(command, ctx, null, null);
     }
 }

@@ -98,7 +98,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
             IContextData? ctx = this.OwnerMenu?.CapturedContext;
             string? cmdId = this.Entry?.CommandId;
             Executability state = !string.IsNullOrWhiteSpace(cmdId) && ctx != null
-                ? CommandManager.Instance.CanExecute(cmdId, ctx, this.SourceContextMenu)
+                ? CommandManager.Instance.CanExecute(cmdId, ctx, null, this.SourceContextMenu)
                 : Executability.Invalid;
             this.CanExecute = state == Executability.Valid;
             this.IsVisible = state != Executability.Invalid;
@@ -138,7 +138,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         ContextRegistry? sourceMenu = this.SourceContextMenu;
         Dispatcher.UIThread.Post(async void () => {
             try {
-                await CommandManager.Instance.Execute(cmdId, context, sourceMenu);
+                await CommandManager.Instance.Execute(cmdId, context, null, sourceMenu);
             }
             catch (Exception e) {
                 ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
@@ -153,7 +153,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
 
     public static async Task ExecuteCommandAndHandleError(string cmdId, IContextData context, ContextRegistry? sourceContextMenu) {
         try {
-            await CommandManager.Instance.Execute(cmdId, context, sourceContextMenu);
+            await CommandManager.Instance.Execute(cmdId, context, null, sourceContextMenu);
         }
         catch (Exception e) {
             ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);

@@ -48,7 +48,7 @@ public abstract class ShortcutManager {
     /// <summary>
     /// Gets the shortcut currently being activated
     /// </summary>
-    public IShortcut? CurrentlyActivatingShortcut { get; private set; }
+    public ShortcutEntry? CurrentlyActivatingShortcut { get; private set; }
     
     /// <summary>
     /// An event fired when a <see cref="ShortcutEntry"/>'s shortcut is modified
@@ -195,7 +195,7 @@ public abstract class ShortcutManager {
     /// <returns>The outcome of the shortcut activation used by the processor's input manager</returns>
     public bool OnShortcutActivated(ShortcutInputProcessor inputProcessor, ShortcutEntry shortcutEntry) {
         try {
-            this.CurrentlyActivatingShortcut = shortcutEntry.Shortcut;
+            this.CurrentlyActivatingShortcut = shortcutEntry;
             return this.OnShortcutActivatedOverride(inputProcessor, shortcutEntry);
         }
         finally {
@@ -215,7 +215,7 @@ public abstract class ShortcutManager {
             return false;
         }
 
-        CommandManager.Instance.Execute(command, inputProcessor.ProvideCurrentContextInternal()!);
+        CommandManager.Instance.Execute(command, inputProcessor.ProvideCurrentContextInternal()!, shortcutEntry, null);
         return true;
     }
 

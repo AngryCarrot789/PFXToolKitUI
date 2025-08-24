@@ -19,6 +19,7 @@
 
 using Avalonia;
 using Avalonia.Interactivity;
+using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
@@ -123,7 +124,7 @@ public abstract class CommandUsage : ICommandUsage {
     protected virtual void OnConnecting() {
         // check shit before actually connecting
     }
-    
+
     protected virtual void OnConnected() => this.OnContextChanged();
 
     protected virtual void OnDisconnected() => this.OnContextChanged();
@@ -145,8 +146,18 @@ public abstract class CommandUsage : ICommandUsage {
 
     public virtual void UpdateCanExecute() {
         IContextData? ctx = this.GetContextData();
-        this.OnUpdateForCanExecuteState(ctx != null ? CommandManager.Instance.CanExecute(this.CommandId, ctx) : Executability.Invalid);
+        this.OnUpdateForCanExecuteState(
+            ctx != null
+                ? CommandManager.Instance.CanExecute(this.CommandId, ctx, null, this.GetContextRegistryForCommand())
+                : Executability.Invalid);
     }
 
-    protected virtual void OnUpdateForCanExecuteState(Executability state) { }
+    protected virtual void OnUpdateForCanExecuteState(Executability state) {
+    }
+
+    /// <summary>
+    /// Gets the context registry associated with this command usage. Should only return a non-null value when used within a menu, of course
+    /// </summary>
+    /// <returns></returns>
+    protected virtual ContextRegistry? GetContextRegistryForCommand() => null;
 }

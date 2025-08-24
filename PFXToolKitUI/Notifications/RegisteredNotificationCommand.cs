@@ -46,7 +46,7 @@ public class RegisteredNotificationCommand : NotificationCommand {
     public override bool CanExecute() {
         if (this.CommandId == null)
             return false;
-        return CommandManager.Instance.CanExecute(this.CommandId, this.ContextData ?? EmptyContext.Instance) == Executability.Valid;
+        return CommandManager.Instance.CanExecute(this.CommandId, this.ContextData ?? EmptyContext.Instance, null, null) == Executability.Valid;
     }
 
     public override Task Execute() {
@@ -54,6 +54,6 @@ public class RegisteredNotificationCommand : NotificationCommand {
             return Task.CompletedTask;
         }
         
-        return CommandManager.Instance.Execute(this.CommandId, this.ContextData);
+        return CommandManager.Instance.Execute(this.CommandId, this.ContextData, null, null);
     }
 }

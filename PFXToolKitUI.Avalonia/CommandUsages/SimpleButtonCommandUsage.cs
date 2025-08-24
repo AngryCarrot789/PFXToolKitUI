@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 
@@ -40,12 +41,14 @@ public class SimpleButtonCommandUsage : CommandUsage {
         this.button = null;
     }
 
+    protected override ContextRegistry? GetContextRegistryForCommand() => this.button?.ContextRegistry;
+
     protected virtual void OnButtonClicked() {
         if (!CommandManager.Instance.TryFindCommandById(this.CommandId, out Command? command)) {
             return;
         }
 
-        CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!));
+        CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
         if (!command.AllowMultipleExecutions && command.IsExecuting) {
             // IsExecuting cannot change in this scope. Reason: The command uses true async (e.g. Task.Delay)
             // and therefore the dispatcher is used to jump back to the main thread (sync context)

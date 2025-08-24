@@ -214,7 +214,7 @@ public partial class ActivityStatusBarControl : UserControl {
     private async void ShowActivityListAsync() {
         try {
             this.isExecutingShowActivityListCmd = true;
-            await CommandManager.Instance.Execute("commands.pfx.ShowActivityListCommand", DataManager.GetFullContextData(this));
+            await CommandManager.Instance.Execute("commands.pfx.ShowActivityListCommand", DataManager.GetFullContextData(this), null, null);
         }
         catch (Exception e) {
             ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
