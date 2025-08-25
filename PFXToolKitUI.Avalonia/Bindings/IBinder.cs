@@ -87,6 +87,16 @@ public interface IBinder<TModel> : IBinder where TModel : class {
     /// </para>
     /// </summary>
     event BinderEventHandler<TModel> UpdateControlWithoutModel;
+
+    /// <summary>
+    /// Invoked when <see cref="IBinder.UpdateControl"/> is invoked when fully attached
+    /// </summary>
+    event BinderEventHandler<TModel> ControlUpdated;
+    
+    /// <summary>
+    /// Invoked when <see cref="IBinder.UpdateModel"/> is invoked when fully attached
+    /// </summary>
+    event BinderEventHandler<TModel> ModelUpdated;
     
     /// <summary>
     /// Attaches both the control and the model to this binder. This is equivalent to

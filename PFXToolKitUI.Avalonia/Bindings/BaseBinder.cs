@@ -62,6 +62,8 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     public string? DebugName { get; set; }
 
     public event BinderEventHandler<TModel>? UpdateControlWithoutModel;
+    public event BinderEventHandler<TModel>? ControlUpdated;
+    public event BinderEventHandler<TModel>? ModelUpdated;
 
     protected BaseBinder() {
     }
@@ -77,6 +79,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         try {
             this.IsUpdatingControl = true;
             this.UpdateControlOverride();
+            this.ControlUpdated?.Invoke(this);
         }
         finally {
             this.IsUpdatingControl = false;
@@ -86,6 +89,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     public void UpdateModel() {
         if (!this.IsUpdatingControl && this.IsFullyAttached) {
             this.UpdateModelOverride();
+            this.ModelUpdated?.Invoke(this);
         }
     }
 

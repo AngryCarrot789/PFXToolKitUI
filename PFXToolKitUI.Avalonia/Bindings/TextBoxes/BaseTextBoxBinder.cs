@@ -59,7 +59,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     public event EscapePressedEventHandler? EscapePressed;
 
     /// <summary>
-    /// Fired when the user confirms their value, typically by pressing ENTER
+    /// Fired when the user confirms their value, either by pressing ENTER or when the text box loses focus when <see cref="CanApplyValueOnLostFocus"/>
     /// </summary>
     public event ValueConfirmedEventHandler? ValueConfirmed;
 
