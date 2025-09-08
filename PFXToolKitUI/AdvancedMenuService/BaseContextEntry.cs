@@ -32,7 +32,7 @@ public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseCont
 /// <summary>
 /// The base class for a menu item model. Contains standard properties like display name, tooltip description and an icon.
 /// <para>
-/// It also provides access to the captured context of the top-level menu when this entry has become visible in the UI,
+/// It also provides access to the captured context of the top-level menu when this entry becomes visible in the UI,
 /// allowing you to access context information and hook onto events. With this information, you can do things like update
 /// the header and icon, and also raise <see cref="CanExecuteChanged"/> when the executability may have changed
 /// </para>
@@ -88,7 +88,7 @@ public abstract class BaseContextEntry : IContextObject {
     /// </summary>
     public IContextData? CapturedContext {
         get => this.capturedContext;
-        set => PropertyHelper.SetAndRaiseINE(ref this.capturedContext, value, this, static (t, o, n) => t.CapturedContextChanged?.Invoke(t, o, n));
+        private set => PropertyHelper.SetAndRaiseINE(ref this.capturedContext, value, this, static (t, o, n) => t.CapturedContextChanged?.Invoke(t, o, n));
     }
 
     /// <summary>

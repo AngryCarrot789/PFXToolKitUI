@@ -1,5 +1,5 @@
-// 
-// Copyright (c) 2023-2025 REghZy
+﻿// 
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -19,21 +19,19 @@
 
 namespace PFXToolKitUI.History;
 
-public interface IHistoryAction {
-    /// <summary>
-    /// Undoes this action
-    /// </summary>
-    /// <returns>True if the undo was successful, otherwise false, meaning this action stays at the top of the undo stack</returns>
-    Task<bool> Undo();
+/// <summary>
+/// An exception thrown when the state of the application was invalid and a history action could not be undone
+/// </summary>
+public class InvalidHistoryException : InvalidOperationException {
+    public InvalidHistoryException(string? message) : base(message) {
+    }
 
-    /// <summary>
-    /// Redoes this action
-    /// </summary>
-    /// <returns>True if the redo was successful, otherwise false, meaning this action stays at the top of the redo stack</returns>
-    Task<bool> Redo();
+    public InvalidHistoryException(string? message, Exception? innerException) : base(message, innerException) {
+    }
 
-    /// <summary>
-    /// Disposes this history action. This is called when it is no longer reachable/deleted (e.g. it was undone then another action was executed, meaning the history got cleared)
-    /// </summary>
-    void Dispose();
+    public static void Assert(bool condition, string message) {
+        if (!condition) {
+            throw new InvalidHistoryException(message);
+        }
+    }
 }

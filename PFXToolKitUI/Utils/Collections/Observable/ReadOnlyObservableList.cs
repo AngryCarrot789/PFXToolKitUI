@@ -27,6 +27,8 @@ namespace PFXToolKitUI.Utils.Collections.Observable;
 /// </summary>
 /// <typeparam name="T">The type of value we store</typeparam>
 public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<T> {
+    private readonly IObservableList<T> delegateList;
+    
     public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
     public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
@@ -37,7 +39,10 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
     public event ObservableListMoveEventHandler<T>? ItemMoved;
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
+    public ResetBehavior ClearBehavior => this.delegateList.ClearBehavior;
+    
     public ReadOnlyObservableList(IObservableList<T> list) : base(list) {
+        this.delegateList = list;
         list.BeforeItemAdded += this.ListOnBeforeItemAdded;
         list.BeforeItemsRemoved += this.ListOnBeforeItemsRemoved;
         list.BeforeItemReplace += this.ListOnBeforeItemReplace;
@@ -65,4 +70,10 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
 
     private void ListOnItemMoved(IObservableList<T> list, int oldIndex, int newIndex, T item) => this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
     private void ListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => this.CollectionChanged?.Invoke(this, e);
+
+    void IObservableList<T>.AddRange(IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
+
+    void IObservableList<T>.InsertRange(int index, IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
+
+    void IObservableList<T>.RemoveRange(int index, int count) => throw new NotSupportedException("Read-only collection");
 }

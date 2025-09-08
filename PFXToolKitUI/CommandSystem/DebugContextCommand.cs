@@ -26,9 +26,6 @@ namespace PFXToolKitUI.CommandSystem;
 public class DebugContextCommand : Command {
     private static readonly Dictionary<Type, Action<StringBuilder, int, object>> dataAppenders = new Dictionary<Type, Action<StringBuilder, int, object>>();
 
-    public DebugContextCommand(bool allowMultipleExecutions = false) : base(allowMultipleExecutions) {
-    }
-
     static DebugContextCommand() {
         RegisterExtendedDataHandler<BaseContextEntry>((sb, indent, entry) => {
             if (entry is CommandContextEntry cmdEntry) {

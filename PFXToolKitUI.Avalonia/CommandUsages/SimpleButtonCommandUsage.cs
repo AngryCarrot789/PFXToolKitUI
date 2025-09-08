@@ -28,8 +28,9 @@ public class SimpleButtonCommandUsage : CommandUsage {
 
     protected ClickableControlHelper Button => this.button ?? throw new InvalidOperationException("Not connected");
 
-    public SimpleButtonCommandUsage(string commandId) : base(commandId) { }
-    
+    public SimpleButtonCommandUsage(string commandId) : base(commandId) {
+    }
+
     protected override void OnConnecting() {
         base.OnConnecting();
         this.button = ClickableControlHelper.Create(this.Control, this.OnButtonClicked);
@@ -48,32 +49,14 @@ public class SimpleButtonCommandUsage : CommandUsage {
             return;
         }
 
-        CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
-        if (!command.AllowMultipleExecutions && command.IsExecuting) {
-            // IsExecuting cannot change in this scope. Reason: The command uses true async (e.g. Task.Delay)
-            // and therefore the dispatcher is used to jump back to the main thread (sync context)
-            command.ExecutingChanged += this.DoOnIsExecutingChanged;
-            this.OnIsExecutingChanged(true);
+        Task task = CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
+        if (task.IsCompleted) {
+            this.UpdateCanExecute();
         }
         else {
-            this.OnIsExecutingChanged(null);
+            this.UpdateCanExecute();
+            task.ContinueWith(_ => this.UpdateCanExecute(), TaskContinuationOptions.ExecuteSynchronously);
         }
-    }
-
-    private void DoOnIsExecutingChanged(Command theCmd, CommandEventArgs commandEventArgs) {
-        theCmd.ExecutingChanged -= this.DoOnIsExecutingChanged;
-        this.OnIsExecutingChanged(false);
-    }
-
-    /// <summary>
-    /// Invoked when the executing state changed.
-    /// </summary>
-    /// <param name="isExecuting">
-    /// Null if the command is not async and finished immediately,
-    /// True if now executing, False is command completed
-    /// </param>
-    protected virtual void OnIsExecutingChanged(bool? isExecuting) {
-        this.UpdateCanExecute();
     }
 
     protected override void OnUpdateForCanExecuteState(Executability state) {

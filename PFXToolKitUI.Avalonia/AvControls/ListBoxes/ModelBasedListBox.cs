@@ -171,6 +171,7 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
 
     protected virtual void OnRemovingItemFromList(ModelBasedListBoxItem<TModel> control, TModel model) {
         Debug.Assert(control.Model == model);
+        base.InternalOnRemovingItem(control);
         control.InternalOnRemovingFromList();
     }
 

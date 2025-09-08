@@ -42,9 +42,9 @@ public delegate void CommandEventHandler(Command command, CommandEventArgs e);
 /// </summary>
 [DebuggerDisplay("Command ({RegisteredCommandId}), Executing: {IsExecuting}, AllowMultipleExecutions: {AllowMultipleExecutions}")]
 public abstract class Command {
-    private volatile int executingCount;
+    private int executingCount;
     internal string? registeredCommandId;
-    
+
     // Used to track issues of commands staying permanently executing
     private volatile Task? theLastRunTask;
 
@@ -61,8 +61,11 @@ public abstract class Command {
     public bool IsExecuting => this.executingCount != 0;
 
     public string RegisteredCommandId => this.registeredCommandId ?? throw new Exception("Command is not registered");
-    
-    protected Command(bool allowMultipleExecutions = false) {
+
+    protected Command() : this(false) {
+    }
+
+    protected Command(bool allowMultipleExecutions) {
         this.AllowMultipleExecutions = allowMultipleExecutions;
     }
 
@@ -124,17 +127,12 @@ public abstract class Command {
         }
 
         try {
-            await (this.theLastRunTask = this.ExecuteCommandAsync(args) ?? Task.CompletedTask);
+            await (this.theLastRunTask = this.ExecuteCommandAsync(args));
         }
         catch (OperationCanceledException) {
             // ignored
         }
         catch (Exception e) {
-            // ONLY USED WHEN CATCH ALL EXCEPTIONS ENABLED
-            // if (Debugger.IsAttached) {
-            //     throw;
-            // }
-
             if (Debugger.IsAttached) {
                 Debugger.Break();
                 ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
@@ -145,7 +143,7 @@ public abstract class Command {
                 }
                 catch {
                     // ignored -- oopsie
-                }   
+                }
             }
         }
         finally {
@@ -173,7 +171,7 @@ public abstract class Command {
     /// <param name="args">Command event args</param>
     protected virtual Task OnAlreadyExecuting(CommandEventArgs args) {
         if (args.IsUserInitiated)
-            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete", defaultButton:MessageBoxResult.OK);
+            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete", defaultButton: MessageBoxResult.OK);
 
         return Task.CompletedTask;
     }

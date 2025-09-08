@@ -36,11 +36,11 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
 
     public BaseModelBasedListBox? ListBox { get; internal set; }
 
-    public BaseModelBasedListBoxItem() {
+    protected BaseModelBasedListBoxItem() {
         this.dragInitiator = this;
         this.HookDragEvents(this);
     }
-    
+
     /// <summary>
     /// Called before this item is added to the <see cref="ListBox"/> but after the <see cref="ListBox"/> and <see cref="Model"/> references are set
     /// </summary>
@@ -87,15 +87,37 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
     }
 
     private void OnDragSourcePointerPressed(object? sender, PointerEventArgs e) {
-        if (!e.Handled && e.GetCurrentPoint(this.dragInitiator).Properties.PointerUpdateKind == PointerUpdateKind.LeftButtonPressed) {
+        if (e.Handled || this.ListBox == null) {
+            return;
+        }
+
+        if (e.GetCurrentPoint(this.dragInitiator).Properties.PointerUpdateKind == PointerUpdateKind.LeftButtonPressed) {
+            // Pointer Released not called?
+            if (this.initiatedDragPointer != null) {
+                this.ListBox.EndDrag(this);
+            }
+
             this.leftClickPos = e.GetPosition(this);
             this.lastMovePosAbs = this.PointToScreen(this.leftClickPos);
+
             this.initiatedDragPointer = e.Pointer;
+
+            this.ListBox.BeginDrag(this);
         }
     }
 
     private void OnDragSourcePointerReleased(object? sender, PointerEventArgs e) {
+        this.ForceStopDrag();
+    }
+
+    internal bool ForceStopDrag() {
+        if (this.initiatedDragPointer == null)
+            return false;
+
+        Debug.Assert(this.ListBox != null);
         this.initiatedDragPointer = null;
+        this.ListBox.EndDrag(this);
+        return true;
     }
 
     private void OnDragSourcePointerMoved(object? sender, PointerEventArgs e) {
@@ -114,7 +136,7 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
                 this.dragInitiator.Cursor = new Cursor(StandardCursorType.No);
             }
         }
-        
+
         PointerPoint point = e.GetCurrentPoint(this);
         Point mPos = e.GetPosition(this);
 
@@ -130,7 +152,7 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
 
         this.lastMovePosAbs = mPosAbs;
         if (!canDrag || !point.Properties.IsLeftButtonPressed || this.initiatedDragPointer == null) {
-            this.initiatedDragPointer = null;
+            this.ForceStopDrag();
             return;
         }
 
@@ -143,7 +165,7 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
                 if (item == this) {
                     continue;
                 }
-                
+
                 Debug.Assert(srcIdx != dstIdx);
                 bool isMovingDown = dstIdx > srcIdx;
                 Point mPosItemRel2List = e.GetPosition(item);

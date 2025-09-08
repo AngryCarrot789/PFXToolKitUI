@@ -27,7 +27,7 @@ namespace PFXToolKitUI.CommandSystem;
 /// This class is a helper for executing commands when awaiting is not necessarily possible
 /// </summary>
 public class CommandExecutionContext {
-    private List<Delegate>? onCompleted;
+    private List<Action>? onCompleted;
 
     public CommandManager CommandManager { get; }
 
@@ -51,7 +51,7 @@ public class CommandExecutionContext {
     }
 
     public void AddCompletionAction(Action completionAction) {
-        (this.onCompleted ??= new List<Delegate>()).Add(completionAction);
+        (this.onCompleted ??= new List<Action>()).Add(completionAction);
     }
 
     public async void Execute() {
@@ -64,9 +64,9 @@ public class CommandExecutionContext {
 
         if (this.onCompleted != null) {
             using ErrorList list = new ErrorList("One or more errors occurred while running command completion callback", false);
-            foreach (Delegate action in this.onCompleted) {
+            foreach (Action action in this.onCompleted) {
                 try {
-                    ((Action) action)();
+                    action();
                 }
                 catch (Exception e) {
                     list.Add(e);

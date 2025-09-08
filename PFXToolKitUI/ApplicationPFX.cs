@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Composition;
 using PFXToolKitUI.Configurations.Commands;
 using PFXToolKitUI.Configurations.Dialogs;
 using PFXToolKitUI.Configurations.Shortcuts.Commands;
@@ -40,8 +41,9 @@ namespace PFXToolKitUI;
 /// <summary>
 /// The main application model class
 /// </summary>
-public abstract class ApplicationPFX : IServiceable {
+public abstract class ApplicationPFX : IServiceable, IComponentManager {
     private static ApplicationPFX? instance;
+    private readonly ComponentStorage myComponentStorage;
     private ApplicationStartupPhase startupPhase;
 
     public static ApplicationPFX Instance {
@@ -116,7 +118,11 @@ public abstract class ApplicationPFX : IServiceable {
         }
     }
 
+    ComponentStorage IComponentManager.ComponentStorage => this.myComponentStorage;
+    IComponentManager? IComponentManager.ParentComponentManager => null;
+
     protected ApplicationPFX() {
+        this.myComponentStorage = new ComponentStorage(this);
         this.ServiceManager = new ServiceManager();
         this.PluginLoader = new PluginLoader();
     }
@@ -364,7 +370,7 @@ public abstract class ApplicationPFX : IServiceable {
         manager.SaveAll();
 
         AppLogger.Instance.WriteLine("Waiting for configs to flush to disk...");
-        Task task =  manager.FlushToDisk(false);
+        Task task = manager.FlushToDisk(false);
         Debug.Assert(task.IsCompleted);
         AppLogger.Instance.WriteLine("Flushed!");
     }

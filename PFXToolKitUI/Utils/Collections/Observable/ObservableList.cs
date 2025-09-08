@@ -58,6 +58,25 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     public event ObservableListReplaceEventHandler<T>? ItemReplaced;
     public event ObservableListMoveEventHandler<T>? ItemMoved;
 
+    /*
+        Actions:
+            Add:
+                OldIndex = -1,    OldItems = null,
+                NewIndex = Valid, NewItems = Added Items
+            Remove:
+                OldIndex = Valid, OldItems = Removed Items
+                NewIndex = -1,    NewItems = null,
+            Replace:
+                OldIndex = NewIndex = Valid, 
+                OldItems = Removed, NewItems = Added
+            Move:
+                OldItems = NewItems = Moved Item,
+                OldIndex = Valid, NewIndex = Valid,
+            Reset: 
+                OldIndex = -1, OldItems = null
+                NewIndex = -1, NewItems = null,
+     */
+    
     /// <summary>
     /// Fired when items are added to or removed from this list, or an item is replaced or moved.
     /// <para>

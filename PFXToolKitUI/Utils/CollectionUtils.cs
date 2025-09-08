@@ -147,13 +147,13 @@ public static class CollectionUtils {
             consumer(value);
         }
     }
-    
+
     public static void ForEach<T, TParam>(this IEnumerable<T> enumerable, TParam param, Action<T, TParam> consumer) {
         foreach (T value in enumerable) {
             consumer(value, param);
         }
     }
-    
+
     public static void ForEachThenClear<T>(this ICollection<T> list, Action<T> consumer) {
         using (ErrorList stack = new ErrorList("An exception occurred while enumerating one or more items before clearing the collection")) {
             int i = 0;
@@ -208,7 +208,7 @@ public static class CollectionUtils {
             array[i] = list[i];
         }
     }
-    
+
     public static void MoveItem<T>(this IList<T> list, int oldIndex, int newIndex) {
         if (newIndex < 0 || newIndex >= list.Count)
             throw new IndexOutOfRangeException($"{nameof(newIndex)} is not within range: {(newIndex < 0 ? "less than zero" : "greater than list length")} ({newIndex})");
@@ -490,5 +490,17 @@ public static class CollectionUtils {
         else {
             list.SetValueAtIndex(index, updater(list.GetValueAtIndex(index)));
         }
+    }
+
+    public static List<(int, T)> CreateIndexMap<T>(IList<T> sourceList, IEnumerable<T> items) {
+        SortedList<int, T> list = new SortedList<int, T>();
+        foreach (T item in items) {
+            int index = sourceList.IndexOf(item);
+            if (index != -1) {
+                list.Add(index, item);
+            }
+        }
+
+        return list.Select(x => (x.Key, x.Value)).ToList();
     }
 }

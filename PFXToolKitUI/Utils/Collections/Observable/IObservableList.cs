@@ -84,4 +84,29 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// An event fired when an item is moved from one index to another
     /// </summary>
     event ObservableListMoveEventHandler<T> ItemMoved;
+
+    /// <summary>
+    /// Specifies the behaviour that determines which <see cref="NotifyCollectionChangedAction"/> is used when this list becomes empty
+    /// </summary>
+    ResetBehavior ClearBehavior { get; }
+
+    /// <summary>
+    /// Adds multiple items to this observable list
+    /// </summary>
+    /// <param name="items">The items to add</param>
+    void AddRange(IEnumerable<T> items);
+    
+    /// <summary>
+    /// Inserts multiple items into the list at the specific index
+    /// </summary>
+    /// <param name="index">The index to insert the item(s) at</param>
+    /// <param name="items">The items to add</param>
+    void InsertRange(int index, IEnumerable<T> items);
+    
+    /// <summary>
+    /// Removes multiple items at the given index
+    /// </summary>
+    /// <param name="index">The index to remove the items at</param>
+    /// <param name="count">The amount of items to remove</param>
+    void RemoveRange(int index, int count);
 }

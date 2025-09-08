@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Templates;
@@ -27,9 +28,9 @@ namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 /// <summary>
 /// The base non-generic version of <see cref="ModelBasedListBox{TModel}"/>
 /// </summary>
-public class BaseModelBasedListBox : ListBox {
+public abstract class BaseModelBasedListBox : ListBox {
     public static readonly StyledProperty<bool> CanDragItemPositionProperty = AvaloniaProperty.Register<BaseModelBasedListBox, bool>(nameof(CanDragItemPosition));
-    
+
     /// <summary>
     /// Gets or sets whether dragging items is allowed. Even when true, dragging items may not be possible
     /// if it's not implemented (see <see cref="MoveItemIndex"/> and <see cref="CanDragItemPositionCore"/>)
@@ -52,12 +53,27 @@ public class BaseModelBasedListBox : ListBox {
     /// will most likely result in the item being moved
     /// </summary>
     public bool CanEffectivelyDragItemPosition => this.CanDragItemPosition && this.CanDragItemPositionCore;
+
+    /// <summary>
+    /// Gets the item currently being dragged
+    /// </summary>
+    protected BaseModelBasedListBoxItem? CurrentDragItem { get; private set; }
+
+    private bool isMovingItem;
     
-    public BaseModelBasedListBox() {
+    protected BaseModelBasedListBox() {
     }
 
     static BaseModelBasedListBox() {
         ItemsPanelProperty.OverrideDefaultValue<BaseModelBasedListBox>(new FuncTemplate<Panel?>(() => new StackPanel()));
+    }
+
+    protected void InternalOnRemovingItem(BaseModelBasedListBoxItem item) {
+        if (this.CurrentDragItem == item && !this.isMovingItem) {
+            Debug.Assert(item.ListBox == this);
+            this.CurrentDragItem.ForceStopDrag();
+            Debug.Assert(this.CurrentDragItem == null);
+        }
     }
 
     protected override void OnLoaded(RoutedEventArgs e) {
@@ -67,13 +83,64 @@ public class BaseModelBasedListBox : ListBox {
         }
     }
 
+    internal void BeginDrag(BaseModelBasedListBoxItem item) {
+        if (this.CurrentDragItem != null) {
+            Debug.Fail("Already dragging an item");
+            this.OnDragItemEnd(this.CurrentDragItem);
+        }
+
+        this.OnDragItemBegin(this.CurrentDragItem = item);
+    }
+
+    internal void EndDrag(BaseModelBasedListBoxItem item) {
+        if (this.CurrentDragItem != item) {
+            Debug.Fail("Different drag items");
+            this.OnDragItemEnd(this.CurrentDragItem);
+        }
+
+        this.OnDragItemEnd(item);
+        this.CurrentDragItem = null;
+    }
+
     /// <summary>
     /// Actually moves the items in this list box. By default, this does nothing. When you override this,
     /// make sure to override <see cref="CanDragItemPositionCore"/> to return true when possible
     /// </summary>
     /// <param name="oldIndex">Source index</param>
     /// <param name="newIndex">Destination index</param>
-    protected internal virtual void MoveItemIndex(int oldIndex, int newIndex) {
+    protected internal void MoveItemIndex(int oldIndex, int newIndex) {
+        this.isMovingItem = true;
+        this.MoveItemIndexOverride(oldIndex, newIndex);
+        this.isMovingItem = false;
+    }
+    
+    protected internal virtual void MoveItemIndexOverride(int oldIndex, int newIndex) {
+    }
+
+    protected bool StopCurrentDrag() {
+        if (this.CurrentDragItem == null)
+            return false;
         
+        Debug.Assert(this.CurrentDragItem.ListBox == this);
+        
+        bool stopped = this.CurrentDragItem.ForceStopDrag();
+        Debug.Assert(this.CurrentDragItem == null);
+        return stopped;
+    }
+
+    /// <summary>
+    /// Invoked when the user clicks the item or dragging grip to start moving the item within the list
+    /// </summary>
+    /// <param name="item">The item being dragged</param>
+    protected virtual void OnDragItemBegin(BaseModelBasedListBoxItem item) {
+        Debug.WriteLine("Begin dragging item");
+    }
+
+    /// <summary>
+    /// Invoked when the user releases their cursor to stop moving the item within the list
+    /// </summary>
+    /// <param name="item">The item no longer being dragged</param>
+    protected virtual void OnDragItemEnd(BaseModelBasedListBoxItem item) {
+        Debug.WriteLine("End dragging item");
     }
 }

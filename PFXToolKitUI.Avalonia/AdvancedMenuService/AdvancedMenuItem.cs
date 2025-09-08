@@ -223,7 +223,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
     private void UpdateIsCheckedProperties(BaseContextEntry sender) {
         this.ToggleType = sender.IsCheckedFunction != null ? MenuItemToggleType.CheckBox : MenuItemToggleType.None;
-        this.UpdateIsChecked(sender);
+        // IsCheckedChanged is fired after IsCheckedFunctionChanged so no need to double call UpdateIsChecked
+        // this.UpdateIsChecked(sender);
     }
 
     private void UpdateIsChecked(BaseContextEntry sender) {

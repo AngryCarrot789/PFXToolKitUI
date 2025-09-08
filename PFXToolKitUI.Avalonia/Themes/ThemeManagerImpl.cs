@@ -192,21 +192,7 @@ public class ThemeManagerImpl : ThemeManager {
                 if (this.cachedInheritMap_InheritFrom2dstKey != null)
                     return this.cachedInheritMap_InheritFrom2dstKey;
 
-                Dictionary<string, HashSet<string>> map = new Dictionary<string, HashSet<string>>();
-                List<ThemeImpl> list = this.GetInheritance();
-                for (int i = list.Count - 1; i >= 0; i--) { // iterate root base to top derived
-                    foreach (KeyValuePair<string, HashSet<string>> entry in list[i].inheritMap_inheritFrom2themeKey) {
-                        if (!map.TryGetValue(entry.Key, out HashSet<string>? set)) {
-                            map[entry.Key] = new HashSet<string>(entry.Value);
-                        }
-                        else {
-                            foreach (string key in entry.Value)
-                                set.Add(key);
-                        }
-                    }
-                }
-
-                return this.cachedInheritMap_InheritFrom2dstKey = map;
+                return this.cachedInheritMap_InheritFrom2dstKey = this.GenerateInheritanceMap();
             }
         }
 
@@ -240,13 +226,6 @@ public class ThemeManagerImpl : ThemeManager {
 
             if (basedOn != null)
                 (basedOn.derivedList ??= []).Add(this);
-        }
-
-        private List<ThemeImpl> GetInheritance() {
-            List<ThemeImpl> list = new List<ThemeImpl>(3);
-            for (ThemeImpl? theme = this; theme != null; theme = theme.BasedOn)
-                list.Add(theme);
-            return list;
         }
 
         private static void GetKeys(string key, out string brushKey, out string colourKey) {
@@ -358,7 +337,7 @@ public class ThemeManagerImpl : ThemeManager {
 
         public bool TryFindObjectInHierarchy<T>(string themeKey, [MaybeNullWhen(false)] out T val, bool canSearchHierarchy = true) {
             for (ThemeImpl? theme = this; canSearchHierarchy && theme != null; theme = theme.BasedOn) {
-                // We create a new ThemeVariant without a parent because we don't need to scan theme dictionaries
+                // 'variantNotInherited' has no base/parent theme, because we don't need to scan theme dictionaries
                 if (theme.Resources.TryGetResource(themeKey, theme.variantNotInherited, out object? value)) {
                     if (value is T t) {
                         val = t;
@@ -593,6 +572,29 @@ public class ThemeManagerImpl : ThemeManager {
                     }
                 }
             }
+        }
+
+        private Dictionary<string, HashSet<string>> GenerateInheritanceMap() {
+            List<ThemeImpl> themeHierarchy = new List<ThemeImpl>(3);
+            for (ThemeImpl? theme = this; theme != null; theme = theme.BasedOn) {
+                themeHierarchy.Add(theme);
+            }
+            
+            // iterate base to derived (e.g. BuiltInDark -> DarkTheme -> CustomDarkTheme)
+            Dictionary<string, HashSet<string>> map = new Dictionary<string, HashSet<string>>();
+            for (int i = themeHierarchy.Count - 1; i >= 0; i--) {
+                foreach (KeyValuePair<string, HashSet<string>> entry in themeHierarchy[i].inheritMap_inheritFrom2themeKey) {
+                    if (!map.TryGetValue(entry.Key, out HashSet<string>? set)) {
+                        map[entry.Key] = new HashSet<string>(entry.Value);
+                    }
+                    else {
+                        foreach (string key in entry.Value)
+                            set.Add(key);
+                    }
+                }
+            }
+
+            return map;
         }
     }
 }

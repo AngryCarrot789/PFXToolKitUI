@@ -116,12 +116,25 @@ public sealed class CommandManager {
     }
 
     /// <summary>
-    /// Executes the given command
+    /// Executes the command using the given context data and other information
     /// </summary>
-    /// <param name="command"></param>
-    /// <param name="context"></param>
-    /// <param name="isUserInitiated"></param>
-    /// <returns></returns>
+    /// <param name="command">The command to execute</param>
+    /// <param name="context">The context data to pass to the command</param>
+    /// <param name="shortcut">
+    /// The shortcut that caused the command to be executed, usually only
+    /// non-null when called by the <see cref="ShortcutManager"/>
+    /// </param>
+    /// <param name="contextMenu">
+    /// The context menu that owns the context entry that caused the command to be executed
+    /// </param>
+    /// <param name="isUserInitiated">
+    /// Whether a user effectively caused the command to execute (e.g. button/context/menu
+    /// click or a key/mouse shortcut was triggered).
+    /// </param>
+    /// <returns>
+    /// A task that represents the command operation. When completed, <see cref="Command.IsExecuting"/>
+    /// will return false if <see cref="Command.AllowMultipleExecutions"/> is also false
+    /// </returns>
     public Task Execute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ValidateContext(context);
         return command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
