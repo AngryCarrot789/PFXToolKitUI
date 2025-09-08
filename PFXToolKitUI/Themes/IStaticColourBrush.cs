@@ -19,5 +19,4 @@
 
 namespace PFXToolKitUI.Themes;
 
-public interface IStaticColourBrush : IColourBrush {
-}
+public interface IStaticColourBrush : IColourBrush;
