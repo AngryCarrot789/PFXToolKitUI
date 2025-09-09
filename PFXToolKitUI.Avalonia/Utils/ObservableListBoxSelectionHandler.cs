@@ -27,48 +27,57 @@ using PFXToolKitUI.Utils.Collections.Observable;
 namespace PFXToolKitUI.Avalonia.Utils;
 
 public sealed class ObservableListBoxSelectionHandler<T> where T : class {
-    private readonly ObservableList<T> sourceList;
+    private readonly ObservableList<T> sourceItems, selectedItems;
     private readonly ListBox listBox;
     private readonly Func<ListBoxItem, T> toModel;
-    private readonly Func<T, ListBoxItem> fromModel;
     private bool isUpdatingControl, isUpdatingModel;
 
-    public ObservableListBoxSelectionHandler(ObservableList<T> sourceList, ListBox listBox, Func<ListBoxItem, T> toModel, Func<T, ListBoxItem> fromModel) {
-        this.sourceList = sourceList;
+    public ObservableListBoxSelectionHandler(ObservableList<T> sourceItems, ObservableList<T> selectedItems, ListBox listBox, Func<ListBoxItem, T> toModel) {
+        this.sourceItems = sourceItems;
+        this.selectedItems = selectedItems;
         this.listBox = listBox;
         this.toModel = toModel;
-        this.fromModel = fromModel;
 
         this.listBox.Selection.Clear();
-        this.OnModelItemsAdded(sourceList, 0, sourceList);
-
+        this.OnSelectedItemsAdded(selectedItems, 0, selectedItems);
+        
         this.listBox.SelectionChanged += this.OnListBoxSelectionChanged;
-        this.listBox.Items.CollectionChanged += this.OnListBoxCollectionChanged;
-        this.sourceList.ItemsAdded += this.OnModelItemsAdded;
-        this.sourceList.ItemsRemoved += this.OnModelItemsRemoved;
-        this.sourceList.ItemReplaced += this.OnModelItemReplaced;
+        this.sourceItems.ItemsAdded += this.OnSourceItemsAdded;
+        this.sourceItems.ItemReplaced += this.OnSourceItemReplaced;
+        this.selectedItems.ItemsAdded += this.OnSelectedItemsAdded;
+        this.selectedItems.ItemsRemoved += this.OnSelectedItemsRemoved;
+        this.selectedItems.ItemReplaced += this.OnSelectedItemReplaced;
 
         // Indices within the selected models list changed. Since no actual items changed, this is fine.
         // this.sourceList.ItemMoved += this.OnModelItemMoved;
     }
 
-    private void OnListBoxCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
-        Debug.Assert(!this.isUpdatingModel && !this.isUpdatingControl, "Reentrancy");
-        if (e.Action != NotifyCollectionChangedAction.Add && e.Action != NotifyCollectionChangedAction.Replace) {
+    private void OnListBoxSelectionChanged(object? sender, SelectionChangedEventArgs e) {
+        if (this.isUpdatingControl || sender != e.Source /* SelectionChanged is not a direct event */) {
             return;
         }
 
+        this.isUpdatingModel = true;
+
+        foreach (object item in e.RemovedItems)
+            this.selectedItems.Remove(this.toModel((ListBoxItem) item));
+
+        if (e.AddedItems.Count > 0)
+            this.selectedItems.AddRange(e.AddedItems.Cast<ListBoxItem>().Select(this.toModel));
+
+        this.isUpdatingModel = false;
+    }
+    
+    private void OnSourceItemsAdded(IObservableList<T> list, int index, IList<T> items) {
+        if (this.isUpdatingModel || this.isUpdatingControl)
+            throw new InvalidOperationException("Reentrancy");
+        
         this.isUpdatingControl = true;
 
         ISelectionModel selection = this.listBox.Selection;
-        ItemCollection itemList = this.listBox.Items;
-
-        IList list = e.NewItems!;
-        for (int i = 0; i < list.Count; i++) {
-            ListBoxItem item = (ListBoxItem) list[i]!;
-            int idx = itemList.IndexOf(item);
-            Debug.Assert(idx == e.NewStartingIndex + i);
-            if (this.sourceList.Contains(this.toModel(item))) {
+        for (int i = 0; i < items.Count; i++) {
+            int idx = index + i;
+            if (this.selectedItems.Contains(items[i])) {
                 if (!selection.IsSelected(idx))
                     selection.Select(idx);
             }
@@ -80,18 +89,31 @@ public sealed class ObservableListBoxSelectionHandler<T> where T : class {
         this.isUpdatingControl = false;
     }
 
-    private void OnModelItemsAdded(IObservableList<T> list, int index, IList<T> items) {
-        if (!this.isUpdatingModel) {
-            ItemCollection itemList = this.listBox.Items;
-            if (itemList.Count <= 0) {
-                return; // SelectionHandler created before items initialized. Not an issue, just worse perf
-            }
+    private void OnSourceItemReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
+        if (this.isUpdatingModel || this.isUpdatingControl)
+            throw new InvalidOperationException("Reentrancy");
+        
+        this.isUpdatingControl = true;
+        
+        ISelectionModel selection = this.listBox.Selection;
+        if (this.selectedItems.Contains(newitem)) {
+            if (!selection.IsSelected(index))
+                selection.Select(index);
+        }
+        else if (selection.IsSelected(index)) {
+            selection.Deselect(index);
+        }
 
+        this.isUpdatingControl = false;
+    }
+
+    private void OnSelectedItemsAdded(IObservableList<T> list, int index, IList<T> items) {
+        if (!this.isUpdatingModel && this.sourceItems.Count > 0 /* check if we were created before items initialized. Not an issue, just worse perf */) {
             this.isUpdatingControl = true;
 
             ISelectionModel selection = this.listBox.Selection;
             foreach (T item in items) {
-                int idx = itemList.IndexOf(this.fromModel(item));
+                int idx = this.sourceItems.IndexOf(item);
                 if (idx != -1 && !selection.IsSelected(idx)) {
                     selection.Select(idx);
                 }
@@ -101,7 +123,7 @@ public sealed class ObservableListBoxSelectionHandler<T> where T : class {
         }
     }
 
-    private void OnModelItemsRemoved(IObservableList<T> list, int index, IList<T> items) {
+    private void OnSelectedItemsRemoved(IObservableList<T> list, int index, IList<T> items) {
         if (!this.isUpdatingModel) {
             this.isUpdatingControl = true;
 
@@ -110,9 +132,8 @@ public sealed class ObservableListBoxSelectionHandler<T> where T : class {
                 selection.Clear();
             }
             else {
-                ItemCollection itemList = this.listBox.Items;
                 foreach (T item in items) {
-                    int idx = itemList.IndexOf(this.fromModel(item));
+                    int idx = this.sourceItems.IndexOf(item);
                     if (idx != -1 && selection.IsSelected(idx)) {
                         selection.Deselect(idx);
                     }
@@ -123,18 +144,16 @@ public sealed class ObservableListBoxSelectionHandler<T> where T : class {
         }
     }
 
-    private void OnModelItemReplaced(IObservableList<T> list, int index, T oldItem, T newItem) {
+    private void OnSelectedItemReplaced(IObservableList<T> list, int index, T oldItem, T newItem) {
         if (!this.isUpdatingModel) {
             this.isUpdatingControl = true;
 
             ISelectionModel selection = this.listBox.Selection;
-            ItemCollection itemList = this.listBox.Items;
-
-            int oldIdx = itemList.IndexOf(this.fromModel(oldItem));
+            int oldIdx = this.sourceItems.IndexOf(oldItem);
             if (oldIdx != -1 && selection.IsSelected(oldIdx))
                 selection.Deselect(oldIdx);
 
-            int newIdx = itemList.IndexOf(this.fromModel(newItem));
+            int newIdx = this.sourceItems.IndexOf(newItem);
             if (newIdx != -1 && !selection.IsSelected(newIdx))
                 selection.Select(newIdx);
 
@@ -142,28 +161,12 @@ public sealed class ObservableListBoxSelectionHandler<T> where T : class {
         }
     }
 
-    private void OnListBoxSelectionChanged(object? sender, SelectionChangedEventArgs e) {
-        if (this.isUpdatingControl || sender != e.Source /* SelectionChanged is not a direct event */) {
-            return;
-        }
-
-        this.isUpdatingModel = true;
-
-        foreach (object item in e.RemovedItems)
-            this.sourceList.Remove(this.toModel((ListBoxItem) item));
-
-        if (e.AddedItems.Count > 0)
-            this.sourceList.AddRange(e.AddedItems.Cast<ListBoxItem>().Select(this.toModel));
-
-        this.isUpdatingModel = false;
-    }
-
     public void Dispose() {
         this.listBox.SelectionChanged -= this.OnListBoxSelectionChanged;
-        this.listBox.Items.CollectionChanged -= this.OnListBoxCollectionChanged;
-        this.sourceList.ItemsAdded -= this.OnModelItemsAdded;
-        this.sourceList.ItemsRemoved -= this.OnModelItemsRemoved;
-        this.sourceList.ItemReplaced -= this.OnModelItemReplaced;
-        // this.sourceList.ItemMoved -= this.OnModelItemMoved;
+        this.sourceItems.ItemsAdded -= this.OnSourceItemsAdded;
+        this.sourceItems.ItemReplaced -= this.OnSourceItemReplaced;
+        this.selectedItems.ItemsAdded -= this.OnSelectedItemsAdded;
+        this.selectedItems.ItemsRemoved -= this.OnSelectedItemsRemoved;
+        this.selectedItems.ItemReplaced -= this.OnSelectedItemReplaced;
     }
 }
