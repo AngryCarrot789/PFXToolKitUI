@@ -17,7 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Persistence;
 
 namespace PFXToolKitUI.Plugins;
@@ -50,44 +49,39 @@ public abstract class Plugin {
     /// Invoked after the plugin is created and the descriptor is set.
     /// This can be used for initial state detection, e.g. detecting if the operating system is supported
     /// </summary>
-    public virtual void OnCreated() {
+    protected internal virtual void OnCreated() {
     }
 
     /// <summary>
-    /// Register this plugin's commands
+    /// Initialize this plugin, e.g. register commands and services
     /// </summary>
-    /// <param name="manager">Command manager</param>
-    public virtual void RegisterCommands(CommandManager manager) {
-    }
-
-    /// <summary>
-    /// Register this plugin's services
-    /// </summary>
-    public virtual void RegisterServices() {
+    protected internal virtual void OnInitialize() {
     }
 
     /// <summary>
     /// Registers this plugin's configurations
     /// </summary>
-    /// <returns></returns>
-    public virtual void RegisterConfigurations(PersistentStorageManager manager) {
+    protected internal virtual void RegisterConfigurations(PersistentStorageManager manager) {
     }
 
     /// <summary>
-    /// Invoked when the application has loaded. This is invoked before any editor window is created.
-    /// Things like context menus, clip types, resource types, model->control mappings and so on should be registered here
+    /// Invoked when the application has loaded. Things like context menus, clip types,
+    /// resource types, model->control mappings and so on should be registered here
     /// </summary>
-    /// <returns></returns>
-    public virtual Task OnApplicationFullyLoaded() {
+    protected internal virtual Task OnApplicationFullyLoaded() {
         return Task.CompletedTask;
     }
 
     /// <summary>
-    /// Invoked when the application is about to exit. This is sort of pointless, but it exists just in case
+    /// Invoked when the application is about to exit.
     /// </summary>
-    public virtual void OnApplicationExiting() {
+    protected internal virtual void OnApplicationExiting() {
     }
 
-    public virtual void GetXamlResources(List<string> paths) {
+    /// <summary>
+    /// Adds any relative XAML files that this plugin requires to be injected into the application resources.
+    /// </summary>
+    /// <param name="paths">The list that relative xaml file paths may be added to</param>
+    protected internal virtual void GetXamlResources(List<string> paths) {
     }
 }

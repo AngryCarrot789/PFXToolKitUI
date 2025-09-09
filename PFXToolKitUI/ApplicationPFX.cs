@@ -241,8 +241,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
             }
 
             await progress.ProgressAndWaitForRender("Initialising plugins...", 0.5);
-            instance.PluginLoader.RegisterCommands(CommandManager.Instance);
-            instance.PluginLoader.RegisterServices();
+            instance.PluginLoader.InitializePlugins();
             await instance.OnPluginsLoaded();
         }
 
@@ -353,7 +352,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
         }
     }
 
-    protected virtual void OnExiting(int exitCode) {
+    protected virtual async Task OnExiting(int exitCode) {
         this.StartupPhase = ApplicationStartupPhase.Stopping;
         this.PluginLoader.OnApplicationExiting();
 
@@ -370,8 +369,9 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
         manager.SaveAll();
 
         AppLogger.Instance.WriteLine("Waiting for configs to flush to disk...");
-        Task task = manager.FlushToDisk(false);
-        Debug.Assert(task.IsCompleted);
+        // Task task = manager.FlushToDisk(true);
+        await manager.FlushToDisk(true);
+        // Debug.Assert(task.IsCompleted);
         AppLogger.Instance.WriteLine("Flushed!");
     }
 
@@ -409,7 +409,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     }
 
     /// <summary>
-    /// Notifies the application to shut down at some point in the future
+    /// Shuts down the application. May not happen immediately.
     /// </summary>
     public virtual void Shutdown() => this.Dispatcher.InvokeShutdown();
 

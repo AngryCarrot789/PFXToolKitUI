@@ -64,6 +64,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
             e.Exit += this.OnApplicationExit;
         }
 
+        avd.ShutdownStarted += this.OnDispatcherBeginShuttingDown;
         avd.ShutdownFinished += this.OnDispatcherShutDown;
     }
 
@@ -76,10 +77,23 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         ToolTip.SetVerticalOffset(sender, 12.0);
     }
 
-    private void OnDispatcherShutDown(object? sender, EventArgs e) {
+    private void OnDispatcherBeginShuttingDown(object? sender, EventArgs e) {
+        AppLogger.Instance.WriteLine("[Application Dispatcher] begin shutdown");
         if (this.StartupPhase != ApplicationStartupPhase.Stopping) {
-            AppLogger.Instance.WriteLine("Application Exit event was not fired! Handling manually");
-            this.OnExiting(0);
+            AppLogger.Instance.WriteLine("Warning: application shutdown caused by dispatcher shutdown!");
+            if (this.Application.ApplicationLifetime is IControlledApplicationLifetime desktop) {
+                desktop.Shutdown();
+            }
+            else {
+                this.Dispatcher.AwaitForCompletion(this.OnExiting(Environment.ExitCode));
+            }
+        }
+    }
+
+    private void OnDispatcherShutDown(object? sender, EventArgs e) {
+        AppLogger.Instance.WriteLine("[Application Dispatcher] finish shutdown");
+        if (this.StartupPhase != ApplicationStartupPhase.Stopping) {
+            AppLogger.Instance.WriteLine("Fatal: application did not shutdown properly. Possibly lost data!");
         }
 
         this.StartupPhase = ApplicationStartupPhase.Stopped;
@@ -87,7 +101,13 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
     }
 
     private void OnApplicationExit(object? sender, ControlledApplicationLifetimeExitEventArgs e) {
-        this.OnExiting(e.ApplicationExitCode);
+        if (this.IsShuttingDown) {
+            AppLogger.Instance.WriteLine("Warning: application exit reentrancy");
+            return;
+        }
+
+        AppLogger.Instance.WriteLine("Application exit requested");
+        this.Dispatcher.AwaitForCompletion(this.OnExiting(e.ApplicationExitCode));
     }
 
     public override void Shutdown() {

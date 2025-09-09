@@ -19,14 +19,16 @@
 
 namespace PFXToolKitUI.Utils.Events;
 
+public delegate void LazyHelper3EventHandler<in T1, in T2, in T3>(T1 value1, T2 value2, T3 value3, bool hasBoth);
+
 /// <summary>
-/// A helper class used to wrap a value that is lazily created at some point, and provides a callback for
-/// when the state is activated or deactivates (which may happen before the value is created)
+/// A helper class that stores three lazily created values, and invokes a callback whenever the
+/// values change. Note, when any value is changed, the callback may be called twice.
 /// </summary>
-/// <typeparam name="T1">The first type of value to wrap</typeparam>
-/// <typeparam name="T2">The second type of value to wrap</typeparam>
-/// <typeparam name="T3">The third type of value to wrap</typeparam>
-public class LazyHelper3<T1, T2, T3>(Action<T1, T2, T3, bool> onIsEnabledChanged) {
+/// <typeparam name="T1">The first value type</typeparam>
+/// <typeparam name="T2">The second value type</typeparam>
+/// <typeparam name="T3">The third value type</typeparam>
+public class LazyHelper3<T1, T2, T3>(LazyHelper3EventHandler<T1, T2, T3> onValuesChanged) {
     private Optional<T1> value1;
     private Optional<T2> value2;
     private Optional<T3> value3;
@@ -37,11 +39,11 @@ public class LazyHelper3<T1, T2, T3>(Action<T1, T2, T3, bool> onIsEnabledChanged
             Optional<T1> oldValue = this.value1;
             if (!oldValue.Equals(value)) {
                 if (oldValue.HasValue && this.value2.HasValue && this.value3.HasValue)
-                    onIsEnabledChanged(oldValue.Value, this.value2.Value, this.value3.Value, false);
+                    onValuesChanged(oldValue.Value, this.value2.Value, this.value3.Value, false);
 
                 this.value1 = value;
                 if (value.HasValue && this.value2.HasValue && this.value3.HasValue)
-                    onIsEnabledChanged(value.Value, this.value2.Value, this.value3.Value, true);
+                    onValuesChanged(value.Value, this.value2.Value, this.value3.Value, true);
             }
         }
     }
@@ -52,11 +54,11 @@ public class LazyHelper3<T1, T2, T3>(Action<T1, T2, T3, bool> onIsEnabledChanged
             Optional<T2> oldValue = this.value2;
             if (!oldValue.Equals(value)) {
                 if (oldValue.HasValue && this.value1.HasValue && this.value3.HasValue)
-                    onIsEnabledChanged(this.value1.Value, oldValue.Value, this.value3.Value, false);
+                    onValuesChanged(this.value1.Value, oldValue.Value, this.value3.Value, false);
 
                 this.value2 = value;
                 if (value.HasValue && this.value1.HasValue && this.value3.HasValue)
-                    onIsEnabledChanged(this.value1.Value, value.Value, this.value3.Value, true);
+                    onValuesChanged(this.value1.Value, value.Value, this.value3.Value, true);
             }
         }
     }
@@ -67,11 +69,11 @@ public class LazyHelper3<T1, T2, T3>(Action<T1, T2, T3, bool> onIsEnabledChanged
             Optional<T3> oldValue = this.value3;
             if (!oldValue.Equals(value)) {
                 if (oldValue.HasValue && this.value1.HasValue && this.value2.HasValue)
-                    onIsEnabledChanged(this.value1.Value, this.value2.Value, oldValue.Value, false);
+                    onValuesChanged(this.value1.Value, this.value2.Value, oldValue.Value, false);
 
                 this.value3 = value;
                 if (value.HasValue && this.value1.HasValue && this.value2.HasValue)
-                    onIsEnabledChanged(this.value1.Value, this.value2.Value, value.Value, true);
+                    onValuesChanged(this.value1.Value, this.value2.Value, value.Value, true);
             }
         }
     }

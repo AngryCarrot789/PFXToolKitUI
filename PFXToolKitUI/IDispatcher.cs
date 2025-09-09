@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
+
 namespace PFXToolKitUI;
 
 /// <summary>
@@ -100,4 +102,31 @@ public interface IDispatcher {
     /// Creates a dispatcher timer
     /// </summary>
     IDispatcherTimer CreateTimer(DispatchPriority priority);
+
+    /// <summary>
+    /// Pushes a new dispatcher frame that exits when the cancellation token is marked as cancelled. Does nothing if already cancelled.
+    /// </summary>
+    /// <param name="cancellationToken">The token that causes the frame to exit once cancelled</param>
+    /// <exception cref="InvalidOperationException">The cancellation token cannot be cancelled</exception>
+    void PushFrame(CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Synchronously waits for the task to complete without stalling the dispatcher,
+    /// by instead pushing a new dispatcher frame that exits once the task completes.
+    /// <para>
+    /// Note that this may cause ordering issues
+    /// </para>
+    /// </summary>
+    /// <param name="task">The task to wait for completion</param>
+    void AwaitForCompletion(Task task) {
+        if (!task.IsCompleted) {
+            using CancellationTokenSource cts = new CancellationTokenSource();
+            task.ContinueWith((t, theCts) => ((CancellationTokenSource) theCts!).Cancel(), cts, CancellationToken.None);
+            this.PushFrame(cts.Token);
+        }
+
+        if (!task.IsCanceled && task.Exception is AggregateException e) {
+            ExceptionDispatchInfo.Throw(e);
+        }
+    }
 }

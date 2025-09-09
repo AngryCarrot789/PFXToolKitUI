@@ -64,7 +64,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     private volatile TaskCompletionSource? myTcs;
     private volatile CancellationTokenSource? actualCts;
     private bool isOwnerOfActivity;
-    
+
     private CancellationTokenSource? myPauseOrCancelSource;
     private CancellationTokenRegistration? pauseCancellationRegistration;
 
@@ -190,7 +190,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         theActivity.PausableTask = this;
 
         OperationCanceledException? oce = null;
-        using ErrorList errorList = new ErrorList("Multiple exceptions while awaiting pausable task", throwOnDispose:false, tryUseFirstException:true);
+        using ErrorList errorList = new ErrorList("Multiple exceptions while awaiting pausable task", throwOnDispose: false, tryUseFirstException: true);
         try {
             await this.RunMainInternal();
         }
@@ -200,7 +200,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         catch (Exception e) {
             errorList.Add(e);
         }
-            
+
         Debug.Assert(this.IsCompleted, "Expected this pausable task to be completed at this point");
         this.activity = null;
 
@@ -382,10 +382,11 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     private async Task<Task> OperateWhilePausedInternal(Func<Task> operation, bool canOperateOnError = true, bool canOperateOnCancelled = true) {
         lock (this.stateLock) {
             switch (this.state) {
-                case TASK_STATE.WAITING:     goto OperateAbs;
-                case TASK_STATE.RUNNING:     goto PauseOperateUnpause;
+                case TASK_STATE.WAITING: goto OperateAbs;
+                case TASK_STATE.RUNNING: goto PauseOperateUnpause;
                 case TASK_STATE.PAUSED_1:
-                case TASK_STATE.PAUSED_2:    goto WaitForPausedThenOperate;
+                case TASK_STATE.PAUSED_2:
+                    goto WaitForPausedThenOperate;
                 case TASK_STATE.COMPLETED_1: goto WaitForCompletionThenOperate;
                 case TASK_STATE.COMPLETED_2: goto OperateAbs;
                 case TASK_STATE.CANCELLED: {
@@ -491,7 +492,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
 
         return true;
     }
-    
+
     public async Task CancelAsync() {
         if (this.actualCts == null)
             throw new InvalidOperationException("Not cancellable");
@@ -513,7 +514,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         if (this.state >= TASK_STATE.COMPLETED_2) {
             return; // task became completed
         }
-        
+
         await (this.myTcs?.Task ?? Task.CompletedTask).ConfigureAwait(false);
     }
 
@@ -535,7 +536,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             await this.pauseCancellationRegistration.Value.DisposeAsync();
 
         this.myPauseOrCancelSource?.Dispose();
-        
+
         if (this.isOwnerOfActivity) {
             this.actualCts?.Dispose();
         }
@@ -571,14 +572,19 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             this.myTcs = new TaskCompletionSource();
         }
 
+        bool ranToSuccess;
         CancellationToken pauseOrCancelToken = this.myPauseOrCancelSource.Token;
+
         try {
             this.continueAttempts = -1;
             await (this.firstTask = this.RunFirst(pauseOrCancelToken));
+            ranToSuccess = true;
         }
         catch (OperationCanceledException) {
-            if (this.pauseState == PAUSE_STATE.REQUESTED && !this.IsCancellationRequested) {
+            if (this.pauseState == PAUSE_STATE.REQUESTED && !trueCancelToken.IsCancellationRequested) {
                 await this.OnPausedInternalAsync(false);
+                await this.TryCancelAfterPausing(trueCancelToken);
+                return;
             }
             else {
                 await this.OnCancelledInternal();
@@ -595,13 +601,12 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             return;
         }
 
-        bool ranToSuccess = false;
-        lock (this.stateLock) {
-            if (this.state == TASK_STATE.RUNNING) {
-                this.state = TASK_STATE.COMPLETED_1;
-                ranToSuccess = true;
-            }
-        }
+        // lock (this.stateLock) {
+        //     if (this.state == TASK_STATE.RUNNING) {
+        //         this.state = TASK_STATE.COMPLETED_1;
+        //         ranToSuccess = true;
+        //     }
+        // }
 
         if (ranToSuccess) {
             await this.OnCompletedInternal();
@@ -650,8 +655,9 @@ public abstract class AdvancedPausableTask : BasePausableTask {
                 await (this.continueTask = this.Continue(pauseOrCancelToken));
             }
             catch (OperationCanceledException) {
-                if (this.pauseState == PAUSE_STATE.REQUESTED && !this.IsCancellationRequested) {
+                if (this.pauseState == PAUSE_STATE.REQUESTED && !trueCancelToken.IsCancellationRequested) {
                     await this.OnPausedInternalAsync(false);
+                    await this.TryCancelAfterPausing(trueCancelToken);
                     continue;
                 }
                 else {
@@ -676,6 +682,20 @@ public abstract class AdvancedPausableTask : BasePausableTask {
 
             await this.OnCompletedInternal();
             return;
+        }
+    }
+
+    private async Task TryCancelAfterPausing(CancellationToken trueCancelToken) {
+        if (trueCancelToken.IsCancellationRequested) {
+            lock (this.stateLock) {
+                if (this.state == TASK_STATE.CANCELLED)
+                    return;
+                this.state = TASK_STATE.CANCELLED;
+                this.pauseState = PAUSE_STATE.NOT_REQUESTED;
+            }
+
+            await this.OnCompletedInternal();
+            trueCancelToken.ThrowIfCancellationRequested();
         }
     }
 

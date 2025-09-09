@@ -78,6 +78,16 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
         return new DispatcherTimerDelegate(timer, this);
     }
 
+    public void PushFrame(CancellationToken cancellationToken) {
+        if (!cancellationToken.CanBeCanceled)
+            throw new InvalidOperationException("Token cannot be cancelled");
+        
+        DispatcherFrame frame = new DispatcherFrame();
+        CancellationTokenRegistration registration = cancellationToken.Register(static f => ((DispatcherFrame) f!).Continue = false, frame);
+        this.dispatcher.PushFrame(frame);
+        registration.Dispose();
+    }
+
     private static DispatcherPriority ToAvaloniaPriority(DispatchPriority priority) {
         return Unsafe.As<DispatchPriority, DispatcherPriority>(ref priority);
     }
@@ -108,12 +118,8 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
             this.dispatcher = dispatcher;
         }
 
-        public void Start() {
-            this.timer.Start();
-        }
+        public void Start() => this.timer.Start();
 
-        public void Stop() {
-            this.timer.Stop();
-        }
+        public void Stop() => this.timer.Stop();
     }
 }

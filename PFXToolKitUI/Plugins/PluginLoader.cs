@@ -20,7 +20,6 @@
 using System.Collections.ObjectModel;
 using System.Reflection;
 using System.Text;
-using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Persistence;
 using PFXToolKitUI.Plugins.Exceptions;
@@ -29,8 +28,8 @@ namespace PFXToolKitUI.Plugins;
 
 public sealed class PluginLoader {
     private readonly List<Plugin> plugins;
-    private List<Type>? corePlugins;
-    private HashSet<Type> loadedPluginTypes; // is this a bad idea?
+    private readonly HashSet<Type> loadedPluginTypes; // is this a bad idea?
+    private List<Type>? registeredCorePluginTypes;
 
     public ReadOnlyCollection<Plugin> Plugins { get; }
 
@@ -48,20 +47,22 @@ public sealed class PluginLoader {
         ArgumentNullException.ThrowIfNull(pluginType);
         if (!typeof(Plugin).IsAssignableFrom(pluginType))
             throw new ArgumentException($"Plugin type does not derive from {nameof(Plugin)}: {pluginType}");
+        if (this.registeredCorePluginTypes != null && this.registeredCorePluginTypes.Contains(pluginType))
+            throw new InvalidOperationException("Plugin type is already registered: " + pluginType);
 
-        (this.corePlugins ??= new List<Type>()).Add(pluginType);
+        (this.registeredCorePluginTypes ??= new List<Type>()).Add(pluginType);
     }
 
     /// <summary>
     /// Loads all registered core plugins
     /// </summary>
     /// <param name="exceptions">A list of exceptions encountered</param>
-    public void LoadCorePlugins(List<PluginLoadException> exceptions) {
-        if (this.corePlugins == null) {
+    internal void LoadCorePlugins(List<PluginLoadException> exceptions) {
+        if (this.registeredCorePluginTypes == null) {
             return;
         }
 
-        foreach (Type pluginType in this.corePlugins) {
+        foreach (Type pluginType in this.registeredCorePluginTypes) {
             if (this.loadedPluginTypes.Contains(pluginType)) {
                 exceptions.Add(new PluginLoadException("Plugin type already in use: " + pluginType));
             }
@@ -84,8 +85,8 @@ public sealed class PluginLoader {
             }
         }
 
-        this.corePlugins.Clear();
-        this.corePlugins = null;
+        this.registeredCorePluginTypes.Clear();
+        this.registeredCorePluginTypes = null;
     }
 
     /// <summary>
@@ -93,7 +94,7 @@ public sealed class PluginLoader {
     /// </summary>
     /// <param name="pluginsFolder">The plugins folder to load from</param>
     /// <param name="exceptions">A list of exceptions encountered</param>
-    public async Task LoadPlugins(string pluginsFolder, List<PluginLoadException> exceptions) {
+    internal async Task LoadPlugins(string pluginsFolder, List<PluginLoadException> exceptions) {
         string[] dirs;
         try {
             // Plugins use relative paths, so we need to give them the full path so they can do their thing.
@@ -109,7 +110,7 @@ public sealed class PluginLoader {
         foreach (string folder in dirs) {
             Plugin? plugin = null;
             try {
-                plugin = await this.ReadDescriptorAndCreatePluginInstance(folder);
+                plugin = await this.LoadAndCreatePluginFromFolder(folder);
             }
             catch (PluginLoadException e) {
                 exceptions.Add(e);
@@ -128,24 +129,72 @@ public sealed class PluginLoader {
             }
         }
     }
+    
+    private async Task<Plugin> LoadAndCreatePluginFromFolder(string pluginFolder) {
+        string dllFile = Path.Combine(pluginFolder, Path.GetFileName(pluginFolder) + ".dll");
+        Assembly assembly;
+        try {
+            assembly = await Task.Run(() => Assembly.LoadFrom(dllFile));
+        }
+        catch (Exception e) {
+            throw new Exception($"Invalid or missing DLL file '{dllFile}'", e);
+        }
 
-    public void RegisterCommands(CommandManager manager) {
+        Type? entryType = null;
+        foreach (Type type in assembly.ExportedTypes) {
+            if (typeof(Plugin).IsAssignableFrom(type.BaseType)) {
+                entryType = type;
+                break;
+            }
+        }
+
+        if (entryType == null)
+            throw new PluginLoadException($"Could not find a class extending {nameof(Plugin)} in {dllFile}");
+
+        if (entryType.IsInterface || entryType.IsAbstract)
+            throw new Exception($"Plugin entry class is abstract or an interface: {entryType.Name} in {dllFile}");
+
+        if (this.loadedPluginTypes.Contains(entryType))
+            throw new PluginLoadException($"Plugin type already in use: {entryType}");
+
+        return (Plugin) Activator.CreateInstance(entryType)! ?? throw new Exception("Failed to instantiate plugin");
+    }
+    
+    private void OnPluginCreated(string? pluginFolder, Plugin plugin) {
+        plugin.PluginLoader = this;
+        plugin.PluginFolder = pluginFolder;
+        plugin.OnCreated();
+        this.plugins.Add(plugin);
+        this.loadedPluginTypes.Add(plugin.GetType());
+    }
+
+    internal void InitializePlugins() {
         foreach (Plugin plugin in this.plugins) {
-            plugin.RegisterCommands(manager);
+            plugin.OnInitialize();
         }
     }
 
-    public void RegisterServices() {
+    internal void RegisterConfigurations(PersistentStorageManager manager) {
         foreach (Plugin plugin in this.plugins) {
-            plugin.RegisterServices();
+            plugin.RegisterConfigurations(manager);
+        }
+    }
+
+    internal async Task OnApplicationFullyLoaded() {
+        foreach (Plugin plugin in this.plugins) {
+            await plugin.OnApplicationFullyLoaded();
+        }
+    }
+
+    internal void OnApplicationExiting() {
+        foreach (Plugin plugin in this.plugins) {
+            plugin.OnApplicationExiting();
         }
     }
 
     /// <summary>
-    /// Gets all of the xaml files that plugins require to be injected into the application resources.
-    /// This gives absolute paths
+    /// Gets a list of absolute paths to xaml files that plugins require to be injected into the application resources.
     /// </summary>
-    /// <returns></returns>
     public List<(Plugin, string)> GetInjectableXamlResources() {
         List<(Plugin, string)> fullPaths = new List<(Plugin, string)>();
         foreach (Plugin plugin in this.plugins) {
@@ -180,61 +229,5 @@ public sealed class PluginLoader {
         }
 
         return fullPaths;
-    }
-
-    private void OnPluginCreated(string? pluginFolder, Plugin plugin) {
-        plugin.PluginLoader = this;
-        plugin.PluginFolder = pluginFolder;
-        plugin.OnCreated();
-        this.plugins.Add(plugin);
-        this.loadedPluginTypes.Add(plugin.GetType());
-    }
-
-    private async Task<Plugin> ReadDescriptorAndCreatePluginInstance(string folder) {
-        string dllFile = Path.Combine(folder, $"{Path.GetFileName(folder)}.dll");
-        Assembly assembly;
-        try {
-            assembly = await Task.Run(() => Assembly.LoadFrom(dllFile));
-        }
-        catch (Exception e) {
-            throw new Exception($"Invalid or missing DLL file '{dllFile}'", e);
-        }
-
-        Type? entryType = null;
-        foreach (Type type in assembly.ExportedTypes) {
-            if (typeof(Plugin).IsAssignableFrom(type.BaseType)) {
-                entryType = type;
-                break;
-            }
-        }
-
-        if (entryType == null)
-            throw new PluginLoadException($"Could not find a class extending {nameof(Plugin)} in {dllFile}");
-
-        if (entryType.IsInterface || entryType.IsAbstract)
-            throw new Exception($"Plugin entry class is abstract or an interface: {entryType.Name} in {dllFile}");
-
-        if (this.loadedPluginTypes.Contains(entryType))
-            throw new PluginLoadException($"Plugin type already in use: {entryType}");
-
-        return (Plugin) Activator.CreateInstance(entryType)! ?? throw new Exception("Failed to instantiate plugin");
-    }
-
-    public void RegisterConfigurations(PersistentStorageManager manager) {
-        foreach (Plugin plugin in this.plugins) {
-            plugin.RegisterConfigurations(manager);
-        }
-    }
-
-    public async Task OnApplicationFullyLoaded() {
-        foreach (Plugin plugin in this.plugins) {
-            await plugin.OnApplicationFullyLoaded();
-        }
-    }
-
-    public void OnApplicationExiting() {
-        foreach (Plugin plugin in this.plugins) {
-            plugin.OnApplicationExiting();
-        }
     }
 }

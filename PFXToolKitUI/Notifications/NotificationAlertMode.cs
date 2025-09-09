@@ -1,7 +1,7 @@
 ﻿namespace PFXToolKitUI.Notifications;
 
 /// <summary>
-/// A mode for a notification's alert state, signaling a warning notification
+/// An alert state for a notification, e.g. something went wrong, so the alert state will be set to pull the user's attention
 /// </summary>
 public enum NotificationAlertMode {
     /// <summary>
@@ -13,7 +13,7 @@ public enum NotificationAlertMode {
     /// </summary>
     UntilUserInteraction,
     /// <summary>
-    /// Alert runs forever until manually disabled (e.g. set to <see cref="None"/>)
+    /// Alert runs forever until manually disabled (e.g. set to <see cref="None"/>) or the notification is hidden
     /// </summary>
     Forever
 }

@@ -26,6 +26,9 @@ public interface IIconPreferences {
         return ApplicationPFX.Instance.ServiceManager.TryGetService(out instance);
     }
     
+    // with the current Icon control impls, we would easily implement an event
+    // to switch aliasing, but this feature is kinda pointless anyway...
+    
     /// <summary>
     /// Gets or sets whether to use antialiasing on icon rendering. Changing this
     /// value may not affect all icons until the application is restarted

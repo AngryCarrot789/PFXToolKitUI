@@ -68,7 +68,7 @@ public abstract class Notification {
     }
 
     /// <summary>
-    /// Gets or sets the amount of time to wait until auto-hide calls <see cref="Close"/>. Default is 5 seconds.
+    /// Gets or sets the amount of time to wait until auto-hide calls <see cref="Hide"/>. Default is 5 seconds.
     /// This cannot be changed while <see cref="IsAutoHideActive"/> is true
     /// </summary>
     public TimeSpan AutoHideDelay {
@@ -90,6 +90,9 @@ public abstract class Notification {
         }
     }
 
+    /// <summary>
+    /// Gets the time at which <see cref="IsAutoHideActive"/> was set to true
+    /// </summary>
     public DateTime AutoHideStartTime { get; private set; }
 
     /// <summary>
@@ -116,11 +119,7 @@ public abstract class Notification {
         get => this.alertMode;
         set => PropertyHelper.SetAndRaiseINE(ref this.alertMode, value, this, static t => t.AlertModeChanged?.Invoke(t));
     }
-
-    // Notification.alarmMode -- remove this line
-    public delegate void NotificationAlarmModeChangedEventHandler(Notification sender);
-    public event NotificationAlarmModeChangedEventHandler? AlertModeChanged;
-
+    
     public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
 
     public ObservableList<NotificationCommand> Commands { get; }
@@ -130,16 +129,17 @@ public abstract class Notification {
     /// </summary>
     public NotificationManager? NotificationManager { get; internal set; }
 
+    /// <summary>
+    /// Gets whether this notification is visible. This returns true when <see cref="NotificationManager"/> is non-null
+    /// </summary>
+    public bool IsVisible => this.NotificationManager != null;
+
     public event NotificationEventHandler? CaptionChanged;
     public event NotificationEventHandler? CanAutoHideChanged;
-
-    /// <summary>
-    /// Fired when <see cref="IsAutoHideActive"/> changes. This is only fired on the main thread
-    /// </summary>
     public event NotificationEventHandler? IsAutoHideActiveChanged;
-
     public event NotificationEventHandler? AutoHideDelayChanged;
     public event NotificationContextDataChangedEventHandler? ContextDataChanged;
+    public event NotificationEventHandler? AlertModeChanged;
 
     protected Notification() {
         this.Commands = new ObservableList<NotificationCommand>();
@@ -147,7 +147,7 @@ public abstract class Notification {
             if (item.Notification != null)
                 throw new InvalidOperationException("Command already exists in another notification");
         };
-        
+
         ObservableItemProcessor.MakeSimple(this.Commands, c => c.Notification = this, c => c.Notification = null);
     }
 
@@ -166,14 +166,14 @@ public abstract class Notification {
                     await Task.Delay(this.autoHideDelay, this.ctsAutoHide.Token).ConfigureAwait(false);
                 }
                 catch (OperationCanceledException) {
-                    // someone stopped the auto-hide
+                    // someone stopped the auto-hide, or the notification was hidden
                 }
             }
 
             await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
                 // Double check whether auto-hide is cancelled
                 if (!this.ctsAutoHide.IsCancellationRequested) {
-                    this.Close();
+                    this.Hide();
                 }
 
                 this.ctsAutoHide.Cancel();
@@ -185,7 +185,7 @@ public abstract class Notification {
                     this.StartAutoHide();
                 }
             }, token: CancellationToken.None);
-        });
+        }, CancellationToken.None);
     }
 
     public void CancelAutoHide() {
@@ -201,17 +201,16 @@ public abstract class Notification {
     }
 
     /// <summary>
-    /// Adds this notification to the given notification manager. Does nothing if already opened in the given notification manager.
+    /// Adds this notification to the given notification manager. If already shown in the notification manager, the auto-hide is restarted.
     /// If we already exist in another notification manager, we remove ourself from it first before adding to the new one.
     /// </summary>
     /// <param name="notificationManager">The notification manager to add ourself to</param>
-    public void Open(NotificationManager notificationManager) {
+    public void Show(NotificationManager notificationManager) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
         ArgumentNullException.ThrowIfNull(notificationManager);
         if (!ReferenceEquals(this.NotificationManager, notificationManager)) {
-            this.NotificationManager?.RemoveNotification(this);
-            notificationManager.AddNotification(this);
-            this.StartAutoHide();
+            this.NotificationManager?.HideNotification(this);
+            notificationManager.ShowNotification(this);
         }
         else if (this.IsAutoHideActive && !this.flagRestartAutoHide) {
             this.flagRestartAutoHide = true;
@@ -222,8 +221,8 @@ public abstract class Notification {
     /// <summary>
     /// Closes this notification, removing it from the <see cref="NotificationManager"/>
     /// </summary>
-    public void Close() {
+    public void Hide() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-        this.NotificationManager?.RemoveNotification(this);
+        this.NotificationManager?.HideNotification(this);
     }
 }

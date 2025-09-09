@@ -19,13 +19,15 @@
 
 namespace PFXToolKitUI.Utils.Events;
 
+public delegate void LazyHelper2EventHandler<in T1, in T2>(T1 value1, T2 value2, bool hasBoth);
+
 /// <summary>
-/// A helper class used to wrap a value that is lazily created at some point, and provides a callback for
-/// when the state is activated or deactivates (which may happen before the value is created)
+/// A helper class that stores two lazily created values, and invokes a callback whenever the
+/// values change. Note, when any value is changed, the callback may be called twice.
 /// </summary>
-/// <typeparam name="T1">The first type of value to wrap</typeparam>
-/// <typeparam name="T2">The second type of value to wrap</typeparam>
-public class LazyHelper2<T1, T2>(Action<T1, T2, bool> onIsEnabledChanged) {
+/// <typeparam name="T1">The first value type</typeparam>
+/// <typeparam name="T2">The second value type</typeparam>
+public class LazyHelper2<T1, T2>(LazyHelper2EventHandler<T1, T2> onValuesChanged) {
     private Optional<T1> value1;
     private Optional<T2> value2;
 
@@ -35,11 +37,11 @@ public class LazyHelper2<T1, T2>(Action<T1, T2, bool> onIsEnabledChanged) {
             Optional<T1> oldValue = this.value1;
             if (!oldValue.Equals(value)) {
                 if (oldValue.HasValue && this.value2.HasValue)
-                    onIsEnabledChanged(oldValue.Value, this.value2.Value, false);
+                    onValuesChanged(oldValue.Value, this.value2.Value, false);
 
                 this.value1 = value;
                 if (value.HasValue && this.value2.HasValue)
-                    onIsEnabledChanged(value.Value, this.value2.Value, true);
+                    onValuesChanged(value.Value, this.value2.Value, true);
             }
         }
     }
@@ -50,11 +52,11 @@ public class LazyHelper2<T1, T2>(Action<T1, T2, bool> onIsEnabledChanged) {
             Optional<T2> oldValue = this.value2;
             if (!oldValue.Equals(value)) {
                 if (oldValue.HasValue && this.value1.HasValue)
-                    onIsEnabledChanged(this.value1.Value, oldValue.Value, false);
+                    onValuesChanged(this.value1.Value, oldValue.Value, false);
 
                 this.value2 = value;
                 if (value.HasValue && this.value1.HasValue)
-                    onIsEnabledChanged(this.value1.Value, value.Value, true);
+                    onValuesChanged(this.value1.Value, value.Value, true);
             }
         }
     }

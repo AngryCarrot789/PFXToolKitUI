@@ -34,6 +34,6 @@ public static class LogExceptionHelper {
         AppLogger.Instance.WriteLine(caption + " - " + message);
         AppLogger.Instance.WriteLine(ex.GetToString());
         
-        await IMessageDialogService.Instance.ShowMessage(caption, message + Environment.NewLine + "See logs for more info");
+        await IMessageDialogService.Instance.ShowMessage(caption, message + Environment.NewLine + Environment.NewLine + "See logs for more info");
     }
 }

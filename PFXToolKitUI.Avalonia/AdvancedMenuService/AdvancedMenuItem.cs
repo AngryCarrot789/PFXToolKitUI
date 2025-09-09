@@ -324,17 +324,14 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         AdvancedMenuService.InsertItemNodesWithDynamicSupport(this, index, [newItem], ref this.dynamicInsertion, ref this.dynamicInserted);
     }
 
-    private void OnEntryIconChanged(BaseContextEntry sender, Icon? oldicon, Icon? newicon) {
-        if (newicon != null) {
+    private void OnEntryIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {
+        if (newIcon != null) {
             if (this.myIconControl == null) {
-                this.myIconControl ??= new IconControl {
-                    Icon = newicon
-                };
-
+                this.myIconControl ??= new IconControl { Icon = newIcon };
                 this.Icon = this.myIconControl;
             }
             else {
-                this.myIconControl.Icon = newicon;
+                this.myIconControl.Icon = newIcon;
             }
         }
         else if (this.myIconControl != null) {

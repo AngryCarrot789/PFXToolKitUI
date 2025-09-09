@@ -23,13 +23,13 @@ using PFXToolKitUI.Utils.Collections.Observable;
 namespace PFXToolKitUI.Notifications;
 
 /// <summary>
-/// Manages a collection of notification. Typically once instance is present per window that supports notification
+/// Manages a collection of notification. Typically, once instance exists per window that supports notification
 /// </summary>
 public class NotificationManager {
     private readonly ObservableList<Notification> notifications;
 
     /// <summary>
-    /// Gets our notifications
+    /// Returns the list of visible notifications
     /// </summary>
     public ReadOnlyObservableList<Notification> Notifications { get; }
 
@@ -38,73 +38,39 @@ public class NotificationManager {
         this.Notifications = new ReadOnlyObservableList<Notification>(this.notifications);
     }
 
-    public void AddNotification(Notification entry) => this.InsertNotification(this.notifications.Count, entry);
-
-    public void InsertNotification(int index, Notification entry) {
-        if (index < 0)
-            throw new ArgumentOutOfRangeException(nameof(index), "Negative indices not allowed");
-        if (index > this.notifications.Count)
-            throw new ArgumentOutOfRangeException(nameof(index), $"Index is beyond the range of this list: {index} > count({this.notifications.Count})");
-
+    public void ShowNotification(Notification entry) {
         if (entry == null)
-            throw new ArgumentNullException(nameof(entry), "Cannot add a null entry");
+            throw new ArgumentNullException(nameof(entry), "Cannot show a null entry");
         if (entry.NotificationManager == this)
-            throw new InvalidOperationException("Entry already exists in this entry. It must be removed first");
+            throw new InvalidOperationException("Notification already shown");
         if (entry.NotificationManager != null)
-            throw new InvalidOperationException("Entry already exists in another container. It must be removed first");
+            throw new InvalidOperationException("Notification shown in another notification manager");
 
         entry.NotificationManager = this;
-        this.notifications.Insert(index, entry);
+        this.notifications.Add(entry);
         entry.OnShowing();
     }
 
-    public void AddNotifications(IEnumerable<Notification> layers) {
-        foreach (Notification entry in layers) {
-            this.AddNotification(entry);
-        }
-    }
-
-    public bool RemoveNotification(Notification entry) {
+    public bool HideNotification(Notification entry) {
         if (!ReferenceEquals(entry.NotificationManager, this)) {
             return false;
         }
 
-        int idx = this.IndexOf(entry);
+        int idx = this.notifications.IndexOf(entry);
         Debug.Assert(idx != -1);
-        this.RemoveNotificationAt(idx);
-
-        Debug.Assert(entry.NotificationManager != this, "Entry parent not updated, still ourself");
-        Debug.Assert(entry.NotificationManager == null, "Entry parent not updated to null");
+        
+        entry.OnHidden();
+        this.notifications.RemoveAt(idx);
+        entry.NotificationManager = null;
         return true;
     }
 
-    public void RemoveNotificationAt(int index) {
-        Notification entry = this.notifications[index];
-        this.notifications.RemoveAt(index);
-        entry.OnHidden();
-        entry.NotificationManager = null;
-    }
-
-    public void RemoveNotifications(IEnumerable<Notification> entries) {
-        foreach (Notification entry in entries) {
-            this.RemoveNotification(entry);
-        }
-    }
-
-    public void ClearNotifications() {
+    public void HideAllNotifications() {
         foreach (Notification t in this.notifications) {
-            t.NotificationManager = null;
             t.OnHidden();
+            t.NotificationManager = null;
         }
 
         this.notifications.Clear();
-    }
-
-    public int IndexOf(Notification entry) {
-        return ReferenceEquals(entry.NotificationManager, this) ? this.notifications.IndexOf(entry) : -1;
-    }
-
-    public bool Contains(Notification entry) {
-        return this.IndexOf(entry) != -1;
     }
 }

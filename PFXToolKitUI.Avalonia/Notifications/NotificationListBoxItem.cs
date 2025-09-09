@@ -90,7 +90,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
     protected override void OnPointerPressed(PointerPressedEventArgs e) {
         base.OnPointerPressed(e);
         if (e.GetCurrentPoint(this).Properties.IsMiddleButtonPressed) {
-            this.Model?.Close();
+            this.Model?.Hide();
         }
     }
 
@@ -135,7 +135,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
         private void OnIsCompletedChanged(ActivityTask sender) {
             this.notification.ActivityTask.IsCompletedChanged -= this.OnIsCompletedChanged;
-            this.notification.Close();
+            this.notification.Hide();
         }
 
         public void OnShown() {
@@ -160,7 +160,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_Close = e.NameScope.GetTemplateChild<Button>("PART_Close");
-        this.PART_Close.Click += (sender, args) => this.Model?.Close();
+        this.PART_Close.Click += (sender, args) => this.Model?.Hide();
 
         this.PART_ActionPanel = e.NameScope.GetTemplateChild<Panel>("PART_ActionPanel");
         this.PART_HeaderBorder = e.NameScope.GetTemplateChild<Border>("PART_HeaderBorder");

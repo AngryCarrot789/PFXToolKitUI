@@ -64,11 +64,7 @@ public class IconControl : Control {
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
         base.OnAttachedToVisualTree(e);
-        if (this.attachedIcon != null) { // ??? how...
-            this.attachedIcon.RenderInvalidated -= this.OnIconInvalidated;
-            this.attachedIcon = null;
-        }
-
+        this.DetachIcon(); // just in case
         if (this.Icon is AbstractAvaloniaIcon icon) {
             this.attachedIcon = icon;
             icon.RenderInvalidated += this.OnIconInvalidated;
@@ -79,27 +75,26 @@ public class IconControl : Control {
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
         base.OnDetachedFromVisualTree(e);
-        if (this.attachedIcon != null) {
-            this.attachedIcon.RenderInvalidated -= this.OnIconInvalidated;
-            this.attachedIcon = null;
-        }
-
+        this.DetachIcon();
         this.isAttachedToVt = false;
     }
 
     private void OnIconChanged(Icon? oldValue, Icon? newValue) {
         Debug.Assert(oldValue == null || !this.isAttachedToVt || ReferenceEquals(oldValue, this.attachedIcon));
-        if (this.attachedIcon != null) {
-            this.attachedIcon.RenderInvalidated -= this.OnIconInvalidated;
-            this.attachedIcon = null;
-        }
-
+        this.DetachIcon();
         if (newValue is AbstractAvaloniaIcon newIcon && this.isAttachedToVt) {
             this.attachedIcon = newIcon;
             newIcon.RenderInvalidated += this.OnIconInvalidated;
         }
     }
 
+    private void DetachIcon() {
+        if (this.attachedIcon != null) {
+            this.attachedIcon.RenderInvalidated -= this.OnIconInvalidated;
+            this.attachedIcon = null;
+        }
+    }
+    
     private void OnIconInvalidated(object? sender, EventArgs e) {
         this.InvalidateVisual();
     }
