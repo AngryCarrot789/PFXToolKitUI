@@ -21,6 +21,7 @@ using System.ComponentModel;
 using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
@@ -35,7 +36,7 @@ public class DesktopServiceImpl : IDesktopService {
         this.ApplicationLifetime = (IClassicDesktopStyleApplicationLifetime?) application.ApplicationLifetime ?? throw new InvalidOperationException("Cannot create desktop service impl when not using classic desktop style");
     }
 
-    public bool SetCursorPosition(int x, int y) {
+    public bool SetCursorPosition(IPointer pointer, int x, int y) {
         if (OperatingSystem.IsWindows()) {
             return Win32CursorUtils.SetCursorPos(x, y);
         }
@@ -44,7 +45,7 @@ public class DesktopServiceImpl : IDesktopService {
         return false;
     }
 
-    public bool GetCursorPosition(out int x, out int y) {
+    public bool GetCursorPosition(IPointer pointer, out int x, out int y) {
         if (OperatingSystem.IsWindows()) {
             return Win32CursorUtils.GetCursorPos(out x, out y);
         }

@@ -27,7 +27,7 @@ public class AboutApplicationCommand : Command {
     }
 
     protected override Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (!ApplicationPFX.Instance.ServiceManager.TryGetService(out IAboutService? service)) {
+        if (!ApplicationPFX.TryGetService(out IAboutService? service)) {
             return Task.CompletedTask;
         }
 

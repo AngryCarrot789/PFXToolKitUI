@@ -24,10 +24,20 @@ namespace PFXToolKitUI.Services.InputStrokes;
 /// <summary>
 /// A service that lets the user specify an input stroke, e.g. a key stroke or mouse clic
 /// </summary>
-public interface IInputStrokeQueryDialogService {
-    public static IInputStrokeQueryDialogService Instance => ApplicationPFX.Instance.ServiceManager.GetService<IInputStrokeQueryDialogService>();
+public interface IInputStrokeQueryService {
+    public static IInputStrokeQueryService Instance => ApplicationPFX.GetService<IInputStrokeQueryService>();
 
-    Task<KeyStroke?> ShowGetKeyStrokeDialog(KeyStroke? keyStroke);
+    /// <summary>
+    /// Returns a user-specified key stroke. Simple implementation shows a dialog that the user types into
+    /// </summary>
+    /// <param name="initialKeyStroke">The key stroke to use as default.</param>
+    /// <returns>A task that provides the key stroke pressed, or the initial key stroke</returns>
+    Task<KeyStroke?> GetKeyStrokeInput(KeyStroke? initialKeyStroke);
 
-    Task<MouseStroke?> ShowGetMouseStrokeDialog(MouseStroke? mouseStroke);
+    /// <summary>
+    /// Returns a user-specified mouse stroke. Simple implementation shows a dialog that the user types into
+    /// </summary>
+    /// <param name="initialMouseStroke">The mouse stroke to use as default.</param>
+    /// <returns>A task that provides the mouse stroke pressed, or the initial mouse stroke</returns>
+    Task<MouseStroke?> GetMouseStroke(MouseStroke? initialMouseStroke);
 }

@@ -28,7 +28,6 @@ using PFXToolKitUI.Avalonia.Services;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Formatting;
 using PFXToolKitUI.Utils;
-using Key = Avalonia.Input.Key;
 
 namespace PFXToolKitUI.Avalonia.AvControls.Dragger;
 
@@ -462,7 +461,7 @@ public class NumberDragger : RangeBase {
 
             this.UpdateCursor();
         }
-        else if (this.dragState == 0 && this.IsKeyboardFocusWithin && !this.IsModifierKey(e.Key)) {
+        else if (this.dragState == 0 && this.IsKeyboardFocusWithin && !IsModifierKey(e.Key)) {
             // Begin editing when we have focus, e.g. via tab
             // indexing, and a non-modifier key is pressed
             this.IsEditing = true;
@@ -470,7 +469,7 @@ public class NumberDragger : RangeBase {
         }
     }
 
-    private bool IsModifierKey(Key k) {
+    private static bool IsModifierKey(Key k) {
         return k == Key.LWin || k == Key.RWin || (k >= Key.LeftShift && k <= Key.RightAlt);
     }
 
@@ -552,7 +551,7 @@ public class NumberDragger : RangeBase {
 
         if (this.LockCursorOnDrag && IDesktopService.TryGetInstance(out IDesktopService? service)) {
             PixelPoint sp = this.PointToScreen(this.lastClickPos);
-            if (!service.SetCursorPosition(sp.X, sp.Y) && !DoubleUtils.AreClose(newValue, oldValue)) {
+            if (!service.SetCursorPosition(e.Pointer, sp.X, sp.Y) && !DoubleUtils.AreClose(newValue, oldValue)) {
                 this.lastMouseMove = point;
             }
         }

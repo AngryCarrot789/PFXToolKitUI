@@ -34,7 +34,7 @@ public class AddMouseStrokeToShortcutUsingDialogCommand : Command {
             return;
         }
 
-        MouseStroke? stroke = await IInputStrokeQueryDialogService.Instance.ShowGetMouseStrokeDialog(null);
+        MouseStroke? stroke = await IInputStrokeQueryService.Instance.GetMouseStroke(null);
         if (stroke.HasValue) {
             if (entry.Shortcut is MouseShortcut shortcut) {
                 entry.Shortcut = new MouseShortcut(shortcut.MouseStrokes.Append(stroke.Value).ToList());

@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Icons;
 /// A class that manages a set of registered icons throughout the application. This is used to simply icon usage
 /// </summary>
 public abstract class IconManager {
-    public static IconManager Instance => ApplicationPFX.Instance.ServiceManager.GetService<IconManager>();
+    public static IconManager Instance => ApplicationPFX.GetService<IconManager>();
 
     private readonly Dictionary<string, Icon> nameToIcon;
 

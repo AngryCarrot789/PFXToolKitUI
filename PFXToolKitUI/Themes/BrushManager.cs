@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Themes;
 /// A factory used to create brushes
 /// </summary>
 public abstract class BrushManager {
-    public static BrushManager Instance => ApplicationPFX.Instance.ServiceManager.GetService<BrushManager>();
+    public static BrushManager Instance => ApplicationPFX.GetService<BrushManager>();
 
     /// <summary>
     /// Creates a brush whose underlying colour is constant and does not change

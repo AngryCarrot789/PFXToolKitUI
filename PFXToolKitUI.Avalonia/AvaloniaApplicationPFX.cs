@@ -134,7 +134,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         manager.RegisterConstant<IColourPickerDialogService>(new ColourPickerDialogServiceImpl());
         manager.RegisterConstant<IFilePickDialogService>(new FilePickDialogServiceImpl());
         manager.RegisterConstant<IConfigurationDialogService>(new ConfigurationDialogServiceImpl());
-        manager.RegisterConstant<IInputStrokeQueryDialogService>(new InputStrokeDialogsImpl());
+        manager.RegisterConstant<IInputStrokeQueryService>(new InputStrokeQueryDialogImpl());
         manager.RegisterConstant<BrushManager>(new BrushManagerImpl());
         manager.RegisterConstant<ToolbarButtonFactory>(new ToolbarButtonFactoryImpl());
         manager.RegisterConstant<ILogViewService>(new LogViewServiceImpl());

@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Composition;
 using PFXToolKitUI.Configurations.Commands;
@@ -416,4 +417,18 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     protected abstract string? GetSolutionFileName();
 
     public abstract string GetApplicationName();
+
+    /// <summary>
+    /// Gets an application service. Delegates to <see cref="Services.ServiceManager.GetService{T}"/> of <see cref="ServiceManager"/>
+    /// </summary>
+    public static T GetService<T>() where T : class {
+        return Instance.ServiceManager.GetService<T>();
+    }
+
+    /// <summary>
+    /// Tries to get an application service. Delegates to <see cref="Services.ServiceManager.TryGetService{T}"/> of <see cref="ServiceManager"/>
+    /// </summary>
+    public static bool TryGetService<T>([NotNullWhen(true)] out T? service, bool canCreate = true) where T : class {
+        return Instance.ServiceManager.TryGetService(out service, canCreate);
+    }
 }

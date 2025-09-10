@@ -23,7 +23,7 @@ namespace PFXToolKitUI.Icons;
 
 public interface IIconPreferences {
     public static bool TryGetInstance([NotNullWhen(true)] out IIconPreferences? instance) {
-        return ApplicationPFX.Instance.ServiceManager.TryGetService(out instance);
+        return ApplicationPFX.TryGetService(out instance);
     }
     
     // with the current Icon control impls, we would easily implement an event

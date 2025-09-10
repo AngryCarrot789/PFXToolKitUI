@@ -27,7 +27,7 @@ public class ShowLogsCommand : Command {
     }
 
     protected override async Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (ApplicationPFX.Instance.ServiceManager.TryGetService(out ILogViewService? service)) {
+        if (ApplicationPFX.TryGetService(out ILogViewService? service)) {
             await service.ShowLogsWindow();
         }
     }

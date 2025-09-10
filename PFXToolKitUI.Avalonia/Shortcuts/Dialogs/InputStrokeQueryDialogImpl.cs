@@ -23,18 +23,18 @@ using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 
-public class InputStrokeDialogsImpl : IInputStrokeQueryDialogService {
-    public async Task<KeyStroke?> ShowGetKeyStrokeDialog(KeyStroke? keyStroke) {
+public class InputStrokeQueryDialogImpl : IInputStrokeQueryService {
+    public async Task<KeyStroke?> GetKeyStrokeInput(KeyStroke? initialKeyStroke) {
         KeyStrokeUserInputInfo info = new KeyStrokeUserInputInfo() {
-            KeyStroke = keyStroke, Caption = "Key Input Stroke"
+            KeyStroke = initialKeyStroke, Caption = "Key Input Stroke"
         };
 
         return await UserInputDialogView.ShowDialogAsync(info) == true ? info.KeyStroke : null;
     }
 
-    public async Task<MouseStroke?> ShowGetMouseStrokeDialog(MouseStroke? mouseStroke) {
+    public async Task<MouseStroke?> GetMouseStroke(MouseStroke? initialMouseStroke) {
         MouseStrokeUserInputInfo info = new MouseStrokeUserInputInfo() {
-            MouseStroke = mouseStroke, Caption = "Mouse Input Stroke"
+            MouseStroke = initialMouseStroke, Caption = "Mouse Input Stroke"
         };
 
         return await UserInputDialogView.ShowDialogAsync(info) == true ? info.MouseStroke : null;

@@ -19,6 +19,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls.ApplicationLifetimes;
+using Avalonia.Input;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
@@ -32,7 +33,7 @@ public interface IDesktopService {
     /// <param name="service"></param>
     /// <returns></returns>
     public static bool TryGetInstance([NotNullWhen(true)] out IDesktopService? service) {
-        return ApplicationPFX.Instance.ServiceManager.TryGetService(out service);
+        return ApplicationPFX.TryGetService(out service);
     }
 
     /// <summary>
@@ -43,15 +44,17 @@ public interface IDesktopService {
     /// <summary>
     /// Sets the absolute mouse cursor position
     /// </summary>
+    /// <param name="pointer"></param>
     /// <param name="x">New Mouse X position</param>
     /// <param name="y">New Mouse X position</param>
-    bool SetCursorPosition(int x, int y);
-    
+    bool SetCursorPosition(IPointer pointer, int x, int y);
+
     /// <summary>
     /// Gets the absolute mouse cursor position
     /// </summary>
+    /// <param name="pointer"></param>
     /// <param name="x">[out] The X position</param>
     /// <param name="y">[out] The Y position</param>
     /// <returns>True if the cursor position was accessed successfully</returns>
-    bool GetCursorPosition(out int x, out int y);
+    bool GetCursorPosition(IPointer pointer, out int x, out int y);
 }
