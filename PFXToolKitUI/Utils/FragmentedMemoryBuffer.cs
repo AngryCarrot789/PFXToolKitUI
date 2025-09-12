@@ -81,7 +81,6 @@ public class FragmentedMemoryBuffer {
         foreach (Fragment f in this.myFragments) {
             ulong fragmentEnd = f.End;
             if (fragmentEnd <= offset || f.Address >= end) {
-                // completely out of range, so keep the fragment
                 keepFrags.Add(f);
                 continue;
             }

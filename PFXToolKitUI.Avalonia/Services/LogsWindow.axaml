@@ -8,14 +8,17 @@
                  x:Class="PFXToolKitUI.Avalonia.Services.LogsWindow"
                  Title="Logs"
                  Width="900" Height="700">
-    <Grid RowDefinitions="*,1,180">
+    <Grid RowDefinitions="*,0,180">
         <l:LogEntryListBox x:Name="PART_ListBox" Grid.Row="0"
                            Background="{DynamicResource ABrush.Tone2.Background.Static}"
+                           BorderThickness="0,0,0,1"
                            SelectionMode="Single"
                            FontFamily="{StaticResource FontOxanium}"/>
         <TextBox x:Name="PART_StackTrace" Grid.Row="2"
                  Background="{DynamicResource ABrush.Tone4.Background.Static}"
+                 BorderThickness="0"
                  IsReadOnly="True"
                  FontFamily="{StaticResource FontOxanium}"/>
+        <GridSplitter Grid.Row="1" Background="Transparent" Margin="0,-4"/>
     </Grid>
 </w:DesktopWindow>

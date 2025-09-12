@@ -23,7 +23,7 @@ using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx;
 
-public sealed class ListBoxSelectionHandler<T> : BaseSelectionHandler<T> where T : class {
+public sealed class ListBoxSelectionHandler<T> : BaseObservableSelectionModelHandler<T> where T : class {
     private readonly ListBox listBox;
     private readonly Func<ListBoxItem, T> toModel;
 

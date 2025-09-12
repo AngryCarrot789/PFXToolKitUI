@@ -24,7 +24,7 @@ namespace PFXToolKitUI.Configurations.Commands;
 
 public class ExpandThemeConfigTreeCommand : Command {
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        return IThemeConfigurationTreeElement.TreeElementKey.GetExecutabilityForPresence(e.ContextData);
+        return IThemeConfigurationTreeElement.TreeElementKey.IsPresent(e.ContextData) ? Executability.Valid : Executability.Invalid;
     }
 
     protected override Task ExecuteCommandAsync(CommandEventArgs e) {

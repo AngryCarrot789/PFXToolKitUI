@@ -24,7 +24,7 @@ namespace PFXToolKitUI.Configurations.Commands;
 
 public class ExpandShortcutTreeCommand : Command {
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        return IShortcutTreeElement.TreeElementKey.GetExecutabilityForPresence(e.ContextData);
+        return IShortcutTreeElement.TreeElementKey.IsPresent(e.ContextData) ? Executability.Valid : Executability.Invalid;
     }
 
     protected override Task ExecuteCommandAsync(CommandEventArgs e) {

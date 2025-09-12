@@ -46,7 +46,7 @@ public class CommandEventArgs {
     /// Gets the shortcut entry that caused a command to execute
     /// </summary>
     public ShortcutEntry? Shortcut { get; }
-    
+
     /// <summary>
     /// Gets the context registry for the context menu that caused a command to execute
     /// </summary>
@@ -63,11 +63,8 @@ public class CommandEventArgs {
     public bool IsUserInitiated { get; }
 
     public CommandEventArgs(CommandManager manager, IContextData contextData, ShortcutEntry? shortcut, ContextRegistry? sourceContextMenu, bool isUserInitiated) {
-        if (contextData == null)
-            throw new ArgumentNullException(nameof(contextData), "Data context cannot be null");
-
         this.Manager = manager ?? throw new ArgumentNullException(nameof(manager), "Command manager cannot be null");
-        this.ContextData = contextData;
+        this.ContextData = contextData ?? throw new ArgumentNullException(nameof(contextData), "Context data cannot be null");
         this.Shortcut = shortcut;
         this.SourceContextMenu = sourceContextMenu;
         this.IsUserInitiated = isUserInitiated;

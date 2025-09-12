@@ -22,14 +22,14 @@ using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx;
 
-public abstract class BaseSelectionHandler<T> where T : class {
+public abstract class BaseObservableSelectionModelHandler<T> where T : class {
     private readonly ObservableList<T> sourceItems, selectedItems;
     protected bool IsUpdatingControl { get; private set; }
     protected bool IsUpdatingModel { get; private set; }
 
     protected abstract ISelectionModel SelectionModel { get; }
 
-    protected BaseSelectionHandler(ObservableList<T> sourceItems, ObservableList<T> selectedItems) {
+    protected BaseObservableSelectionModelHandler(ObservableList<T> sourceItems, ObservableList<T> selectedItems) {
         this.sourceItems = sourceItems;
         this.selectedItems = selectedItems;
 

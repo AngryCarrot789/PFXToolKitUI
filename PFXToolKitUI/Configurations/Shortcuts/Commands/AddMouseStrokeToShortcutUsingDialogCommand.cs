@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Configurations.Shortcuts.Commands;
 
 public class AddMouseStrokeToShortcutUsingDialogCommand : Command {
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        return ShortcutContextRegistry.ShortcutEntryKey.GetExecutabilityForPresence(e.ContextData);
+        return ShortcutContextRegistry.ShortcutEntryKey.IsPresent(e.ContextData) ? Executability.Valid : Executability.Invalid;
     }
 
     protected override async Task ExecuteCommandAsync(CommandEventArgs e) {

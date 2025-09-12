@@ -68,9 +68,8 @@ public sealed class CommandManager {
     /// <exception cref="ArgumentException">Command ID is null or empty</exception>
     /// <exception cref="ArgumentNullException">Command is null</exception>
     public void Register(string id, Command command) {
-        ValidateId(id);
-        if (command == null)
-            throw new ArgumentNullException(nameof(command));
+        ArgumentException.ThrowIfNullOrWhiteSpace(id);
+        ArgumentNullException.ThrowIfNull(command);
         this.RegisterInternal(id, command);
     }
 
@@ -106,8 +105,8 @@ public sealed class CommandManager {
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
     public Task Execute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
-        ValidateId(commandId);
-        ValidateContext(context);
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
+        ArgumentNullException.ThrowIfNull(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
             return command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
         }
@@ -136,27 +135,26 @@ public sealed class CommandManager {
     /// will return false if <see cref="Command.AllowMultipleExecutions"/> is also false
     /// </returns>
     public Task Execute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
-        ValidateContext(context);
+        ArgumentNullException.ThrowIfNull(context);
         return command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
     }
 
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
         return new CommandExecutionContext(commandId, command, this, context, isUserInitiated);
     }
-
+    
     /// <summary>
-    /// Tries to get the presentation for a command with the given ID
+    /// Tries to get the executability for a command with the given ID
     /// </summary>
-    /// <param name="commandId">The command ID to execute</param>
-    /// <param name="context">The context to use. Cannot be null</param>
-    /// <param name="isUserInitiated">Whether a user caused the command to need to be executed. Supply false if this was invoked by a task or scheduler for example</param>
-    /// <returns>The command's presentation for the current context</returns>
-    /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the GetPresentation function threw ane exception</exception>
-    /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
-    /// <exception cref="ArgumentNullException">Context is null</exception>
+    /// <param name="commandId"></param>
+    /// <param name="context"></param>
+    /// <param name="shortcut"></param>
+    /// <param name="contextMenu"></param>
+    /// <param name="isUserInitiated"></param>
+    /// <returns></returns>
     public Executability CanExecute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
-        ValidateId(commandId);
-        ValidateContext(context);
+        ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
+        ArgumentNullException.ThrowIfNull(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
             return this.CanExecute(command.Command, context, shortcut, contextMenu, isUserInitiated);
         }
@@ -164,20 +162,17 @@ public sealed class CommandManager {
         return Executability.Invalid;
     }
 
+    /// <summary>
+    /// Gets the executability of a command
+    /// </summary>
+    /// <param name="command">The command</param>
+    /// <param name="context">The context to use. Cannot be null</param>
+    /// <param name="shortcut"></param>
+    /// <param name="contextMenu"></param>
+    /// <param name="isUserInitiated"></param>
+    /// <returns></returns>
     public Executability CanExecute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
-        ValidateContext(context);
+        ArgumentNullException.ThrowIfNull(context);
         return command.CanExecute(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
-    }
-
-    public static void ValidateId(string id) {
-        if (id != null && string.IsNullOrWhiteSpace(id)) {
-            throw new ArgumentException("Command ID cannot be null or empty", nameof(id));
-        }
-    }
-
-    public static void ValidateContext(IContextData context) {
-        if (context == null) {
-            throw new ArgumentNullException(nameof(context), "Context cannot be null");
-        }
     }
 }

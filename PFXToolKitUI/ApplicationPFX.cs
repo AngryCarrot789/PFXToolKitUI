@@ -67,7 +67,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     public PersistentStorageManager PersistentStorageManager => this.ServiceManager.GetService<PersistentStorageManager>();
 
     /// <summary>
-    /// Gets the main application thread dispatcher
+    /// Gets the application main thread dispatcher
     /// </summary>
     public abstract IDispatcher Dispatcher { get; }
 

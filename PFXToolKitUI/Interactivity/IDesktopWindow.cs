@@ -25,10 +25,18 @@ namespace PFXToolKitUI.Interactivity;
 /// An interface that represents a window in the windowing system
 /// </summary>
 public interface IDesktopWindow {
+    /// <summary>
+    /// The data key used to access the window from <see cref="IContextData"/> in, for example, a command
+    /// </summary>
     public static readonly DataKey<IDesktopWindow> DataKey = DataKey<IDesktopWindow>.Create("TopLevel_DesktopWindow");
     
     /// <summary>
     /// Gets this window's clipboard service
     /// </summary>
     IClipboardService? ClipboardService { get; }
+    
+    /// <summary>
+    /// Gets the owner window
+    /// </summary>
+    IDesktopWindow? Owner { get; }
 }

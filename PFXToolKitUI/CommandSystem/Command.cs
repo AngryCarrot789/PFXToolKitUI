@@ -19,7 +19,6 @@
 
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
-using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
@@ -28,16 +27,16 @@ namespace PFXToolKitUI.CommandSystem;
 public delegate void CommandEventHandler(Command command, CommandEventArgs e);
 
 /// <summary>
-/// A class that represents something that can be executed. Commands are given contextual
-/// information (see <see cref="CommandEventArgs.ContextData"/>) to do work.
-/// Commands do their work in the <see cref="ExecuteCommand_NotAsync"/> method, and can optionally specify
-/// their executability via the <see cref="CanExecuteCore"/> method
+/// A class that represents something that can be executed. Commands are given contextual information
+/// (see <see cref="CommandEventArgs.ContextData"/>) to do work. Commands do their work in the
+/// <see cref="ExecuteCommandAsync"/> method, and can optionally specify their executability
+/// via the <see cref="CanExecuteCore"/> method.
 /// <para>
-/// Commands are used primarily by the shortcut and advanced menu service to do
-/// work, but they can also be used by things like buttons
+/// Commands are used primarily by the shortcut and advanced menu service to do work, but
+/// they can also be used by things like buttons
 /// </para>
 /// <para>
-/// These commands can be executed through the <see cref="CommandManager.Execute(Command,IContextData,bool)"/> function
+/// These commands can be executed through the <see cref="CommandManager"/>
 /// </para>
 /// </summary>
 [DebuggerDisplay("Command ({RegisteredCommandId}), Executing: {IsExecuting}, AllowMultipleExecutions: {AllowMultipleExecutions}")]
@@ -73,6 +72,17 @@ public abstract class Command {
     // Then fire ContextDataChanged for those command hooks or whatever, they can then disconnect
     // old event handlers and attach new ones
 
+    /// <summary>
+    /// Gets the executability state for this command. When <see cref="Executability.Valid"/>, it means that
+    /// the command can do what it's supposed to do. Any other state is up to the UI on how to present the UI.
+    /// <para>
+    /// Commands used by menu items and context menu items will typically be hidden when the state is <see cref="Executability.Invalid"/>,
+    /// and will just be disabled when the state is <see cref="Executability.ValidButCannotExecute"/>, otherwise clickable.
+    /// However, buttons will typically just be disabled when the state is not <see cref="Executability.Valid"/>
+    /// </para>
+    /// </summary>
+    /// <param name="e">Command event args</param>
+    /// <returns>The executability</returns>
     public Executability CanExecute(CommandEventArgs e) {
         Executability result = this.CanExecuteCore(e);
 
@@ -98,7 +108,7 @@ public abstract class Command {
     protected virtual Executability CanExecuteCore(CommandEventArgs e) => Executability.Valid;
 
     /// <summary>
-    /// Executes this command with the given command event args. This is always called on the main application thread (AMT)
+    /// Executes this command with the given command event args. This is always called on the application main thread (AMT)
     /// </summary>
     /// <param name="e">The command event args, containing info about the current context</param>
     protected abstract Task ExecuteCommandAsync(CommandEventArgs e);

@@ -19,7 +19,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using PFXToolKitUI.CommandSystem;
 
 namespace PFXToolKitUI.Interactivity.Contexts;
 
@@ -93,8 +92,6 @@ public sealed class DataKey<T> : DataKey {
     }
 
     public bool IsPresent(IContextData contextData) => contextData.ContainsKey(this.Id);
-
-    public Executability GetExecutabilityForPresence(IContextData contextData) => this.IsPresent(contextData) ? Executability.Valid : Executability.Invalid;
 
     public bool TryGetContext(IContextData context, [NotNullWhen(true)] out T? value) {
         ArgumentNullException.ThrowIfNull(context);

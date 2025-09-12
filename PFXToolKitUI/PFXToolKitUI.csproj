@@ -9,6 +9,7 @@
 
     <ItemGroup>
       <Folder Include="Persistence\Serialisation\Impl\" />
+      <Folder Include="Windowing\" />
     </ItemGroup>
 
     <ItemGroup>

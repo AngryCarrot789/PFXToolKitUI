@@ -39,7 +39,7 @@ namespace PFXToolKitUI.Avalonia.Services.Windowing;
 /// </summary>
 public class DesktopWindow : WindowEx, IDesktopWindow {
     private static readonly FieldInfo FIELD_showingAsDialog = typeof(Window).GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic)!;
-    
+
     /// <summary>
     /// Gets whether the window is actually open or not. False when not opened or <see cref="IsClosed"/> is true
     /// </summary>
@@ -62,6 +62,8 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     private Window? myPlacedCenteredToOverride;
 
     public IClipboardService? ClipboardService { get; }
+
+    IDesktopWindow? IDesktopWindow.Owner => base.Owner as IDesktopWindow;
 
     public DesktopWindow() : base() {
         this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -125,11 +127,15 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
 
     protected sealed override void OnOpened(EventArgs e) {
         Debug.Assert(!this.IsClosed && !this.IsOpen, "Unexpected state");
-        
+
+        if (this.IsOpenAsDialog && !(this.Owner is IDesktopWindow)) {
+            throw new InvalidOperationException("Attempt to show DesktopWindow as modal dialog without a IDesktopWindow owner. Owner = " + this.Owner?.GetType());
+        }
+
         this.StopRendering();
         this.IsClosed = false;
         this.IsOpen = true;
-        
+
         this.OnOpenedCore();
         base.OnOpened(e);
         this.InvalidateMeasure();
@@ -158,7 +164,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
 
     protected override async Task<bool> OnClosingAsync(WindowCloseReason reason) {
         Debug.Assert(!this.IsClosed && this.IsOpen, "Unexpected state");
-        
+
         bool isCancelled = false;
         Delegate[]? handlers = this.ClosingAsync?.GetInvocationList();
         if (handlers != null) {
