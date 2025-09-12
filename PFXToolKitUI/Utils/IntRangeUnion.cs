@@ -73,6 +73,10 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
             this.Add(range);
         }
     }
+    
+    private IntRangeUnion(List<IntRange> ranges) {
+        this.myRanges = ranges;
+    }
 
     public static void Test() {
         List<IntRange> reflectionRanges = new List<IntRange>();
@@ -357,5 +361,9 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
 
         public void Dispose() {
         }
+    }
+
+    public IntRangeUnion Clone() {
+        return new IntRangeUnion(this.myRanges.ToList());
     }
 }

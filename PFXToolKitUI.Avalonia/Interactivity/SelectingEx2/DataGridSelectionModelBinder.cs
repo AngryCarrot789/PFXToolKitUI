@@ -18,13 +18,14 @@
 // 
 
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Controls;
 using PFXToolKitUI.Interactivity.Selections;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx;
+namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx2;
 
 public sealed class DataGridSelectionModelBinder<T> {
     private bool isUpdatingModel, isUpdatingControl;
@@ -37,11 +38,12 @@ public sealed class DataGridSelectionModelBinder<T> {
         this.DataGrid = dataGrid;
         this.Selection = selection;
 
+        this.OnModelSelectionChanged(selection, new SelectionModelChangedEventArgs(selection.ToIntRangeUnion().ToList(), ReadOnlyCollection<IntRange>.Empty));
         dataGrid.SelectionChanged += this.OnDataGridSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
 
-    private void OnModelSelectionChanged(ListSelectionModel<T> sender, IList<IntRange> addedIndices, IList<IntRange> removedIndices) {
+    private void OnModelSelectionChanged(object? o, SelectionModelChangedEventArgs e) {
         if (this.isUpdatingModel)
             return;
 
@@ -50,13 +52,13 @@ public sealed class DataGridSelectionModelBinder<T> {
 
         ObservableList<T> srcList = this.Selection.SourceList;
         IList? list = this.DataGrid.SelectedItems;
-        foreach (IntRange range in removedIndices) {
+        foreach (IntRange range in e.RemovedIndices) {
             for (int i = range.Start; i < range.End; i++) {
                 list.Remove(srcList[i]);
             }
         }
 
-        foreach (IntRange range in addedIndices) {
+        foreach (IntRange range in e.AddedIndices) {
             for (int i = range.Start; i < range.End; i++) {
                 list.Add(srcList[i]);
             }
@@ -79,7 +81,7 @@ public sealed class DataGridSelectionModelBinder<T> {
     }
 
     public void Dispose() {
-        this.DataGrid.SelectionChanged += this.OnDataGridSelectionChanged;
-        this.Selection.SelectionChanged += this.OnModelSelectionChanged;
+        this.DataGrid.SelectionChanged -= this.OnDataGridSelectionChanged;
+        this.Selection.SelectionChanged -= this.OnModelSelectionChanged;
     }
 }
