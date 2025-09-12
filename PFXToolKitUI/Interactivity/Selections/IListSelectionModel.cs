@@ -92,7 +92,7 @@ public interface IListSelectionModel {
     /// Deselects all items
     /// </summary>
     void Clear();
-    
+
     /// <summary>
     /// Returns a new <see cref="IntRangeUnion"/> containing the selected indices
     /// </summary>
@@ -111,7 +111,12 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     /// Enumerates the selected items
     /// </summary>
     IEnumerable<T> SelectedItems { get; }
-    
+
+    /// <summary>
+    /// Enumerates the selected indices and pairs them with the item itself
+    /// </summary>
+    IEnumerable<KeyValuePair<int, T>> SelectedEntries { get; }
+
     /// <summary>
     /// Gets the observable list that stores the items of a mode that may be selectable.
     /// This list is not the selected items list, instead, use <see cref="SelectedItems"/> to enumerate the items.
@@ -122,25 +127,25 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     /// Selects an item
     /// </summary>
     /// <param name="item"></param>
-    void SelectItem(T item);
-    
+    void Select(T item);
+
     /// <summary>
     /// Selects multiple items
     /// </summary>
     /// <param name="items"></param>
-    void SelectItems(IEnumerable<T> items);
-
+    void Select(IEnumerable<T> items);
+    
     /// <summary>
     /// Deselects an item
     /// </summary>
     /// <param name="item"></param>
     void Deselect(T item);
-    
+
     /// <summary>
     /// Deselects multiple items
     /// </summary>
     /// <param name="items"></param>
-    void DeselectItems(IEnumerable<T> items);
+    void Deselect(IEnumerable<T> items);
 
     /// <summary>
     /// Checks if an item is selected
@@ -155,7 +160,7 @@ public readonly struct SelectionModelChangedEventArgs(IList<IntRange> addedIndic
     /// The ranges containing indices that are now selected
     /// </summary>
     public IList<IntRange> AddedIndices { get; } = addedIndices;
-    
+
     /// <summary>
     /// The ranges containing indices that are no longer selected
     /// </summary>
