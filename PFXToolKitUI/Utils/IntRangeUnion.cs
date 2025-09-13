@@ -37,7 +37,7 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
     /// Returns the number of ranges stored in this union
     /// </summary>
     public int RangeCount => this.myRanges.Count;
-    
+
     /// <summary>
     /// Calculates the number of actual integers present in this union by iterating each range and summing its <see cref="IntRange.Length"/>
     /// </summary>
@@ -45,7 +45,7 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         get {
             if (this.cachedGrandTotal.HasValue)
                 return this.cachedGrandTotal.Value;
-            
+
             int total = 0;
             foreach (IntRange range in this.myRanges)
                 total += range.Length;
@@ -73,14 +73,12 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
             this.Add(range);
         }
     }
-    
+
     private IntRangeUnion(List<IntRange> ranges) {
         this.myRanges = ranges;
     }
 
     public static void Test() {
-        List<IntRange> reflectionRanges = new List<IntRange>();
-
         IntRangeUnion list = new IntRangeUnion();
         list.Add(1);
         list.Add(4);
@@ -126,7 +124,6 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         SearchResultPair result = this.FindFirstOverlappingRange(item);
         switch (result.Result) {
             case SearchResult.BeforeIndex: this.myRanges.Insert(result.Index + 1, item); break;
-
             case SearchResult.AfterIndex:
             case SearchResult.NotPresent:
                 this.myRanges.Insert(result.Index, item);
@@ -189,7 +186,7 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         GetPresenceUnion(union, range, complement, this.myRanges);
         return union;
     }
-    
+
     public void GetPresenceUnion(IntRangeUnion dstUnion, IntRange range, bool complement) {
         GetPresenceUnion(dstUnion, range, complement, this.myRanges);
     }
@@ -285,7 +282,7 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         return new SearchResultPair(SearchResult.NotPresent, start);
     }
 
-    public List<IntRange> ToList() => this.myRanges.ToList();
+    public List<IntRange> ToList() => new List<IntRange>(this.myRanges);
 
     public static bool IsSuperSetOf(IntRange range, List<IntRange> list) {
         SearchResultPair result = FindFirstOverlappingRange(range, list);

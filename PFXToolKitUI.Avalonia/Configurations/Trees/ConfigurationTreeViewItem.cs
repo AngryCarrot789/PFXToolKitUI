@@ -90,8 +90,6 @@ public class ConfigurationTreeViewItem : TreeViewItem, IConfigurationTreeOrNode 
         control.OnAdding(tree, this, layer);
         this.Items.Insert(index, control);
         tree.AddResourceMapping(control, layer);
-        control.ApplyStyling();
-        control.ApplyTemplate();
         control.OnAdded();
     }
 

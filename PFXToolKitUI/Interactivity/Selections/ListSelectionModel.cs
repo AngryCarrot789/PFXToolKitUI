@@ -111,18 +111,18 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     }
 
     public void Select(int index) => this.SelectRange(index, 1);
-    public void Select(T item) {
+    public void SelectItem(T item) {
         int index = this.SourceList.IndexOf(item);
         if (index != -1) {
             this.Select(index);
         }
     }
     
+    public void SelectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, true);
     public void SelectRange(int index, int count) => this.SetSelection(index, count, true);
     public void SelectRanges(IntRangeUnion union) => this.SetSelectionForRanges(union, true);
-    public void Select(IEnumerable<T> items) => this.SelectSelectionForItems(items, true);
     public void Deselect(int index) => this.DeselectRange(index, 1);
-    public void Deselect(T item) {
+    public void DeselectItem(T item) {
         int index = this.SourceList.IndexOf(item);
         if (index != -1) {
             this.Deselect(index);
@@ -133,7 +133,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public void DeselectRanges(IntRangeUnion union) => this.SetSelectionForRanges(union, false);
 
-    public void Deselect(IEnumerable<T> items) => this.SelectSelectionForItems(items, false);
+    public void DeselectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, false);
 
     public bool IsSelected(int index) => this.selectedIndices.Contains(index);
     

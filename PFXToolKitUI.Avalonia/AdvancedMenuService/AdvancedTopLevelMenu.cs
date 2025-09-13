@@ -87,8 +87,6 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         AdvancedMenuItem menuItem = (AdvancedMenuItem) this.CreateItem(item);
         menuItem.OnAdding(this, this, item);
         this.Items.Insert(index, menuItem);
-        menuItem.ApplyStyling();
-        menuItem.ApplyTemplate();
         menuItem.OnAdded();
     }
     

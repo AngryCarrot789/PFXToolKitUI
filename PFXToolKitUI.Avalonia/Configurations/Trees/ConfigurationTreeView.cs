@@ -75,8 +75,6 @@ public class ConfigurationTreeView : TreeView, IConfigurationTreeOrNode {
         control.OnAdding(this, null, layer);
         this.Items.Insert(index, control);
         this.AddResourceMapping(control, layer);
-        control.ApplyStyling();
-        control.ApplyTemplate();
         control.OnAdded();
     }
 

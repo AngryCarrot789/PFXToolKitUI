@@ -194,8 +194,6 @@ public partial class ConfigurationPanelControl : UserControl {
 
     private void ConnectPage(ConfigurationPage configPage, BaseConfigurationPageControl page) {
         this.PART_PagePresenter.Content = page;
-        page.ApplyStyling();
-        page.ApplyTemplate();
         page.Connect(configPage);
         this.ActiveContext!.SetViewingPage(configPage);
     }

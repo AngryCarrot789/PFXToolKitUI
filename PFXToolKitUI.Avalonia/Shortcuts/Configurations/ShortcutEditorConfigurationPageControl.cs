@@ -20,6 +20,7 @@
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Configurations.Pages;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Shortcuts.Trees;
@@ -31,6 +32,7 @@ using PFXToolKitUI.Shortcuts;
 namespace PFXToolKitUI.Avalonia.Shortcuts.Configurations;
 
 public class ShortcutEditorConfigurationPageControl : BaseConfigurationPageControl {
+    private readonly ManualBinder<ShortcutGroupEntry> rootEntryBinder = new ManualBinder<ShortcutGroupEntry>(b => ((ShortcutTreeView) b.Control).RootEntry = b.Model, b => ((ShortcutTreeView) b.Control).RootEntry = null);
     private ShortcutTreeView? PART_ShortcutTree;
 
     public ShortcutEditorConfigurationPageControl() {
@@ -44,6 +46,8 @@ public class ShortcutEditorConfigurationPageControl : BaseConfigurationPageContr
         if (e.NameScope.TryGetTemplateChild("PART_DemoHyperlink", out HyperlinkButton? hyperlink)) {
             hyperlink.Click += this.OnHyperlinkClicked;
         }
+        
+        this.rootEntryBinder.AttachControl(this.PART_ShortcutTree);
     }
 
     private void OnHyperlinkClicked(object? sender, RoutedEventArgs e) {
@@ -57,11 +61,11 @@ public class ShortcutEditorConfigurationPageControl : BaseConfigurationPageContr
 
     public override void OnConnected() {
         base.OnConnected();
-        this.PART_ShortcutTree!.RootEntry = ((ShortcutEditorConfigurationPage) this.Page!).RootGroupEntry;
+        this.rootEntryBinder.SwitchModel(((ShortcutEditorConfigurationPage) this.Page!).RootGroupEntry!);
     }
 
     public override void OnDisconnected() {
         base.OnDisconnected();
-        this.PART_ShortcutTree!.RootEntry = null;
+        this.rootEntryBinder.SwitchModel(null);
     }
 }

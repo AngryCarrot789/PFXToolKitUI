@@ -117,15 +117,11 @@ public static class AdvancedMenuService {
                 if (element is AdvancedMenuItem menuItem) {
                     menuItem.OnAdding(item.OwnerMenu, item, (BaseContextEntry) entry);
                     item.Items.Insert(i++, menuItem);
-                    menuItem.ApplyStyling();
-                    menuItem.ApplyTemplate();
                     menuItem.OnAdded();
                 }
                 else if (element is IAdvancedEntryConnection connection) {
                     connection.OnAdding(item.OwnerMenu, item, entry);
                     item.Items.Insert(i++, element);
-                    element.ApplyStyling();
-                    element.ApplyTemplate();
                     connection.OnAdded();
                 }
                 else {
@@ -304,15 +300,11 @@ public static class AdvancedMenuService {
                 if (element is AdvancedMenuItem menuItem) {
                     menuItem.OnAdding(item.OwnerMenu, item, (BaseContextEntry) entry);
                     item.Items.Insert(idx++, menuItem);
-                    menuItem.ApplyStyling();
-                    menuItem.ApplyTemplate();
                     menuItem.OnAdded();
                 }
                 else if (element is IAdvancedEntryConnection connection) {
                     connection.OnAdding(item.OwnerMenu, item, entry);
                     item.Items.Insert(idx++, element);
-                    element.ApplyStyling();
-                    element.ApplyTemplate();
                     connection.OnAdded();
                 }
                 else {

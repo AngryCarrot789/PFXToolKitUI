@@ -28,7 +28,7 @@ namespace PFXToolKitUI.Utils.Collections.Observable;
 /// <typeparam name="T">The type of value we store</typeparam>
 public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<T> {
     private readonly IObservableList<T> delegateList;
-    
+
     public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
     public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
@@ -40,40 +40,22 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
     public ResetBehavior ClearBehavior => this.delegateList.ClearBehavior;
-    
+
     public ReadOnlyObservableList(IObservableList<T> list) : base(list) {
         this.delegateList = list;
-        list.BeforeItemAdded += this.ListOnBeforeItemAdded;
-        list.BeforeItemsRemoved += this.ListOnBeforeItemsRemoved;
-        list.BeforeItemReplace += this.ListOnBeforeItemReplace;
-        list.BeforeItemMoved += this.ListOnBeforeItemMoved;
-        list.ItemsAdded += this.ListOnItemsAdded;
-        list.ItemsRemoved += this.ListOnItemsRemoved;
-        list.ItemReplaced += this.ListOnItemReplaced;
-        list.ItemMoved += this.ListOnItemMoved;
-        list.CollectionChanged += this.ListCollectionChanged;
+        list.BeforeItemAdded += (sender, index, item) => this.BeforeItemAdded?.Invoke(this, index, item);
+        list.BeforeItemsRemoved += (sender, index, count) => this.BeforeItemsRemoved?.Invoke(this, index, count);
+        list.BeforeItemReplace += (sender, index, oldItem, newItem) => this.BeforeItemReplace?.Invoke(this, index, oldItem, newItem);
+        list.BeforeItemMoved += (sender, oldIndex, newIndex, item) => this.BeforeItemMoved?.Invoke(this, oldIndex, newIndex, item);
+        list.ItemsAdded += (sender, index, items) => this.ItemsAdded?.Invoke(this, index, items);
+        list.ItemsRemoved += (sender, index, items) => this.ItemsRemoved?.Invoke(this, index, items);
+        list.ItemReplaced += (sender, index, oldItem, newItem) => this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
+        list.ItemMoved += (sender, oldIndex, newIndex, item) => this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
+        list.CollectionChanged += (sender, e) => this.CollectionChanged?.Invoke(this, e);
     }
 
-    private void ListOnBeforeItemAdded(IObservableList<T> list, int index, T item) => this.BeforeItemAdded?.Invoke(this, index, item);
-
-    private void ListOnBeforeItemsRemoved(IObservableList<T> list, int index, int count) => this.BeforeItemsRemoved?.Invoke(this, index, count);
-
-    private void ListOnBeforeItemReplace(IObservableList<T> list, int index, T oldItem, T newItem) => this.BeforeItemReplace?.Invoke(this, index, oldItem, newItem);
-
-    private void ListOnBeforeItemMoved(IObservableList<T> list, int oldIndex, int newIndex, T item) => this.BeforeItemMoved?.Invoke(this, oldIndex, newIndex, item);
-
-    private void ListOnItemsAdded(IObservableList<T> list, int index, IList<T> items) => this.ItemsAdded?.Invoke(this, index, items);
-
-    private void ListOnItemsRemoved(IObservableList<T> list, int index, IList<T> items) => this.ItemsRemoved?.Invoke(this, index, items);
-
-    private void ListOnItemReplaced(IObservableList<T> list, int index, T oldItem, T newItem) => this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
-
-    private void ListOnItemMoved(IObservableList<T> list, int oldIndex, int newIndex, T item) => this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
-    private void ListCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) => this.CollectionChanged?.Invoke(this, e);
-
     void IObservableList<T>.AddRange(IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
-
     void IObservableList<T>.InsertRange(int index, IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
-
     void IObservableList<T>.RemoveRange(int index, int count) => throw new NotSupportedException("Read-only collection");
+    IntRangeUnion IObservableList<T>.RemoveRange(IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
 }

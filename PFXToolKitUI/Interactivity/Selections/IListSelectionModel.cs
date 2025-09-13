@@ -22,6 +22,9 @@ using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Interactivity.Selections;
 
+/// <summary>
+/// An interface for a list-based selection model.
+/// </summary>
 public interface IListSelectionModel {
     /// <summary>
     /// Returns the number of selected items
@@ -100,6 +103,14 @@ public interface IListSelectionModel {
     IntRangeUnion ToIntRangeUnion();
 }
 
+/// <summary>
+/// A generic implementation of <see cref="IListSelectionModel"/>
+/// <para>
+/// Note about selecting and deselecting items that do not exist (e.g. <see cref="SelectItems"/>): no exception will
+/// be thrown, instead, the request will be ignored. It is the job of the caller to check the items beforehand
+/// </para>
+/// </summary>
+/// <typeparam name="T"></typeparam>
 public interface IListSelectionModel<T> : IListSelectionModel {
     /// <summary>
     /// Gets the nth selected item
@@ -127,25 +138,25 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     /// Selects an item
     /// </summary>
     /// <param name="item"></param>
-    void Select(T item);
+    void SelectItem(T item);
 
     /// <summary>
     /// Selects multiple items
     /// </summary>
     /// <param name="items"></param>
-    void Select(IEnumerable<T> items);
+    void SelectItems(IEnumerable<T> items);
     
     /// <summary>
     /// Deselects an item
     /// </summary>
     /// <param name="item"></param>
-    void Deselect(T item);
+    void DeselectItem(T item);
 
     /// <summary>
     /// Deselects multiple items
     /// </summary>
     /// <param name="items"></param>
-    void Deselect(IEnumerable<T> items);
+    void DeselectItems(IEnumerable<T> items);
 
     /// <summary>
     /// Checks if an item is selected

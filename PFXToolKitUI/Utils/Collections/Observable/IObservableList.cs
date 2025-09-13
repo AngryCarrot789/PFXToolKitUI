@@ -109,4 +109,11 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <param name="index">The index to remove the items at</param>
     /// <param name="count">The amount of items to remove</param>
     void RemoveRange(int index, int count);
+
+    /// <summary>
+    /// Removes a collection of items from this list, and returns a union of the indices of the removed items
+    /// </summary>
+    /// <param name="items">The items to remove</param>
+    /// <returns>The indices removed</returns>
+    IntRangeUnion RemoveRange(IEnumerable<T> items);
 }

@@ -67,16 +67,16 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
                 OldIndex = Valid, OldItems = Removed Items
                 NewIndex = -1,    NewItems = null,
             Replace:
-                OldIndex = NewIndex = Valid, 
+                OldIndex = NewIndex = Valid,
                 OldItems = Removed, NewItems = Added
             Move:
                 OldItems = NewItems = Moved Item,
                 OldIndex = Valid, NewIndex = Valid,
-            Reset: 
+            Reset:
                 OldIndex = -1, OldItems = null
                 NewIndex = -1, NewItems = null,
      */
-    
+
     /// <summary>
     /// Fired when items are added to or removed from this list, or an item is replaced or moved.
     /// <para>
@@ -144,19 +144,21 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             list = items.ToList();
         }
 
-        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeItemAdded;
-        if (beforeAdd != null) {
-            foreach (T item in list) {
-                beforeAdd(this, index, item);
+        if (list.Count > 0) {
+            ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeItemAdded;
+            if (beforeAdd != null) {
+                foreach (T item in list) {
+                    beforeAdd(this, index, item);
+                }
             }
+
+            this.myItems.InsertRange(index, list);
+
+            if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null) // Stops the event handler modifying the list
+                list = list.AsReadOnly();
+
+            this.OnItemsAdded(index, list);
         }
-
-        this.myItems.InsertRange(index, list);
-
-        if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null) // Stops the event handler modifying the list
-            list = list.AsReadOnly();
-
-        this.OnItemsAdded(index, list);
     }
 
     /// <summary>
@@ -171,6 +173,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             throw new IndexOutOfRangeException("Negative index: " + index);
         if ((uint) index > (uint) this.myItems.Count)
             throw new IndexOutOfRangeException($"Index beyond length of this list: {index} > {this.myItems.Count}");
+        if (items.Length == 0)
+            return;
 
         ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeItemAdded;
         if (beforeAdd != null) {
@@ -203,7 +207,9 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             throw new ArgumentOutOfRangeException(nameof(count), count, "Count is negative");
         if (this.myItems.Count - index < count)
             throw new IndexOutOfRangeException("The index and count exceed the range of this list");
-        
+        if (count == 0)
+            return;
+
         this.CheckReentrancy();
 
         this.BeforeItemsRemoved?.Invoke(this, index, count);
@@ -218,6 +224,39 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             this.myItems.RemoveRange(index, count);
             this.OnItemsRemoved(index, items.AsReadOnly());
         }
+    }
+
+    public IntRangeUnion RemoveRange(IEnumerable<T> items) {
+        this.CheckReentrancy();
+        if (!(items is IList<T> list)) {
+            list = items.ToList();
+        }
+
+        // Calculate a union of ranges to remove
+        IntRangeUnion union = new IntRangeUnion();
+        foreach (T item in list) {
+            int index = this.myItems.IndexOf(item);
+            if (index != -1) {
+                union.Add(index);
+            }
+        }
+
+        if (union.RangeCount > 0) {
+            // We could iterate front to back and increase start offset by length each time,
+            // however it's more efficient to remove back to front
+            List<IntRange> indices = union.ToList();
+            for (int i = indices.Count - 1; i >= 0; i--) {
+                IntRange range = indices[i];
+                if (range.Length == 1) {
+                    this.RemoveItem(range.Start);
+                }
+                else {
+                    this.RemoveRange(range.Start, range.Length);
+                }
+            }
+        }
+
+        return union;
     }
 
     protected override void SetItem(int index, T newItem) {
@@ -237,9 +276,9 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             throw new IndexOutOfRangeException("Negative newIndex: " + newIndex);
         if ((uint) newIndex >= (uint) this.myItems.Count)
             throw new IndexOutOfRangeException($"newIndex beyond length of this list: {newIndex} >= {this.myItems.Count}");
-        
+
         T item = this[oldIndex];
-        
+
         this.BeforeItemMoved?.Invoke(this, oldIndex, newIndex, item);
         base.RemoveItem(oldIndex);
         base.InsertItem(newIndex, item);
@@ -330,6 +369,12 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
                 throw new InvalidOperationException("Reentrancy Not Allowed");
         }
     }
+
+    IEnumerator IEnumerable.GetEnumerator() => this.myItems.GetEnumerator();
+
+    IEnumerator<T> IEnumerable<T>.GetEnumerator() => this.myItems.GetEnumerator();
+
+    public new List<T>.Enumerator GetEnumerator() => this.myItems.GetEnumerator();
 
     private SimpleMonitor EnsureMonitorInitialized() => this._monitor ??= new SimpleMonitor(this);
 

@@ -66,8 +66,6 @@ public abstract class ModelBasedTreeView<TModel> : ModelBasedTreeView where TMod
 
         this.Items.Insert(index, control);
         this.itemMap.AddMapping(model, control);
-        control.ApplyStyling();
-        control.ApplyTemplate();
         control.InternalOnAdded();
     }
 

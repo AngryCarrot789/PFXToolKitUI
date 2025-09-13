@@ -71,6 +71,8 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         this.PART_IsInheritedIndicator = e.NameScope.GetTemplateChild<Ellipse>(nameof(this.PART_IsInheritedIndicator));
         this.PART_ThemeColourPreview = e.NameScope.GetTemplateChild<Rectangle>(nameof(this.PART_ThemeColourPreview));
         this.PART_ThemeColourPreview.Fill = this.myCurrentDynamicBrush;
+
+        this.UpdateIsInheritedIndicator();
     }
 
     protected override void OnIsReallyVisibleChanged() {
@@ -270,8 +272,6 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         control.OnAdding(tree, this, layer);
         this.Items.Insert(index, control);
         tree.AddResourceMapping(control, layer);
-        control.ApplyStyling();
-        control.ApplyTemplate();
         control.OnAdded();
     }
 

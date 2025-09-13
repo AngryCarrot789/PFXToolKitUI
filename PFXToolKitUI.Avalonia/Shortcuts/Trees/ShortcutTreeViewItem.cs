@@ -22,6 +22,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.AdvancedMenuService;
+using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Avalonia.Shortcuts.Trees.InputStrokeControls;
@@ -34,6 +35,20 @@ using PFXToolKitUI.Shortcuts.Inputs;
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees;
 
 public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
+    private readonly ManualBinderEx<ShortcutEntryHeaderControl, IKeyMapEntry> headerKeyMapBinder = new ManualBinderEx<ShortcutEntryHeaderControl, IKeyMapEntry>((c, m) => c.KeyMapEntry = m, (c, m) => c.KeyMapEntry = null);
+
+    private readonly ManualBinderEx<StackPanel, IShortcut> shortcutStrokesBinder = new ManualBinderEx<StackPanel, IShortcut>((c, m) => {
+        c.Children.Clear();
+        foreach (IInputStroke stroke in m.InputStrokes) {
+            if (stroke is KeyStroke keyStroke) {
+                c.Children.Add(new KeyStrokeControl() { KeyStroke = keyStroke });
+            }
+            else if (stroke is MouseStroke mouseStroke) {
+                c.Children.Add(new MouseStrokeControl() { MouseStroke = mouseStroke });
+            }
+        }
+    }, (c, m) => c.Children.Clear());
+
     public ShortcutTreeView? ShortcutTree { get; private set; }
 
     public ShortcutTreeViewItem? ParentNode { get; private set; }
@@ -54,6 +69,8 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         base.OnApplyTemplate(e);
         this.PART_HeaderControl = e.NameScope.GetTemplateChild<ShortcutEntryHeaderControl>(nameof(this.PART_HeaderControl));
         this.PART_InputStrokeList = e.NameScope.GetTemplateChild<StackPanel>(nameof(this.PART_InputStrokeList));
+        this.headerKeyMapBinder.AttachControl(this.PART_HeaderControl);
+        this.shortcutStrokesBinder.AttachControl(this.PART_InputStrokeList);
     }
 
     protected override void OnLoaded(RoutedEventArgs e) {
@@ -73,7 +90,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.ParentNode = parentNode;
         this.Entry = resource;
 
-        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange(); 
+        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange();
         if (resource is ShortcutEntry entry)
             change.Context.Set(ShortcutContextRegistry.ShortcutEntryKey, entry);
         change.Context.Set(IKeyMapEntry.DataKey, resource);
@@ -103,20 +120,12 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
 
         // rawName should not be <root> because the root object should never be visible technically.
         // But just in case...
-        this.PART_HeaderControl!.KeyMapEntry = this.Entry!;
+        this.headerKeyMapBinder.SwitchModel(this.Entry!);
         ToolTipEx.SetTipType(this, typeof(ShotcutTreeViewItemToolTip));
     }
 
     private void OnEntryShortcutChanged(ShortcutEntry sender, IShortcut oldShortcut, IShortcut newShortcut) {
-        this.PART_InputStrokeList!.Children.Clear();
-        foreach (IInputStroke stroke in newShortcut.InputStrokes) {
-            if (stroke is KeyStroke keyStroke) {
-                this.PART_InputStrokeList.Children.Add(new KeyStrokeControl() { KeyStroke = keyStroke });
-            }
-            else if (stroke is MouseStroke mouseStroke) {
-                this.PART_InputStrokeList.Children.Add(new MouseStrokeControl() { MouseStroke = mouseStroke });
-            }
-        }
+        this.shortcutStrokesBinder.SwitchModel(newShortcut);
     }
 
     public virtual void OnRemoving() {
@@ -128,18 +137,18 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.GroupCounter = this.InputStateCounter = 0;
         if (this.Entry is ShortcutEntry shortcut) {
             shortcut.ShortcutChanged -= this.OnEntryShortcutChanged;
-            this.PART_InputStrokeList!.Children.Clear();
         }
 
-        this.PART_HeaderControl!.KeyMapEntry = null;
+        this.headerKeyMapBinder.SwitchModel(null);
+        this.shortcutStrokesBinder.SwitchModel(null);
     }
 
     public virtual void OnRemoved() {
         this.ShortcutTree = null;
         this.ParentNode = null;
         this.Entry = null;
-        
-        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange(); 
+
+        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange();
         change.Context.Set(ShortcutContextRegistry.ShortcutEntryKey, null).Set(IKeyMapEntry.DataKey, null);
     }
 
@@ -187,8 +196,6 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         control.OnAdding(tree, this, layer);
         this.Items.Insert(index, control);
         tree.AddResourceMapping(control, layer);
-        control.ApplyStyling();
-        control.ApplyTemplate();
         control.OnAdded();
     }
 

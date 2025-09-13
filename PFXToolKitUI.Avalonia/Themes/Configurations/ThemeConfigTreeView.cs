@@ -105,8 +105,6 @@ public class ThemeConfigTreeView : TreeView, IThemeConfigEntryTreeOrNode, ITheme
         control.OnAdding(this, null, layer);
         this.Items.Insert(index, control);
         this.AddResourceMapping(control, layer);
-        control.ApplyStyling();
-        control.ApplyTemplate();
         control.OnAdded();
     }
 

@@ -74,8 +74,8 @@ public sealed class DataGridSelectionModelBinder<T> {
         Debug.Assert(!this.isUpdatingModel);
         this.isUpdatingModel = true;
 
-        this.Selection.Deselect(e.RemovedItems.Cast<T>());
-        this.Selection.Select(e.AddedItems.Cast<T>());
+        this.Selection.DeselectItems(e.RemovedItems.Cast<T>());
+        this.Selection.SelectItems(e.AddedItems.Cast<T>());
 
         this.isUpdatingModel = false;
     }
