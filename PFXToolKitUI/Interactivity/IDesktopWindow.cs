@@ -39,4 +39,6 @@ public interface IDesktopWindow {
     /// Gets the owner window
     /// </summary>
     IDesktopWindow? Owner { get; }
+
+    Task<bool> LaunchUriAsync(Uri uri);
 }

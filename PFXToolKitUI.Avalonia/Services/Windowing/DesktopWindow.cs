@@ -64,6 +64,8 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     public IClipboardService? ClipboardService { get; }
 
     IDesktopWindow? IDesktopWindow.Owner => base.Owner as IDesktopWindow;
+    
+    public Task<bool> LaunchUriAsync(Uri uri) => this.Launcher.LaunchUriAsync(uri);
 
     public DesktopWindow() : base() {
         this.WindowStartupLocation = WindowStartupLocation.CenterOwner;

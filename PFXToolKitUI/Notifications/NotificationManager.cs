@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using PFXToolKitUI.Composition;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Notifications;
@@ -36,6 +37,10 @@ public class NotificationManager {
     public NotificationManager() {
         this.notifications = new ObservableList<Notification>();
         this.Notifications = new ReadOnlyObservableList<Notification>(this.notifications);
+    }
+
+    public static NotificationManager GetInstance(IComponentManager componentManager) {
+        return componentManager.GetOrCreateComponent(_ => new NotificationManager());
     }
 
     public void ShowNotification(Notification entry) {
