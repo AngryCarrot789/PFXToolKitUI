@@ -18,9 +18,11 @@
 // 
 
 using System.Diagnostics;
+using System.Text;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
@@ -28,11 +30,27 @@ using PFXToolKitUI.Avalonia.Utils;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
+public delegate void FocusedPathChangedEventHandler(string? oldPath, string? newPath, bool isCausedByFocusPathPropertyChanging);
+
 /// <summary>
 /// A class which manages the WPF inputs and global focus scopes. This class also dispatches input events to the shortcut system
 /// </summary>
 public class UIInputManager {
-    public delegate void FocusedPathChangedEventHandler(string? oldPath, string? newPath, bool isCausedByFocusPathPropertyChanging);
+    // /// <summary>
+    // /// A dependency property which is used to tells the input system that shortcuts key strokes can be processed when the focused element is the base WPF text editor control
+    // /// </summary>
+    // public static readonly AvaloniaProperty IsInheritedFocusAllowedProperty = AvaloniaProperty.RegisterAttached("IsInheritedFocusAllowed", typeof(bool), typeof(UIInputManager), BoolBox.True);
+    //
+    // /// <summary>
+    // /// A dependency property used to check if a control blocks shortcut key processing. This is false by default for most
+    // /// standard controls, but is true for things like text boxes and rich text boxes (but can be set back to false explicitly)
+    // /// </summary>
+    // public static readonly AvaloniaProperty IsKeyShortcutProcessingBlockedProperty = AvaloniaProperty.RegisterAttached("IsKeyShortcutProcessingBlocked", typeof(bool), typeof(UIInputManager), BoolBox.False);
+    //
+    // /// <summary>
+    // /// A dependency property which is the same as <see cref="IsKeyShortcutProcessingBlockedProperty"/> except for mouse strokes
+    // /// </summary>
+    // public static readonly AvaloniaProperty IsMouseProcessingBlockedProperty = AvaloniaProperty.RegisterAttached("IsMouseProcessingBlocked", typeof(bool), typeof(UIInputManager), new PropertyMetadata(default(bool)));
 
     private static readonly AttachedProperty<AvaloniaShortcutInputProcessor?> ShortcutProcessorProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, AvaloniaShortcutInputProcessor?>("ShortcutProcessor");
 
@@ -51,50 +69,33 @@ public class UIInputManager {
     /// </summary>
     public static readonly AttachedProperty<bool> IsKeyShortcutProcessingBlockedProperty = AvaloniaProperty.RegisterAttached<UIInputManager, AvaloniaObject, bool>("IsKeyShortcutProcessingBlocked");
 
-    public static readonly AttachedProperty<WeakReference?> CurrentFocusedElementProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, WeakReference?>("CurrentFocusedElement");
-    public static readonly AttachedProperty<WeakReference?> LastFocusedElementProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, WeakReference?>("LastFocusedElement");
+    public static readonly AttachedProperty<InputElement?> CurrentFocusedElementProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, InputElement?>("CurrentFocusedElement");
+    public static readonly AttachedProperty<InputElement?> LastFocusedElementProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, InputElement?>("LastFocusedElement");
 
     /// <summary>
     /// A property for whether a control (whose <see cref="FocusPathProperty"/> has a value) currently has focus
     /// </summary>
     public static readonly AttachedProperty<bool> IsFocusedProperty = AvaloniaProperty.RegisterAttached<UIInputManager, AvaloniaObject, bool>("IsFocused");
 
-    public static InputElement? GetCurrentFocusedElement(TopLevel obj) => obj.GetValue(CurrentFocusedElementProperty)?.Target as InputElement;
-    public static InputElement? GetLastFocusedElement(TopLevel obj) => obj.GetValue(LastFocusedElementProperty)?.Target as InputElement;
-
-    public static void SetIsFocused(AvaloniaObject obj, bool value) => obj.SetValue(IsFocusedProperty, value);
-
-    public static bool GetIsFocused(AvaloniaObject obj) => obj.GetValue(IsFocusedProperty);
-
-    // /// <summary>
-    // /// A dependency property which is used to tells the input system that shortcuts key strokes can be processed when the focused element is the base WPF text editor control
-    // /// </summary>
-    // public static readonly AvaloniaProperty IsInheritedFocusAllowedProperty = AvaloniaProperty.RegisterAttached("IsInheritedFocusAllowed", typeof(bool), typeof(UIInputManager), BoolBox.True);
-    //
-    // /// <summary>
-    // /// A dependency property used to check if a control blocks shortcut key processing. This is false by default for most
-    // /// standard controls, but is true for things like text boxes and rich text boxes (but can be set back to false explicitly)
-    // /// </summary>
-    // public static readonly AvaloniaProperty IsKeyShortcutProcessingBlockedProperty = AvaloniaProperty.RegisterAttached("IsKeyShortcutProcessingBlocked", typeof(bool), typeof(UIInputManager), BoolBox.False);
-    //
-    // /// <summary>
-    // /// A dependency property which is the same as <see cref="IsKeyShortcutProcessingBlockedProperty"/> except for mouse strokes
-    // /// </summary>
-    // public static readonly AvaloniaProperty IsMouseProcessingBlockedProperty = AvaloniaProperty.RegisterAttached("IsMouseProcessingBlocked", typeof(bool), typeof(UIInputManager), new PropertyMetadata(default(bool)));
-
+    private static readonly SortedList<Key, int> keyRepeatCounter;
+    
     public static UIInputManager Instance { get; } = new UIInputManager();
 
+    /// <summary>
+    /// Gets the element whose <see cref="IsFocusedProperty"/> is set to true
+    /// </summary>
+    public static StyledElement? CurrentFocusedObject { get; private set; }
 
-    public static event FocusedPathChangedEventHandler? OnFocusedPathChanged;
-
-    private static readonly WeakReference currentlyFocusedObject = new WeakReference(null);
-
-    public static object? CurrentFocusedObject => currentlyFocusedObject.Target;
-
+    /// <summary>
+    /// Gets the current <see cref="FocusPathProperty"/> for <see cref="CurrentFocusedObject"/>
+    /// </summary>
     public string? FocusedPath { get; private set; }
 
-    private static readonly SortedList<Key, int> RepeatCounter;
-
+    /// <summary>
+    /// An event fired when <see cref="FocusedPath"/> changed
+    /// </summary>
+    public static event FocusedPathChangedEventHandler? FocusedPathChanged;
+    
     private UIInputManager() {
         if (Instance != null)
             throw new InvalidOperationException();
@@ -120,11 +121,19 @@ public class UIInputManager {
 
         IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextBox), new StyledPropertyMetadata<bool>(true));
         IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextPresenter), new StyledPropertyMetadata<bool>(true));
-        RepeatCounter = new SortedList<Key, int>();
+        keyRepeatCounter = new SortedList<Key, int>();
         // AvalonEdit
         // IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextEditor), new StyledPropertyMetadata<bool>(true));
         // IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextArea), new StyledPropertyMetadata<bool>(true));
     }
+
+    public static InputElement? GetCurrentFocusedElement(TopLevel obj) => obj.GetValue(CurrentFocusedElementProperty);
+
+    public static InputElement? GetLastFocusedElement(TopLevel obj) => obj.GetValue(LastFocusedElementProperty);
+
+    public static void SetIsFocused(AvaloniaObject obj, bool value) => obj.SetValue(IsFocusedProperty, value);
+
+    public static bool GetIsFocused(AvaloniaObject obj) => obj.GetValue(IsFocusedProperty);
 
     private static void OnTopLevelPreviewPointerPressed(TopLevel sender, PointerPressedEventArgs e) {
         if (!(e.Source is InputElement element)) {
@@ -172,17 +181,17 @@ public class UIInputManager {
 
         bool isRepeat = false;
         if (isRelease) {
-            RepeatCounter[key] = 0;
+            keyRepeatCounter[key] = 0;
         }
         else {
-            int keyIndex = RepeatCounter.IndexOfKey(key);
+            int keyIndex = keyRepeatCounter.IndexOfKey(key);
             if (keyIndex == -1) {
-                RepeatCounter[key] = 1;
+                keyRepeatCounter[key] = 1;
                 isRepeat = false;
             }
             else {
-                int count = RepeatCounter.GetValueAtIndex(keyIndex);
-                RepeatCounter.SetValueAtIndex(keyIndex, count + 1);
+                int count = keyRepeatCounter.GetValueAtIndex(keyIndex);
+                keyRepeatCounter.SetValueAtIndex(keyIndex, count + 1);
                 isRepeat = count > 0;
             }
         }
@@ -238,62 +247,73 @@ public class UIInputManager {
             OnGotOrLostFocus(topLevel, element, lost);
         }
     }
-    
+
     private static void OnGotOrLostFocus(TopLevel topLevel, InputElement element, bool lost) {
         string? oldFocusPath = Instance.FocusedPath, newFocusPath;
 
-        WeakReference? last = topLevel.GetValue(LastFocusedElementProperty);
-        if (last == null)
-            topLevel.SetValue(LastFocusedElementProperty, last = new WeakReference(null));
+#if DEBUG
+        InputElement? lastFocused = topLevel.GetValue(LastFocusedElementProperty);
+#endif
 
-        WeakReference? curr = topLevel.GetValue(CurrentFocusedElementProperty);
-        if (curr == null)
-            topLevel.SetValue(CurrentFocusedElementProperty, curr = new WeakReference(null));
-
-        object? lastTarget = curr.Target;
-        last.Target = lastTarget;
+        InputElement? currFocused = topLevel.GetValue(CurrentFocusedElementProperty);
+        topLevel.SetValue(LastFocusedElementProperty, currFocused);
         if (lost) {
-            if (!ReferenceEquals(lastTarget, element)) {
-                Debug.Fail("Last Target not equal to element which lost focus");
-                throw new Exception("Last Target not equal to element which lost focus");
+            if (!ReferenceEquals(currFocused, element)) {
+                Debug.Fail("Fatal error: Last focused element does not match element that just lost focus");
+                throw new Exception();
             }
-            
-            newFocusPath = null;
-            curr.Target = null;
 
-            Debug.WriteLine($"Focus LOST: '{element.GetType().Name}{(element.Name != null ? $" [NAME={element.Name}]" : "")}'");
+            newFocusPath = null;
+            topLevel.SetValue(CurrentFocusedElementProperty, null);
+
+            Debug.WriteLine($"Focus LOST: '{ReadableControlName(element, topLevel)}'");
 
             element.DetachedFromVisualTree -= OnElementDetachedFromVisualTree;
         }
         else {
-            curr.Target = element;
+            topLevel.SetValue(CurrentFocusedElementProperty, element);
             newFocusPath = GetFocusPath(element);
 
-#if DEBUG
             string msg = "";
-            if (lastTarget != null) {
-                msg = $" (ERROR: lastTarget still valid '{lastTarget.GetType().Name}')";
+            if (currFocused != null) {
+                currFocused.DetachedFromVisualTree -= OnElementDetachedFromVisualTree;
+#if DEBUG
+                msg = $" (ERROR: LastFocused still valid '{ReadableControlName(currFocused, topLevel)}')";
+#endif
             }
 
-            Debug.WriteLine($"Focus GAINED: null -> '{element.GetType().Name}{(element.Name != null ? $" [NAME={element.Name}]" : "")}'{(newFocusPath != null ? $" (FPath: {newFocusPath})" : "")}{msg}");
-#endif
+            Debug.WriteLine($"Focus GAINED: null -> '{ReadableControlName(element, topLevel)}'{msg}");
 
             element.DetachedFromVisualTree += OnElementDetachedFromVisualTree;
         }
 
         if (oldFocusPath != newFocusPath) {
             Instance.FocusedPath = newFocusPath;
-            OnFocusedPathChanged?.Invoke(oldFocusPath, newFocusPath, false);
+            FocusedPathChanged?.Invoke(oldFocusPath, newFocusPath, false);
             UpdateCurrentlyFocusedObject(element, newFocusPath);
         }
     }
 
+    private static string ReadableControlName(InputElement e, TopLevel? topLevel = null) {
+        StringBuilder sb = new StringBuilder().Append(e.GetType().Name);
+        if (e.Name != null)
+            sb.Append(" [NAME=\"").Append(e.Name).Append("\"]");
+        if (e is HeaderedItemsControl hic && hic.Header is string header1)
+            sb.Append(" [HEADER=\"").Append(header1).Append("\"]");
+        else if (e is HeaderedSelectingItemsControl hsic && hsic.Header is string header2)
+            sb.Append(" [HEADER=\"").Append(header2).Append("\"]");
+        if (GetFocusPath(e) is string focusPath)
+            sb.Append(" [FPath=\"").Append(focusPath).Append("\"]");
+        sb.Append(" [TopLevel=\"").Append((topLevel ?? TopLevel.GetTopLevel(e))?.GetType().Name).Append("\"]");
+        return sb.ToString();
+    }
+
     private static void OnElementDetachedFromVisualTree(object? sender, VisualTreeAttachmentEventArgs e) {
-        if (e.Root is TopLevel topLevel) {
-            WeakReference? curr = topLevel.GetValue(CurrentFocusedElementProperty);
-            if (curr != null && curr.Target == sender) {
-                Debug.WriteLine("Control removed from VT. Forcing lost focus");
-                OnGotOrLostFocus(topLevel, (InputElement) sender!, lost: true);
+        if (e.Root is TopLevel topLevel && sender != null) {
+            InputElement? focused = GetCurrentFocusedElement(topLevel);
+            if (focused == sender) {
+                Debug.WriteLine("Control removed from Visual Tree, forcing lost focus for " + ReadableControlName(focused, topLevel));
+                OnGotOrLostFocus(topLevel, focused, lost: true);
             }
         }
     }
@@ -312,7 +332,7 @@ public class UIInputManager {
         TopLevel? topLevel = obj as TopLevel ?? (obj as Visual)?.GetVisualRoot() as TopLevel;
         if (topLevel != null && GetCurrentFocusedElement(topLevel) == obj) {
             Instance.FocusedPath = newPath;
-            OnFocusedPathChanged?.Invoke(oldPath, newPath, false);
+            FocusedPathChanged?.Invoke(oldPath, newPath, false);
             UpdateCurrentlyFocusedObject(obj, newPath);
             Debug.WriteLine($"Focus Path swapped for '{obj.GetType().Name}'");
         }
@@ -336,18 +356,18 @@ public class UIInputManager {
     /// <param name="target">Target/focused element which now has focus</param>
     /// <param name="newPath"></param>
     public static void UpdateCurrentlyFocusedObject(AvaloniaObject target, string? newPath) {
-        object? lastFocused = currentlyFocusedObject.Target;
+        object? lastFocused = CurrentFocusedObject;
         if (lastFocused != null) {
-            currentlyFocusedObject.Target = null;
+            CurrentFocusedObject = null;
             ((AvaloniaObject) lastFocused).SetValue(IsFocusedProperty, false);
         }
 
         if (string.IsNullOrEmpty(newPath))
             return;
 
-        AvaloniaObject? root = VisualTreeUtils.FindNearestInheritedPropertyDefinitionForLogical(FocusPathProperty, target as StyledElement);
+        StyledElement? root = VisualTreeUtils.FindNearestInheritedPropertyDefinitionForLogical(FocusPathProperty, target as StyledElement);
         if (root != null) {
-            currentlyFocusedObject.Target = root;
+            CurrentFocusedObject = root;
             root.SetValue(IsFocusedProperty, true);
         }
         else {

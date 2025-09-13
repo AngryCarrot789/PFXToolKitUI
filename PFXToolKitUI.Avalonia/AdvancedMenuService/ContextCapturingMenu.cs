@@ -65,7 +65,10 @@ public class ContextCapturingMenu : Menu {
     }
 
     protected override void OnGotFocus(GotFocusEventArgs e) {
-        this.lastFocus = null;
+        if (e.Handled || this.lastFocus != null) {
+            return;
+        }
+        
         if (TopLevel.GetTopLevel(this) is TopLevel topLevel) {
             this.lastFocus = UIInputManager.GetLastFocusedElement(topLevel);
         }

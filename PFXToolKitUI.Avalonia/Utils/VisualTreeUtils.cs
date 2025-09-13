@@ -25,7 +25,7 @@ using Avalonia.Input;
 namespace PFXToolKitUI.Avalonia.Utils;
 
 public static class VisualTreeUtils {
-    public static AvaloniaObject? FindNearestInheritedPropertyDefinitionForLogical<T>(AvaloniaProperty<T> property, StyledElement? target) {
+    public static StyledElement? FindNearestInheritedPropertyDefinitionForLogical<T>(AvaloniaProperty<T> property, StyledElement? target) {
         for (StyledElement? next = target; next != null; next = next.Parent) {
             Optional<T> localValue = next.GetBaseValue(property);
             if (!localValue.HasValue)
