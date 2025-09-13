@@ -80,12 +80,14 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
 
     public void PushFrame(CancellationToken cancellationToken) {
         if (!cancellationToken.CanBeCanceled)
-            throw new InvalidOperationException("Token cannot be cancelled");
-        
+            throw new InvalidOperationException("The token is not cancellable, meaning this method would never return");
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
         DispatcherFrame frame = new DispatcherFrame();
-        CancellationTokenRegistration registration = cancellationToken.Register(static f => ((DispatcherFrame) f!).Continue = false, frame);
-        this.dispatcher.PushFrame(frame);
-        registration.Dispose();
+        using (cancellationToken.Register(static f => ((DispatcherFrame) f!).Continue = false, frame)) {
+            this.dispatcher.PushFrame(frame);
+        }
     }
 
     private static DispatcherPriority ToAvaloniaPriority(DispatchPriority priority) {

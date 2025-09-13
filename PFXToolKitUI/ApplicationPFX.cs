@@ -50,7 +50,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     public static ApplicationPFX Instance {
         get {
             if (instance == null)
-                throw new InvalidOperationException("Application not initialised yet");
+                throw new InvalidOperationException("Application instance has not been setup.");
 
             return instance;
         }
@@ -145,65 +145,65 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     }
 
     /// <summary>
+    /// Initializes the application by calling <see cref="InitializeApplicationAsync"/> and blocks until completion using a dispatcher frame
+    /// </summary>
+    public static void InitializeApplication(IApplicationStartupProgress progress, string[] envArgs) {
+        Instance.Dispatcher.AwaitForCompletion(InitializeApplicationAsync(progress, envArgs));
+    }
+
+    /// <summary>
     /// Actually initialize the application. This includes loading services, plugins, persistent configurations and more.
     /// </summary>
-    public static async Task InitializeApplication(IApplicationStartupProgress progress, string[] envArgs) {
-        if (instance == null)
-            throw new InvalidOperationException("Application instance has not been setup.");
+    public static async Task InitializeApplicationAsync(IApplicationStartupProgress progress, string[] envArgs) {
+        ApplicationPFX app = Instance;
 
         await progress.ProgressAndWaitForRender("Setup", 0.01);
 
         // App initialisation takes a big chunk of the startup
         // phase, so it has a healthy dose of range available
         using (progress.CompletionState.PushCompletionRange(0.0, 0.7)) {
-            // Let the app crash in debug mode so that the IDE can spot the exception
             try {
-                instance.StartupPhase = ApplicationStartupPhase.PreLoad;
+                app.StartupPhase = ApplicationStartupPhase.PreLoad;
                 await progress.ProgressAndWaitForRender("Loading services");
                 using (progress.CompletionState.PushCompletionRange(0.0, 0.2)) {
-                    instance.RegisterServices(instance.ServiceManager);
+                    app.RegisterServices(app.ServiceManager);
                 }
 
-                string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), instance.GetApplicationName(), "Options");
-                instance.ServiceManager.RegisterConstant(new PersistentStorageManager(storageDir));
+                string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), app.GetApplicationName(), "Options");
+                app.ServiceManager.RegisterConstant(new PersistentStorageManager(storageDir));
 
                 await progress.ProgressAndWaitForRender("Loading commands");
                 using (progress.CompletionState.PushCompletionRange(0.2, 0.4)) {
-                    instance.RegisterCommands(CommandManager.Instance);
+                    app.RegisterCommands(CommandManager.Instance);
                 }
-
+                
                 await progress.ProgressAndWaitForRender("Loading keymap...");
                 using (progress.CompletionState.PushCompletionRange(0.4, 0.6)) {
                     string keymapFilePath = Path.GetFullPath("Keymap.xml");
-                    if (File.Exists(keymapFilePath)) {
-                        try {
-                            await using FileStream stream = File.OpenRead(keymapFilePath);
-                            ShortcutManager.Instance.ReloadFromStream(stream);
-                        }
-                        catch (Exception ex) {
-                            await IMessageDialogService.Instance.ShowMessage("Keymap", "Failed to read keymap file" + keymapFilePath + ". This error can be ignored, but shortcuts won't work", ex.GetToString());
-                        }
+                    try {
+                        await using FileStream stream = File.OpenRead(keymapFilePath);
+                        ShortcutManager.Instance.ReloadFromStream(stream);
                     }
-                    else {
-                        await IMessageDialogService.Instance.ShowMessage("Keymap", "Keymap file does not exist at " + keymapFilePath + ". This error can be ignored, but shortcuts won't work");
+                    catch (FileNotFoundException) {
+                        AppLogger.Instance.WriteLine("Keymap file does not exist at " + keymapFilePath + ". This error can be ignored, but shortcuts won't work");
+                    }
+                    catch (Exception ex) {
+                        AppLogger.Instance.WriteLine("Failed to read keymap file" + keymapFilePath + ". This error can be ignored, but shortcuts won't work" + Environment.NewLine + ex.GetToString());
                     }
                 }
 
-                instance.StartupPhase = ApplicationStartupPhase.Loading;
+                app.StartupPhase = ApplicationStartupPhase.Loading;
                 await progress.ProgressAndWaitForRender("Loading application", 0.8);
                 using (progress.CompletionState.PushCompletionRange(0.8, 1.0)) {
-                    await instance.OnSetupApplication(progress);
+                    await app.OnSetupApplication(progress);
                 }
 
                 await progress.WaitForRender();
             }
             catch (Exception ex) {
                 Console.WriteLine("Exception during setup:" + Environment.NewLine + ex.GetToString());
-
-                if (Debugger.IsAttached)
-                    Debugger.Break();
-
-                await instance.OnSetupFailed(ex);
+                Debugger.Break();
+                await app.OnSetupFailed(ex);
                 return;
             }
         }
@@ -211,7 +211,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
         await progress.ProgressAndWaitForRender("Loading plugins");
         using (progress.CompletionState.PushCompletionRange(0.7, 0.8)) {
             List<PluginLoadException> exceptions = new List<PluginLoadException>();
-            instance.PluginLoader.LoadCorePlugins(exceptions);
+            app.PluginLoader.LoadCorePlugins(exceptions);
 
 #if DEBUG
             string? solutionFolder = null;
@@ -227,13 +227,13 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
 
             if (solutionFolder != null) {
                 // Load plugins in the solution folder
-                string? solName = instance.GetSolutionFileName();
+                string? solName = app.GetSolutionFileName();
                 if (!string.IsNullOrWhiteSpace(solName) && File.Exists(Path.Combine(solutionFolder, solName))) {
-                    await instance.PluginLoader.LoadPlugins(Path.Combine(solutionFolder, "Plugins"), exceptions);
+                    await app.PluginLoader.LoadPlugins(Path.Combine(solutionFolder, "Plugins"), exceptions);
                 }
             }
 #endif
-            await Instance.PluginLoader.LoadPlugins("Plugins", exceptions);
+            await app.PluginLoader.LoadPlugins("Plugins", exceptions);
 
             if (exceptions.Count > 0) {
                 string errorText = string.Join(Environment.NewLine + Environment.NewLine, exceptions);
@@ -242,29 +242,31 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
             }
 
             await progress.ProgressAndWaitForRender("Initialising plugins...", 0.5);
-            instance.PluginLoader.InitializePlugins();
-            await instance.OnPluginsLoaded();
+            app.PluginLoader.InitializePlugins();
+            await app.OnPluginsLoaded();
         }
 
         {
             await progress.ProgressAndWaitForRender("Loading configurations...");
-            PersistentStorageManager psm = instance.PersistentStorageManager;
+            PersistentStorageManager psm = app.PersistentStorageManager;
 
-            instance.RegisterConfigurations();
-            instance.PluginLoader.RegisterConfigurations(psm);
+            app.RegisterConfigurations();
+            app.PluginLoader.RegisterConfigurations(psm);
 
             await psm.LoadAllAsync(null, false);
         }
 
         await progress.ProgressAndWaitForRender("Finalizing startup...", 0.99);
         {
-            instance.StartupPhase = ApplicationStartupPhase.FullyLoaded;
-            await instance.OnApplicationFullyLoaded();
-            await instance.PluginLoader.OnApplicationFullyLoaded();
+            app.StartupPhase = ApplicationStartupPhase.FullyLoaded;
+            await app.OnApplicationFullyLoaded();
+            await app.PluginLoader.OnApplicationFullyLoaded();
         }
 
-        instance.StartupPhase = ApplicationStartupPhase.Running;
-        await instance.OnApplicationRunning(progress, envArgs);
+        await Task.Delay(500);
+
+        app.StartupPhase = ApplicationStartupPhase.Running;
+        await app.OnApplicationRunning(progress, envArgs);
     }
 
     // The methods from RegisterServices to OnExiting are ordered based

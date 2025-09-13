@@ -104,10 +104,11 @@ public interface IDispatcher {
     IDispatcherTimer CreateTimer(DispatchPriority priority);
 
     /// <summary>
-    /// Pushes a new dispatcher frame that exits when the cancellation token is marked as cancelled. Does nothing if already cancelled.
+    /// Pushes a new dispatcher frame that exits when the cancellation token is marked
+    /// as cancelled. If already cancelled, then nothing happens.
     /// </summary>
     /// <param name="cancellationToken">The token that causes the frame to exit once cancelled</param>
-    /// <exception cref="InvalidOperationException">The cancellation token cannot be cancelled</exception>
+    /// <exception cref="InvalidOperationException">The cancellation token is not cancellable</exception>
     void PushFrame(CancellationToken cancellationToken);
 
     /// <summary>
@@ -121,12 +122,12 @@ public interface IDispatcher {
     void AwaitForCompletion(Task task) {
         if (!task.IsCompleted) {
             using CancellationTokenSource cts = new CancellationTokenSource();
-            task.ContinueWith((t, theCts) => ((CancellationTokenSource) theCts!).Cancel(), cts, CancellationToken.None);
+            task.ContinueWith((t, theCts) => ((CancellationTokenSource) theCts!).Cancel(), cts, TaskContinuationOptions.ExecuteSynchronously);
             this.PushFrame(cts.Token);
         }
 
         if (!task.IsCanceled && task.Exception is AggregateException e) {
-            ExceptionDispatchInfo.Throw(e);
+            ExceptionDispatchInfo.Throw(e.InnerExceptions.Count == 1 ? e.InnerExceptions[0] : e);
         }
     }
 }
