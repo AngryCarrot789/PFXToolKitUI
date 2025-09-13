@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -89,12 +90,12 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         this.Items.Insert(index, menuItem);
         menuItem.OnAdded();
     }
-    
+
     private void OnItemRemoved(object sender, int index, ContextEntryGroup item) {
         ItemCollection list = this.Items;
         this.OnItemRemoved(list, index, (AdvancedMenuItem) list[index]!);
     }
-    
+
     private void OnItemRemoved(ItemCollection items, int index, AdvancedMenuItem item) {
         Type type = item.Entry!.GetType();
         item.OnRemoving();
@@ -102,12 +103,12 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         item.OnRemoved();
         this.PushCachedItem(type, item);
     }
-    
+
     private void OnItemMoved(object sender, int oldindex, int newindex, ContextEntryGroup item) {
         ItemCollection list = this.Items;
         if (newindex < 0 || newindex >= list.Count)
             throw new IndexOutOfRangeException($"{nameof(newindex)} is not within range: {(newindex < 0 ? "less than zero" : "greater than list length")} ({newindex})");
-        
+
         object? removedItem = list[oldindex];
         list.RemoveAt(oldindex);
         list.Insert(newindex, removedItem);
@@ -126,6 +127,7 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         base.Close();
         if (wasOpen && this.lastFocus != null) {
             DataManager.ClearDelegateContextData(this);
+            Debug.WriteLine("[TopLevelMenu] Cleared captured context from: " + this.lastFocus);
             if (this.lastFocus != null) {
                 this.lastFocus.Focus();
                 this.lastFocus = null;
@@ -134,7 +136,10 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
     }
 
     protected override void OnGotFocus(GotFocusEventArgs e) {
-        this.lastFocus = null;
+        if (e.Handled || this.lastFocus != null) {
+            return;
+        }
+
         if (TopLevel.GetTopLevel(this) is TopLevel topLevel) {
             this.lastFocus = UIInputManager.GetLastFocusedElement(topLevel);
         }
@@ -146,7 +151,10 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
     }
 
     private void CaptureContextFromObject(InputElement inputElement) {
-        DataManager.SetDelegateContextData(this, DataManager.GetFullContextData(inputElement));
+        IContextData capturedContext = DataManager.GetFullContextData(inputElement);
+        
+        Debug.WriteLine($"[TopLevelMenu] Captured context from: {inputElement} ({string.Join(", ", capturedContext.Entries.Select(x => x.Key + "=" + x.Value))})");
+        DataManager.SetDelegateContextData(this, capturedContext);
     }
 
     public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuService.PushCachedItem(this.itemCache, entryType, item);

@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
@@ -17,16 +17,24 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Interactivity;
+using PFXToolKitUI.Utils;
 
-public interface IFileDropNotifier {
-    /// <summary>
-    /// Ges the allow drop type(s) from the given dragged paths and input allowed drop types
-    /// </summary>
-    /// <param name="paths">The paths being dragged (non-null and has at least 1 entry)</param>
-    /// <param name="dropType">Drop type the user wants to perform</param>
-    /// <returns></returns>
-    EnumDropType GetFileDropType(string[] paths, EnumDropType dropType);
+namespace PFXToolKitUI.Interactivity.Selections;
 
-    Task OnFilesDropped(string[] paths, EnumDropType dropType);
+/// <summary>
+/// Manages a hierarchy of selected indices
+/// </summary>
+/// <typeparam name="T"></typeparam>
+public sealed class TreeSelectionModel<T> where T : class {
+    // TODO
+    
+    
+    private readonly Dictionary<T, IntRangeUnion> mySelectionMap = new Dictionary<T, IntRangeUnion>();
+    
+    public void Select(T item, int index) {
+        if (!this.mySelectionMap.TryGetValue(item, out IntRangeUnion? union))
+            this.mySelectionMap[item] = union = new IntRangeUnion();
+        
+        union.Add(index);
+    }
 }

@@ -24,12 +24,11 @@ using PFXToolKitUI.Utils.Collections.Observable;
 namespace PFXToolKitUI.Interactivity.Selections;
 
 /// <summary>
-/// Manages a one dimensional list of selected items for a source list of items
+/// Manages a one dimensional list of selected indices
 /// </summary>
 /// <typeparam name="T">The type of item that is selectable</typeparam>
 public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     private readonly IntRangeUnion selectedIndices;
-
 
     public ObservableList<T> SourceList { get; }
 

@@ -38,7 +38,7 @@ namespace PFXToolKitUI.Avalonia.Services.Windowing;
 /// The base class for windows supported by a <see cref="WindowingSystem"/>
 /// </summary>
 public class DesktopWindow : WindowEx, IDesktopWindow {
-    private static readonly FieldInfo FIELD_showingAsDialog = typeof(Window).GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic)!;
+    // private static readonly FieldInfo FIELD_showingAsDialog = typeof(Window).GetField("_showingAsDialog", BindingFlags.Instance | BindingFlags.NonPublic)!;
 
     /// <summary>
     /// Gets whether the window is actually open or not. False when not opened or <see cref="IsClosed"/> is true
@@ -53,7 +53,7 @@ public class DesktopWindow : WindowEx, IDesktopWindow {
     /// <summary>
     /// Gets whether this window is open as a modal dialog
     /// </summary>
-    public bool IsOpenAsDialog => (bool) FIELD_showingAsDialog.GetValue(this)!;
+    public bool IsOpenAsDialog => this.IsDialog; //(bool) FIELD_showingAsDialog.GetValue(this)!;
 
     public event DesktopWindowClosingAsyncEventHandler? ClosingAsync;
 
