@@ -8,7 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Interactivity\Windowing\" />
       <Folder Include="Persistence\Serialisation\Impl\" />
     </ItemGroup>
 

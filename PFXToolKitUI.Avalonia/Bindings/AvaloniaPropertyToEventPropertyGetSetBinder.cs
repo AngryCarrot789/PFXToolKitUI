@@ -42,7 +42,7 @@ public sealed class AvaloniaPropertyToEventPropertyGetSetBinder<TModel> : BaseAv
         }
     }
 
-    protected override void UpdateControlOverride() {
+    protected override void UpdateControlOverride(bool hasJustAttached) {
         if (this.IsFullyAttached && this.Property != null && this.getter != null) {
             object? newValue = this.getter(this);
             this.myControl!.SetValue(this.Property, newValue);

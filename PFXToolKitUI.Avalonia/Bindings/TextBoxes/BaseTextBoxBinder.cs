@@ -82,8 +82,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     protected override void UpdateModelOverride() {
     }
 
-    protected override void UpdateControlOverride() {
-
+    protected override void UpdateControlOverride(bool hasJustAttached) {
         TextBox tb = (TextBox) this.myControl!;
         if (this.IsFullyAttached) {
             string newValue = this.GetTextCore();
@@ -91,6 +90,13 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
             this.isResettingTextToModel = true;
             tb.Text = newValue;
             BugFix.TextBox_UpdateSelection(tb);
+            if (hasJustAttached && tb.IsUndoEnabled) {
+                // goofy way to clear the undo stack, so that the user cannot undo what
+                // this class applied for the first time since attaching the control
+                tb.IsUndoEnabled = false;
+                tb.IsUndoEnabled = true;
+            }
+            
             this.isResettingTextToModel = false;
         }
         

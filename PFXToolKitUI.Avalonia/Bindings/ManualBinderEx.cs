@@ -38,7 +38,7 @@ public class ManualBinderEx<TControl, TModel> : BaseBinder<TModel> where TContro
     protected override void UpdateModelOverride() {
     }
 
-    protected override void UpdateControlOverride() {
+    protected override void UpdateControlOverride(bool hasJustAttached) {
     }
 
     protected override void OnAttached() => this.onAttached.Invoke((TControl) this.Control, this.Model);

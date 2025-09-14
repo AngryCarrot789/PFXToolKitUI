@@ -74,8 +74,8 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseTextBoxBinder<TModel>
         return (this.convertToString != null ? this.convertToString(newValue) : newValue?.ToString()) ?? "";
     }
 
-    protected override void UpdateControlOverride() {
-        base.UpdateControlOverride();
+    protected override void UpdateControlOverride(bool hasJustAttached) {
+        base.UpdateControlOverride(hasJustAttached);
         if (this.IsFullyAttached) {
             this.ControlUpdated?.Invoke(this);
         }

@@ -46,7 +46,7 @@ public static class PropertyHelper {
             onValueChanged(instance);
         }
     }
-    
+
     /// <summary>
     /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
     /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/> parameter 
@@ -86,7 +86,7 @@ public static class PropertyHelper {
             onValueChanged(instance, oldValue, newValue);
         }
     }
-    
+
     /// <summary>
     /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
     /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/>
@@ -106,6 +106,21 @@ public static class PropertyHelper {
         T oldValue = field;
         if (!equals(oldValue, newValue)) {
             field = newValue;
+            onValueChanged(instance, oldValue, newValue);
+        }
+    }
+
+    public static void SetAndRaiseINEEx<TOwner, T>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, Action onValueChanged) {
+        if (!EqualityComparer<T>.Default.Equals(getter(propertyOwner), newValue)) {
+            setter(propertyOwner, newValue);
+            onValueChanged();
+        }
+    }
+    
+    public static void SetAndRaiseINEEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
+        T oldValue = getter(propertyOwner);
+        if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
+            setter(propertyOwner, newValue);
             onValueChanged(instance, oldValue, newValue);
         }
     }

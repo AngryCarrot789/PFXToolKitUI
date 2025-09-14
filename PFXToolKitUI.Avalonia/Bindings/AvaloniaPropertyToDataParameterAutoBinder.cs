@@ -55,7 +55,7 @@ public class AvaloniaPropertyToDataParameterAutoBinder<TModel> : BaseAvaloniaPro
         }
     }
 
-    protected override void UpdateControlOverride() {
+    protected override void UpdateControlOverride(bool hasJustAttached) {
         if (this.IsFullyAttached && this.Property != null && this.Parameter != null) {
             object? newValue = this.Parameter.GetObjectValue(this.Model);
             this.myControl!.SetValue(this.Property, this.ToProperty != null ? this.ToProperty(newValue) : newValue);

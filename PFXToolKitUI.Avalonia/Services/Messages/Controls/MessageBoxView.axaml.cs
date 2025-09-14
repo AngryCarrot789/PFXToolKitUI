@@ -22,19 +22,25 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
-using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
-public partial class MessageBoxControl : UserControl {
-    public static readonly StyledProperty<MessageBoxInfo?> MessageBoxDataProperty = AvaloniaProperty.Register<MessageBoxControl, MessageBoxInfo?>("MessageBoxData");
+public partial class MessageBoxView : UserControl {
+    public static readonly StyledProperty<MessageBoxInfo?> MessageBoxDataProperty = AvaloniaProperty.Register<MessageBoxView, MessageBoxInfo?>("MessageBoxData");
 
     public MessageBoxInfo? MessageBoxData {
         get => this.GetValue(MessageBoxDataProperty);
         set => this.SetValue(MessageBoxDataProperty, value);
     }
 
+    /// <summary>
+    /// Gets the window this view is currently open in
+    /// </summary>
+    public IWindow? Window { get; private set; }
+
+    private readonly IBinder<MessageBoxInfo> captionBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CaptionChanged), (b) => ((MessageBoxView) b.Control).Window!.Title = b.Model.Caption);
     private readonly IBinder<MessageBoxInfo> headerBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.HeaderChanged), (b) => ((TextBlock) b.Control).Text = b.Model.Header);
     private readonly IBinder<MessageBoxInfo> messageBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.MessageChanged), (b) => ((TextBox) b.Control).Text = b.Model.Message);
     private readonly IBinder<MessageBoxInfo> yesOkTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.YesOkTextChanged), (b) => ((Button) b.Control).Content = b.Model.YesOkText);
@@ -44,7 +50,7 @@ public partial class MessageBoxControl : UserControl {
     private readonly IBinder<MessageBoxInfo> autrBinder = new AvaloniaPropertyToEventPropertyBinder<MessageBoxInfo>(CheckBox.IsCheckedProperty, nameof(MessageBoxInfo.AlwaysUseThisResultChanged), (b) => ((CheckBox) b.Control).IsChecked = b.Model.AlwaysUseThisResult, (b) => b.Model.AlwaysUseThisResult = ((CheckBox) b.Control).IsChecked == true);
     private readonly IBinder<MessageBoxInfo> autrUntilCloseBinder = new AvaloniaPropertyToEventPropertyBinder<MessageBoxInfo>(CheckBox.IsCheckedProperty, nameof(MessageBoxInfo.AlwaysUseThisResultUntilAppClosesChanged), (b) => ((CheckBox) b.Control).IsChecked = b.Model.AlwaysUseThisResultUntilAppCloses, (b) => b.Model.AlwaysUseThisResultUntilAppCloses = ((CheckBox) b.Control).IsChecked == true);
 
-    public MessageBoxControl() {
+    public MessageBoxView() {
         this.InitializeComponent();
         this.headerBinder.AttachControl(this.PART_Header);
         this.messageBinder.AttachControl(this.PART_Message);
@@ -67,8 +73,8 @@ public partial class MessageBoxControl : UserControl {
         }
     }
 
-    static MessageBoxControl() {
-        MessageBoxDataProperty.Changed.AddClassHandler<MessageBoxControl, MessageBoxInfo?>((o, e) => o.OnMessageBoxDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    static MessageBoxView() {
+        MessageBoxDataProperty.Changed.AddClassHandler<MessageBoxView, MessageBoxInfo?>((o, e) => o.OnMessageBoxDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
 
     private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) {
@@ -132,6 +138,7 @@ public partial class MessageBoxControl : UserControl {
         }
 
         // Create this first just in case there's a problem with no registrations
+        this.captionBinder.SwitchModel(newData);
         this.headerBinder.SwitchModel(newData);
         this.messageBinder.SwitchModel(newData);
         this.yesOkTextBinder.SwitchModel(newData);
@@ -146,10 +153,10 @@ public partial class MessageBoxControl : UserControl {
 
         // Set visible when data is null, for debugging
         this.PART_AUTRPanel.IsVisible = newData == null || !string.IsNullOrWhiteSpace(newData.PersistentDialogName);
-        
+
         this.UpdateVisibleButtons();
         if (newData != null) {
-            Dispatcher.UIThread.InvokeAsync(() => {
+            Dispatcher.UIThread.Post(() => {
                 switch (newData.DefaultButton) {
                     case MessageBoxResult.None: break;
                     case MessageBoxResult.Yes:
@@ -218,8 +225,22 @@ public partial class MessageBoxControl : UserControl {
     /// <param name="result">The dialog result wanted</param>
     /// <returns>True if the dialog was closed, false if it could not be closed due to a validation error or other error</returns>
     public void Close(MessageBoxResult result) {
-        if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
-            window.Close(result);
+        if (this.Window != null && this.Window.IsOpenAndNotClosing) {
+            this.Window.Close(result);
         }
+    }
+
+    internal void OnWindowOpening(IWindow window) {
+        this.Window = window;
+        this.captionBinder.AttachControl(this);
+    }
+
+    internal void OnWindowOpened(IWindow window) {
+        window.SizingInfo.SizeToContent = SizeToContent.Manual;
+    }
+
+    internal void OnWindowClosed(IWindow window) {
+        this.captionBinder.DetachControl();
+        this.Window = null;
     }
 }

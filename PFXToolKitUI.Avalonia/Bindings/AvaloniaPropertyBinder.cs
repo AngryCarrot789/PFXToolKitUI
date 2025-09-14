@@ -45,5 +45,5 @@ public class AvaloniaPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel>
 
     protected override void UpdateModelOverride() => this.DoUpdateModel?.Invoke(this);
 
-    protected override void UpdateControlOverride() => this.DoUpdateControl?.Invoke(this);
+    protected override void UpdateControlOverride(bool hasJustAttached) => this.DoUpdateControl?.Invoke(this);
 }

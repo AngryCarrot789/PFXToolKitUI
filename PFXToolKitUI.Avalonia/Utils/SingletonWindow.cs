@@ -18,7 +18,7 @@
 // 
 
 using System.Diagnostics;
-using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 
 namespace PFXToolKitUI.Avalonia.Utils;
 
@@ -26,40 +26,38 @@ namespace PFXToolKitUI.Avalonia.Utils;
 /// A helper class for managing a single view of a window
 /// </summary>
 public sealed class SingletonWindow {
-    private readonly Func<DesktopWindow> factory;
-    private readonly WindowingSystem system;
-    private DesktopWindow? window;
+    private readonly IWindowManager? manager;
+    private readonly Func<IWindowManager, IWindow> factory;
+    private IWindow? currentView;
 
-    public SingletonWindow(Func<DesktopWindow> factory) {
-        if (!WindowingSystem.TryGetInstance(out WindowingSystem? windowingSystem)) {
-            throw new Exception("No windowing system available");
-        }
-
+    /// <summary>
+    /// A helper class for managing a single view of a window
+    /// </summary>
+    public SingletonWindow(Func<IWindowManager, IWindow> factory) {
         this.factory = factory;
-        this.system = windowingSystem;
+        if (!IWindowManager.TryGetInstance(out this.manager))
+            throw new InvalidOperationException("No window manager available");
     }
 
     public void ShowOrActivate() {
-        if (this.window == null) {
-            this.window = this.factory();
-            this.window.Closed += this.OnWindowClosed;
-            
-            this.system.Register(this.window).Show();
+        if (this.currentView != null) {
+            Debug.Assert(this.currentView.IsOpen);
+            this.currentView.Activate();
         }
         else {
-            Debug.Assert(this.window.IsOpen);
-            
-            this.window.Activate();
+            this.currentView = this.factory(this.manager!);
+            this.currentView.WindowClosed += this.OnWindowClosed;
+            this.currentView.Show();
         }
     }
 
-    private void OnWindowClosed(object? sender, EventArgs e) {
-        ((DesktopWindow) sender!).Closed -= this.OnWindowClosed;
-        this.window = null;
+    private void OnWindowClosed(IWindow sender, EventArgs e) {
+        sender.WindowClosed -= this.OnWindowClosed;
+        this.currentView = null;
     }
 
     public void Close() {
-        this.window?.Close();
-        Debug.Assert(this.window == null);
+        this.currentView?.Close();
+        Debug.Assert(this.currentView == null);
     }
 }

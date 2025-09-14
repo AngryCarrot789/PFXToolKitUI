@@ -18,9 +18,11 @@
 // 
 
 using System.Collections.Immutable;
+using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Services.FilePicking;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 using Path = System.IO.Path;
 
@@ -31,7 +33,7 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     // picker right after another dialog closes can cause WM_ENABLE not to be sent to
     // the parent window, basically freezing the whole application
     private const int WaitTimeMillisForWM_ENABLE = 100;
-    
+
     public static IReadOnlyList<FilePickerFileType>? ConvertFilters(IEnumerable<FileFilter>? filters) {
         if (filters == null)
             return null;
@@ -44,55 +46,111 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string?> OpenFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out DesktopWindow? window)) {
+        if (!IWindowManager.TryGetInstance(out IWindowManager? service) || !service.TryGetActiveOrMainWindow(out IWindow? window)) {
             return null;
         }
 
-        await Task.Delay(WaitTimeMillisForWM_ENABLE);
-        string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
-        IReadOnlyList<IStorageFile> list = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions() {
-            Title = message ?? "Pick a file",
-            AllowMultiple = false,
-            SuggestedFileName = fileName,
-            FileTypeFilter = ConvertFilters(filters)
-        });
+        if (window.TryGetTopLevel(out TopLevel? topLevel)) {
+            await Task.Delay(WaitTimeMillisForWM_ENABLE);
+            IStorageProvider provider = topLevel.StorageProvider;
+            if (!provider.CanOpen) {
+                await IMessageDialogService.Instance.ShowMessage("Error", "This platform does not support picking files");
+                return null;
+            }
 
-        return list.Count != 1 ? null : list[0].Path.LocalPath;
+            string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
+            IReadOnlyList<IStorageFile> list = await provider.OpenFilePickerAsync(new FilePickerOpenOptions() {
+                Title = message ?? "Pick a file",
+                AllowMultiple = false,
+                SuggestedFileName = fileName,
+                FileTypeFilter = ConvertFilters(filters)
+            });
+
+            return list.Count != 1 ? null : list[0].Path.LocalPath;
+        }
+
+        return null;
     }
 
     public async Task<string[]?> OpenMultipleFiles(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out DesktopWindow? window)) {
+        if (!IWindowManager.TryGetInstance(out IWindowManager? service) || !service.TryGetActiveOrMainWindow(out IWindow? window)) {
             return null;
         }
 
-        await Task.Delay(WaitTimeMillisForWM_ENABLE);
-        string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
-        IReadOnlyList<IStorageFile> list = await window.StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions() {
-            Title = message ?? "Pick some files",
-            AllowMultiple = true,
-            SuggestedFileName = fileName,
-            FileTypeFilter = ConvertFilters(filters)
-        });
+        if (window.TryGetTopLevel(out TopLevel? topLevel)) {
+            await Task.Delay(WaitTimeMillisForWM_ENABLE);
+            IStorageProvider provider = topLevel.StorageProvider;
+            if (!provider.CanOpen) {
+                await IMessageDialogService.Instance.ShowMessage("Error", "This platform does not support picking files");
+                return null;
+            }
 
-        return list.Count == 0 ? null : list.Select(x => x.Path.LocalPath).ToArray();
+            string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
+            IReadOnlyList<IStorageFile> list = await provider.OpenFilePickerAsync(new FilePickerOpenOptions() {
+                Title = message ?? "Pick some files",
+                AllowMultiple = true,
+                SuggestedFileName = fileName,
+                FileTypeFilter = ConvertFilters(filters)
+            });
+
+            return list.Count == 0 ? null : list.Select(x => x.Path.LocalPath).ToArray();
+        }
+
+        return null;
+    }
+
+    public async Task<string?> OpenFolders(string? message, string? initialPath = null, bool allowMultiple = false) {
+        if (!IWindowManager.TryGetInstance(out IWindowManager? service) || !service.TryGetActiveOrMainWindow(out IWindow? window)) {
+            return null;
+        }
+
+        if (window.TryGetTopLevel(out TopLevel? topLevel)) {
+            await Task.Delay(WaitTimeMillisForWM_ENABLE);
+            IStorageProvider provider = topLevel.StorageProvider;
+            if (!provider.CanPickFolder) {
+                await IMessageDialogService.Instance.ShowMessage("Error", "This platform does not support picking folders");
+                return null;
+            }
+
+            string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
+            IReadOnlyList<IStorageFolder> list = await provider.OpenFolderPickerAsync(new FolderPickerOpenOptions() {
+                Title = message ?? ("Pick " + (allowMultiple ? " folders" : " a folder")),
+                AllowMultiple = allowMultiple,
+                SuggestedFileName = fileName
+            });
+
+            return list.Count != 1 ? null : list[0].Path.LocalPath;
+        }
+
+        return null;
     }
 
     public async Task<string?> SaveFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null, bool warnOverwrite = true) {
-        if (!WindowingSystem.TryGetInstance(out WindowingSystem? service) || !service.TryGetActiveWindow(out DesktopWindow? window)) {
+        if (!IWindowManager.TryGetInstance(out IWindowManager? service) || !service.TryGetActiveOrMainWindow(out IWindow? window)) {
             return null;
         }
 
-        await Task.Delay(WaitTimeMillisForWM_ENABLE);
-        string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
-        string? extension = fileName != null ? Path.GetExtension(fileName) : null;
-        IStorageFile? item = await window.StorageProvider.SaveFilePickerAsync(new FilePickerSaveOptions() {
-            Title = message ?? "Save a file",
-            SuggestedFileName = fileName,
-            DefaultExtension = extension,
-            ShowOverwritePrompt = warnOverwrite,
-            FileTypeChoices = ConvertFilters(filters)
-        });
+        if (window.TryGetTopLevel(out TopLevel? topLevel)) {
+            await Task.Delay(WaitTimeMillisForWM_ENABLE);
+            IStorageProvider provider = topLevel.StorageProvider;
+            if (!provider.CanSave) {
+                await IMessageDialogService.Instance.ShowMessage("Error", "This platform does not support picking files");
+                return null;
+            }
 
-        return item?.Path.LocalPath;
+            string? fileName = initialPath != null ? Path.GetFileName(initialPath) : initialPath;
+            string? extension = fileName != null ? Path.GetExtension(fileName) : null;
+            IStorageFile? item = await provider.SaveFilePickerAsync(new FilePickerSaveOptions() {
+                Title = message ?? "Save a file",
+                SuggestedFileName = fileName,
+                DefaultExtension = extension,
+                ShowOverwritePrompt = warnOverwrite,
+                FileTypeChoices = ConvertFilters(filters)
+            });
+
+            return item?.Path.LocalPath;
+        }
+
+        return null;
     }
 }

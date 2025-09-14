@@ -18,7 +18,7 @@
 // 
 
 using Avalonia.Controls;
-using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Utils.Commands;
 
@@ -30,6 +30,8 @@ public partial class ConfigurationDialogView : UserControl {
     internal readonly AsyncRelayCommand ApplyThenCloseCommand;
     internal readonly AsyncRelayCommand CancelCommand;
 
+    public IWindow? Window { get; internal set; }
+    
     public ConfigurationDialogView(ConfigurationManager manager) {
         this.InitializeComponent();
         this.configManager = manager;
@@ -59,18 +61,14 @@ public partial class ConfigurationDialogView : UserControl {
             
             this.PART_EditorPanel.IsEnabled = false;
             await this.configManager.ApplyChangesInHierarchyAsync(null);
-            if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
-                window.Close(true);
-            }
+            this.Window?.Close(true);
         }, () => !this.ApplyCommand.IsRunning && !this.CancelCommand!.IsRunning);
 
         this.CancelCommand = new AsyncRelayCommand(async () => {
             this.UpdateCommands();
             this.PART_EditorPanel.IsEnabled = false;
             await this.configManager.RevertLiveChangesInHierarchyAsync(null);
-            if (TopLevel.GetTopLevel(this) is DesktopWindow window) {
-                window.Close(false);
-            }
+            this.Window?.Close(false);
         }, () => !this.ApplyCommand.IsRunning && !this.ApplyThenCloseCommand.IsRunning);
 
         this.PART_ApplyButton.Command = this.ApplyCommand;
@@ -86,10 +84,8 @@ public partial class ConfigurationDialogView : UserControl {
     private void OnEditorContextChanged(ConfigurationPanelControl sender, ConfigurationContext? oldContext, ConfigurationContext? newContext) {
         if (oldContext != null)
             oldContext.ModifiedPagesUpdated -= this.OnModifiedPagesChanged;
-
         if (newContext != null)
             newContext.ModifiedPagesUpdated += this.OnModifiedPagesChanged;
-
         this.UpdateCommands();
     }
 

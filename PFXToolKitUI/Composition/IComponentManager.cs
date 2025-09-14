@@ -31,6 +31,8 @@ public interface IComponentManager {
     ComponentStorage ComponentStorage { get; }
 
     sealed bool HasComponent(Type componentType) => this.ComponentStorage.HasComponent(componentType);
+    
+    sealed bool HasComponent<T>() => this.ComponentStorage.HasComponent<T>();
 
     sealed object GetComponent(Type componentType) => this.ComponentStorage.GetComponent(componentType);
 
@@ -40,9 +42,5 @@ public interface IComponentManager {
 
     sealed bool TryGetComponent<T>([NotNullWhen(true)] out T? component) where T : class => this.ComponentStorage.TryGetComponent(out component);
 
-    sealed void AddService<TComponent>(TComponent component) where TComponent : class => this.ComponentStorage.AddComponent(component);
-    
-    sealed void AddLazyService<TComponent>(Func<IComponentManager, TComponent> component) where TComponent : class => this.ComponentStorage.AddLazyComponent(component);
-
-    sealed TComponent GetOrCreateComponent<TComponent>(Func<IComponentManager, TComponent> factory) where TComponent : class => this.ComponentStorage.GetOrCreateComponent(factory);
+    sealed T GetOrCreateComponent<T>(Func<IComponentManager, T> factory) where T : class => this.ComponentStorage.GetOrCreateComponent(factory);
 }

@@ -60,6 +60,22 @@ public interface IFilePickDialogService {
     Task<string[]?> OpenMultipleFiles(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null);
 
     /// <summary>
+    /// Shows a dialog that allows the user to pick a single file
+    /// </summary>
+    /// <param name="message">A message to show to the user, usually the dialog's caption/titlebar</param>
+    /// <param name="initialPath"></param>
+    /// <param name="allowMultiple">True to allow picking multiple folders, False to only allow picking one</param>
+    /// <param name="defaultPathPath">
+    /// The initial directory that the dialog shows (e.g. desktop or system32 or whatever).
+    /// Null by default, meaning the operating system decides what the initial directory is
+    /// </param>
+    /// <returns>
+    /// The selected file path, or null if the user selected nothing or cancelled the operation.
+    /// Will not be an empty string or consist of only whitespaces
+    /// </returns>
+    Task<string?> OpenFolders(string? message, string? initialPath = null, bool allowMultiple = false);
+    
+    /// <summary>
     /// Shows a dialog that allows the user to specify a file path to save. This method won't actually save any data of course
     /// </summary>
     /// <param name="message">A message to show to the user, usually the dialog's caption/titlebar</param>

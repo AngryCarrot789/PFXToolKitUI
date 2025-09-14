@@ -40,12 +40,20 @@ public interface IUserInputContent {
     /// <summary>
     /// Fired when the window opens. Is not called when we become connected to a UserInputDialogView whose window is already open.
     /// </summary>
-    void OnWindowOpened();
+    void OnWindowOpening() {
+    }
+
+    /// <summary>
+    /// Fired when the window opens. Is not called when we become connected to a UserInputDialogView whose window is already open.
+    /// </summary>
+    void OnWindowOpened() {
+    }
 
     /// <summary>
     /// Fired when the window closes. Is not called when we become disconnected from a UserInputDialogView whose window is open.
     /// </summary>
-    void OnWindowClosed();
+    void OnWindowClosed() {
+    }
 
     PixelSize GetMinimumBounds() => PixelSize.Empty;
 }

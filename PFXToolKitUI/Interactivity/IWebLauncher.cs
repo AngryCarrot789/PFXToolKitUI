@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2024-2025 REghZy
+// Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -17,18 +17,22 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia.Controls;
+using System.Diagnostics.CodeAnalysis;
+using PFXToolKitUI.Interactivity.Windowing;
 
-namespace PFXToolKitUI.Avalonia.Services.Windowing;
+namespace PFXToolKitUI.Interactivity;
 
 /// <summary>
-/// An event handler for when a window is trying to close
-/// <param name="window">The sender window</param>
-/// <param name="reason">The reason for window close</param>
-/// <param name="isCancelled">True when another handler has cancelled the close</param>
+/// A service that allows launching a URL in a web browser
 /// </summary>
-/// <returns>
-/// A task which contains the cancellation boolean. True means do not close,
-/// False means we don't want to stop it from closing (another handler may cancel though)
-/// </returns>
-public delegate Task<bool> DesktopWindowClosingAsyncEventHandler(DesktopWindow sender, WindowCloseReason reason, bool isCancelled);
+public interface IWebLauncher {
+    /// <summary>Tries to get the web launcher service for a window</summary>
+    public static bool TryGet(ITopLevelComponentManager window, [NotNullWhen(true)] out IWebLauncher? launcher) => window.TryGetWebLauncher(out launcher);
+    
+    /// <summary>
+    /// Tries to launch the uri in a web browser
+    /// </summary>
+    /// <param name="uri">The address</param>
+    /// <returns>A task returns true when successful</returns>
+    Task<bool> LaunchUriAsync(Uri uri);
+}

@@ -21,9 +21,12 @@ using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
+/// <summary>
+/// Manages the top-level menu items for a window's main menu
+/// </summary>
 public class TopLevelMenuRegistry {
     /// <summary>
-    /// Gets all of the top-level menu items
+    /// Gets the menu item entries for this menu
     /// </summary>
     public ObservableList<ContextEntryGroup> Items { get; }
 

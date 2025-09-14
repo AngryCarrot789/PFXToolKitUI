@@ -36,7 +36,7 @@ public class ManualBinder<TModel> : BaseBinder<TModel> where TModel : class {
     protected override void UpdateModelOverride() {
     }
 
-    protected override void UpdateControlOverride() {
+    protected override void UpdateControlOverride(bool hasJustAttached) {
     }
 
     protected override void OnAttached() {

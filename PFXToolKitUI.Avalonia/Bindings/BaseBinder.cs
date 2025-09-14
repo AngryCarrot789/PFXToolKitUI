@@ -39,6 +39,7 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class {
     protected Control? myControl;
     protected TModel? myModel;
+    private int reentrancyUpdateControl;
 
     public Control Control => this.myControl ?? throw new InvalidOperationException("No control is attached");
 
@@ -54,7 +55,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
     public bool IsFullyAttached { get; private set; }
 
-    public bool IsUpdatingControl { get; protected set; }
+    public bool IsUpdatingControl => this.reentrancyUpdateControl > 0;
 
     /// <summary>
     /// A unique name for this instance to identify it while debugging
@@ -69,20 +70,22 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     }
 
     public void UpdateControl() {
-        if (!this.IsFullyAttached) {
-            return;
+        if (this.IsFullyAttached) {
+            this.UpdateControlInternal(false);
         }
+    }
 
-        // We don't check if we are updating the control, just in case the model
-        // decided to coerce its own value which is different from the UI control
-
+    private void UpdateControlInternal(bool isFirstUpdateControl) {
         try {
-            this.IsUpdatingControl = true;
-            this.UpdateControlOverride();
+            // We don't check if we are updating the control, just in case the model
+            // decided to coerce its own value which is different from the UI control
+
+            this.reentrancyUpdateControl++;
+            this.UpdateControlOverride(isFirstUpdateControl);
             this.ControlUpdated?.Invoke(this);
         }
         finally {
-            this.IsUpdatingControl = false;
+            this.reentrancyUpdateControl--;
         }
     }
 
@@ -101,7 +104,8 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     /// <summary>
     /// This method should be overridden to update the control's value using the model's value
     /// </summary>
-    protected abstract void UpdateControlOverride();
+    /// <param name="hasJustAttached">True when <see cref="IsFullyAttached"/> became true in the call frame, false otherwise</param>
+    protected abstract void UpdateControlOverride(bool hasJustAttached);
 
     public void Attach(Control control, TModel model) {
         if (this.IsFullyAttached)
@@ -254,7 +258,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     private void AttachInternal() {
         this.IsFullyAttached = true;
         this.OnAttached();
-        this.UpdateControl();
+        this.UpdateControlInternal(true);
     }
 
     private void TryDetachInternal() {

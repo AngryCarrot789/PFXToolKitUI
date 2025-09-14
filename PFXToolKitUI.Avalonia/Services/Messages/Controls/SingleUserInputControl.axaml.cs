@@ -101,9 +101,6 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         return true;
     }
 
-    public void OnWindowOpened() {
-    }
-
     public PixelSize GetMinimumBounds() {
         int minWidth = this.myData!.MinimumDialogWidthHint;
         if (minWidth >= 0) {
@@ -111,9 +108,6 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         }
         
         return PixelSize.Empty;
-    }
-
-    public void OnWindowClosed() {
     }
 
     private void UpdateLabelVisibility() => this.PART_Label.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Label);

@@ -104,12 +104,6 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         return true;
     }
 
-    public void OnWindowOpened() {
-    }
-
-    public void OnWindowClosed() {
-    }
-
     private void UpdateLabelAVisibility() => this.PART_LabelA.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.LabelA);
     private void UpdateLabelBVisibility() => this.PART_LabelA.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.LabelA);
     private void UpdateFooterVisibility() => this.PART_FooterTextBlock.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Footer);

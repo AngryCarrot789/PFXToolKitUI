@@ -6,7 +6,10 @@
              xmlns:av="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia"
              mc:Ignorable="d"
              x:Class="PFXToolKitUI.Avalonia.Configurations.ConfigurationDialogView"
-             av:UIInputManager.FocusPath="Configuration">
+             av:UIInputManager.FocusPath="Configuration"
+             FontFamily="{StaticResource FontOxanium}"
+             FontWeight="Medium"
+             Background="{DynamicResource PanelBackground0}">
     <DockPanel>
         <Border DockPanel.Dock="Bottom"
                 Background="{DynamicResource ABrush.Tone4.Background.Static}"

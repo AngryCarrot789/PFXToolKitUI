@@ -52,10 +52,4 @@ public partial class ColourUserInputControl : UserControl, IUserInputContent {
     public bool FocusPrimaryInput() {
         return false;
     }
-
-    public void OnWindowOpened() {
-    }
-
-    public void OnWindowClosed() {
-    }
 }

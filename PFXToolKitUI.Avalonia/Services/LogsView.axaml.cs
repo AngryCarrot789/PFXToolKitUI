@@ -19,13 +19,12 @@
 
 using Avalonia.Controls;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
-using PFXToolKitUI.Avalonia.Services.Windowing;
 using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
-public partial class LogsWindow : DesktopWindow {
-    public LogsWindow() {
+public partial class LogsView : UserControl {
+    public LogsView() {
         this.InitializeComponent();
         this.PART_ListBox.SelectionChanged += this.OnSelectionChanged;
     }
@@ -41,13 +40,11 @@ public partial class LogsWindow : DesktopWindow {
         }
     }
 
-    protected override void OnOpenedCore() {
-        base.OnOpenedCore();
+    internal void OnWindowOpened() {
         this.PART_ListBox.SetItemsSource(AppLogger.Instance.Entries);
     }
 
-    protected override void OnClosed(EventArgs e) {
-        base.OnClosed(e);
+    internal void OnWindowClosed() {
         this.PART_ListBox.SetItemsSource(null);
     }
 }

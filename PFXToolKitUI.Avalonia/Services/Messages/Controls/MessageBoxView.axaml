@@ -1,9 +1,8 @@
-﻿<UserControl x:Class="PFXToolKitUI.Avalonia.Services.Messages.Controls.MessageBoxControl"
+﻿<UserControl x:Class="PFXToolKitUI.Avalonia.Services.Messages.Controls.MessageBoxView"
              xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Services"
              xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">

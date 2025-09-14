@@ -1,7 +1,9 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls;assembly=PFXToolKitUI.Avalonia"
-                    xmlns:converters="clr-namespace:PFXToolKitUI.Avalonia.Themes.Converters">
+                    xmlns:converters="clr-namespace:PFXToolKitUI.Avalonia.Themes.Converters"
+                    xmlns:di="clr-namespace:PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl"
+                    xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls">
     <ControlTheme x:Key="{x:Type Window}" TargetType="{x:Type Window}">
         <Setter Property="Background" Value="{DynamicResource Window.Static.Background}"/>
         <Setter Property="TransparencyBackgroundFallback" Value="White"/>
@@ -36,7 +38,7 @@
         ExtendClientAreaTitleBarHeightHint="-1"
     -->
 
-    <ControlTheme x:Key="{x:Type controls:WindowEx}" TargetType="{x:Type controls:WindowEx}" BasedOn="{StaticResource {x:Type Window}}">
+    <ControlTheme x:Key="{x:Type di:DesktopNativeWindow}" TargetType="{x:Type di:DesktopNativeWindow}" BasedOn="{StaticResource {x:Type Window}}">
         <Setter Property="TitleBarBrush" Value="{DynamicResource Window.Static.Title.Background}"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource Window.Static.Border}"/>
@@ -51,14 +53,6 @@
                             IsHitTestVisible="False"/>
                     <VisualLayerManager x:Name="PART_VisualLayerManager" Margin="1">
                         <VisualLayerManager.ChromeOverlayLayer>
-                            <!--
-                            <c:WindowTitleBar x:Name="PART_TitleBar" Height="30"
-                                              Background="{TemplateBinding TitleBarBrush}"
-                                              Icon="{TemplateBinding Icon}"
-                                              Title="{TemplateBinding Title}"
-                                              DockPanel.Dock="Top" IsHitTestVisible="False"
-                                              VerticalAlignment="Top" HorizontalAlignment="Stretch"/>
-                            -->
                         </VisualLayerManager.ChromeOverlayLayer>
                         <DockPanel>
                             <Panel x:Name="PART_TitleBarPanel" Height="30" IsHitTestVisible="True" DockPanel.Dock="Top" VerticalAlignment="Top" HorizontalAlignment="Stretch">
@@ -100,14 +94,18 @@
                                         </Button>
                                     </StackPanel>
                                     <DockPanel Background="Transparent" Margin="0,0,5,0" HorizontalAlignment="Stretch" IsHitTestVisible="False">
-                                        <Image x:Name="PART_IconImage" 
-                                               Source="{TemplateBinding Icon, Converter={x:Static converters:IconImageConverter.Instance}}"
-                                               IsVisible="{TemplateBinding Icon, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                               Margin="5,0,0,0" Height="16" Width="16"
-                                               VerticalAlignment="Center" 
-                                               Stretch="UniformToFill"
-                                               RenderOptions.BitmapInterpolationMode="None" 
-                                               DockPanel.Dock="Left"/>
+                                        <StackPanel DockPanel.Dock="Left" Orientation="Horizontal">
+                                            <Image x:Name="PART_IconImage"
+                                                   Margin="5,0,0,0" Height="16" Width="16"
+                                                   IsVisible="False"
+                                                   VerticalAlignment="Center"
+                                                   Stretch="UniformToFill"
+                                                   RenderOptions.BitmapInterpolationMode="None"/>
+                                            <avc:IconControl x:Name="PART_IconControl"
+                                                             Margin="5,0,0,0" Height="16" Width="16"
+                                                             IsVisible="False"
+                                                             VerticalAlignment="Center"/>
+                                        </StackPanel>
                                         <TextBlock FontSize="13" Margin="5,3,0,3" TextAlignment="{TemplateBinding TitleBarTextAlignment}"
                                                    VerticalAlignment="Center" HorizontalAlignment="Stretch" TextWrapping="NoWrap"
                                                    Foreground="{TemplateBinding Foreground}"

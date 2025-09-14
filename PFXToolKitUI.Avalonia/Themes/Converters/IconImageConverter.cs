@@ -25,15 +25,12 @@ using Avalonia.Media.Imaging;
 
 namespace PFXToolKitUI.Avalonia.Themes.Converters;
 
-public class IconImageConverter : IValueConverter {
+public sealed class IconImageConverter : IValueConverter {
     public static IconImageConverter Instance { get; } = new IconImageConverter();
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is WindowIcon icon) {
-            using MemoryStream stream = new MemoryStream(1024);
-            icon.Save(stream);
-            stream.Seek(0, SeekOrigin.Begin);
-            return new Bitmap(stream);
+            return WindowIconToBitmap(icon);
         }
 
         return value == AvaloniaProperty.UnsetValue ? value : null;
@@ -41,5 +38,12 @@ public class IconImageConverter : IValueConverter {
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) {
         throw new NotImplementedException();
+    }
+
+    public static Bitmap WindowIconToBitmap(WindowIcon icon) {
+        using MemoryStream stream = new MemoryStream(1024);
+        icon.Save(stream);
+        stream.Seek(0, SeekOrigin.Begin);
+        return new Bitmap(stream);
     }
 }

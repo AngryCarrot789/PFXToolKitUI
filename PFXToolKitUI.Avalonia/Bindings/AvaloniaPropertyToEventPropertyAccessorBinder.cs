@@ -37,8 +37,6 @@ public class AvaloniaPropertyToEventPropertyAccessorBinder<TModel, TValue> : Bas
         this.accessor = accessor ?? throw new ArgumentNullException(nameof(accessor));
     }
 
-    private void OnEvent() => this.UpdateControl();
-
     protected override void UpdateModelOverride() {
         if (this.IsFullyAttached && base.Property != null) {
             object? newValue = this.myControl!.GetValue(base.Property);
@@ -46,7 +44,7 @@ public class AvaloniaPropertyToEventPropertyAccessorBinder<TModel, TValue> : Bas
         }
     }
 
-    protected override void UpdateControlOverride() {
+    protected override void UpdateControlOverride(bool hasJustAttached) {
         if (this.IsFullyAttached && base.Property != null) {
             object? newValue = this.accessor.GetObjectValue(this.myModel!);
             this.myControl!.SetValue(base.Property!, newValue);

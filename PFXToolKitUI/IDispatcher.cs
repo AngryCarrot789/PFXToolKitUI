@@ -119,6 +119,7 @@ public interface IDispatcher {
     /// </para>
     /// </summary>
     /// <param name="task">The task to wait for completion</param>
+    /// <exception cref="AggregateException">The task was faulted and <see cref="Task.Exception"/> was non-null</exception>
     void AwaitForCompletion(Task task) {
         if (!task.IsCompleted) {
             using CancellationTokenSource cts = new CancellationTokenSource();
@@ -126,8 +127,9 @@ public interface IDispatcher {
             this.PushFrame(cts.Token);
         }
 
-        if (!task.IsCanceled && task.Exception is AggregateException e) {
-            ExceptionDispatchInfo.Throw(e.InnerExceptions.Count == 1 ? e.InnerExceptions[0] : e);
+        AggregateException? exception = task.Exception;
+        if (exception != null) {
+            ExceptionDispatchInfo.Throw(exception);
         }
     }
 }

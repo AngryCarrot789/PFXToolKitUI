@@ -70,7 +70,7 @@ public class ErroringDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaP
         }
     }
 
-    protected override void UpdateControlOverride() {
+    protected override void UpdateControlOverride(bool hasJustAttached) {
         if (this.IsFullyAttached && this.Property != null) {
             TValue? newValue = this.Parameter.GetValue(this.Model);
             this.myControl!.SetValue(this.Property, this.ParamToProp(newValue));

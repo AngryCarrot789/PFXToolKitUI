@@ -17,9 +17,15 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
+using PFXToolKitUI.Interactivity.Windowing;
+
 namespace PFXToolKitUI.Interactivity;
 
 public interface IClipboardService {
+    /// <summary>Tries to get the clipboard service for a window. Windows might not have a clipboard, e.g. the OS has no clipboard</summary>
+    public static bool TryGet(ITopLevelComponentManager window, [NotNullWhen(true)] out IClipboardService? clipboard) => window.TryGetClipboard(out clipboard);
+    
     /// <summary>
     /// Returns a string containing the text data on the Clipboard.
     /// </summary>

@@ -17,31 +17,40 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Avalonia.Services.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Logging;
+using PFXToolKitUI.Themes;
+using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class LogViewServiceImpl : ILogViewService {
-    private WeakReference<LogsWindow>? currentWindow;
+    private IWindow? currentWindow;
 
     public Task ShowLogsWindow() {
-        if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
-            if (this.currentWindow == null || !this.currentWindow.TryGetTarget(out LogsWindow? existing) || existing.IsClosed) {
-                LogsWindow window = new LogsWindow();
-                if (this.currentWindow == null)
-                    this.currentWindow = new WeakReference<LogsWindow>(window);
-                else
-                    this.currentWindow.SetTarget(window);
+        if (IWindowManager.TryGetInstance(out IWindowManager? manager)) {
+            if (this.currentWindow == null) {
+                this.currentWindow = manager.CreateWindow(new WindowBuilder() {
+                    Title = "Application Logs",
+                    Content = new LogsView(),
+                    TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
+                    BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
+                    Width = 900, Height = 700
+                });
 
-                system.Register(window).Show();
+                this.currentWindow.WindowOpened += static (sender, args) => ((LogsView) sender.Content!).OnWindowOpened();
+                this.currentWindow.WindowClosed += (sender, args) => {
+                    ((LogsView) sender.Content!).OnWindowClosed();
+                    this.currentWindow = null;
+                };
+                
+                return this.currentWindow.ShowAsync();
             }
-            else {
-                existing.Activate();
-                return Task.CompletedTask;
-            }
+
+            this.currentWindow.Activate();
+            return Task.CompletedTask;
         }
-
+        
         return Task.CompletedTask;
     }
 }

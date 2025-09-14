@@ -39,5 +39,5 @@ public class AvaloniaPropertyToEventPropertyBinder<TModel> : BaseAvaloniaPropert
 
     protected override void UpdateModelOverride() => this.updateModel?.Invoke(this);
 
-    protected override void UpdateControlOverride() => this.updateControl?.Invoke(this);
+    protected override void UpdateControlOverride(bool hasJustAttached) => this.updateControl?.Invoke(this);
 }

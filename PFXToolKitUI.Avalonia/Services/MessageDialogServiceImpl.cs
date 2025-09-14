@@ -17,11 +17,15 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Avalonia.Services.Messages.Windows;
-using PFXToolKitUI.Avalonia.Services.Windowing;
+using Avalonia.Controls;
+using Avalonia.Input;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Services.Messages.Controls;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.Messaging.Configurations;
+using PFXToolKitUI.Themes;
+using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
@@ -43,7 +47,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
         if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
             return await ShowMessageMainThread(info);
         }
-        
+
         return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
     }
 
@@ -75,23 +79,52 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             }
         }
 
-        if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
-            if (system.TryGetActiveWindow(out DesktopWindow? activeWindow)) {
-                MessageBoxWindow window = new MessageBoxWindow() { MessageBoxData = info };
-                MessageBoxResult? result = await system.Register(window).ShowDialog<MessageBoxResult?>(activeWindow);
-                window.MessageBoxData = null;
-
-                MessageBoxResult trueResult = result ?? MessageBoxResult.None;
-                if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && trueResult != MessageBoxResult.None) {
-                    PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(trueResult, info.AlwaysUseThisResultUntilAppCloses);
-                }
-
-                return trueResult;
-            }
-            else {
+        if (IWindowManager.TryGetInstance(out IWindowManager? manager)) {
+            if (!manager.TryGetActiveOrMainWindow(out IWindow? activeWindow)) {
                 Console.WriteLine("Warning: no active window available to show MessageBox");
                 Console.WriteLine($"[{info.Caption}] {info.Header}");
                 Console.WriteLine($"  {info.Message}");
+            }
+
+            MessageBoxView view = new MessageBoxView() {
+                MessageBoxData = info
+            };
+
+            IWindow window = manager.CreateWindow(new WindowBuilder() {
+                Title = info.Caption,
+                Parent = activeWindow,
+                Content = view,
+                SizeToContent = SizeToContent.WidthAndHeight,
+                MinWidth = 300, MinHeight = 100,
+                MaxWidth = 800, MaxHeight = 800,
+                TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
+                BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
+            });
+
+            window.Control.AddHandler(InputElement.KeyDownEvent, WindowOnKeyDown);
+            window.WindowOpening += WindowOnWindowOpening;
+            window.WindowOpened += WindowOnWindowOpened;
+            window.WindowClosed += WindowOnWindowClosed;
+
+            MessageBoxResult mbResult = await window.ShowDialog() as MessageBoxResult? ?? MessageBoxResult.None;
+            view.MessageBoxData = null; // unhook models' event handlers
+
+            if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && mbResult != MessageBoxResult.None) {
+                PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(mbResult, info.AlwaysUseThisResultUntilAppCloses);
+            }
+
+            return mbResult;
+
+            void WindowOnWindowOpening(IWindow s, EventArgs e) => view.OnWindowOpening(s);
+            void WindowOnWindowOpened(IWindow s, EventArgs e) => view.OnWindowOpened(s);
+            void WindowOnWindowClosed(IWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
+
+            void WindowOnKeyDown(object? s, KeyEventArgs e) {
+                if (!e.Handled && e.Key == Key.Escape) {
+                    if (view.Window != null && view.Window.IsOpenAndNotClosing) {
+                        view.Close(MessageBoxResult.None);
+                    }
+                }
             }
         }
         else {

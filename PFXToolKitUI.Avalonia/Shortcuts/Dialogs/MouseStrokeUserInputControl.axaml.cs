@@ -67,10 +67,4 @@ public partial class MouseStrokeUserInputControl : UserControl, IUserInputConten
         this.InputBox.Focus();
         return true;
     }
-
-    public void OnWindowOpened() {
-    }
-
-    public void OnWindowClosed() {
-    }
 }
