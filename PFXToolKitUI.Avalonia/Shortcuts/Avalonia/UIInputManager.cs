@@ -341,7 +341,7 @@ public class UIInputManager {
     /// <summary>
     /// Sets the element's focus path for the specific element, which is used to evaluate which shortcuts are visible to the element and its visual tree
     /// </summary>
-    public static void SetFocusPath(AvaloniaObject element, string value) => element.SetValue(FocusPathProperty, value);
+    public static void SetFocusPath(AvaloniaObject element, string? value) => element.SetValue(FocusPathProperty, value);
 
     /// <summary>
     /// Gets the element's focus path for the specific element, which is used to evaluate which shortcuts are visible to the element and its visual tree

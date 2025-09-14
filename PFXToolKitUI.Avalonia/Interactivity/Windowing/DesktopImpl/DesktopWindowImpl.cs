@@ -29,6 +29,7 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
+using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Composition;
 using PFXToolKitUI.Icons;
@@ -183,6 +184,8 @@ public sealed class DesktopWindowImpl : IWindow {
         this.BorderBrush = builder.BorderBrush;
         this.Menu = builder.Menu;
         this.Content = builder.Content;
+
+        UIInputManager.SetFocusPath(this.myNativeWindow, builder.FocusPath);
 
         using MultiChangeToken change = DataManager.GetContextData(this.myNativeWindow).BeginChange();
         change.Context.Set(IWindow.WindowDataKey, this);
