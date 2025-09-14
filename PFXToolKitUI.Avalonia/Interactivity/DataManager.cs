@@ -32,12 +32,16 @@ using PFXToolKitUI.Interactivity.Contexts;
 namespace PFXToolKitUI.Avalonia.Interactivity;
 
 /// <summary>
-/// A class that is used to store and extract contextual information from WPF components.
+/// A class that is used to store and extract contextual information from controls.
 /// <para>
-/// This class generates inherited-merged contextual data for the logical tree, that is, all contextual data
-/// is accumulated and cached in each element from logical parents, and the <see cref="InheritedContextChangedEvent"/> is fired
-/// on the element and all of its visual children when that parent's <see cref="ContextDataProperty"/> changes,
-/// allowing listeners to do anything they want (e.g. re-query command executability based on available context)
+/// This class generates "inherited-merged" contextual data for the logical tree, that is, all contextual data
+/// is accumulated and cached in each element from logical parents (on demand), where the descendends have final
+/// priority over duplicate keys.
+/// </para>
+/// <para>
+/// The <see cref="InheritedContextChangedEvent"/> is fired on elements and all of its visual children
+/// when that parent's <see cref="ContextDataProperty"/> changes, allowing listeners to do anything
+/// they want (e.g. re-query command executability based on available context)
 /// </para>
 /// </summary>
 public class DataManager {

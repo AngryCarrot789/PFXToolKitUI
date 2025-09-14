@@ -50,12 +50,23 @@ public abstract class Notification {
     /// Some notifications may not want to auto hide as they may contain crucial information such as errors which you
     /// may want to look at, so set this property to false.
     /// <para>
-    /// Note, <see cref="StartAutoHide"/> is called as soon as the notification is added to a <see cref="NotificationManager"/>
+    /// Note, <see cref="StartAutoHide"/> is called as soon as the notification is shown in <see cref="NotificationManager"/>.
+    /// Changing this property to false after <see cref="Show"/> will cancel auto-hide.
     /// </para>
     /// </summary>
     public bool CanAutoHide {
         get => this.canAutoHide;
-        set => PropertyHelper.SetAndRaiseINE(ref this.canAutoHide, value, this, static t => t.CanAutoHideChanged?.Invoke(t));
+        set {
+            if (this.canAutoHide != value) {
+                this.canAutoHide = value;
+                if (!value) {
+                    this.flagRestartAutoHide = false;
+                    this.CancelAutoHide();
+                }
+
+                this.CanAutoHideChanged?.Invoke(this);
+            }
+        }
     }
 
     /// <summary>
@@ -119,7 +130,7 @@ public abstract class Notification {
         get => this.alertMode;
         set => PropertyHelper.SetAndRaiseINE(ref this.alertMode, value, this, static t => t.AlertModeChanged?.Invoke(t));
     }
-    
+
     public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
 
     public ObservableList<NotificationCommand> Commands { get; }
@@ -143,9 +154,11 @@ public abstract class Notification {
 
     protected Notification() {
         this.Commands = new ObservableList<NotificationCommand>();
-        this.Commands.BeforeItemAdded += (list, index, item) => {
-            if (item.Notification != null)
-                throw new InvalidOperationException("Command already exists in another notification");
+        this.Commands.BeforeItemsAdded += (list, index, items) => {
+            foreach (NotificationCommand item in items) {
+                if (item.Notification != null)
+                    throw new InvalidOperationException("Command already exists in another notification");
+            }
         };
 
         ObservableItemProcessor.MakeSimple(this.Commands, c => c.Notification = this, c => c.Notification = null);

@@ -37,15 +37,15 @@ public delegate void ObservableListReplaceEventHandler<T>(IObservableList<T> lis
 /// <typeparam name="T"></typeparam>
 public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <summary>
-    /// An event fired when one or more items are about to be added. This can be used for pre-checks
-    /// and throwing an exception when those checks fail.
+    /// An event fired when items are about to be added to this collection
     /// </summary>
-    public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
+    public event ObservableListMultipleItemsEventHandler<T>? BeforeItemsAdded;
     
     /// <summary>
     /// An event fired when one or more items are about to be removed.
     /// </summary>
     public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
+    
     
     /// <summary>
     /// An event fired when an item is about to be replaced by another item

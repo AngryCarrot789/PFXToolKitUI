@@ -77,16 +77,17 @@ public sealed class WindowSizingInfo {
         set => PropertyHelper.SetAndRaiseINE(ref this.height, value, this, static (t, o, n) => t.DoubleValueChanged?.Invoke(t, nameof(Height), o, n));
     }
 
+    /// <summary>
+    /// Gets or sets if the window can be resized by the user. This also hides the maximize button, if used
+    /// </summary>
     public bool CanResize {
         get => this.canResize;
         set => PropertyHelper.SetAndRaiseINE(ref this.canResize, value, this, static t => t.CanResizeChanged?.Invoke(t));
     }
 
     /// <summary>
-    /// Gets or sets how the window should be sized based on its contents
-    /// <para>
-    /// The default value is null, which means the window will size itself to its content when it becomes visible, then switches to manual sizing.
-    /// </para>
+    /// Gets or sets how the window should be sized based on its contents. The default is manual, which means the window
+    /// initially takes up the framework default window size, unless our width/height or minimum analogues are set
     /// </summary>
     public SizeToContent SizeToContent {
         get => this.sizeToContent;

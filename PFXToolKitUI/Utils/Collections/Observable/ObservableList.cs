@@ -48,7 +48,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     private readonly bool isDerivedType;
     protected int blockReentrancyCount;
 
-    public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
+    public event ObservableListMultipleItemsEventHandler<T>? BeforeItemsAdded;
     public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
     public event ObservableListMoveEventHandler<T>? BeforeItemMoved;
@@ -119,17 +119,16 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         if ((uint) index > (uint) this.myItems.Count)
             throw new IndexOutOfRangeException($"Index beyond length of this list: {index} > {this.myItems.Count}");
 
-        this.BeforeItemAdded?.Invoke(this, index, item);
+        SingletonList<T>? itemList = null;
+        this.BeforeItemsAdded?.Invoke(this, index, itemList = new SingletonList<T>(item));
         this.myItems.Insert(index, item);
 
         // Invoke base method when derived or if we have an ItemsAdded or CC handler
         if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null)
-            this.OnItemsAdded(index, new SingletonList<T>(item));
+            this.OnItemsAdded(index, itemList ?? new SingletonList<T>(item));
     }
 
     public void AddRange(IEnumerable<T> items) => this.InsertRange(this.Count, items);
-
-    public void AddSpanRange(ReadOnlySpan<T> items) => this.InsertSpanRange(this.Count, items);
 
     public void InsertRange(int index, IEnumerable<T> items) {
         this.CheckReentrancy();
@@ -144,14 +143,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             list = items.ToList();
         }
 
-        if (list.Count > 0) {
-            ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeItemAdded;
-            if (beforeAdd != null) {
-                foreach (T item in list) {
-                    beforeAdd(this, index, item);
-                }
-            }
-
+        if (list.Count > 0) {            
+            this.BeforeItemsAdded?.Invoke(this, index, list);
             this.myItems.InsertRange(index, list);
 
             if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null) // Stops the event handler modifying the list
@@ -159,33 +152,6 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
             this.OnItemsAdded(index, list);
         }
-    }
-
-    /// <summary>
-    /// Inserts a span of items into this list. Before trying to optimise code to use this, know that this method may
-    /// create an array and then list from the span if we are a derived type or we have event handlers for <see cref="ItemsAdded"/>
-    /// </summary>
-    /// <param name="index"></param>
-    /// <param name="items"></param>
-    public void InsertSpanRange(int index, ReadOnlySpan<T> items) {
-        this.CheckReentrancy();
-        if (index < 0)
-            throw new IndexOutOfRangeException("Negative index: " + index);
-        if ((uint) index > (uint) this.myItems.Count)
-            throw new IndexOutOfRangeException($"Index beyond length of this list: {index} > {this.myItems.Count}");
-        if (items.Length == 0)
-            return;
-
-        ObservableListBeforeAddedEventHandler<T>? beforeAdd = this.BeforeItemAdded;
-        if (beforeAdd != null) {
-            foreach (T item in items) {
-                beforeAdd(this, index, item);
-            }
-        }
-
-        this.myItems.InsertRange(index, items);
-        if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null)
-            this.OnItemsAdded(index, new ReadOnlyCollection<T>(items.ToArray()));
     }
 
     protected override void RemoveItem(int index) {

@@ -27,6 +27,9 @@ public delegate void NotificationCommandEventHandler(NotificationCommand sender)
 
 public delegate void NotificationCommandContextDataChangedEventHandler(NotificationCommand sender, IContextData? oldData, IContextData? newData);
 
+/// <summary>
+/// A command that may be executed from within a notification
+/// </summary>
 public abstract class NotificationCommand {
     private Notification? notification;
     private string? text, tooltip;

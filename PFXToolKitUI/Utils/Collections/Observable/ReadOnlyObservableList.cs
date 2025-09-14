@@ -29,7 +29,7 @@ namespace PFXToolKitUI.Utils.Collections.Observable;
 public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<T> {
     private readonly IObservableList<T> delegateList;
 
-    public event ObservableListBeforeAddedEventHandler<T>? BeforeItemAdded;
+    public event ObservableListMultipleItemsEventHandler<T>? BeforeItemsAdded;
     public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
     public event ObservableListMoveEventHandler<T>? BeforeItemMoved;
@@ -43,7 +43,7 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
 
     public ReadOnlyObservableList(IObservableList<T> list) : base(list) {
         this.delegateList = list;
-        list.BeforeItemAdded += (sender, index, item) => this.BeforeItemAdded?.Invoke(this, index, item);
+        list.BeforeItemsAdded += (sender, index, items) => this.BeforeItemsAdded?.Invoke(this, index, items);
         list.BeforeItemsRemoved += (sender, index, count) => this.BeforeItemsRemoved?.Invoke(this, index, count);
         list.BeforeItemReplace += (sender, index, oldItem, newItem) => this.BeforeItemReplace?.Invoke(this, index, oldItem, newItem);
         list.BeforeItemMoved += (sender, oldIndex, newIndex, item) => this.BeforeItemMoved?.Invoke(this, oldIndex, newIndex, item);
