@@ -169,7 +169,7 @@ public sealed class DesktopWindowImpl : IWindow {
             this.ComponentStorage.AddComponent<IClipboardService>(new ClipboardServiceImpl(clip));
         }
 
-        this.ComponentStorage.AddComponent(new WebLauncherImpl(this.myNativeWindow));
+        this.ComponentStorage.AddComponent<IWebLauncher>(new WebLauncherImpl(this.myNativeWindow));
 
         this.myNativeWindow.ShowTitleBarIcon = builder.ShowTitleBarIcon;
         this.myNativeWindow.CanResize = builder.CanResize;
@@ -185,8 +185,8 @@ public sealed class DesktopWindowImpl : IWindow {
         this.Content = builder.Content;
 
         using MultiChangeToken change = DataManager.GetContextData(this.myNativeWindow).BeginChange();
-        change.Context.Set(IWindow.DataKey, this);
-        change.Context.Set(ITopLevelComponentManager.DataKey, new DesktopTopLevelComponentManagerImpl(this));
+        change.Context.Set(IWindow.WindowDataKey, this);
+        change.Context.Set(ITopLevelComponentManager.TLCManagerDataKey, this);
     }
 
     private void ApplyBuilderSizing(WindowBuilder builder) {

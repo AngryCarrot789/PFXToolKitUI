@@ -24,9 +24,9 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
-using PFXToolKitUI.Composition;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Themes;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
@@ -56,11 +56,11 @@ public delegate void WindowTitleBarTextAlignmentChangedEventHandler(IWindow wind
 /// <summary>
 /// Exposes window-like properties that delegate to either a native OS window or a single-view overlay (typically only used on mobile or rasp pi).
 /// </summary>
-public interface IWindow : IComponentManager {
+public interface IWindow : ITopLevelComponentManager {
     /// <summary>
     /// The data key used to access the window from <see cref="IContextData"/> in, for example, a command
     /// </summary>
-    public static readonly DataKey<IWindow> DataKey = DataKey<IWindow>.Create("WindowingWindow");
+    public static readonly DataKey<IWindow> WindowDataKey = DataKey<IWindow>.Create("WindowingWindow");
 
     /// <summary>
     /// Gets the window manager associated with this window
@@ -200,7 +200,7 @@ public interface IWindow : IComponentManager {
     /// Gets or sets the position of the window
     /// </summary>
     PixelPoint Position { get; set; }
-
+    
     /// <summary>
     /// An event fired when the window is in the process of opening but has not been shown on screen yet.
     /// </summary>

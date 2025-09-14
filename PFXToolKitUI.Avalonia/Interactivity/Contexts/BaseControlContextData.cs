@@ -26,6 +26,10 @@ using PFXToolKitUI.Utils;
 namespace PFXToolKitUI.Avalonia.Interactivity.Contexts;
 
 public abstract class BaseControlContextData : IControlContextData {
+#if DEBUG
+    public readonly string? DEBUG_STACKTRACE_CREATION = Debugger.IsAttached ? Environment.StackTrace : null;
+#endif
+    
     protected int batchCounter;
     private Dictionary<string, object>? myData;
     private List<ModificationEntry>? myBatchModifications;

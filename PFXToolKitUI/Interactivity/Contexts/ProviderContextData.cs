@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 
 namespace PFXToolKitUI.Interactivity.Contexts;
@@ -26,6 +27,10 @@ namespace PFXToolKitUI.Interactivity.Contexts;
 /// </summary>
 public class ProviderContextData : IContextData, IRandomAccessContextData {
     private Dictionary<string, ObjectProvider>? myData;
+    
+#if DEBUG
+    public readonly string? DEBUG_STACKTRACE_CREATION = Debugger.IsAttached ? Environment.StackTrace : null;
+#endif
 
     public IEnumerable<KeyValuePair<string, object>> Entries {
         get {
@@ -105,24 +110,21 @@ public class ProviderContextData : IContextData, IRandomAccessContextData {
         }
     }
 
-    private struct ObjectProvider {
-        private int type;
-        private object? value;
-
-        public static ObjectProvider ForValue(object? value) => new ObjectProvider() {
-            type = 1, value = value
-        };
-
-        public static ObjectProvider ForProvider(Func<object> provider) => new ObjectProvider() {
-            type = 2, value = provider
-        };
+    [DebuggerDisplay("ContextEntry({ToString()})")]
+    private readonly struct ObjectProvider(int type, object? value) {
+        public static ObjectProvider ForValue(object? value) => new ObjectProvider(1, value);
+        public static ObjectProvider ForProvider(Func<object> provider) => new ObjectProvider(2, provider);
 
         public object? ProvideValue() {
-            switch (this.type) {
-                case 1:  return this.value;
-                case 2:  return ((Func<object>) this.value!)();
+            switch (type) {
+                case 1:  return value;
+                case 2:  return ((Func<object>) value!)();
                 default: throw new Exception("Invalid object provider");
             }
+        }
+
+        public override string ToString() {
+            return this.ProvideValue()?.ToString() ?? "!null!";
         }
     }
 }
