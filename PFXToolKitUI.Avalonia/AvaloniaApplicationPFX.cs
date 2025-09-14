@@ -34,11 +34,11 @@ using PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 using PFXToolKitUI.Avalonia.Themes;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.Toolbars.Toolbars;
+using PFXToolKitUI.Composition;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Plugins;
-using PFXToolKitUI.Services;
 using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.FilePicking;
 using PFXToolKitUI.Services.InputStrokes;
@@ -119,32 +119,32 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         }
     }
 
-    protected override void RegisterServices(ServiceManager manager) {
+    protected override void RegisterComponents(ComponentStorage manager) {
         // We always want to make sure message dialogs are registered, just in case of errors
-        manager.RegisterConstant<IMessageDialogService>(new MessageDialogServiceImpl());
+        manager.AddComponent<IMessageDialogService>(new MessageDialogServiceImpl());
 
         // we have to register these before base class
-        manager.RegisterConstant<ShortcutManager>(new AvaloniaShortcutManager());
-        manager.RegisterConstant<ThemeManager>(new ThemeManagerImpl(this.Application));
-        manager.RegisterConstant<IconManager>(new IconManagerImpl());
+        manager.AddComponent<ShortcutManager>(new AvaloniaShortcutManager());
+        manager.AddComponent<ThemeManager>(new ThemeManagerImpl(this.Application));
+        manager.AddComponent<IconManager>(new IconManagerImpl());
 
-        base.RegisterServices(manager);
+        base.RegisterComponents(manager);
 
-        manager.RegisterConstant<IUserInputDialogService>(new InputDialogServiceImpl());
-        manager.RegisterConstant<IColourPickerDialogService>(new ColourPickerDialogServiceImpl());
-        manager.RegisterConstant<IFilePickDialogService>(new FilePickDialogServiceImpl());
-        manager.RegisterConstant<IConfigurationDialogService>(new ConfigurationDialogServiceImpl());
-        manager.RegisterConstant<IInputStrokeQueryService>(new InputStrokeQueryDialogImpl());
-        manager.RegisterConstant<BrushManager>(new BrushManagerImpl());
-        manager.RegisterConstant<ToolbarButtonFactory>(new ToolbarButtonFactoryImpl());
-        manager.RegisterConstant<ILogViewService>(new LogViewServiceImpl());
+        manager.AddComponent<IUserInputDialogService>(new InputDialogServiceImpl());
+        manager.AddComponent<IColourPickerDialogService>(new ColourPickerDialogServiceImpl());
+        manager.AddComponent<IFilePickDialogService>(new FilePickDialogServiceImpl());
+        manager.AddComponent<IConfigurationDialogService>(new ConfigurationDialogServiceImpl());
+        manager.AddComponent<IInputStrokeQueryService>(new InputStrokeQueryDialogImpl());
+        manager.AddComponent<BrushManager>(new BrushManagerImpl());
+        manager.AddComponent<ToolbarButtonFactory>(new ToolbarButtonFactoryImpl());
+        manager.AddComponent<ILogViewService>(new LogViewServiceImpl());
     }
 
     protected override async Task OnSetupApplication(IApplicationStartupProgress progress) {
         await base.OnSetupApplication(progress);
 
         await progress.ProgressAndWaitForRender("Loading themes...");
-        ((ThemeManagerImpl) this.ServiceManager.GetService<ThemeManager>()).SetupBuiltInThemes();
+        ((ThemeManagerImpl) this.ComponentStorage.GetComponent<ThemeManager>()).SetupBuiltInThemes();
     }
 
     protected override async Task OnPluginsLoaded() {

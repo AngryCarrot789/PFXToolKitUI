@@ -23,11 +23,11 @@ namespace PFXToolKitUI.Logging;
 
 public class ShowLogsCommand : Command {
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        return ApplicationPFX.Instance.ServiceManager.HasService<ILogViewService>() ? Executability.Valid : Executability.Invalid;
+        return ApplicationPFX.HasComponent<ILogViewService>() ? Executability.Valid : Executability.Invalid;
     }
 
     protected override async Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (ApplicationPFX.TryGetService(out ILogViewService? service)) {
+        if (ApplicationPFX.TryGetComponent(out ILogViewService? service)) {
             await service.ShowLogsWindow();
         }
     }

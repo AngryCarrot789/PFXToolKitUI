@@ -65,7 +65,7 @@ public delegate void TaskManagerTaskEventHandler(ActivityManager activityManager
 /// </para>
 /// </summary>
 public sealed class ActivityManager : IDisposable {
-    public static ActivityManager Instance => ApplicationPFX.GetService<ActivityManager>();
+    public static ActivityManager Instance => ApplicationPFX.GetComponent<ActivityManager>();
 
     // private readonly ThreadLocal<ActivityTask> threadToTask;
     private readonly AsyncLocal<ActivityTask?> threadToTask;

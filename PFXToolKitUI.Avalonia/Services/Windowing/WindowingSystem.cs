@@ -46,7 +46,7 @@ public abstract class WindowingSystem {
     /// <param name="system"></param>
     /// <returns></returns>
     public static bool TryGetInstance([NotNullWhen(true)] out WindowingSystem? system) {
-        return ApplicationPFX.TryGetService(out system);
+        return ApplicationPFX.TryGetComponent(out system);
     }
 
     /// <summary>
@@ -86,7 +86,7 @@ public sealed class WindowingSystemImpl : WindowingSystem {
     }
 
     public WindowingSystemImpl(Uri? defaultIconUri = null) {
-        this.desktop = ApplicationPFX.GetService<IDesktopService>();
+        this.desktop = ApplicationPFX.GetComponent<IDesktopService>();
         this.openWindows = new List<DesktopWindow>();
         this.defaultIconUri = defaultIconUri;
     }

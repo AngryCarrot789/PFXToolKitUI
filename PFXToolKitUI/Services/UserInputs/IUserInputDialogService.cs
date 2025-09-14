@@ -20,7 +20,7 @@
 namespace PFXToolKitUI.Services.UserInputs;
 
 public interface IUserInputDialogService {
-    public static IUserInputDialogService Instance => ApplicationPFX.GetService<IUserInputDialogService>();
+    public static IUserInputDialogService Instance => ApplicationPFX.GetComponent<IUserInputDialogService>();
 
     /// <summary>
     /// Shows an input dialog using the given information object

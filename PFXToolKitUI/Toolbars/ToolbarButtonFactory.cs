@@ -20,7 +20,7 @@
 namespace PFXToolKitUI.Toolbars;
 
 public abstract class ToolbarButtonFactory {
-    public static ToolbarButtonFactory Instance => ApplicationPFX.GetService<ToolbarButtonFactory>();
+    public static ToolbarButtonFactory Instance => ApplicationPFX.GetComponent<ToolbarButtonFactory>();
 
     public abstract IButtonElement CreateButton();
 

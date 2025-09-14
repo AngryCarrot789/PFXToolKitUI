@@ -28,7 +28,6 @@ using PFXToolKitUI.Logging;
 using PFXToolKitUI.Persistence;
 using PFXToolKitUI.Plugins;
 using PFXToolKitUI.Plugins.Exceptions;
-using PFXToolKitUI.Services;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.Messaging.Configurations;
 using PFXToolKitUI.Shortcuts;
@@ -42,9 +41,8 @@ namespace PFXToolKitUI;
 /// <summary>
 /// The main application model class
 /// </summary>
-public abstract class ApplicationPFX : IServiceable, IComponentManager {
+public abstract class ApplicationPFX : IComponentManager {
     private static ApplicationPFX? instance;
-    private readonly ComponentStorage myComponentStorage;
     private ApplicationStartupPhase startupPhase;
 
     public static ApplicationPFX Instance {
@@ -57,14 +55,9 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     }
 
     /// <summary>
-    /// Gets the application service manager
-    /// </summary>
-    public ServiceManager ServiceManager { get; }
-
-    /// <summary>
     /// Gets the application's persistent storage manager
     /// </summary>
-    public PersistentStorageManager PersistentStorageManager => this.ServiceManager.GetService<PersistentStorageManager>();
+    public PersistentStorageManager PersistentStorageManager => ((IComponentManager) this).GetComponent<PersistentStorageManager>();
 
     /// <summary>
     /// Gets the application main thread dispatcher
@@ -119,12 +112,10 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
         }
     }
 
-    ComponentStorage IComponentManager.ComponentStorage => this.myComponentStorage;
-    IComponentManager? IComponentManager.ParentComponentManager => null;
+    public ComponentStorage ComponentStorage { get; }
 
     protected ApplicationPFX() {
-        this.myComponentStorage = new ComponentStorage(this);
-        this.ServiceManager = new ServiceManager();
+        this.ComponentStorage = new ComponentStorage(this);
         this.PluginLoader = new PluginLoader();
     }
 
@@ -166,11 +157,11 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
                 app.StartupPhase = ApplicationStartupPhase.PreLoad;
                 await progress.ProgressAndWaitForRender("Loading services");
                 using (progress.CompletionState.PushCompletionRange(0.0, 0.2)) {
-                    app.RegisterServices(app.ServiceManager);
+                    app.RegisterComponents(app.ComponentStorage);
                 }
 
                 string storageDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), app.GetApplicationName(), "Options");
-                app.ServiceManager.RegisterConstant(new PersistentStorageManager(storageDir));
+                app.ComponentStorage.AddComponent(new PersistentStorageManager(storageDir));
 
                 await progress.ProgressAndWaitForRender("Loading commands");
                 using (progress.CompletionState.PushCompletionRange(0.2, 0.4)) {
@@ -272,10 +263,10 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     // The methods from RegisterServices to OnExiting are ordered based
     // on the order they're invoked during application lifetime.
 
-    protected virtual void RegisterServices(ServiceManager manager) {
-        manager.RegisterConstant(ApplicationConfigurationManager.Instance);
-        manager.RegisterConstant(new ActivityManager());
-        manager.RegisterConstant(new CommandManager());
+    protected virtual void RegisterComponents(ComponentStorage manager) {
+        manager.AddComponent(ApplicationConfigurationManager.Instance);
+        manager.AddComponent(new ActivityManager());
+        manager.AddComponent(new CommandManager());
     }
 
     protected virtual void RegisterCommands(CommandManager manager) {
@@ -312,7 +303,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     /// </summary>
     /// <param name="exception">The exception that occured</param>
     protected virtual async Task OnSetupFailed(Exception exception) {
-        if (this.ServiceManager.TryGetService(out IMessageDialogService? service)) {
+        if (this.ComponentStorage.TryGetComponent(out IMessageDialogService? service)) {
             await service.ShowMessage("App startup failed", "Failed to initialise application", exception.ToString());
         }
 
@@ -347,7 +338,7 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     /// <param name="progress">Progress manager</param>
     /// <param name="envArgs">Command line arguments, typically passed to the startup manager</param>
     protected virtual Task OnApplicationRunning(IApplicationStartupProgress progress, string[] envArgs) {
-        if (Instance.ServiceManager.TryGetService(out IStartupManager? service)) {
+        if (Instance.ComponentStorage.TryGetComponent(out IStartupManager? service)) {
             return service.OnApplicationStartupWithArgs(progress, envArgs.Length > 1 ? envArgs.Skip(1).ToArray() : Array.Empty<string>());
         }
         else {
@@ -421,16 +412,23 @@ public abstract class ApplicationPFX : IServiceable, IComponentManager {
     public abstract string GetApplicationName();
 
     /// <summary>
-    /// Gets an application service. Delegates to <see cref="Services.ServiceManager.GetService{T}"/> of <see cref="ServiceManager"/>
+    /// Returns true when an application component exists
     /// </summary>
-    public static T GetService<T>() where T : class {
-        return Instance.ServiceManager.GetService<T>();
+    public static bool HasComponent<T>() {
+        return Instance.ComponentStorage.HasComponent<T>();
+    }
+    
+    /// <summary>
+    /// Gets an application component.
+    /// </summary>
+    public static T GetComponent<T>() where T : class {
+        return Instance.ComponentStorage.GetComponent<T>();
     }
 
     /// <summary>
-    /// Tries to get an application service. Delegates to <see cref="Services.ServiceManager.TryGetService{T}"/> of <see cref="ServiceManager"/>
+    /// Tries to get an application component.
     /// </summary>
-    public static bool TryGetService<T>([NotNullWhen(true)] out T? service, bool canCreate = true) where T : class {
-        return Instance.ServiceManager.TryGetService(out service, canCreate);
+    public static bool TryGetComponent<T>([NotNullWhen(true)] out T? component) where T : class {
+        return Instance.ComponentStorage.TryGetComponent(out component);
     }
 }

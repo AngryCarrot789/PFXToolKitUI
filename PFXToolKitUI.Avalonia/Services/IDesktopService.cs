@@ -33,7 +33,7 @@ public interface IDesktopService {
     /// <param name="service"></param>
     /// <returns></returns>
     public static bool TryGetInstance([NotNullWhen(true)] out IDesktopService? service) {
-        return ApplicationPFX.TryGetService(out service);
+        return ApplicationPFX.TryGetComponent(out service);
     }
 
     /// <summary>

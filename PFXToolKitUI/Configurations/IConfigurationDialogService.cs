@@ -20,7 +20,7 @@
 namespace PFXToolKitUI.Configurations;
 
 public interface IConfigurationDialogService {
-    public static IConfigurationDialogService Instance => ApplicationPFX.GetService<IConfigurationDialogService>();
+    public static IConfigurationDialogService Instance => ApplicationPFX.GetComponent<IConfigurationDialogService>();
 
     Task ShowConfigurationDialog(ConfigurationManager configurationManager);
 }

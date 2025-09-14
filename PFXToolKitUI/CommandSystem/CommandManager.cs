@@ -30,7 +30,7 @@ namespace PFXToolKitUI.CommandSystem;
 /// Commands are registered at application startup, before any primary UI is loaded
 /// </summary>
 public sealed class CommandManager {
-    public static CommandManager Instance => ApplicationPFX.GetService<CommandManager>();
+    public static CommandManager Instance => ApplicationPFX.GetComponent<CommandManager>();
 
     // using this just in case I soon add more data associated with commands
     private class CommandEntry {

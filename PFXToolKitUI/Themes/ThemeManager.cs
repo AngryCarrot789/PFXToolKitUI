@@ -25,7 +25,7 @@ namespace PFXToolKitUI.Themes;
 public delegate void ThemeManagerActiveThemeChangedEventHandler(ThemeManager manager, Theme oldTheme, Theme newTheme);
 
 public abstract class ThemeManager {
-    public static ThemeManager Instance => ApplicationPFX.GetService<ThemeManager>();
+    public static ThemeManager Instance => ApplicationPFX.GetComponent<ThemeManager>();
 
     /// <summary>
     /// Gets the themes that currently exist

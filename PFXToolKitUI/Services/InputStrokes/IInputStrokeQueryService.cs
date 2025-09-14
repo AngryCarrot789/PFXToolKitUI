@@ -25,7 +25,7 @@ namespace PFXToolKitUI.Services.InputStrokes;
 /// A service that lets the user specify an input stroke, e.g. a key stroke or mouse clic
 /// </summary>
 public interface IInputStrokeQueryService {
-    public static IInputStrokeQueryService Instance => ApplicationPFX.GetService<IInputStrokeQueryService>();
+    public static IInputStrokeQueryService Instance => ApplicationPFX.GetComponent<IInputStrokeQueryService>();
 
     /// <summary>
     /// Returns a user-specified key stroke. Simple implementation shows a dialog that the user types into

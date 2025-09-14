@@ -23,11 +23,11 @@ namespace PFXToolKitUI.CommandSystem;
 
 public class AboutApplicationCommand : Command {
     protected override Executability CanExecuteCore(CommandEventArgs e) {
-        return ApplicationPFX.Instance.ServiceManager.HasService<IAboutService>() ? Executability.Valid : Executability.ValidButCannotExecute;
+        return ApplicationPFX.HasComponent<IAboutService>() ? Executability.Valid : Executability.ValidButCannotExecute;
     }
 
     protected override Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (!ApplicationPFX.TryGetService(out IAboutService? service)) {
+        if (!ApplicationPFX.TryGetComponent(out IAboutService? service)) {
             return Task.CompletedTask;
         }
 

@@ -29,21 +29,20 @@ public interface IComponentManager {
     /// Gets the component container object
     /// </summary>
     ComponentStorage ComponentStorage { get; }
-    
-    /// <summary>
-    /// Gets the component manager that this instance belongs to
-    /// </summary>
-    IComponentManager? ParentComponentManager { get; }
 
-    sealed object GetComponent(Type serviceType) => this.ComponentStorage.GetComponent(serviceType);
+    sealed bool HasComponent(Type componentType) => this.ComponentStorage.HasComponent(componentType);
+
+    sealed object GetComponent(Type componentType) => this.ComponentStorage.GetComponent(componentType);
 
     sealed T GetComponent<T>() where T : class => this.ComponentStorage.GetComponent<T>();
 
-    sealed bool TryGetComponent(Type serviceType, [NotNullWhen(true)] out object? component) => this.ComponentStorage.TryGetComponent(serviceType, out component);
+    sealed bool TryGetComponent(Type componentType, [NotNullWhen(true)] out object? component) => this.ComponentStorage.TryGetComponent(componentType, out component);
 
     sealed bool TryGetComponent<T>([NotNullWhen(true)] out T? component) where T : class => this.ComponentStorage.TryGetComponent(out component);
 
-    sealed void AddService<TComponent>(TComponent component) where TComponent : class => this.ComponentStorage.AddService(component);
+    sealed void AddService<TComponent>(TComponent component) where TComponent : class => this.ComponentStorage.AddComponent(component);
+    
+    sealed void AddLazyService<TComponent>(Func<IComponentManager, TComponent> component) where TComponent : class => this.ComponentStorage.AddLazyComponent(component);
 
-    sealed T GetOrCreateComponent<T>(Func<IComponentManager, T> factory) where T : class => this.ComponentStorage.GetOrCreateComponent(factory);
+    sealed TComponent GetOrCreateComponent<TComponent>(Func<IComponentManager, TComponent> factory) where TComponent : class => this.ComponentStorage.GetOrCreateComponent(factory);
 }

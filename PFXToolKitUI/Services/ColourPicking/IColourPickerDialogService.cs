@@ -22,7 +22,7 @@ using SkiaSharp;
 namespace PFXToolKitUI.Services.ColourPicking;
 
 public interface IColourPickerDialogService {
-    public static IColourPickerDialogService Instance => ApplicationPFX.GetService<IColourPickerDialogService>();
+    public static IColourPickerDialogService Instance => ApplicationPFX.GetComponent<IColourPickerDialogService>();
 
     Task<SKColor?> PickColourAsync(SKColor? defaultColour);
 }

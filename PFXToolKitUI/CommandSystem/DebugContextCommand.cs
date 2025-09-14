@@ -44,7 +44,7 @@ public class DebugContextCommand : Command {
     }
 
     protected override async Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (ApplicationPFX.TryGetService(out IMessageDialogService? service)) {
+        if (ApplicationPFX.TryGetComponent(out IMessageDialogService? service)) {
             List<KeyValuePair<string, object>> entries = e.ContextData.Entries.ToList();
             StringBuilder sb = new StringBuilder(256);
 
