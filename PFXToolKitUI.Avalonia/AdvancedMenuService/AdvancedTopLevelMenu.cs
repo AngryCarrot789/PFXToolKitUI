@@ -44,6 +44,16 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
 
     IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
 
+    public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion {
+        get => throw new InvalidOperationException();
+        set => throw new InvalidOperationException();
+    }
+
+    public Dictionary<int, int>? DynamicInserted {
+        get => throw new InvalidOperationException();
+        set => throw new InvalidOperationException();
+    }
+
     protected override Type StyleKeyOverride => typeof(Menu);
 
     private readonly Dictionary<Type, Stack<Control>> itemCache;
@@ -85,7 +95,7 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
     }
 
     private void OnItemAdded(object sender, int index, ContextEntryGroup item) {
-        AdvancedMenuItem menuItem = (AdvancedMenuItem) this.CreateItem(item);
+        AdvancedMenuItem menuItem = (AdvancedMenuItem) AdvancedMenuHelper.CreateItem(this, item);
         menuItem.OnAdding(this, this, item);
         this.Items.Insert(index, menuItem);
         menuItem.OnAdded();
@@ -116,7 +126,7 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
 
     protected override void OnSubmenuOpened(RoutedEventArgs e) {
         if (e.Source is AdvancedMenuItem menuItem) {
-            AdvancedMenuService.NormaliseSeparators(menuItem);
+            AdvancedMenuHelper.NormaliseSeparators(menuItem);
         }
 
         base.OnSubmenuOpened(e);
@@ -152,18 +162,12 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
 
     private void CaptureContextFromObject(InputElement inputElement) {
         IContextData capturedContext = DataManager.GetFullContextData(inputElement);
-        
+
         Debug.WriteLine($"[TopLevelMenu] Captured context from: {inputElement} ({string.Join(", ", capturedContext.Entries.Select(x => x.Key + "=" + x.Value))})");
         DataManager.SetDelegateContextData(this, capturedContext);
     }
 
-    public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuService.PushCachedItem(this.itemCache, entryType, item);
+    public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuHelper.PushCachedItem(this.itemCache, entryType, item);
 
-    public Control? PopCachedItem(Type entryType) => AdvancedMenuService.PopCachedItem(this.itemCache, entryType);
-
-    public Control CreateItem(IContextObject entry) => AdvancedMenuService.CreateChildItem(this, entry);
-
-    public void StoreDynamicGroup(DynamicGroupPlaceholderContextObject groupPlaceholder, int index) {
-        throw new InvalidOperationException("It should be impossible to use dynamic entries in a top-level menu");
-    }
+    public Control? PopCachedItem(Type entryType) => AdvancedMenuHelper.PopCachedItem(this.itemCache, entryType);
 }

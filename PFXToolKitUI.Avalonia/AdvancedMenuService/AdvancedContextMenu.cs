@@ -40,10 +40,12 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     private readonly IBinder<ContextRegistry> captionBinder;
     private readonly Dictionary<Type, Stack<Control>> itemCache;
     private InputElement? currentTarget;
-    private Dictionary<int, DynamicGroupPlaceholderContextObject>? dynamicInsertion;
-    private Dictionary<int, int>? dynamicInserted;
 
     IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
+
+    public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
+
+    public Dictionary<int, int>? DynamicInserted { get; set; }
 
     public string? ContextCaption {
         get => this.GetValue(ContextCaptionProperty);
@@ -82,8 +84,8 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         }
 
         this.CaptureContextFromObject(this.currentTarget);
-        AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
-        AdvancedMenuService.NormaliseSeparators(this);
+        AdvancedMenuHelper.GenerateDynamicVisualItems(this);
+        AdvancedMenuHelper.NormaliseSeparators(this);
     }
 
     protected override void OnLoaded(RoutedEventArgs e) {
@@ -104,7 +106,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     }
 
     private void OnMenuClosed(object? sender, RoutedEventArgs e) {
-        AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
+        AdvancedMenuHelper.ClearDynamicVisualItems(this);
         this.ClearContext();
     }
 
@@ -130,15 +132,9 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         target.ContextRequested -= this.OnRequestOpenContextMenu;
     }
 
-    public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuService.PushCachedItem(this.itemCache, entryType, item);
+    public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuHelper.PushCachedItem(this.itemCache, entryType, item);
 
-    public Control? PopCachedItem(Type entryType) => AdvancedMenuService.PopCachedItem(this.itemCache, entryType);
-
-    public Control CreateItem(IContextObject entry) => AdvancedMenuService.CreateChildItem(this, entry);
-
-    public void StoreDynamicGroup(DynamicGroupPlaceholderContextObject groupPlaceholder, int index) {
-        (this.dynamicInsertion ??= new Dictionary<int, DynamicGroupPlaceholderContextObject>())[index] = groupPlaceholder;
-    }
+    public Control? PopCachedItem(Type entryType) => AdvancedMenuHelper.PopCachedItem(this.itemCache, entryType);
 
     protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey) {
         return new AdvancedMenuItem();
@@ -183,7 +179,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
                     }
                 }
 
-                AdvancedMenuService.InsertItemNodes(menu, contextObjects);
+                AdvancedMenuHelper.OnLogicalItemsAdded(menu, 0, contextObjects);
             }
 
             // Slide in and add ContextRequested handler before the base ContextMenu

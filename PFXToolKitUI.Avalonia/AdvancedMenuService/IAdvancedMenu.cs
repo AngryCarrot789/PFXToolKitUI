@@ -39,5 +39,5 @@ public interface IAdvancedMenu : IAdvancedMenuOrItem {
     /// <summary>
     /// Creates or gets a cached item that can represent the given context object
     /// </summary>
-    Control CreateItem(IContextObject entry);
+    Control CreateItem(IContextObject entry) => AdvancedMenuHelper.CreateItem(this, entry);
 }

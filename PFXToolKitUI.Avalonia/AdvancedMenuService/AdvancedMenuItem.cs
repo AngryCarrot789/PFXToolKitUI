@@ -58,9 +58,11 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     public BaseContextEntry? Entry { get; private set; }
 
     bool IAdvancedMenuOrItem.IsOpen => this.IsSubMenuOpen;
-
-    protected Dictionary<int, DynamicGroupPlaceholderContextObject>? dynamicInsertion;
-    protected Dictionary<int, int>? dynamicInserted;
+    
+    public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
+    
+    public Dictionary<int, int>? DynamicInserted { get; set; }
+    
     private IconControl? myIconControl;
 
     public AdvancedMenuItem() {
@@ -85,21 +87,13 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
     protected virtual void OnLoadedOverride(RoutedEventArgs e) {
         BaseContextEntry.InternalOnBecomeVisible(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
-        AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
-        Dispatcher.UIThread.InvokeAsync(() => {
-            AdvancedMenuService.NormaliseSeparators(this);
-            // if (this.Entry is ContextEntryGroup list && list.ShowDummyItemWhenEmpty) {
-            //     this.ShowDummyItem();
-            // }
-        }, DispatcherPriority.Loaded);
+        AdvancedMenuHelper.GenerateDynamicVisualItems(this);
+        Dispatcher.UIThread.InvokeAsync(() => AdvancedMenuHelper.NormaliseSeparators(this), DispatcherPriority.Loaded);
     }
 
     protected virtual void OnUnloadedOverride(RoutedEventArgs e) {
         BaseContextEntry.InternalOnBecomeHidden(this.Entry!);
-        AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
-        // if (this.Entry is ContextEntryGroup list && list.ShowDummyItemWhenEmpty) {
-        //     this.HideDummyItem();
-        // }
+        AdvancedMenuHelper.ClearDynamicVisualItems(this);
     }
 
     public virtual void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, BaseContextEntry entry) {
@@ -129,15 +123,11 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         entry.IconChanged += this.OnEntryIconChanged;
 
         if (entry is ContextEntryGroup list) {
-            AdvancedMenuService.InsertItemNodes(this, list.Items);
+            AdvancedMenuHelper.OnLogicalItemsAdded(this, 0, list.Items);
             list.Items.ItemsAdded += this.ItemsOnItemsAdded;
             list.Items.ItemsRemoved += this.ItemsOnItemsRemoved;
             list.Items.ItemMoved += this.ItemsOnItemMoved;
             list.Items.ItemReplaced += this.ItemsOnItemReplaced;
-            // list.ShowDummyItemWhenEmptyChanged += this.OnShowDummyItemWhenEmptyChanged;
-            // if (list.ShowDummyItemWhenEmpty) {
-            //     this.ShowDummyItem();
-            // }
         }
 
         entry.CanExecuteChanged += this.OnCanExecuteChanged;
@@ -154,10 +144,6 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
             list.Items.ItemsRemoved -= this.ItemsOnItemsRemoved;
             list.Items.ItemMoved -= this.ItemsOnItemMoved;
             list.Items.ItemReplaced -= this.ItemsOnItemReplaced;
-            // list.ShowDummyItemWhenEmptyChanged -= this.OnShowDummyItemWhenEmptyChanged;
-            // if (list.ShowDummyItemWhenEmpty) {
-            //     this.HideDummyItem();
-            // }
         }
 
         entry.DisplayNameChanged -= this.OnEntryDisplayNameChanged;
@@ -174,8 +160,10 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         }
 
         this.ClearValue(ToolTipEx.TipProperty);
-        AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
-        AdvancedMenuService.ClearItemNodes(this);
+        AdvancedMenuHelper.ClearDynamicVisualItems(this);
+        AdvancedMenuHelper.ClearVisualNodes(this);
+        this.DynamicInsertion = null;
+        this.DynamicInserted = null;
         
         DataManager.GetContextData(this).Set(BaseContextEntry.DataKey, null);
     }
@@ -185,41 +173,6 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.ParentNode = null;
         this.Entry = null;
     }
-
-    // private void OnShowDummyItemWhenEmptyChanged(BaseContextEntry sender) {
-    //     if (((ContextEntryGroup) sender).ShowDummyItemWhenEmpty) {
-    //         this.ShowDummyItem();
-    //     }
-    //     else {
-    //         this.HideDummyItem();
-    //     }
-    // }
-    // private bool isDummyItemShown;
-
-    // private void ShowDummyItem() {
-    //     if (!(this.Entry is ContextEntryGroup list) || this.isDummyItemShown) {
-    //         return;
-    //     }
-    //
-    //     if (this.Items.Count < 1 && list.ShowDummyItemWhenEmpty) {
-    //         this.isDummyItemShown = true;
-    //         // this.Items.Add(new CaptionSeparator() {
-    //         //     Text = "No options available", Padding = new Thickness(24,3,4,3)
-    //         // });
-    //     }
-    // }
-
-    // private void HideDummyItem() {
-    //     if (!(this.Entry is ContextEntryGroup list) || !this.isDummyItemShown) {
-    //         return;
-    //     }
-    //
-    //     if (this.Items.Count > 0 && list.ShowDummyItemWhenEmpty) {
-    //         this.isDummyItemShown = false;
-    //         // Debug.Assert(this.Items[0] is CaptionSeparator);
-    //         // this.Items.RemoveAt(0);
-    //     }
-    // }
 
     private void UpdateIsCheckedProperties(BaseContextEntry sender) {
         this.ToggleType = sender.IsCheckedFunction != null ? MenuItemToggleType.CheckBox : MenuItemToggleType.None;
@@ -235,8 +188,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.UpdateCanExecute();
 
         if (!this.IsVisibilityChanging) {
-            AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
-            Dispatcher.UIThread.InvokeAsync(() => AdvancedMenuService.NormaliseSeparators(this), DispatcherPriority.Loaded);
+            AdvancedMenuHelper.GenerateDynamicVisualItems(this);
+            Dispatcher.UIThread.InvokeAsync(() => AdvancedMenuHelper.NormaliseSeparators(this), DispatcherPriority.Loaded);
         }
     }
 
@@ -244,12 +197,12 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         base.OnPropertyChanged(change);
         if (change.Property == IsSubMenuOpenProperty) {
             if (this.IsSubMenuOpen) {
-                AdvancedMenuService.GenerateDynamicItems(this, ref this.dynamicInsertion, ref this.dynamicInserted);
-                Debug.WriteLine($"Generated dynamic items for menu item shown: " + (this.dynamicInserted?.Count ?? 0));
+                AdvancedMenuHelper.GenerateDynamicVisualItems(this);
+                Debug.WriteLine($"Generated dynamic items for menu item shown: " + (this.DynamicInserted?.Count ?? 0));
             }
             else {
-                Debug.WriteLine($"Cleared '{this.dynamicInserted?.Count ?? 0}' dynamic items for menu item hidden");
-                AdvancedMenuService.ClearDynamicItems(this, ref this.dynamicInserted);
+                Debug.WriteLine($"Cleared '{this.DynamicInserted?.Count ?? 0}' dynamic items for menu item hidden");
+                AdvancedMenuHelper.ClearDynamicVisualItems(this);
             }
         }
     }
@@ -290,38 +243,26 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
     protected virtual void UpdateHeader(BaseContextEntry entry) {
         this.Header = entry.DisplayName;
-        // if (entry is ContextEntryGroup g && g.Items.Count < 1) {
-        //     this.Header = entry.DisplayName + " (empty)";
-        // }
-        // else {
-        //     this.Header = entry.DisplayName;
-        // }
-    }
-
-    public void StoreDynamicGroup(DynamicGroupPlaceholderContextObject groupPlaceholder, int index) {
-        (this.dynamicInsertion ??= new Dictionary<int, DynamicGroupPlaceholderContextObject>())[index] = groupPlaceholder;
     }
 
     private void ItemsOnItemsAdded(IObservableList<IContextObject> list, int index, IList<IContextObject> items) {
-        // this.HideDummyItem();
         this.OnItemAddedOrRemoved();
-        AdvancedMenuService.InsertItemNodesWithDynamicSupport(this, index, new List<IContextObject>(items), ref this.dynamicInsertion, ref this.dynamicInserted);
+        AdvancedMenuHelper.OnLogicalItemsAdded(this, index, new List<IContextObject>(items));
     }
 
     private void ItemsOnItemsRemoved(IObservableList<IContextObject> list, int index, IList<IContextObject> items) {
-        // this.ShowDummyItem();
         this.OnItemAddedOrRemoved();
-        AdvancedMenuService.RemoveItemNodesWithDynamicSupport(this.OwnerMenu!, this, index, new List<IContextObject>(items), ref this.dynamicInsertion, ref this.dynamicInserted);
+        AdvancedMenuHelper.OnLogicalItemsRemoved(this, index, new List<IContextObject>(items));
     }
 
     private void ItemsOnItemMoved(IObservableList<IContextObject> list, int oldIndex, int newIndex, IContextObject item) {
-        AdvancedMenuService.RemoveItemNodesWithDynamicSupport(this.OwnerMenu!, this, oldIndex, [item], ref this.dynamicInsertion, ref this.dynamicInserted);
-        AdvancedMenuService.InsertItemNodesWithDynamicSupport(this, newIndex, [item], ref this.dynamicInsertion, ref this.dynamicInserted);
+        AdvancedMenuHelper.OnLogicalItemsRemoved(this, oldIndex, [item]);
+        AdvancedMenuHelper.OnLogicalItemsAdded(this, newIndex, [item]);
     }
 
     private void ItemsOnItemReplaced(IObservableList<IContextObject> list, int index, IContextObject oldItem, IContextObject newItem) {
-        AdvancedMenuService.RemoveItemNodesWithDynamicSupport(this.OwnerMenu!, this, index, [oldItem], ref this.dynamicInsertion, ref this.dynamicInserted);
-        AdvancedMenuService.InsertItemNodesWithDynamicSupport(this, index, [newItem], ref this.dynamicInsertion, ref this.dynamicInserted);
+        AdvancedMenuHelper.OnLogicalItemsRemoved(this, index, [oldItem]);
+        AdvancedMenuHelper.OnLogicalItemsAdded(this, index, [newItem]);
     }
 
     private void OnEntryIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {

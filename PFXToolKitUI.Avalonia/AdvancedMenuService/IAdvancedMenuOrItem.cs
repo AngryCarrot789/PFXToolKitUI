@@ -42,10 +42,13 @@ public interface IAdvancedMenuOrItem {
     bool IsOpen { get; }
 
     /// <summary>
-    /// Stores the dynamic group for insertion at the given index inside this element's item
-    /// list. Post-processing must be done on this index during generation
+    /// Gets or sets a dictionary that maps the logical index of a dynamic group to the dynamic group itself
     /// </summary>
-    /// <param name="groupPlaceholder">The dynamic group</param>
-    /// <param name="index">The unprocessed index</param>
-    void StoreDynamicGroup(DynamicGroupPlaceholderContextObject groupPlaceholder, int index);
+    Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
+    
+    /// <summary>
+    /// Gets or sets a dictionary that maps the logical index of a dynamic group to the number of items
+    /// it has generated and are currently inserted as visual items
+    /// </summary>
+    Dictionary<int, int>? DynamicInserted { get; set; }
 }
