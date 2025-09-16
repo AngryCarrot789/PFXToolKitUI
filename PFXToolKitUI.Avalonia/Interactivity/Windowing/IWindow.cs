@@ -341,14 +341,15 @@ public class WindowCloseEventArgs(IWindow window, WindowCloseReason reason, bool
 /// </summary>
 public class WindowCancelCloseEventArgs(IWindow window, WindowCloseReason reason, bool isFromCode) : WindowCloseEventArgs(window, reason, isFromCode) {
     // We don't allow de-cancelling the close because it could lead to unexpected behaviour and issues
+    private volatile bool isCancelled;
 
     /// <summary>
     /// Gets whether the closing of the window should be cancelled
     /// </summary>
-    public bool IsCancelled { get; private set; }
+    public bool IsCancelled => this.isCancelled;
 
     /// <summary>
     /// Sets <see cref="IsCancelled"/> to true
     /// </summary>
-    public void SetCancelled() => this.IsCancelled = true;
+    public void SetCancelled() => this.isCancelled = true;
 }

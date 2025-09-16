@@ -282,17 +282,15 @@ public sealed class DesktopWindowImpl : IWindow {
                 tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCancelCloseEventArgs>) handler)(this, beforeClosingArgs)));
             }
 
-            if (tasks.Any(x => !x.IsCompleted)) {
-                try {
-                    ApplicationPFX.Instance.Dispatcher.AwaitForCompletion(Task.WhenAll(tasks));
-                }
-                catch (AggregateException ex) {
-                    List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
-                    if (errors.Count == 1)
-                        throw new Exception("Exception invoking async Closing handler", errors[0]);
-                    if (errors.Count > 0)
-                        throw new AggregateException("Exception invoking multiple async Closing handler", errors);
-                }
+            try {
+                ApplicationPFX.Instance.Dispatcher.AwaitForCompletion(Task.WhenAll(tasks));
+            }
+            catch (AggregateException ex) {
+                List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
+                if (errors.Count == 1)
+                    throw new Exception("Exception invoking async Closing handler", errors[0]);
+                if (errors.Count > 0)
+                    throw new AggregateException("Exception invoking multiple async Closing handler", errors);
             }
         }
 
@@ -312,17 +310,15 @@ public sealed class DesktopWindowImpl : IWindow {
                 tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCloseEventArgs>) handler)(this, closingArgs)));
             }
 
-            if (tasks.Any(x => !x.IsCompleted)) {
-                try {
-                    ApplicationPFX.Instance.Dispatcher.AwaitForCompletion(Task.WhenAll(tasks));
-                }
-                catch (AggregateException ex) {
-                    List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
-                    if (errors.Count == 1)
-                        throw new Exception("Exception invoking async Closing handler", errors[0]);
-                    if (errors.Count > 0)
-                        throw new AggregateException("Exception invoking multiple async Closing handler", errors);
-                }
+            try {
+                ApplicationPFX.Instance.Dispatcher.AwaitForCompletion(Task.WhenAll(tasks));
+            }
+            catch (AggregateException ex) {
+                List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
+                if (errors.Count == 1)
+                    throw new Exception("Exception invoking async Closing handler", errors[0]);
+                if (errors.Count > 0)
+                    throw new AggregateException("Exception invoking multiple async Closing handler", errors);
             }
         }
 
