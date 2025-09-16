@@ -24,7 +24,7 @@ namespace PFXToolKitUI.Themes;
 /// <summary>
 /// Represents a brush whose colour is constant, provided when created by the user
 /// </summary>
-public interface IConstantColourBrush : IStaticColourBrush {
+public interface IConstantColourBrush : IColourBrush {
     /// <summary>
     /// Gets this brush's underlying colour
     /// </summary>

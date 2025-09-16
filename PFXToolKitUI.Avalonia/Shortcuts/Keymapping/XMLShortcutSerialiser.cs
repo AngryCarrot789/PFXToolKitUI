@@ -167,7 +167,7 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
             throw new Exception("Expected element of type 'KeyMap' to be the root element for the XML document");
         }
 
-        string version = GetAttributeNullable(rootElement, "Version");
+        string? version = GetAttributeNullable(rootElement, "Version");
         Version keymapVersion = !string.IsNullOrEmpty(version) ? Version.Parse(version) : new Version(1, 0, 0);
 
         ShortcutGroupEntry root = ShortcutGroupEntry.CreateRoot(manager);

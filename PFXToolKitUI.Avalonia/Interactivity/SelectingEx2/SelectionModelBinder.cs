@@ -36,12 +36,12 @@ public sealed class SelectionModelBinder<T> {
         this.SelectionModel = selectionModel;
         this.Selection = selection;
 
-        this.OnModelSelectionChanged(selection, new SelectionModelChangedEventArgs(selection.ToIntRangeUnion().ToList(), ReadOnlyCollection<IntRange>.Empty));
+        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToIntRangeUnion().ToList(), ReadOnlyCollection<IntRange>.Empty));
         selectionModel.SelectionChanged += this.OnSelectionModelSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
 
-    private void OnModelSelectionChanged(object? o, SelectionModelChangedEventArgs e) {
+    private void OnModelSelectionChanged(object? o, ListSelectionModelChangedEventArgs e) {
         if (this.isUpdatingModel)
             return;
 

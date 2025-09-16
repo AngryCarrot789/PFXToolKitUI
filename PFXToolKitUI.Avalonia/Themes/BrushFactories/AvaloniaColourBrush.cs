@@ -210,7 +210,7 @@ public sealed class ConstantAvaloniaLinearGradientBrush : AvaloniaColourBrush, I
     public override ImmutableLinearGradientBrush Brush { get; }
 
     public ConstantAvaloniaLinearGradientBrush(ImmutableLinearGradientBrush brush) {
-        this.Brush = brush;
+        this.Brush = brush ?? throw new ArgumentNullException(nameof(brush));
     }
 }
 
@@ -218,7 +218,7 @@ public sealed class ConstantAvaloniaRadialGradientBrush : AvaloniaColourBrush, I
     public override ImmutableRadialGradientBrush Brush { get; }
 
     public ConstantAvaloniaRadialGradientBrush(ImmutableRadialGradientBrush brush) {
-        this.Brush = brush;
+        this.Brush = brush ?? throw new ArgumentNullException(nameof(brush));
     }
 }
 
@@ -227,7 +227,7 @@ public class StaticAvaloniaColourBrush : AvaloniaColourBrush, IStaticColourBrush
 
     public override IImmutableBrush? Brush { get; }
 
-    public StaticAvaloniaColourBrush(string themeKey, IImmutableBrush? brush) {
+    internal StaticAvaloniaColourBrush(string themeKey, IImmutableBrush? brush) {
         this.ThemeKey = themeKey;
         this.Brush = brush;
     }
@@ -250,7 +250,7 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
 
     public event DynamicColourBrushChangedEventHandler? BrushChanged;
 
-    public DynamicAvaloniaColourBrush(string themeKey) {
+    internal DynamicAvaloniaColourBrush(string themeKey) {
         this.ThemeKey = themeKey;
     }
 

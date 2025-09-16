@@ -172,8 +172,7 @@ public abstract class ApplicationPFX : IComponentManager {
                 using (progress.CompletionState.PushCompletionRange(0.4, 0.6)) {
                     string keymapFilePath = Path.GetFullPath("Keymap.xml");
                     try {
-                        await using FileStream stream = File.OpenRead(keymapFilePath);
-                        ShortcutManager.Instance.ReloadFromStream(stream);
+                        ShortcutManager.Instance.ReloadFromFile(keymapFilePath);
                     }
                     catch (FileNotFoundException) {
                         AppLogger.Instance.WriteLine("Keymap file does not exist at " + keymapFilePath + ". This error can be ignored, but shortcuts won't work");

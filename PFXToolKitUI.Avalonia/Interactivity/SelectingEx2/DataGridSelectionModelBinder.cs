@@ -38,12 +38,12 @@ public sealed class DataGridSelectionModelBinder<T> {
         this.DataGrid = dataGrid;
         this.Selection = selection;
 
-        this.OnModelSelectionChanged(selection, new SelectionModelChangedEventArgs(selection.ToIntRangeUnion().ToList(), ReadOnlyCollection<IntRange>.Empty));
+        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToIntRangeUnion().ToList(), ReadOnlyCollection<IntRange>.Empty));
         dataGrid.SelectionChanged += this.OnDataGridSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
 
-    private void OnModelSelectionChanged(object? o, SelectionModelChangedEventArgs e) {
+    private void OnModelSelectionChanged(object? o, ListSelectionModelChangedEventArgs e) {
         if (this.isUpdatingModel)
             return;
 

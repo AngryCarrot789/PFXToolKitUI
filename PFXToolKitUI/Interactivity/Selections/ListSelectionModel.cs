@@ -35,7 +35,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     /// <summary>
     /// An event fired when this list's indices change
     /// </summary>
-    public event EventHandler<SelectionModelChangedEventArgs>? SelectionChanged;
+    public event EventHandler<ListSelectionModelChangedEventArgs>? SelectionChanged;
 
     /// <summary>
     /// Returns the number of selected items
@@ -147,7 +147,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         if (this.SelectionChanged != null) {
             IList<IntRange> changedList = this.selectedIndices.ToList();
             this.selectedIndices.Clear();
-            this.SelectionChanged?.Invoke(this, new SelectionModelChangedEventArgs(ReadOnlyCollection<IntRange>.Empty, changedList));
+            this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(ReadOnlyCollection<IntRange>.Empty, changedList));
         }
         else {
             this.selectedIndices.Clear();
@@ -189,7 +189,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
             if (changedIndices.RangeCount > 0) {
                 IList<IntRange> empty = ReadOnlyCollection<IntRange>.Empty;
-                this.SelectionChanged?.Invoke(this, new SelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
+                this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
             }
         }
     }
@@ -221,7 +221,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
             if (changedIndices.RangeCount > 0) {
                 IList<IntRange> empty = ReadOnlyCollection<IntRange>.Empty;
-                this.SelectionChanged?.Invoke(this, new SelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
+                this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
             }
         }
         else {

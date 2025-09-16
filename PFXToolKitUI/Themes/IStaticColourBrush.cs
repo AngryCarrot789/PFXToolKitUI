@@ -19,4 +19,9 @@
 
 namespace PFXToolKitUI.Themes;
 
-public interface IStaticColourBrush : IColourBrush;
+public interface IStaticColourBrush : IColourBrush {
+    /// <summary>
+    /// Gets the key that locates the "brush" contents
+    /// </summary>
+    string ThemeKey { get; }
+}

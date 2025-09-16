@@ -39,7 +39,7 @@ public interface IListSelectionModel {
     /// <summary>
     /// An event fired when the selection state changes
     /// </summary>
-    public event EventHandler<SelectionModelChangedEventArgs>? SelectionChanged;
+    public event EventHandler<ListSelectionModelChangedEventArgs>? SelectionChanged;
 
     /// <summary>
     /// Select a single item
@@ -166,7 +166,7 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     bool? IsItemSelected(T item);
 }
 
-public readonly struct SelectionModelChangedEventArgs(IList<IntRange> addedIndices, IList<IntRange> removedIndices) {
+public readonly struct ListSelectionModelChangedEventArgs(IList<IntRange> addedIndices, IList<IntRange> removedIndices) {
     /// <summary>
     /// The ranges containing indices that are now selected
     /// </summary>

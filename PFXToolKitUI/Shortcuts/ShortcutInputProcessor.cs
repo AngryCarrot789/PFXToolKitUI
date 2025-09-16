@@ -401,8 +401,11 @@ public abstract class ShortcutInputProcessor {
     /// <param name="stroke">The key stroke that was received</param>
     /// <returns>Whether to cancel the usage or not. True = cancel, False = keep</returns>
     protected virtual bool OnCancelUsageForNoSuchNextKeyStroke(IShortcutUsage usage, ShortcutEntry shortcutEntry, KeyStroke stroke) {
+        if (!this.OnCancelUsage(usage, shortcutEntry))
+            return false;
+        
         this.Manager.OnCancelUsageForNoSuchNextKeyStroke(this, usage, shortcutEntry, stroke);
-        return this.OnCancelUsage(usage, shortcutEntry);
+        return true;
     }
 
     /// <summary>
@@ -412,8 +415,11 @@ public abstract class ShortcutInputProcessor {
     /// <param name="stroke">The mouse stroke that was received</param>
     /// <returns>Whether to cancel the usage or not. True = cancel, False = keep</returns>
     protected virtual bool OnCancelUsageForNoSuchNextMouseStroke(IShortcutUsage usage, ShortcutEntry shortcutEntry, MouseStroke stroke) {
+        if (!this.OnCancelUsage(usage, shortcutEntry))
+            return false;
+        
         this.Manager.OnCancelUsageForNoSuchNextMouseStroke(this, usage, shortcutEntry, stroke);
-        return this.OnCancelUsage(usage, shortcutEntry);
+        return true;
     }
 
     protected virtual bool OnCancelUsage(IShortcutUsage usage, ShortcutEntry shortcutEntry) {

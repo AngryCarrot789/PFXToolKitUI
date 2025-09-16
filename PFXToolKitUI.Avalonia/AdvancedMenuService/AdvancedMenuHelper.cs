@@ -17,7 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using PFXToolKitUI.AdvancedMenuService;
