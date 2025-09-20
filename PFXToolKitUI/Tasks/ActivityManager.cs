@@ -96,7 +96,7 @@ public sealed class ActivityManager : IDisposable {
 
     public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, progress, null, creationOptions);
 
-    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new ConcurrentActivityProgress(), cts, creationOptions);
+    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new DispatcherActivityProgress(), cts, creationOptions);
 
     public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) {
         return ActivityTask.InternalStartActivity(this, action, progress, cts, creationOptions);
@@ -106,7 +106,7 @@ public sealed class ActivityManager : IDisposable {
 
     public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, progress, null, creationOptions);
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new ConcurrentActivityProgress(), cts, creationOptions);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new DispatcherActivityProgress(), cts, creationOptions);
 
     public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) {
         return ActivityTask<T>.InternalStartActivity(this, action, progress, cts, creationOptions);

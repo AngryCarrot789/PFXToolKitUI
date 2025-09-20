@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Interactivity.Windowing;
+
 namespace PFXToolKitUI.Services.UserInputs;
 
 public interface IUserInputDialogService {
@@ -26,9 +28,13 @@ public interface IUserInputDialogService {
     /// Shows an input dialog using the given information object
     /// </summary>
     /// <param name="info">The information to present in the dialog</param>
+    /// <param name="parentTopLevel">
+    /// The top level who should be the parent of the dialog. When null, the currently 
+    /// active window will be used, or worse case, the app's main window
+    /// </param>
     /// <returns>
     /// An async boolean. True when closed successfully (you can accept the results, and trust the
     /// validation function was run), False when validation fails or the text field is empty and
     /// empty is disabled, or Null when the dialog closed unexpectedly</returns>
-    Task<bool?> ShowInputDialogAsync(UserInputInfo info);
+    Task<bool?> ShowInputDialogAsync(UserInputInfo info, ITopLevel? parentTopLevel = null);
 }

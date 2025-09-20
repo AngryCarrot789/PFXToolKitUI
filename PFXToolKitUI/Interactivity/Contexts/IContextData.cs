@@ -39,4 +39,15 @@ public interface IContextData {
     /// Checks if the given data key is contained in this context
     /// </summary>
     bool ContainsKey(string key);
+
+    /// <summary>
+    /// Creates an instance of <see cref="ContextData"/> from this context data instance.
+    /// The returned instance has no effect on the current instance.
+    /// </summary>
+    ContextData ToMutable() {
+        ContextData data = new ContextData();
+        foreach (KeyValuePair<string, object> entry in this.Entries)
+            data.SetRaw(entry.Key, entry.Value);
+        return data;
+    }
 }

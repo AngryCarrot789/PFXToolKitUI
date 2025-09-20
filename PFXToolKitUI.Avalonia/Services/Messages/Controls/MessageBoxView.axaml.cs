@@ -61,7 +61,7 @@ public partial class MessageBoxView : UserControl {
         this.autrBinder.AttachControl(this.PART_AlwaysUseThisResult);
         this.autrUntilCloseBinder.AttachControl(this.PART_AUTR_UntilAppCloses);
         this.PART_Header.PropertyChanged += this.OnHeaderTextBlockPropertyChanged;
-
+        
         this.PART_YesOkButton.Click += this.OnConfirmButtonClicked;
         this.PART_NoButton.Click += this.OnNoButtonClicked;
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
@@ -226,7 +226,7 @@ public partial class MessageBoxView : UserControl {
     /// <returns>True if the dialog was closed, false if it could not be closed due to a validation error or other error</returns>
     public void Close(MessageBoxResult result) {
         if (this.Window != null && this.Window.IsOpenAndNotClosing) {
-            this.Window.Close(result);
+            _ = this.Window.RequestCloseAsync(result);
         }
     }
 

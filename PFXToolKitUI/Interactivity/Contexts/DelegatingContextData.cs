@@ -22,27 +22,29 @@ using System.Diagnostics.CodeAnalysis;
 namespace PFXToolKitUI.Interactivity.Contexts;
 
 public class DelegatingContextData : IContextData {
-    private readonly IContextData[] contextDataArray;
+    private readonly IContextData[] context;
 
-    public IEnumerable<KeyValuePair<string, object>> Entries => this.contextDataArray.SelectMany(x => x.Entries);
+    public IEnumerable<KeyValuePair<string, object>> Entries => this.context.SelectMany(x => x.Entries);
 
     public DelegatingContextData(IContextData data1) : this([data1]) { }
 
     public DelegatingContextData(IContextData data1, IContextData data2) : this([data1, data2]) { }
 
-    public DelegatingContextData(IContextData[] contextDataArray) {
-        this.contextDataArray = contextDataArray;
+    public DelegatingContextData(params IContextData[] context) {
+        this.context = context;
     }
 
     public bool TryGetContext(string key, [NotNullWhen(true)] out object? value) {
-        foreach (IContextData data in this.contextDataArray) {
-            if (data.TryGetContext(key, out value))
+        // Scan from bottom to top, which is behaviour that the DataManager uses for the logical tree
+        for (int i = this.context.Length - 1; i >= 0; i--) {
+            if (this.context[i].TryGetContext(key, out value)) {
                 return true;
+            }
         }
 
         value = null;
         return false;
     }
 
-    public bool ContainsKey(string key) => this.contextDataArray.Any(x => x.ContainsKey(key));
+    public bool ContainsKey(string key) => this.context.Any(x => x.ContainsKey(key));
 }

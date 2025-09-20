@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Interactivity.Windowing;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Services.ColourPicking;
@@ -24,5 +25,5 @@ namespace PFXToolKitUI.Services.ColourPicking;
 public interface IColourPickerDialogService {
     public static IColourPickerDialogService Instance => ApplicationPFX.GetComponent<IColourPickerDialogService>();
 
-    Task<SKColor?> PickColourAsync(SKColor? defaultColour);
+    Task<SKColor?> PickColourAsync(SKColor? defaultColour, ITopLevel? parentTopLevel = null);
 }

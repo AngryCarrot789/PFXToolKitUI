@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Services.InputStrokes;
@@ -28,16 +29,24 @@ public interface IInputStrokeQueryService {
     public static IInputStrokeQueryService Instance => ApplicationPFX.GetComponent<IInputStrokeQueryService>();
 
     /// <summary>
-    /// Returns a user-specified key stroke. Simple implementation shows a dialog that the user types into
+    /// Returns a user-specified KeyStroke. Simple implementation shows a dialog that the user types into
     /// </summary>
-    /// <param name="initialKeyStroke">The key stroke to use as default.</param>
-    /// <returns>A task that provides the key stroke pressed, or the initial key stroke</returns>
-    Task<KeyStroke?> GetKeyStrokeInput(KeyStroke? initialKeyStroke);
+    /// <param name="initialKeyStroke">The KeyStroke to use as default.</param>
+    /// <param name="parentTopLevel">
+    /// The top level who should be the parent of the dialog. When null, the currently 
+    /// active window will be used, or worse case, the app's main window
+    /// </param>
+    /// <returns>A task that provides the KeyStroke pressed, or the initial KeyStroke</returns>
+    Task<KeyStroke?> GetKeyStrokeInput(KeyStroke? initialKeyStroke, ITopLevel? parentTopLevel = null);
 
     /// <summary>
-    /// Returns a user-specified mouse stroke. Simple implementation shows a dialog that the user types into
+    /// Returns a user-specified MouseStroke. Simple implementation shows a dialog that the user types into
     /// </summary>
-    /// <param name="initialMouseStroke">The mouse stroke to use as default.</param>
-    /// <returns>A task that provides the mouse stroke pressed, or the initial mouse stroke</returns>
-    Task<MouseStroke?> GetMouseStroke(MouseStroke? initialMouseStroke);
+    /// <param name="initialMouseStroke">The MouseStroke to use as default.</param>
+    /// <param name="parentTopLevel">
+    /// The top level who should be the parent of the dialog. When null, the currently 
+    /// active window will be used, or worse case, the app's main window
+    /// </param>
+    /// <returns>A task that provides the MouseStroke pressed, or the initial MouseStroke</returns>
+    Task<MouseStroke?> GetMouseStroke(MouseStroke? initialMouseStroke, ITopLevel? parentTopLevel = null);
 }

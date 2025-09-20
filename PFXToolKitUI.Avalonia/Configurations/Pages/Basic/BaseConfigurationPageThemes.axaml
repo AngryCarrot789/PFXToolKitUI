@@ -3,7 +3,6 @@
                     xmlns:trees="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Trees;assembly=PFXToolKitUI.Avalonia"
                     xmlns:pages="clr-namespace:PFXToolKitUI.Avalonia.Configurations.Pages"
                     xmlns:propertyEditing="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing"
-                    xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls"
                     xmlns:cu="clr-namespace:PFXToolKitUI.Avalonia.CommandUsages"
                     xmlns:configurations="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Configurations"
                     xmlns:themes="clr-namespace:PFXToolKitUI.Avalonia.Themes.Configurations"
@@ -12,7 +11,8 @@
                     xmlns:messages="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages"
                     xmlns:dd="clr-namespace:PFXToolKitUI.Configurations.Dialogs;assembly=PFXToolKitUI"
                     xmlns:avalonia="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Avalonia"
-                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips">
+                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
+                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Controls">
     <ControlTheme x:Key="{x:Type pages:PropertyEditorConfigurationPageControl}" TargetType="{x:Type pages:PropertyEditorConfigurationPageControl}">
         <Setter Property="Template">
             <ControlTemplate TargetType="{x:Type pages:PropertyEditorConfigurationPageControl}">
@@ -32,7 +32,7 @@
                             <Run Text="The yellow labels are the input gestures that must be performed to activate the shortcut. More than one label means a multi-gesture shortcut" BaselineAlignment="Center"/>
                         </TextBlock>
                     </Grid>
-                    <c:GroupBox Grid.Row="2" Header="Keymap" Margin="5,0,5,5">
+                    <controls:GroupBox Grid.Row="2" Header="Keymap" Margin="5,0,5,5">
                         <Grid Margin="0" RowDefinitions="Auto,*">
                             <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto">
                                 <StackPanel Orientation="Horizontal" Grid.Column="0">
@@ -45,7 +45,7 @@
                             </Grid>
                             <trees:ShortcutTreeView x:Name="PART_ShortcutTree" Grid.Row="1"/>
                         </Grid>
-                    </c:GroupBox>
+                    </controls:GroupBox>
                 </Grid>
             </ControlTemplate>
         </Setter>
@@ -61,7 +61,7 @@
                             <Run Text="Dialogs have the ability to remember your choice. This lets you view your choices, modify the persistence, and also delete the choice (by pressing delete)" BaselineAlignment="Center"/>
                         </TextBlock>
                     </Grid>
-                    <c:GroupBox Grid.Row="2" Header="Keymap" Margin="5,0,5,5">
+                    <controls:GroupBox Grid.Row="2" Header="Keymap" Margin="5,0,5,5">
                         <DataGrid x:Name="PART_DataGrid"
                                   Background="Transparent"
                                   BorderThickness="0"
@@ -88,7 +88,7 @@
                                 </DataGridTemplateColumn>
                             </DataGrid.Columns>
                         </DataGrid>
-                    </c:GroupBox>
+                    </controls:GroupBox>
                 </Grid>
             </ControlTemplate>
         </Setter>
@@ -114,7 +114,7 @@
                             <Run Text="Create a copy (preferably an inherited copy) to save changes" BaselineAlignment="Center" Foreground="{DynamicResource ABrush.Foreground.Disabled}"/>
                         </TextBlock>
                     </StackPanel>
-                    <c:GroupBox x:Name="PART_GroupBox" Grid.Row="2" Header="Theme Name Here" Margin="5,0,5,5">
+                    <controls:GroupBox x:Name="PART_GroupBox" Grid.Row="2" Header="Theme Name Here" Margin="5,0,5,5">
                         <Grid Margin="0">
                             <Grid.RowDefinitions>
                                 <RowDefinition Height="20"/>
@@ -185,7 +185,7 @@
                                 <ColorPicker Grid.Column="6" Grid.Row="0" Grid.RowSpan="2" x:Name="PART_ColorPicker" Margin="0,0,5,0"/>
                             </Grid>
                         </Grid>
-                    </c:GroupBox>
+                    </controls:GroupBox>
                 </Grid>
             </ControlTemplate>
         </Setter>

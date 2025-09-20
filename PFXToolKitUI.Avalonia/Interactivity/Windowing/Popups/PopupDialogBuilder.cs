@@ -1,4 +1,4 @@
-// 
+﻿// 
 // Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
@@ -17,20 +17,24 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Tasks;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Popups;
 
-public readonly struct CompletionRange {
-    public readonly double Range;
-    public readonly double PreviousMultiplier;
-    public readonly double PreviousTotalCompletion;
+/// <summary>
+/// A builder object for building a popup for a single-view popup manager
+/// </summary>
+public class PopupDialogBuilder {
+    /// <summary>
+    /// Gets or sets the parent popup
+    /// </summary>
+    public IPopupDialog? Parent { get; set; }
 
-    public CompletionRange(double range, double previousMultiplier, double previousTotalCompletion) {
-        this.Range = range;
-        this.PreviousMultiplier = previousMultiplier;
-        this.PreviousTotalCompletion = previousTotalCompletion;
-    }
+    /// <summary>
+    /// Gets or sets the title bar builder object, which describes the information for a standard title bar. When set to null, no title bar is present 
+    /// </summary>
+    public PopupTitleBarInfo? TitleBar { get; set; }
 
-    public override string ToString() {
-        return $"Range={this.Range:F4} ~ PrevMultiplier={this.PreviousMultiplier:F4} ~ PrevTotalCompletion={this.PreviousTotalCompletion:F4}";
-    }
+    /// <summary>
+    /// Gets or sets the popup's content
+    /// </summary>
+    public object? Content { get; set; }
 }

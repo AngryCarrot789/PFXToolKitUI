@@ -17,26 +17,34 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 
 public class InputStrokeQueryDialogImpl : IInputStrokeQueryService {
-    public async Task<KeyStroke?> GetKeyStrokeInput(KeyStroke? initialKeyStroke) {
+    public async Task<KeyStroke?> GetKeyStrokeInput(KeyStroke? initialKeyStroke, ITopLevel? parentTopLevel = null) {
         KeyStrokeUserInputInfo info = new KeyStrokeUserInputInfo() {
             KeyStroke = initialKeyStroke, Caption = "Key Input Stroke"
         };
 
-        return await UserInputDialogView.ShowDialogAsync(info) == true ? info.KeyStroke : null;
+        Task<bool?> task = parentTopLevel != null
+            ? UserInputDialogView.ShowDialogAsync(info, IWindow.FromTopLevel(parentTopLevel))
+            : UserInputDialogView.ShowDialogAsync(info);
+        return await task == true ? info.KeyStroke : null;
     }
 
-    public async Task<MouseStroke?> GetMouseStroke(MouseStroke? initialMouseStroke) {
+    public async Task<MouseStroke?> GetMouseStroke(MouseStroke? initialMouseStroke, ITopLevel? parentTopLevel = null) {
         MouseStrokeUserInputInfo info = new MouseStrokeUserInputInfo() {
             MouseStroke = initialMouseStroke, Caption = "Mouse Input Stroke"
         };
 
-        return await UserInputDialogView.ShowDialogAsync(info) == true ? info.MouseStroke : null;
+        Task<bool?> task = parentTopLevel != null
+            ? UserInputDialogView.ShowDialogAsync(info, IWindow.FromTopLevel(parentTopLevel))
+            : UserInputDialogView.ShowDialogAsync(info);
+        return await task == true ? info.MouseStroke : null;
     }
 }

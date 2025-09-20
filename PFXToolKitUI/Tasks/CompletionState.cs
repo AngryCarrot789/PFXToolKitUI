@@ -103,7 +103,7 @@ public abstract class CompletionState {
     /// </returns>
     public PopCompletionStateRangeToken PushCompletionRange(double min, double max, bool fillRemainingOnCompleted = true) {
         CompletionRange range = new CompletionRange(max - min, this.totalMultiplier, this.TotalCompletion);
-        this.totalMultiplier *= range.Range;
+        this.totalMultiplier *= range.range;
         this.ranges.Push(range);
         return new PopCompletionStateRangeToken(this, fillRemainingOnCompleted);
     }
@@ -121,10 +121,10 @@ public abstract class CompletionState {
 
         // Just set the progress to 100%
         if (fillRemainingOnCompleted)
-            this.TotalCompletion = this.ranges.Peek().PreviousTotalCompletion + this.totalMultiplier;
+            this.TotalCompletion = this.ranges.Peek().prevTotalCompletion + this.totalMultiplier;
 
         CompletionRange popped = this.ranges.Pop();
-        this.totalMultiplier = popped.PreviousMultiplier;
+        this.totalMultiplier = popped.prevMultiplier;
     }
 
     /// <summary>
@@ -151,7 +151,7 @@ public abstract class CompletionState {
     /// <param name="value">The value to append (multiplied based on the current ranges on the stack)</param>
     public void SetProgress(double value) {
         if (this.ranges.TryPeek(out CompletionRange top)) {
-            this.TotalCompletion = top.PreviousTotalCompletion + (this.totalMultiplier * value);
+            this.TotalCompletion = top.prevTotalCompletion + (this.totalMultiplier * value);
         }
         else {
             // assert totalMultiplier == 1.0
@@ -159,6 +159,40 @@ public abstract class CompletionState {
         }
     }
 
+    /// <summary>
+    /// Saves the current state of pushed completion ranges and total completion
+    /// that may be restored when the returned value is disposed
+    /// </summary>
+    /// <returns>
+    /// A value that when disposed will restore the pushed completion ranges and total completion
+    /// </returns>
+    public State SaveState() => new State(this);
+
+    public readonly struct State(CompletionState state) : IDisposable {
+        private readonly CompletionRange[] ranges = state.ranges.ToArray();
+        private readonly double totalMultiplier = state.totalMultiplier;
+        private readonly double totalCompletion = state.TotalCompletion;
+
+        public void Dispose() {
+            state.ranges.Clear();
+            foreach (CompletionRange range in this.ranges)
+                state.ranges.Push(range);
+            
+            state.totalMultiplier = this.totalMultiplier;
+            state.TotalCompletion = this.totalCompletion;
+        }
+    }
+
+    private readonly struct CompletionRange(double range, double prevMultiplier, double prevTotalCompletion) {
+        public readonly double range = range;
+        public readonly double prevMultiplier = prevMultiplier;
+        public readonly double prevTotalCompletion = prevTotalCompletion;
+
+        public override string ToString() {
+            return $"Range={this.range:F4} ~ PrevMultiplier={this.prevMultiplier:F4} ~ PrevTotalCompletion={this.prevTotalCompletion:F4}";
+        }
+    }
+    
     public static void TestCompletionRangeFunctionality() {
         SimpleCompletionState tracker = new SimpleCompletionState();
         using (tracker.PushCompletionRange(0.0, 0.5)) {

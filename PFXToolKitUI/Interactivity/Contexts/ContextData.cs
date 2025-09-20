@@ -110,6 +110,8 @@ public class ContextData : IRandomAccessContextData {
         return ctx;
     }
 
+    public ContextData ToMutable() => this.Clone();
+
     public ContextData? ToNullIfEmpty() => this.Count > 0 ? this : null;
 
     public ContextData Merge(IContextData ctx) {

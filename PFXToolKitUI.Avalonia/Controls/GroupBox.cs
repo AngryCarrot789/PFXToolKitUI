@@ -22,7 +22,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Layout;
 using Avalonia.Media;
 
-namespace PFXToolKitUI.Avalonia.Themes.Controls;
+namespace PFXToolKitUI.Avalonia.Controls;
 
 /// <summary>
 /// A headered content control which has a piece of text at the top left, and content below

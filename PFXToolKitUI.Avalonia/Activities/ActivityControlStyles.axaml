@@ -11,6 +11,21 @@
         <Setter Property="Padding" Value="6,4"/>
         <Setter Property="Template">
             <ControlTemplate TargetType="{x:Type local:ActivityListItem}">
+                <local:ActivityRowControl x:Name="PART_Row"
+                                          ActivityTask="{Binding RelativeSource={RelativeSource Self}, Path=ActivityTask}"
+                                          ShowCaption="{Binding RelativeSource={RelativeSource Self}, Path=ShowCaption}"/>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme x:Key="{x:Type local:ActivityRowControl}" TargetType="{x:Type local:ActivityRowControl}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type local:ActivityRowControl}">
                 <Border>
                     <StackPanel Margin="{TemplateBinding Padding}" VerticalAlignment="Center" HorizontalAlignment="Stretch">
                         <TextBlock x:Name="PART_Header" Text="Header Here" Padding="1,3"/>
@@ -31,8 +46,8 @@
                                             Padding="4,1" Margin="0"
                                             BorderThickness="0"
                                             CornerRadius="2"
-                                            IconMaxHeight="12" IconMaxWidth="12" 
-                                            VerticalContentAlignment="Center" 
+                                            IconMaxHeight="12" IconMaxWidth="12"
+                                            VerticalContentAlignment="Center"
                                             HorizontalContentAlignment="Center"/>
                             <ProgressBar x:Name="PART_ProgressBar" Minimum="0" Maximum="1" Height="9" BorderThickness="0" CornerRadius="2"/>
                         </DockPanel>
@@ -41,22 +56,28 @@
                 </Border>
             </ControlTemplate>
         </Setter>
-        <Style Selector="^:pointerover /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ListBoxItem.MouseOver.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ListBoxItem.MouseOver.Border}"/>
-        </Style>
-
-        <Style Selector="^:selected[IsFocused=False] /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ListBoxItem.SelectedInactive.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ListBoxItem.SelectedInactive.Border}"/>
-        </Style>
-
-        <Style Selector="^:selected[IsFocused=True] /template/ ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource ListBoxItem.SelectedActive.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource ListBoxItem.SelectedActive.Border}"/>
-        </Style>
     </ControlTheme>
-    <ControlTheme x:Key="{x:Type local:ActivityListControl}" TargetType="{x:Type local:ActivityListControl}">
+
+    <ControlTheme x:Key="{x:Type local:ProgressRowControl}" TargetType="{x:Type local:ProgressRowControl}">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type local:ProgressRowControl}">
+                <Border>
+                    <StackPanel Margin="{TemplateBinding Padding}" VerticalAlignment="Center" HorizontalAlignment="Stretch">
+                        <TextBlock x:Name="PART_Header" Text="Header Here" Padding="1,3"/>
+                        <ProgressBar x:Name="PART_ProgressBar" Minimum="0" Maximum="1" Height="9" BorderThickness="0" CornerRadius="2"/>
+                        <TextBlock x:Name="PART_Footer" Text="Footer Here" Padding="1,3" Foreground="{DynamicResource ABrush.Foreground.Disabled}" TextWrapping="Wrap"/>
+                    </StackPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
+    <ControlTheme x:Key="{x:Type local:ActivityListBoxControl}" TargetType="{x:Type local:ActivityListBoxControl}">
         <Setter Property="Background" Value="{DynamicResource ABrush.Tone2.Background.Static}"/>
         <Setter Property="HeaderBrush" Value="{DynamicResource ABrush.Tone5.Background.Static}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone6.Border.Static}"/>
@@ -64,7 +85,7 @@
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Template">
-            <ControlTemplate TargetType="{x:Type local:ActivityListControl}">
+            <ControlTemplate TargetType="{x:Type local:ActivityListBoxControl}">
                 <Border x:Name="PART_Border"
                         Padding="{TemplateBinding Padding}"
                         Background="{TemplateBinding Background}"

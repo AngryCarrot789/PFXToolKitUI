@@ -19,6 +19,7 @@
 
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Configurations.UI;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.UserInputs;
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Utils;
@@ -61,7 +62,7 @@ public class CreateThemeCommand : Command {
         }
 
         info.Text = TextIncrement.GetIncrementableString((x) => theme.ThemeManager.GetTheme(x) == null, theme.Name, out string? value, true) ? value : theme.Name;
-        if (await IUserInputDialogService.Instance.ShowInputDialogAsync(info) != true) {
+        if (await IUserInputDialogService.Instance.ShowInputDialogAsync(info, ITopLevel.FromContext(e.ContextData)) != true) {
             return;
         }
 

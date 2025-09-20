@@ -21,6 +21,7 @@ using Avalonia.Controls;
 using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Services.Messages.Controls;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.Messaging.Configurations;
@@ -79,60 +80,53 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             }
         }
 
-        if (IWindowManager.TryGetInstance(out IWindowManager? manager)) {
-            if (!manager.TryGetActiveOrMainWindow(out IWindow? activeWindow)) {
-                Console.WriteLine("Warning: no active window available to show MessageBox");
-                Console.WriteLine($"[{info.Caption}] {info.Header}");
-                Console.WriteLine($"  {info.Message}");
-            }
+        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
+        if (parentWindow == null) {
+            AppLogger.Instance.WriteLine("Could not find appropriate window for message box");
+            Console.WriteLine($"[{info.Caption}] {info.Header}");
+            Console.WriteLine($"  {info.Message}");
+            return MessageBoxResult.None;
+        }
 
-            MessageBoxView view = new MessageBoxView() {
-                MessageBoxData = info
-            };
+        MessageBoxView view = new MessageBoxView() {
+            MessageBoxData = info
+        };
 
-            IWindow window = manager.CreateWindow(new WindowBuilder() {
-                Title = info.Caption,
-                Parent = activeWindow,
-                Content = view,
-                SizeToContent = SizeToContent.WidthAndHeight,
-                MinWidth = 300, MinHeight = 100,
-                MaxWidth = 800, MaxHeight = 800,
-                TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
-                BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
-            });
+        IWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
+            Title = info.Caption,
+            Parent = parentWindow,
+            Content = view,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            MinWidth = 300, MinHeight = 100,
+            MaxWidth = 800, MaxHeight = 800,
+            TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
+            BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
+        });
 
-            window.Control.AddHandler(InputElement.KeyDownEvent, WindowOnKeyDown);
-            window.WindowOpening += WindowOnWindowOpening;
-            window.WindowOpened += WindowOnWindowOpened;
-            window.WindowClosed += WindowOnWindowClosed;
+        window.Control.AddHandler(InputElement.KeyDownEvent, WindowOnKeyDown);
+        window.WindowOpening += WindowOnWindowOpening;
+        window.WindowOpened += WindowOnWindowOpened;
+        window.WindowClosed += WindowOnWindowClosed;
 
-            MessageBoxResult mbResult = await window.ShowDialog() as MessageBoxResult? ?? MessageBoxResult.None;
-            view.MessageBoxData = null; // unhook models' event handlers
+        MessageBoxResult mbResult = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
+        view.MessageBoxData = null; // unhook models' event handlers
 
-            if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && mbResult != MessageBoxResult.None) {
-                PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(mbResult, info.AlwaysUseThisResultUntilAppCloses);
-            }
+        if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && mbResult != MessageBoxResult.None) {
+            PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(mbResult, info.AlwaysUseThisResultUntilAppCloses);
+        }
 
-            return mbResult;
+        return mbResult;
 
-            void WindowOnWindowOpening(IWindow s, EventArgs e) => view.OnWindowOpening(s);
-            void WindowOnWindowOpened(IWindow s, EventArgs e) => view.OnWindowOpened(s);
-            void WindowOnWindowClosed(IWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
+        void WindowOnWindowOpening(IWindow s, EventArgs e) => view.OnWindowOpening(s);
+        void WindowOnWindowOpened(IWindow s, EventArgs e) => view.OnWindowOpened(s);
+        void WindowOnWindowClosed(IWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
 
-            void WindowOnKeyDown(object? s, KeyEventArgs e) {
-                if (!e.Handled && e.Key == Key.Escape) {
-                    if (view.Window != null && view.Window.IsOpenAndNotClosing) {
-                        view.Close(MessageBoxResult.None);
-                    }
+        void WindowOnKeyDown(object? s, KeyEventArgs e) {
+            if (!e.Handled && e.Key == Key.Escape) {
+                if (view.Window != null && view.Window.IsOpenAndNotClosing) {
+                    view.Close(MessageBoxResult.None);
                 }
             }
         }
-        else {
-            Console.WriteLine("Warning: no message box library available");
-            Console.WriteLine($"[{info.Caption}] {info.Header}");
-            Console.WriteLine($"  {info.Message}");
-        }
-
-        return MessageBoxResult.None;
     }
 }

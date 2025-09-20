@@ -1,6 +1,5 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Themes.Controls;assembly=PFXToolKitUI.Avalonia"
                     xmlns:converters="clr-namespace:PFXToolKitUI.Avalonia.Themes.Converters"
                     xmlns:di="clr-namespace:PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl"
                     xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls">

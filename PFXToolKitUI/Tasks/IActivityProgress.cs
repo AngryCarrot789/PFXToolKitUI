@@ -36,25 +36,22 @@ public interface IActivityProgress {
     string? Caption { get; set; }
 
     /// <summary>
-    /// Gets or sets the description text (aka operation description). This can be what is currently going on. 
+    /// Gets or sets the description text (aka operation description). This can be what is currently going on
     /// </summary>
     string? Text { get; set; }
 
     /// <summary>
-    /// An event fired when the <see cref="IsIndeterminate"/> property changes.
-    /// This event is fired on the main thread, even if <see cref="IsIndeterminate"/> is changed on a task thread
+    /// An event fired when the <see cref="IsIndeterminate"/> property changes
     /// </summary>
     event ActivityProgressEventHandler IsIndeterminateChanged;
 
     /// <summary>
-    /// An event fired when the <see cref="Caption"/> property changes.
-    /// This event is fired on the main thread, even if <see cref="Caption"/> is changed on a task thread
+    /// An event fired when the <see cref="Caption"/> property changes
     /// </summary>
     event ActivityProgressEventHandler CaptionChanged;
 
     /// <summary>
-    /// An event fired when the <see cref="Text"/> property changes.
-    /// This event is fired on the main thread, even if <see cref="Text"/> is changed on a task thread
+    /// An event fired when the <see cref="Text"/> property changes
     /// </summary>
     event ActivityProgressEventHandler TextChanged;
 
@@ -63,13 +60,34 @@ public interface IActivityProgress {
     /// </summary>
     CompletionState CompletionState { get; }
 
+    /// <summary>
+    /// Saves the values of <see cref="IsIndeterminate"/>, <see cref="Caption"/> and
+    /// <see cref="Text"/>, which can then be restored by disposing the returned struct
+    /// </summary>
+    /// <returns>
+    /// A struct that stores the current property values and can restore them when disposed
+    /// </returns>
+    State SaveState() => new(this);
+
     void SetCaptionAndText(string value) {
         this.Caption = value;
         this.Text = value;
     }
-    
+
     void SetCaptionAndText(string caption, string text) {
         this.Caption = caption;
         this.Text = text;
+    }
+
+    public readonly struct State(IActivityProgress progress) : IDisposable {
+        public readonly bool IsIndeterminate = progress.IsIndeterminate;
+        public readonly string? Caption = progress.Caption;
+        public readonly string? Text = progress.Text;
+
+        public void Dispose() {
+            progress.IsIndeterminate = this.IsIndeterminate;
+            progress.Caption = this.Caption;
+            progress.Text = this.Text;
+        }
     }
 }

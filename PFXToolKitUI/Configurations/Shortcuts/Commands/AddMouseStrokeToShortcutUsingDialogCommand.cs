@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
@@ -34,7 +35,7 @@ public class AddMouseStrokeToShortcutUsingDialogCommand : Command {
             return;
         }
 
-        MouseStroke? stroke = await IInputStrokeQueryService.Instance.GetMouseStroke(null);
+        MouseStroke? stroke = await IInputStrokeQueryService.Instance.GetMouseStroke(null, ITopLevel.FromContext(e.ContextData));
         if (stroke.HasValue) {
             if (entry.Shortcut is MouseShortcut shortcut) {
                 entry.Shortcut = new MouseShortcut(shortcut.MouseStrokes.Append(stroke.Value).ToList());

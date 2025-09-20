@@ -30,7 +30,6 @@ using PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.InputStrokes;
-using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.UserInputs;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
@@ -54,11 +53,6 @@ public partial class UserInputDialogView : UserControl {
         get => this.PART_InputFieldContent.Margin;
         set => this.PART_InputFieldContent.Margin = value;
     }
-
-    /// <summary>
-    /// Gets the dialog result for this user input dialog
-    /// </summary>
-    public bool? DialogResult { get; private set; }
 
     /// <summary>
     /// Gets the window we are opened in
@@ -105,7 +99,7 @@ public partial class UserInputDialogView : UserControl {
                 this.Window.SizingInfo.MinHeight = bounds.Height;
         }
     }
-    
+
     internal void OnWindowOpened(IWindow window) {
         this.captionBinder.AttachControl(this);
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
@@ -128,9 +122,9 @@ public partial class UserInputDialogView : UserControl {
         return new Size(Math.Max(size.Width, 250), size.Height);
     }
 
-    private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) => this.TryCloseDialog(true);
+    private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) => this.RequestClose(true);
 
-    private void OnCancelButtonClicked(object? sender, RoutedEventArgs e) => this.TryCloseDialog(false);
+    private void OnCancelButtonClicked(object? sender, RoutedEventArgs e) => this.RequestClose(false);
 
     private void OnUserInputDataChanged(UserInputInfo? oldData, UserInputInfo? newData) {
         if (oldData != null) {
@@ -197,23 +191,66 @@ public partial class UserInputDialogView : UserControl {
     /// True if the dialog was closed (regardless of the dialog result),
     /// false if it could not be closed due to a validation error or other error
     /// </returns>
-    public bool TryCloseDialog(bool result) {
-        if (this.Window?.IsOpenAndNotClosing != true) {
-            return true;
-        }
+    public void RequestClose(bool result) {
+        if (this.Window != null && this.Window.IsOpenAndNotClosing) {
+            if (!result) {
+                _ = this.Window!.RequestCloseAsync(BoolBox.False);
+                return;
+            }
 
-        if (!result) {
-            this.Window!.Close((this.DialogResult = false).BoxNullable());
-            return true;
-        }
+            UserInputInfo? data = this.UserInputInfo;
+            if (data == null || data.HasErrors()) {
+                return;
+            }
 
-        UserInputInfo? data = this.UserInputInfo;
-        if (data == null || data.HasErrors()) {
-            return false;
+            _ = this.Window!.RequestCloseAsync(BoolBox.True);
         }
+    }
 
-        this.Window!.Close((this.DialogResult = true).BoxNullable());
-        return true;
+    /// <summary>
+    /// Shows a new user input dialog using the given user information to create the content
+    /// </summary>
+    /// <param name="info">The input info</param>
+    /// <param name="parentWindow">The parent window for the dialog</param>
+    /// <returns>A task to await the dialog close result</returns>
+    public static async Task<bool?> ShowDialogAsync(UserInputInfo info, IWindow parentWindow) {
+        ArgumentNullException.ThrowIfNull(info);
+        ArgumentNullException.ThrowIfNull(parentWindow);
+        
+        UserInputDialogView view = new UserInputDialogView() {
+            UserInputInfo = info
+        };
+
+        IWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
+            Title = info.Caption,
+            Parent = parentWindow,
+            Content = view,
+            SizeToContent = SizeToContent.WidthAndHeight,
+            CanResize = false,
+            TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
+            BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
+        });
+
+        window.Control.AddHandler(KeyDownEvent, WindowOnKeyDown);
+        window.WindowOpening += WindowOnWindowOpening;
+        window.WindowOpened += WindowOnWindowOpened;
+        window.WindowClosed += WindowOnWindowClosed;
+
+        bool? result = await window.ShowDialogAsync() as bool?;
+        view.UserInputInfo = null; // unhook models' event handlers
+        return result;
+
+        void WindowOnWindowOpening(IWindow s, EventArgs e) => view.OnWindowOpening(s);
+        void WindowOnWindowOpened(IWindow s, EventArgs e) => view.OnWindowOpened(s);
+        void WindowOnWindowClosed(IWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
+
+        void WindowOnKeyDown(object? s, KeyEventArgs e) {
+            if (!e.Handled && e.Key == Key.Escape) {
+                if (view.Window != null && view.Window.IsOpenAndNotClosing) {
+                    view.RequestClose(false);
+                }
+            }
+        }
     }
 
     /// <summary>
@@ -223,56 +260,11 @@ public partial class UserInputDialogView : UserControl {
     /// <returns>A task to await the dialog close result</returns>
     public static async Task<bool?> ShowDialogAsync(UserInputInfo info) {
         ArgumentNullException.ThrowIfNull(info);
-
-        if (IWindowManager.TryGetInstance(out IWindowManager? manager)) {
-            if (!manager.TryGetActiveOrMainWindow(out IWindow? activeWindow)) {
-                return false;
-            }
-
-            UserInputDialogView view = new UserInputDialogView() {
-                UserInputInfo = info
-            };
-
-            IWindow window = manager.CreateWindow(new WindowBuilder() {
-                Title = info.Caption,
-                Parent = activeWindow,
-                Content = view,
-                SizeToContent = SizeToContent.WidthAndHeight,
-                CanResize = false,
-                TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
-                BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
-            });
-
-            window.Control.AddHandler(KeyDownEvent, WindowOnKeyDown);
-            window.WindowOpening += WindowOnWindowOpening;
-            window.WindowOpened += WindowOnWindowOpened;
-            window.WindowClosed += WindowOnWindowClosed;
-
-            bool? result = await window.ShowDialog() as bool?;
-            view.UserInputInfo = null; // unhook models' event handlers
-
-            if (result == true && view.DialogResult == true) {
-                return true;
-            }
-
-            return result;
-
-            void WindowOnWindowOpening(IWindow s, EventArgs e) => view.OnWindowOpening(s);
-            void WindowOnWindowOpened(IWindow s, EventArgs e) => view.OnWindowOpened(s);
-            void WindowOnWindowClosed(IWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
-
-            void WindowOnKeyDown(object? s, KeyEventArgs e) {
-                if (!e.Handled && e.Key == Key.Escape) {
-                    if (view.Window != null && view.Window.IsOpenAndNotClosing) {
-                        view.TryCloseDialog(false);
-                    }
-                }
-            }
-        }
-        else {
-            await IMessageDialogService.Instance.ShowMessage("Desktop", "No windowing library available");
+        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
+        if (parentWindow == null) {
+            return null;
         }
 
-        return null;
+        return await ShowDialogAsync(info, parentWindow);
     }
 }

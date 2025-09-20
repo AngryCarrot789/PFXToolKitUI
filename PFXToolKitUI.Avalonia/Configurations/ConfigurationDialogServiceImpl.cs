@@ -19,6 +19,7 @@
 
 using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Themes;
 
@@ -26,40 +27,38 @@ namespace PFXToolKitUI.Avalonia.Configurations;
 
 public class ConfigurationDialogServiceImpl : IConfigurationDialogService {
     public async Task ShowConfigurationDialog(ConfigurationManager configurationManager) {
-        if (IWindowManager.TryGetInstance(out IWindowManager? manager)) {
-            if (!manager.TryGetActiveOrMainWindow(out IWindow? activeWindow)) {
-                return;
-            }
-
-            IWindow window = manager.CreateWindow(new WindowBuilder() {
-                Title = "Settings",
-                Content = new ConfigurationDialogView(configurationManager),
-                FocusPath = "Configuration",
-                BorderBrush = BrushManager.Instance.GetDynamicThemeBrush("PanelBorderBrush"),
-                TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone7.Background.Static"),
-                MinWidth = 600, MinHeight = 450,
-                Width = 950, Height = 700,
-                Parent = activeWindow
-            });
-
-            window.Control.AddHandler(InputElement.KeyDownEvent, OnWindowKeyDown);
-            window.WindowOpened += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = s;
-            window.WindowClosed += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = null;
-            
-            window.WindowClosingAsync += static (sender, args) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
-                ConfigurationDialogView view = (ConfigurationDialogView) sender.Content!;
-                await view.configManager.RevertLiveChangesInHierarchyAsync(null);
-                view.PART_EditorPanel.ConfigurationManager = null;
-            }).Unwrap();
-
-            await window.ShowDialog();
+        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
+        if (parentWindow == null)
             return;
-            
-            void OnWindowKeyDown(object? sender, KeyEventArgs e) {
-                if (!e.Handled && e.Key == Key.Escape && !window.IsOpenAndNotClosing) {
-                    e.Handled = true;
-                    ((ConfigurationDialogView) window.Content!).CancelCommand.Execute(null);
-                }
+        
+        IWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
+            Title = "Settings",
+            Content = new ConfigurationDialogView(configurationManager),
+            FocusPath = "Configuration",
+            BorderBrush = BrushManager.Instance.GetDynamicThemeBrush("PanelBorderBrush"),
+            TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone7.Background.Static"),
+            MinWidth = 600, MinHeight = 450,
+            Width = 950, Height = 700,
+            Parent = parentWindow
+        });
+
+        window.Control.AddHandler(InputElement.KeyDownEvent, OnWindowKeyDown);
+        window.WindowOpened += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = s;
+        window.WindowClosed += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = null;
+
+        window.WindowClosingAsync += static (sender, args) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+            ConfigurationDialogView view = (ConfigurationDialogView) sender.Content!;
+            await view.configManager.RevertLiveChangesInHierarchyAsync(null);
+            view.PART_EditorPanel.ConfigurationManager = null;
+        }).Unwrap();
+
+        await window.ShowDialogAsync();
+        return;
+
+        void OnWindowKeyDown(object? sender, KeyEventArgs e) {
+            if (!e.Handled && e.Key == Key.Escape && !window.IsOpenAndNotClosing) {
+                e.Handled = true;
+                ((ConfigurationDialogView) window.Content!).CancelCommand.Execute(null);
             }
         }
     }

@@ -23,6 +23,7 @@ using PFXToolKitUI.Tasks.Pausable;
 namespace PFXToolKitUI.Tasks;
 
 public delegate void ActivityTaskEventHandler(ActivityTask sender);
+
 public delegate void ActivityTaskPausableTaskChangedEventHandler(ActivityTask sender, AdvancedPausableTask? oldPausableTask, AdvancedPausableTask? newPausableTask);
 
 /// <summary>
@@ -43,6 +44,9 @@ public class ActivityTask {
     internal readonly CancellationTokenSource? cancellationTokenSource;
     private AdvancedPausableTask? myInternalPausableTask;
 
+    /// <summary>
+    /// Gets the task returned by the user's function when running the activity
+    /// </summary>
     protected Task? UserTask => this.userTask;
 
     /// <summary>
@@ -69,7 +73,7 @@ public class ActivityTask {
     /// Returns true when cancellation is requested 
     /// </summary>
     public bool IsCancellationRequested => this.IsDirectlyCancellable && this.CancellationToken.IsCancellationRequested;
-    
+
     /// <summary>
     /// Gets the exception that was thrown during the execution of the user action
     /// </summary>
@@ -86,9 +90,8 @@ public class ActivityTask {
     public CancellationToken CancellationToken { get; }
 
     /// <summary>
-    /// Gets this activity's task, which can be used to await completion. This task is a proxy of
-    /// the user task function, and will not throw <see cref="OperationCanceledException"/> when
-    /// awaited if our <see cref="CancellationToken"/>'s is cancelled
+    /// Gets this activity's task, which can be used to await completion. This task is a proxy of the user
+    /// task function, and will not throw any exceptions, even if the activity is cancelled or faulted
     /// </summary>
     public Task Task {
         get => this.theMainTask!;
@@ -117,7 +120,7 @@ public class ActivityTask {
     /// so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/> if they need to
     /// </summary>
     public event ActivityTaskPausableTaskChangedEventHandler? PausableTaskChanged;
-    
+
     /// <summary>
     /// Fired (on the main thread) when <see cref="IsCompleted"/> changes
     /// </summary>
@@ -130,7 +133,7 @@ public class ActivityTask {
         this.cancellationTokenSource = cancellationTokenSource;
         this.CancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;
     }
-    
+
     protected void ValidateNotStarted() {
         if (this.state != 0)
             throw new InvalidOperationException("An activity task cannot be restarted");
@@ -138,7 +141,7 @@ public class ActivityTask {
 
     protected virtual Task CreateTask(TaskCreationOptions creationOptions) {
         this.ValidateNotStarted();
-        
+
         // We don't provide the cancellation token, because we want to handle it
         // separately. Awaiting this activity task should never throw an exception
         return Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap();
@@ -158,8 +161,8 @@ public class ActivityTask {
             await (this.userTask = this.action());
             await this.OnCompleted(null);
         }
-        catch (OperationCanceledException) {
-            await this.OnCancelled();
+        catch (OperationCanceledException e) {
+            await this.OnCancelled(e);
         }
         catch (Exception e) {
             await this.OnCompleted(e);
@@ -182,8 +185,10 @@ public class ActivityTask {
 
         return true;
     }
-    
-    private Task OnCancelled() => ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 3);
+
+    protected virtual Task OnCancelled(OperationCanceledException e) {
+        return ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 3);
+    }
 
     protected virtual async Task OnCompleted(Exception? e) {
         this.exception = e;
@@ -191,7 +196,7 @@ public class ActivityTask {
     }
 
     internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions, AdvancedPausableTask? pausableTask = null) {
-        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new ConcurrentActivityProgress(), cts) { myInternalPausableTask = pausableTask };
+        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DispatcherActivityProgress(), cts) { myInternalPausableTask = pausableTask };
         if (pausableTask != null)
             pausableTask.activity = task;
         return InternalStartActivityImpl(task, creationOptions);
@@ -216,30 +221,45 @@ public class ActivityTask {
 // This system isn't great but it just about works... i'd rather not use public new ... methods but oh well
 
 public class ActivityTask<T> : ActivityTask {
-    public T? Result { get; private set; }
+    private Result<T> myResult;
 
-    public new Task<T?> Task => (Task<T?>) this.theMainTask!;
+    public new Task<Result<T>> Task => (Task<Result<T>>) this.theMainTask!;
 
     protected ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts) : base(activityManager, action, activityProgress, cts) {
     }
 
     internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions) {
-        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new ConcurrentActivityProgress(), cts), creationOptions);
+        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new DispatcherActivityProgress(), cts), creationOptions);
     }
 
-    /// <inheritdoc cref="ActivityTask.GetAwaiter"/>
-    public new TaskAwaiter<T?> GetAwaiter() => this.Task.GetAwaiter();
+    /// <summary>
+    /// Returns a task awaiter that can be used to wait for the activity to become completed or faulted.
+    /// </summary>
+    /// <returns>
+    /// An awaiter whose result is a <see cref="Result{T}"/> value, which can either contain the
+    /// successful value or an exception (which may be <see cref="OperationCanceledException"/>)
+    /// </returns>
+    public new TaskAwaiter<Result<T>> GetAwaiter() => this.Task.GetAwaiter();
 
     protected override Task CreateTask(TaskCreationOptions creationOptions) {
         this.ValidateNotStarted();
-        return System.Threading.Tasks.Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap().ContinueWith(x => this.Result, TaskContinuationOptions.ExecuteSynchronously);
+        return this.DoCreateTask(creationOptions);
+    }
+
+    protected Task<Result<T>> DoCreateTask(TaskCreationOptions creationOptions) {
+        this.ValidateNotStarted();
+        return System.Threading.Tasks.Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap().ContinueWith(x => this.myResult, TaskContinuationOptions.ExecuteSynchronously);
+    }
+    
+    protected override Task OnCancelled(OperationCanceledException e) {
+        this.myResult = Result<T>.FromException(e); 
+        return base.OnCancelled(e);
     }
 
     protected override Task OnCompleted(Exception? e) {
-        if (this.UserTask is Task<T> t && e == null) {
-            this.Result = t.Result ?? default;
-        }
-
+        this.myResult = e != null 
+            ? Result<T>.FromException(e)
+            : Result<T>.FromValue(((Task<T>) this.UserTask!).Result);
         return base.OnCompleted(e);
     }
 }

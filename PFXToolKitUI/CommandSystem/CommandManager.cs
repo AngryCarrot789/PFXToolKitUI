@@ -30,22 +30,15 @@ namespace PFXToolKitUI.CommandSystem;
 /// Commands are registered at application startup, before any primary UI is loaded
 /// </summary>
 public sealed class CommandManager {
+    /// <summary>
+    /// Gets the global command manager instance
+    /// </summary>
     public static CommandManager Instance => ApplicationPFX.GetComponent<CommandManager>();
-
-    // using this just in case I soon add more data associated with commands
-    private class CommandEntry {
-        public readonly Command Command;
-#if DEBUG
-        public readonly string CreationStackTrace;
-#endif
-
-        public CommandEntry(Command command) {
-            this.Command = command;
-#if DEBUG
-            this.CreationStackTrace = new StackTrace(true).ToString();
-#endif
-        }
-    }
+    
+    /// <summary>
+    /// Gets the async local context manager, which is used to store and access context data for async command execution frames
+    /// </summary>
+    public static AsyncLocalContextManager LocalContextManager => Instance.asyncContextManager;
 
     /// <summary>
     /// Gets the number of commands registered
@@ -55,9 +48,11 @@ public sealed class CommandManager {
     public IEnumerable<KeyValuePair<string, Command>> Commands => this.commands.Select(x => new KeyValuePair<string, Command>(x.Key, x.Value.Command));
 
     private readonly Dictionary<string, CommandEntry> commands;
+    private readonly AsyncLocalContextManager asyncContextManager;
 
     public CommandManager() {
         this.commands = new Dictionary<string, CommandEntry>();
+        this.asyncContextManager = new AsyncLocalContextManager();
     }
 
     /// <summary>
@@ -142,7 +137,7 @@ public sealed class CommandManager {
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
         return new CommandExecutionContext(commandId, command, this, context, isUserInitiated);
     }
-    
+
     /// <summary>
     /// Tries to get the executability for a command with the given ID
     /// </summary>
@@ -174,5 +169,20 @@ public sealed class CommandManager {
     public Executability CanExecute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentNullException.ThrowIfNull(context);
         return command.CanExecute(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
+    }
+
+    private class CommandEntry {
+        public readonly Command Command;
+        
+#if DEBUG
+        public readonly string CreationStackTrace;
+#endif
+
+        public CommandEntry(Command command) {
+            this.Command = command;
+#if DEBUG
+            this.CreationStackTrace = new StackTrace(true).ToString();
+#endif
+        }
     }
 }

@@ -56,7 +56,7 @@ public delegate void WindowTitleBarTextAlignmentChangedEventHandler(IWindow wind
 /// <summary>
 /// Exposes window-like properties that delegate to either a native OS window or a single-view overlay (typically only used on mobile or rasp pi).
 /// </summary>
-public interface IWindow : ITopLevelComponentManager {
+public interface IWindow : ITopLevel {
     /// <summary>
     /// The data key used to access the window from <see cref="IContextData"/> in, for example, a command
     /// </summary>
@@ -65,7 +65,7 @@ public interface IWindow : ITopLevelComponentManager {
     /// <summary>
     /// Gets the window manager associated with this window
     /// </summary>
-    IWindowManager WindowMyManager { get; }
+    IWindowManager WindowManager { get; }
 
     /// <summary>
     /// Gets the parent window. This is usually only set for dialogs, however, it might be
@@ -86,19 +86,6 @@ public interface IWindow : ITopLevelComponentManager {
     bool IsMainWindow { get; }
 
     /// <summary>
-    /// Gets whether the window is in the process of closing. This property is false when <see cref="IsClosed"/> is true.
-    /// </summary>
-    bool IsClosing { get; }
-
-    /// <summary>
-    /// Gets whether the window is actually closed. This differs from <see cref="IsClosing"/> because
-    /// on platforms that use a closing animation, <see cref="IsClosed"/> will be set as true once
-    /// the window is fully closed, whereas <see cref="IsClosing"/> is set after invoking <see cref="CloseAsync"/>
-    /// and is then set to false when <see cref="IsClosed"/> becomes true
-    /// </summary>
-    bool IsClosed { get; }
-
-    /// <summary>
     /// Gets whether the window is in the process of being opened. This is set to tru before <see cref="WindowOpening"/>
     /// and is set to false before <see cref="WindowOpened"/> (which is also when <see cref="IsOpen"/> is set to true)
     /// </summary>
@@ -109,6 +96,26 @@ public interface IWindow : ITopLevelComponentManager {
     /// is fired and is set to false before <see cref="WindowClosed"/> is fired
     /// </summary>
     bool IsOpen { get; }
+
+    /// <summary>
+    /// Returns true when the window is in the process of trying to close; <see cref="TryClose"/>
+    /// and <see cref="TryCloseAsync"/> will be invoked while this is true.
+    /// <para>
+    /// When this value is false but <see cref="IsClosing"/> is true,
+    /// the window close operation can no longer be cancelled
+    /// </para>
+    /// </summary>
+    bool IsTryingToClose { get; }
+
+    /// <summary>
+    /// Gets whether the window is in the process of closing. This property is false when <see cref="IsClosed"/> is true.
+    /// </summary>
+    bool IsClosing { get; }
+
+    /// <summary>
+    /// Gets whether the window is actually closed.
+    /// </summary>
+    bool IsClosed { get; }
 
     /// <summary>
     /// Returns true when <see cref="WindowOpened"/> has been fired
@@ -200,7 +207,7 @@ public interface IWindow : ITopLevelComponentManager {
     /// Gets or sets the position of the window
     /// </summary>
     PixelPoint Position { get; set; }
-    
+
     /// <summary>
     /// An event fired when the window is in the process of opening but has not been shown on screen yet.
     /// </summary>
@@ -215,19 +222,19 @@ public interface IWindow : ITopLevelComponentManager {
     /// An event fired when the window is requested to close. <see cref="IsClosing"/> and <see cref="IsClosed"/>
     /// will both be false at this time.
     /// <para>
-    /// This and <see cref="BeforeClosingAsync"/> are the only times that cancelling window closure is possible
+    /// This and <see cref="TryCloseAsync"/> are the only times that cancelling window closure is possible
     /// </para>
     /// </summary>
-    event WindowEventHandler<WindowCancelCloseEventArgs>? BeforeClosing;
+    event WindowEventHandler<WindowCancelCloseEventArgs>? TryClose;
 
     /// <summary>
     /// An asynchronous event fired when the window is requested to close. The handlers are invoked
-    /// in their own tasks once all handlers of <see cref="BeforeClosing"/> are invoked.
+    /// in their own tasks once all handlers of <see cref="TryClose"/> are invoked.
     /// <para>
-    /// This and <see cref="BeforeClosing"/> are the only times that cancelling window closure is possible
+    /// This and <see cref="TryClose"/> are the only times that cancelling window closure is possible
     /// </para>
     /// </summary>
-    event AsyncWindowEventHandler<WindowCancelCloseEventArgs>? BeforeClosingAsync;
+    event AsyncWindowEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
 
     /// <summary>
     /// An event fired when the window is actually about to close. This is fired after <see cref="IsClosing"/> is set as true,
@@ -245,7 +252,7 @@ public interface IWindow : ITopLevelComponentManager {
     /// An event fired when the window is fully closed. <see cref="IsClosing"/> is set to false and <see cref="IsClosed"/>
     /// is set as true prior to this event.
     /// <para>
-    /// This is fired before the task returned by <see cref="CloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
+    /// This is fired before the task returned by <see cref="RequestCloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
     /// </para>
     /// </summary>
     event WindowEventHandler<WindowCloseEventArgs>? WindowClosed;
@@ -263,55 +270,117 @@ public interface IWindow : ITopLevelComponentManager {
     /// <param name="topLevel">The found top level</param>
     /// <returns>True if a top level was found</returns>
     bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel);
-    
-    /// <summary>
-    /// Shows this window in a non-modal mode and returns once the window is visible on-screen
-    /// </summary>
-    void Show();
 
     /// <summary>
-    /// Shows this window in a non-modal mode. This method posts an open request
-    /// on the dispatcher and returns a task that completes when the window opens.
+    /// Shows this window in a non-modal mode as an asynchronous operation.
     /// </summary>
-    /// <returns>A task that completes once the window has opened (i.e. once the opening animation has finished)</returns>
+    /// <returns>A task that completes once the window has opened</returns>
     Task ShowAsync();
 
     /// <summary>
-    /// Shows this window in a modal mode. This method will return before the window is
-    /// closed, however, the task will be completed once the window actually closes.
+    /// Shows this window in a modal mode as an asynchronous operation.
     /// </summary>
-    /// <returns>A task that completes once the window has opened (i.e. once the opening animation has finished)</returns>
-    Task<object?> ShowDialog();
+    /// <returns>
+    /// A task that completes when the window closes, and whose result is the first value passed
+    /// to <see cref="RequestCloseAsync"/> when the window was not already trying to close.
+    /// </returns>
+    Task<object?> ShowDialogAsync();
 
     /// <summary>
-    /// Closes this window and waits until it is closed
+    /// Requests the window to close. The returned task is completed when the window either closes
+    /// or the close operation was cancelled, where the bool result represents the closed state.
+    /// <para>
+    /// Note, invoking this method when already closed or closing is permitted but is a bug.
+    /// </para>
     /// </summary>
     /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
     /// <returns>True if the window was actually closed, False if the close attempt was cancelled</returns>
-    bool Close(object? dialogResult = null);
+    Task<bool> RequestCloseAsync(object? dialogResult = null);
 
     /// <summary>
-    /// Closes this window. This method posts a close request on the dispatcher and
-    /// returns a task that completes when the window closes.
+    /// Tries to request the window to close by calling <see cref="RequestCloseAsync"/>.
+    /// <para>
+    /// Does nothing if already closed. If already closing, the dialog result will be ignored.
+    /// </para>
     /// </summary>
-    /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
-    /// <returns>True if the window was actually closed, False if the close attempt was cancelled</returns>
-    Task<bool> CloseAsync(object? dialogResult = null);
+    /// <param name="dialogResult">The dialog result to use when not already closing</param>
+    /// <returns>A task that completes when the window closes</returns>
+    Task TryRequestCloseAsync(object? dialogResult = null) {
+        if (this.IsClosed)
+            return Task.CompletedTask;
+        if (this.IsClosing)
+            return this.WaitForClosedAsync();
+
+        return this.RequestCloseAsync(dialogResult);
+    }
 
     /// <summary>
     /// Waits for this window to become closed. Note this does not actually tell the window to close.
     /// <para>
     /// If the window is already closed then this method just immediately returns <see cref="Task.CompletedTask"/>
     /// </para>
+    /// <para>
+    /// This method does not throw <see cref="OperationCanceledException"/>
+    /// </para>
     /// </summary>
     /// <param name="cancellationToken">Allows to stop waiting for the window to close</param>
-    /// <returns>A task that completes before the task returned by <see cref="CloseAsync"/> becomes completed</returns>
+    /// <returns>A task that completes before the task returned by <see cref="RequestCloseAsync"/> becomes completed</returns>
     Task WaitForClosedAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Force-activates this window, making <see cref="IsActivated"/> and it becomes the focused control
     /// </summary>
     void Activate();
+
+    /// <summary>
+    /// Gets a <see cref="IWindow"/> from a <see cref="ITopLevel"/> object
+    /// </summary>
+    /// <param name="topLevel">The top level</param>
+    /// <returns>The window</returns>
+    static IWindow FromTopLevel(ITopLevel topLevel) {
+        if (topLevel is IWindow window) {
+            return window;
+        }
+
+        throw new ArgumentException("Invalid top level object: not a window", nameof(topLevel));
+    }
+
+    /// <summary>
+    /// Gets the window from the context data, or null, if there is no window available
+    /// </summary>
+    /// <param name="context">The context</param>
+    /// <returns>The window</returns>
+    static IWindow? WindowFromContext(IContextData context) => WindowDataKey.GetContext(context);
+
+    /// <summary>
+    /// Tries to get the window from the context data.
+    /// </summary>
+    /// <param name="context">The context</param>
+    /// <param name="window">The window</param>
+    /// <returns>True if a window was available</returns>
+    static bool TryGetWindowFromContext(IContextData context, [NotNullWhen(true)] out IWindow? window) => WindowDataKey.TryGetContext(context, out window);
+
+    /// <summary>
+    /// Tries to get the window from the visual, or returns null, if the visual isn't in a <see cref="IWindow"/>
+    /// </summary>
+    /// <param name="visual">The visual to get the window of</param>
+    /// <returns>The window, or null</returns>
+    static IWindow? FromVisual(Visual visual) {
+        return IWindowManager.TryGetWindow(visual, out IWindow? window) ? window : null;
+    }
+
+    /// <summary>
+    /// Tries to get the window from the visual
+    /// </summary>
+    /// <param name="visual">The visual to get the window of</param>
+    /// <param name="window">The window the visual exists in</param>
+    /// <returns>
+    /// True if the visual existed in a window. False if either no <see cref="IWindowManager"/>
+    /// existed or <see cref="TryGetWindowFromVisual"/> returned false
+    /// </returns>
+    static bool TryGetFromVisual(Visual visual, [NotNullWhen(true)] out IWindow? window) {
+        return IWindowManager.TryGetWindow(visual, out window);
+    }
 }
 
 /// <summary>
@@ -331,7 +400,7 @@ public class WindowCloseEventArgs(IWindow window, WindowCloseReason reason, bool
     public WindowCloseReason Reason { get; } = reason;
 
     /// <summary>
-    /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IWindow.CloseAsync"/>)
+    /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IWindow.RequestCloseAsync"/>)
     /// </summary>
     public bool IsFromCode { get; } = isFromCode;
 }

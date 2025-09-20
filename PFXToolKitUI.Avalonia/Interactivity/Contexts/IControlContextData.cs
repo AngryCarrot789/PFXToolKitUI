@@ -51,6 +51,15 @@ public interface IControlContextData : IRandomAccessContextData {
     IControlContextData Set(DataKey<bool> key, bool? value);
 
     /// <summary>
+    /// Safely sets a raw value for the given key by doing runtime type-checking. 
+    /// This method invokes <see cref="DataManager.InvalidateInheritedContext"/> if no batches are in progress
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <param name="value">The value to insert, or null, to remove</param>
+    /// <returns>The current instance</returns>
+    IControlContextData SetSafely(DataKey key, object? value);
+    
+    /// <summary>
     /// Unsafely sets a raw value for the given key. Care must be taken using this method,
     /// since <see cref="DataKey{T}"/> will throw if it doesn't receive the correct value.
     /// This method invokes <see cref="DataManager.InvalidateInheritedContext"/> if no batches are in progress

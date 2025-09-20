@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -21,25 +21,33 @@ using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Popups;
 
 /// <summary>
-/// Manages <see cref="IWindow"/> instances and facilitates creating windows
+/// Manages popups.
+/// <para>
+/// Single-view applications have a single piece of content. Therefore, to support showing
+/// windows without native interop, the single view content must support showing controls on-top of
+/// the application's main content (which will likely be a page control to present pages).
+/// </para>
+/// <para>
+/// The application's content isn't a <see cref="IPopupDialog"/>; by default, no windows exists.
+/// </para>
 /// </summary>
-public interface IWindowManager {
+public interface IPopupDialogManager {
     /// <summary>
-    /// Enumerates all top-level windows, as in, windows that have no <see cref="IWindow.Owner"/> set
+    /// Enumerates all top-level windows, as in, windows that have no <see cref="IPopupDialog.Owner"/> set
     /// </summary>
-    IEnumerable<IWindow> TopLevelWindows { get; }
+    IEnumerable<IPopupDialog> TopLevelWindows { get; }
 
     /// <summary>
     /// Enumerates all visible windows, recursively.
     /// </summary>
-    IEnumerable<IWindow> AllWindows {
+    IEnumerable<IPopupDialog> AllWindows {
         get {
-            foreach (IWindow window in this.TopLevelWindows) {
+            foreach (IPopupDialog window in this.TopLevelWindows) {
                 yield return window;
-                foreach (IWindow child in window.OwnedWindows) {
+                foreach (IPopupDialog child in window.OwnedWindows) {
                     yield return child;
                 }
             }
@@ -47,13 +55,13 @@ public interface IWindowManager {
     }
 
     /// <summary>
-    /// An event fired when a <see cref="IWindow"/> is shown via <see cref="IWindow.ShowAsync"/> or <see cref="IWindow.ShowDialogAsync"/>.
-    /// Note -- this is fired after all of the window's <see cref="IWindow.WindowOpened"/> event handlers are invoked
+    /// An event fired when a <see cref="IPopupDialog"/> is shown via <see cref="IPopupDialog.ShowAsync"/> or <see cref="IPopupDialog.ShowDialog"/>.
+    /// Note -- this is fired after all of the window's <see cref="IPopupDialog.WindowOpened"/> event handlers are invoked
     /// <para>
-    /// Handlers of this event can use this to for example attach a <see cref="IWindow.WindowClosed"/> event handler
+    /// Handlers of this event can use this to for example attach a <see cref="IPopupDialog.WindowClosed"/> event handler
     /// </para>
     /// </summary>
-    event EventHandler<WindowEventArgs>? WindowOpened;
+    event EventHandler<PopupEventArgs>? WindowOpened;
 
     // /// <summary>
     // /// An event fired when a <see cref="IWindow"/> becomes activated
@@ -65,24 +73,24 @@ public interface IWindowManager {
     /// </summary>
     /// <param name="builder">The builder</param>
     /// <returns>The newly created window</returns>
-    IWindow CreateWindow(WindowBuilder builder);
+    IPopupDialog CreatePopup(PopupDialogBuilder builder);
 
     /// <summary>
     /// Tries to get the window that is currently activated (as in, has control focus).
     /// </summary>
     /// <param name="window">The active window</param>
     /// <returns>True if an active window was found</returns>
-    bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IWindow? window);
+    bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IPopupDialog? window);
 
     /// <summary>
     /// Returns the window produced by <see cref="TryGetActiveOrMainWindow"/> or returns null
     /// </summary>
     /// <returns>The active window or null</returns>
-    IWindow? GetActiveWindowOrNull() => this.TryGetActiveOrMainWindow(out IWindow? window) ? window : null;
-    
+    IPopupDialog? GetActiveWindowOrNull() => this.TryGetActiveOrMainWindow(out IPopupDialog? window) ? window : null;
+
     /// <summary>
-    /// Tries to get the <see cref="IWindow"/> instance that a specific visual control exists in.
-    /// This method always returns true when passing <see cref="IWindow.Control"/> as the visual.
+    /// Tries to get the <see cref="IPopupDialog"/> instance that a specific visual control exists in.
+    /// This method always returns true when passing <see cref="IPopupDialog.Control"/> as the visual.
     /// <para>
     /// This is effectively equivalent to <see cref="TopLevel.GetTopLevel"/>, except this method
     /// may work in cases where that method will not
@@ -91,34 +99,34 @@ public interface IWindowManager {
     /// <param name="visual">The visual</param>
     /// <param name="window">The window that the visual exists in</param>
     /// <returns>True if the window was found</returns>
-    bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IWindow? window);
+    bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IPopupDialog? window);
 
     /// <summary>
     /// Tries to get the window manager service
     /// </summary>
     /// <param name="windowManager">The manager, or null</param>
     /// <returns>True if a window manager exists</returns>
-    public static bool TryGetInstance([NotNullWhen(true)] out IWindowManager? windowManager) {
+    public static bool TryGetInstance([NotNullWhen(true)] out IPopupDialogManager? windowManager) {
         return ApplicationPFX.TryGetComponent(out windowManager);
     }
 
     /// <summary>
-    /// Tries to get the <see cref="IWindow"/> instance that a visual exists in. This is effectively
+    /// Tries to get the <see cref="IPopupDialog"/> instance that a visual exists in. This is effectively
     /// equivalent to <see cref="TopLevel.GetTopLevel"/>, except this method may work in cases where
     /// that method will not
     /// </summary>
     /// <param name="visual">The visual to get the window of</param>
-    /// <param name="window">The window the visual exists in</param>
+    /// <param name="popup">The window the visual exists in</param>
     /// <returns>
-    /// True if the visual existed in a window. False if either no <see cref="IWindowManager"/>
+    /// True if the visual existed in a window. False if either no <see cref="IPopupDialogManager"/>
     /// existed or <see cref="TryGetWindowFromVisual"/> returned false
     /// </returns>
-    static bool TryGetWindow(Visual visual, [NotNullWhen(true)] out IWindow? window) {
-        if (!TryGetInstance(out IWindowManager? manager)) {
-            window = null;
-            return false;
+    static bool TryGetWindow(Visual visual, [NotNullWhen(true)] out IPopupDialog? popup) {
+        if (TryGetInstance(out IPopupDialogManager? manager)) {
+            return manager.TryGetWindowFromVisual(visual, out popup);
         }
 
-        return manager.TryGetWindowFromVisual(visual, out window);
+        popup = null;
+        return false;
     }
 }

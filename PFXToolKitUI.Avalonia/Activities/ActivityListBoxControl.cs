@@ -29,9 +29,9 @@ namespace PFXToolKitUI.Avalonia.Activities;
 /// <summary>
 /// A control shown in a window which contains a list of all running activities
 /// </summary>
-public class ActivityListControl : TemplatedControl {
-    public static readonly StyledProperty<IBrush?> HeaderBrushProperty = AvaloniaProperty.Register<ActivityListControl, IBrush?>(nameof(HeaderBrush));
-    public static readonly StyledProperty<ActivityManager?> ActivityManagerProperty = AvaloniaProperty.Register<ActivityListControl, ActivityManager?>(nameof(ActivityManager));
+public class ActivityListBoxControl : TemplatedControl {
+    public static readonly StyledProperty<IBrush?> HeaderBrushProperty = AvaloniaProperty.Register<ActivityListBoxControl, IBrush?>(nameof(HeaderBrush));
+    public static readonly StyledProperty<ActivityManager?> ActivityManagerProperty = AvaloniaProperty.Register<ActivityListBoxControl, ActivityManager?>(nameof(ActivityManager));
 
     public IBrush? HeaderBrush {
         get => this.GetValue(HeaderBrushProperty);
@@ -46,11 +46,11 @@ public class ActivityListControl : TemplatedControl {
     private ItemsControl? PART_ItemsControl;
     private readonly Stack<ActivityListItem> itemCache = new Stack<ActivityListItem>();
     
-    public ActivityListControl() {
+    public ActivityListBoxControl() {
     }
     
-    static ActivityListControl() {
-        ActivityManagerProperty.Changed.AddClassHandler<ActivityListControl, ActivityManager?>((o, e) => o.OnActivityManagerChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    static ActivityListBoxControl() {
+        ActivityManagerProperty.Changed.AddClassHandler<ActivityListBoxControl, ActivityManager?>((o, e) => o.OnActivityManagerChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
 
     private void OnActivityManagerChanged(ActivityManager? oldManager, ActivityManager? newManager) {

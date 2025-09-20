@@ -28,7 +28,11 @@ namespace PFXToolKitUI.Avalonia.Utils;
 public sealed class SingletonWindow {
     private readonly IWindowManager? manager;
     private readonly Func<IWindowManager, IWindow> factory;
-    private IWindow? currentView;
+    
+    /// <summary>
+    /// Gets the current window
+    /// </summary>
+    public IWindow? Current { get; private set; }
 
     /// <summary>
     /// A helper class for managing a single view of a window
@@ -40,24 +44,19 @@ public sealed class SingletonWindow {
     }
 
     public void ShowOrActivate() {
-        if (this.currentView != null) {
-            Debug.Assert(this.currentView.IsOpen);
-            this.currentView.Activate();
+        if (this.Current != null) {
+            Debug.Assert(this.Current.IsOpen);
+            this.Current.Activate();
         }
         else {
-            this.currentView = this.factory(this.manager!);
-            this.currentView.WindowClosed += this.OnWindowClosed;
-            this.currentView.Show();
+            this.Current = this.factory(this.manager!);
+            this.Current.WindowClosed += this.OnWindowClosed;
+            this.Current.ShowAsync();
         }
     }
 
     private void OnWindowClosed(IWindow sender, EventArgs e) {
         sender.WindowClosed -= this.OnWindowClosed;
-        this.currentView = null;
-    }
-
-    public void Close() {
-        this.currentView?.Close();
-        Debug.Assert(this.currentView == null);
+        this.Current = null;
     }
 }

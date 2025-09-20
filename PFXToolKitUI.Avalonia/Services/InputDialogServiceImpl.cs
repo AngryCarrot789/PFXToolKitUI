@@ -17,13 +17,17 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.UserInputs;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class InputDialogServiceImpl : IUserInputDialogService {
-    public async Task<bool?> ShowInputDialogAsync(UserInputInfo info) {
-        return await UserInputDialogView.ShowDialogAsync(info);
+    public Task<bool?> ShowInputDialogAsync(UserInputInfo info, ITopLevel? parentTopLevel = null) {
+        return parentTopLevel != null
+            ? UserInputDialogView.ShowDialogAsync(info, IWindow.FromTopLevel(parentTopLevel))
+            : UserInputDialogView.ShowDialogAsync(info);
     }
 }

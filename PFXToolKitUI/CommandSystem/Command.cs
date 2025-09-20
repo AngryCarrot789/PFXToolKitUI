@@ -114,8 +114,9 @@ public abstract class Command {
     protected abstract Task ExecuteCommandAsync(CommandEventArgs e);
 
     internal async Task InternalExecuteImpl(CommandEventArgs args) {
-        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        using IDisposable globalContextUsage = CommandManager.LocalContextManager.PushGlobalContext(args.ContextData);
 
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
         int executing;
         if (this.AllowMultipleExecutions) {
             executing = Interlocked.Increment(ref this.executingCount);

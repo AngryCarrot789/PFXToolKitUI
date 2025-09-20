@@ -27,7 +27,9 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Interactivity.Windowing;
 
 namespace PFXToolKitUI.Avalonia.Interactivity;
 
@@ -35,13 +37,19 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 /// A class that is used to store and extract contextual information from controls.
 /// <para>
 /// This class generates "inherited-merged" contextual data for the logical tree, that is, all contextual data
-/// is accumulated and cached in each element from logical parents (on demand), where the descendends have final
-/// priority over duplicate keys.
+/// is accumulated and cached in each control of the logical parents (on demand), where the descendants have final
+/// priority over duplicate keys, and will also have the most entries in the <see cref="IContextData"/>.
 /// </para>
 /// <para>
 /// The <see cref="InheritedContextChangedEvent"/> is fired on elements and all of its visual children
 /// when that parent's <see cref="ContextDataProperty"/> changes, allowing listeners to do anything
-/// they want (e.g. re-query command executability based on available context)
+/// they want (e.g. re-query command executability based on available context). Usually when using it
+/// to update command states, the update is posted on the dispatcher thread to be done later
+/// </para>
+/// <para>
+/// With the addition of the <see cref="IWindowManager"/> service, controls that exist in the visual tree
+/// of a window created by this service, will have two keys always associated with them:
+/// <see cref="ITopLevel.TopLevelDataKey"/> and <see cref="IWindow.WindowDataKey"/>.
 /// </para>
 /// </summary>
 public class DataManager {

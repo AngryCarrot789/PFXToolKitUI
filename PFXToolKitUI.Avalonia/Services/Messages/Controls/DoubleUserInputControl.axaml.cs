@@ -59,7 +59,7 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
 
     private void OnAnyTextFieldKeyDown(object? sender, KeyEventArgs e) {
         if ((e.Key == Key.Escape || e.Key == Key.Enter) && this.myDialog != null) {
-            this.myDialog.TryCloseDialog(e.Key != Key.Escape);
+            this.myDialog.RequestClose(e.Key != Key.Escape);
         }
     }
 

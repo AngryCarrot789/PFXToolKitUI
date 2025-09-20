@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -17,22 +17,26 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics.CodeAnalysis;
+using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Interactivity.Windowing;
 
-namespace PFXToolKitUI.Interactivity;
+namespace PFXToolKitUI.Utils;
 
-/// <summary>
-/// A service that allows launching a URL in a web browser
-/// </summary>
-public interface IWebLauncher {
-    /// <summary>Tries to get the web launcher service for a window</summary>
-    public static bool TryGet(ITopLevel window, [NotNullWhen(true)] out IWebLauncher? launcher) => window.TryGetWebLauncher(out launcher);
-    
+public static class TopLevelContextUtils {
     /// <summary>
-    /// Tries to launch the uri in a web browser
+    /// Tries to get a useful top level from the current command context as well as the optional alternate context
     /// </summary>
-    /// <param name="uri">The address</param>
-    /// <returns>A task returns true when successful</returns>
-    Task<bool> LaunchUriAsync(Uri uri);
+    public static ITopLevel? GetUsefulTopLevel(IContextData? alternateContext = null) {
+        ITopLevel? parentWindow = null;
+        if (CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? context)) {
+            parentWindow = ITopLevel.FromContext(context);
+        }
+
+        if (parentWindow == null && alternateContext != null) {
+            parentWindow = ITopLevel.FromContext(alternateContext);
+        }
+
+        return parentWindow;
+    }
 }

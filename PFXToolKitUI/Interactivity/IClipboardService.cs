@@ -24,7 +24,7 @@ namespace PFXToolKitUI.Interactivity;
 
 public interface IClipboardService {
     /// <summary>Tries to get the clipboard service for a window. Windows might not have a clipboard, e.g. the OS has no clipboard</summary>
-    public static bool TryGet(ITopLevelComponentManager window, [NotNullWhen(true)] out IClipboardService? clipboard) => window.TryGetClipboard(out clipboard);
+    public static bool TryGet(ITopLevel window, [NotNullWhen(true)] out IClipboardService? clipboard) => window.TryGetClipboard(out clipboard);
     
     /// <summary>
     /// Returns a string containing the text data on the Clipboard.

@@ -22,9 +22,10 @@ using PFXToolKitUI.Utils.RDA;
 namespace PFXToolKitUI.Tasks;
 
 /// <summary>
-/// Concurrent implementation of <see cref="IActivityProgress"/>
+/// A concurrent implementation of <see cref="IActivityProgress"/> that
+/// dispatches property change events to the main UI thread dispatcher
 /// </summary>
-public class ConcurrentActivityProgress : IActivityProgress {
+public class DispatcherActivityProgress : IActivityProgress {
     private readonly Lock dataLock = new Lock(); // only really used as a memory barrier
     private bool isIndeterminate;
     private string? headerText;
@@ -87,10 +88,10 @@ public class ConcurrentActivityProgress : IActivityProgress {
 
     public CompletionState CompletionState { get; }
     
-    public ConcurrentActivityProgress() : this(DispatchPriority.Loaded) {
+    public DispatcherActivityProgress() : this(DispatchPriority.Loaded) {
     }
 
-    public ConcurrentActivityProgress(DispatchPriority eventDispatchPriority) {
+    public DispatcherActivityProgress(DispatchPriority eventDispatchPriority) {
         this.eventDispatchPriority = eventDispatchPriority;
         this.updateIsIndeterminateRda = RapidDispatchActionEx.ForSync(() => this.IsIndeterminateChanged?.Invoke(this), eventDispatchPriority);
         this.updateCaptionRda = RapidDispatchActionEx.ForSync(() => this.CaptionChanged?.Invoke(this), eventDispatchPriority);

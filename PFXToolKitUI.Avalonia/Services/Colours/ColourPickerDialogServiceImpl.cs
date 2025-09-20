@@ -17,18 +17,24 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.ColourPicking;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Services.Colours;
 
 public class ColourPickerDialogServiceImpl : IColourPickerDialogService {
-    public async Task<SKColor?> PickColourAsync(SKColor? defaultColour) {
+    public async Task<SKColor?> PickColourAsync(SKColor? defaultColour, ITopLevel? parentTopLevel = null) {
         ColourUserInputInfo info = new ColourUserInputInfo() {
             Colour = defaultColour ?? SKColors.Black
         };
 
-        return await UserInputDialogView.ShowDialogAsync(info) == true ? info.Colour : null;
+        Task<bool?> task = parentTopLevel != null
+            ? UserInputDialogView.ShowDialogAsync(info, IWindow.FromTopLevel(parentTopLevel))
+            : UserInputDialogView.ShowDialogAsync(info);
+
+        return await task == true ? info.Colour : null;
     }
 }

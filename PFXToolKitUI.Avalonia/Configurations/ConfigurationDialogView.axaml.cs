@@ -31,7 +31,7 @@ public partial class ConfigurationDialogView : UserControl {
     internal readonly AsyncRelayCommand CancelCommand;
 
     public IWindow? Window { get; internal set; }
-    
+
     public ConfigurationDialogView(ConfigurationManager manager) {
         this.InitializeComponent();
         this.configManager = manager;
@@ -42,13 +42,15 @@ public partial class ConfigurationDialogView : UserControl {
         this.PART_EditorPanel.IsEnabled = true;
 
         this.ApplyCommand = new AsyncRelayCommand(async () => {
-            this.UpdateCommands();
-            
-            this.PART_EditorPanel.IsEnabled = false;
-            await this.configManager.ApplyChangesInHierarchyAsync(null);
-            this.PART_EditorPanel.IsEnabled = true;
-            
-            ApplicationPFX.Instance.Dispatcher.Post(this.UpdateCommands);
+            if (this.Window != null) {
+                this.UpdateCommands();
+
+                this.PART_EditorPanel.IsEnabled = false;
+                await this.configManager.ApplyChangesInHierarchyAsync(null);
+                this.PART_EditorPanel.IsEnabled = true;
+
+                ApplicationPFX.Instance.Dispatcher.Post(this.UpdateCommands);
+            }
         }, () => {
             if (this.ApplyThenCloseCommand!.IsRunning || this.CancelCommand!.IsRunning)
                 return false;
@@ -57,18 +59,21 @@ public partial class ConfigurationDialogView : UserControl {
         });
 
         this.ApplyThenCloseCommand = new AsyncRelayCommand(async () => {
-            this.UpdateCommands();
-            
-            this.PART_EditorPanel.IsEnabled = false;
-            await this.configManager.ApplyChangesInHierarchyAsync(null);
-            this.Window?.Close(true);
+            if (this.Window != null) {
+                this.UpdateCommands();
+                this.PART_EditorPanel.IsEnabled = false;
+                await this.configManager.ApplyChangesInHierarchyAsync(null);
+                await this.Window!.RequestCloseAsync(true);
+            }
         }, () => !this.ApplyCommand.IsRunning && !this.CancelCommand!.IsRunning);
 
         this.CancelCommand = new AsyncRelayCommand(async () => {
-            this.UpdateCommands();
-            this.PART_EditorPanel.IsEnabled = false;
-            await this.configManager.RevertLiveChangesInHierarchyAsync(null);
-            this.Window?.Close(false);
+            if (this.Window != null) {
+                this.UpdateCommands();
+                this.PART_EditorPanel.IsEnabled = false;
+                await this.configManager.RevertLiveChangesInHierarchyAsync(null);
+                await this.Window!.RequestCloseAsync(false);
+            }
         }, () => !this.ApplyCommand.IsRunning && !this.ApplyThenCloseCommand.IsRunning);
 
         this.PART_ApplyButton.Command = this.ApplyCommand;
