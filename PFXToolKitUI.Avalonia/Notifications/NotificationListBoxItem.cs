@@ -30,9 +30,11 @@ using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 using PFXToolKitUI.Avalonia.Bindings;
+using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Notifications;
 using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Themes;
@@ -334,7 +336,11 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
             protected override bool CanExecuteCore(object? parameter) => button.myCurrentCommand?.CanExecute() ?? false;
 
-            protected override Task ExecuteCoreAsync(object? parameter) => button.myCurrentCommand?.Execute() ?? Task.CompletedTask;
+            protected override async Task ExecuteCoreAsync(object? parameter) {
+                if (button.myCurrentCommand != null) {
+                    await CommandManager.Instance.RunActionAsync(_ => button.myCurrentCommand.Execute(), DataManager.GetFullContextData(button));
+                }
+            }
 
             // Delegate NotificationCommand's CanExecuteChange to the ICommand version
             private void OnCanExecuteChanged(NotificationCommand sender) => this.RaiseCanExecuteChanged();

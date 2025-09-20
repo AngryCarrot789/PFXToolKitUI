@@ -225,7 +225,7 @@ public partial class MessageBoxView : UserControl {
     /// <param name="result">The dialog result wanted</param>
     /// <returns>True if the dialog was closed, false if it could not be closed due to a validation error or other error</returns>
     public void Close(MessageBoxResult result) {
-        if (this.Window != null && this.Window.IsOpenAndNotClosing) {
+        if (this.Window != null && this.Window.OpenState == OpenState.Open) {
             _ = this.Window.RequestCloseAsync(result);
         }
     }

@@ -87,6 +87,12 @@ public sealed class WindowBuilder {
     public bool ShowTitleBarIcon { get; set; } = true;
 
     /// <summary>
+    /// Gets or sets if this window will be a "tool" window. The definition is different across platforms,
+    /// but on windows, usually has a smaller and simplified title bar
+    /// </summary>
+    public bool IsToolWindow { get; set; }
+
+    /// <summary>
     /// Gets or sets whether the window can be resized by the user
     /// </summary>
     public bool CanResize { get; set; } = true;

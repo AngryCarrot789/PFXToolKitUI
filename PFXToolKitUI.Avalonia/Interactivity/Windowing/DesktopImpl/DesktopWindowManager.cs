@@ -76,19 +76,19 @@ public sealed class DesktopWindowManager : IWindowManager {
 
     public bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IWindow? window) {
         // Get last activated, or find the first that is activated
-        if ((window = this.lastActivated) != null && window.IsOpenAndNotClosing)
+        if ((window = this.lastActivated) != null && window.OpenState == OpenState.Open)
             return true;
         
         // lastActivated not set somehow, so find an activated window
-        if ((window = this.mainWindows.FirstOrDefault(x => ((IWindow) x).IsOpenAndNotClosing && x.IsActivated)) != null)
+        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState == OpenState.Open && x.IsActivated)) != null)
             return true;
-        if ((window = this.allWindows.LastOrDefault(x => ((IWindow) x).IsOpenAndNotClosing && x.IsActivated)) != null)
+        if ((window = this.allWindows.LastOrDefault(x => x.OpenState == OpenState.Open && x.IsActivated)) != null)
             return true;
         
         // bad case of the software bugs. Find an open window
-        if ((window = this.mainWindows.FirstOrDefault(x => ((IWindow) x).IsOpenAndNotClosing)) != null)
+        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState == OpenState.Open)) != null)
             return true;
-        return (window = this.allWindows.LastOrDefault(x => ((IWindow) x).IsOpenAndNotClosing)) != null;
+        return (window = this.allWindows.LastOrDefault(x => x.OpenState == OpenState.Open)) != null;
     }
 
     public bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IWindow? window) {
@@ -132,7 +132,7 @@ public sealed class DesktopWindowManager : IWindowManager {
 
     private void OnWindowActivated(object? sender, EventArgs e) {
         DesktopWindowImpl window = ((DesktopNativeWindow) sender!).Window;
-        Debug.Assert(window.IsOpen || window.IsOpening);
+        Debug.Assert(window.OpenState > OpenState.NotOpened && window.OpenState <= OpenState.Open);
 
         this.lastActivated = window;
     }

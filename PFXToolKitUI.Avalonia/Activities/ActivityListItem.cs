@@ -43,8 +43,25 @@ public class ActivityListItem : TemplatedControl {
     public ActivityListItem() {
     }
 
+    static ActivityListItem() {
+        ActivityTaskProperty.Changed.AddClassHandler<ActivityListItem, ActivityTask?>((s, e) => s.OnActivityTaskChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+        ShowCaptionProperty.Changed.AddClassHandler<ActivityListItem, bool>((s, e) => s.OnShowCaptionChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    }
+
+    private void OnActivityTaskChanged(ActivityTask? oldValue, ActivityTask? newValue) {
+        if (this.PART_Row != null)
+            this.PART_Row.ActivityTask = newValue;
+    }
+
+    private void OnShowCaptionChanged(bool oldValue, bool newValue) {
+        if (this.PART_Row != null)
+            this.PART_Row.ShowCaption = newValue;
+    }
+
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_Row = e.NameScope.GetTemplateChild<ActivityRowControl>(nameof(this.PART_Row));
+        this.PART_Row.ActivityTask = this.ActivityTask;
+        this.PART_Row.ShowCaption = this.ShowCaption;
     }
 }

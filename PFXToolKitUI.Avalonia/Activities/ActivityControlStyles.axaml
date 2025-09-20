@@ -11,9 +11,7 @@
         <Setter Property="Padding" Value="6,4"/>
         <Setter Property="Template">
             <ControlTemplate TargetType="{x:Type local:ActivityListItem}">
-                <local:ActivityRowControl x:Name="PART_Row"
-                                          ActivityTask="{Binding RelativeSource={RelativeSource Self}, Path=ActivityTask}"
-                                          ShowCaption="{Binding RelativeSource={RelativeSource Self}, Path=ShowCaption}"/>
+                <local:ActivityRowControl x:Name="PART_Row" Margin="{TemplateBinding Padding}"/>
             </ControlTemplate>
         </Setter>
     </ControlTheme>

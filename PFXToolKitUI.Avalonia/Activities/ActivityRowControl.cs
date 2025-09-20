@@ -90,6 +90,7 @@ public class ActivityRowControl : TemplatedControl {
         this.binderIsIndeterminate.AttachControl(this);
         this.binderCompletionValue.AttachControl(this);
         this.UpdateCancelButton();
+        this.UpdatePauseContinueButton(this.ActivityTask?.PausableTask);
     }
 
     private void OnActivityTaskChanged(ActivityTask? oldTask, ActivityTask? newTask) {

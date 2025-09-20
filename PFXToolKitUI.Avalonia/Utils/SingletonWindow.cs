@@ -45,8 +45,9 @@ public sealed class SingletonWindow {
 
     public void ShowOrActivate() {
         if (this.Current != null) {
-            Debug.Assert(this.Current.IsOpen);
-            this.Current.Activate();
+            if (this.Current.OpenState == OpenState.Open) {
+                this.Current.Activate();
+            }
         }
         else {
             this.Current = this.factory(this.manager!);

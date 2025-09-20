@@ -123,7 +123,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
         void WindowOnKeyDown(object? s, KeyEventArgs e) {
             if (!e.Handled && e.Key == Key.Escape) {
-                if (view.Window != null && view.Window.IsOpenAndNotClosing) {
+                if (view.Window != null && view.Window.OpenState == OpenState.Open) {
                     view.Close(MessageBoxResult.None);
                 }
             }

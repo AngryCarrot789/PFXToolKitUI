@@ -56,7 +56,7 @@ public class ConfigurationDialogServiceImpl : IConfigurationDialogService {
         return;
 
         void OnWindowKeyDown(object? sender, KeyEventArgs e) {
-            if (!e.Handled && e.Key == Key.Escape && !window.IsOpenAndNotClosing) {
+            if (!e.Handled && e.Key == Key.Escape && window.OpenState == OpenState.Open) {
                 e.Handled = true;
                 ((ConfigurationDialogView) window.Content!).CancelCommand.Execute(null);
             }

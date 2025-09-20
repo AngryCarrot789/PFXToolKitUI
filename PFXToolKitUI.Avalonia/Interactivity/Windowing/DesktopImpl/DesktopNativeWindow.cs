@@ -78,10 +78,12 @@ public sealed class DesktopNativeWindow : Window {
         }
     }
 
+    public bool IsToolWindow { get; set; }
+
     public TopLevelMenuRegistry? Menu { get; set; }
 
     public DesktopWindowImpl Window { get; }
-    
+
     private VisualLayerManager? PART_VisualLayerManager;
     private Panel? PART_TitleBarPanel;
     private Button? PART_ButtonMinimize, PART_ButtonRestore, PART_ButtonMaximize, PART_ButtonClose;
@@ -118,6 +120,8 @@ public sealed class DesktopNativeWindow : Window {
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
+        this.PART_VisualLayerManager = e.NameScope.GetTemplateChild<VisualLayerManager>("PART_VisualLayerManager");
+        this.PART_TitleBarPanel = e.NameScope.GetTemplateChild<Panel>("PART_TitleBarPanel");
         (this.PART_ButtonMinimize = e.NameScope.GetTemplateChild<Button>("PART_ButtonMinimize")).Click += OnMinimizeButtonClick;
         (this.PART_ButtonRestore = e.NameScope.GetTemplateChild<Button>("PART_ButtonRestore")).Click += OnRestoreButtonClick;
         (this.PART_ButtonMaximize = e.NameScope.GetTemplateChild<Button>("PART_ButtonMaximize")).Click += OnMaximizeButtonClick;
@@ -126,11 +130,16 @@ public sealed class DesktopNativeWindow : Window {
         this.PART_IconImage = e.NameScope.GetTemplateChild<Image>("PART_IconImage");
         this.PART_IconControl = e.NameScope.GetTemplateChild<IconControl>("PART_IconControl");
         this.PART_IconControl.Icon = this.TitleBarIcon;
-
-        this.PART_VisualLayerManager = e.NameScope.GetTemplateChild<VisualLayerManager>("PART_VisualLayerManager");
-        this.PART_TitleBarPanel = e.NameScope.GetTemplateChild<Panel>("PART_TitleBarPanel");
         this.UpdateTitleBarButtonVisibility();
         this.OnIconStateChanged(null, null);
+        if (this.IsToolWindow) {
+            this.PART_TitleBarPanel.Height = 24;
+            this.ExtendClientAreaTitleBarHeightHint = 24;
+            this.PART_ButtonMinimize.Width = 27;
+            this.PART_ButtonRestore.Width = 27;
+            this.PART_ButtonMaximize.Width = 27;
+            this.PART_ButtonClose.Width = 27;
+        }
     }
 
     protected override void OnLoaded(RoutedEventArgs e) {
@@ -191,8 +200,8 @@ public sealed class DesktopNativeWindow : Window {
     }
 
     private void OnOpening(object? sender, RoutedEventArgs e) {
-        this.Window.OnNativeWindowOpening();
         this.doNotModifySizeToContent = true;
+        this.Window.OnNativeWindowOpening();
     }
 
     protected override void OnOpened(EventArgs e) {

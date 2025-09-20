@@ -40,4 +40,6 @@ public class LogEntry {
         this.StackTrace = stackTrace;
         this.Content = content;
     }
+
+    public override string ToString() => $"[{this.LogTime:hh:mm:ss ff}] {this.Content}";
 }

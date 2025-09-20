@@ -192,7 +192,7 @@ public partial class UserInputDialogView : UserControl {
     /// false if it could not be closed due to a validation error or other error
     /// </returns>
     public void RequestClose(bool result) {
-        if (this.Window != null && this.Window.IsOpenAndNotClosing) {
+        if (this.Window != null && this.Window.OpenState == OpenState.Open) {
             if (!result) {
                 _ = this.Window!.RequestCloseAsync(BoolBox.False);
                 return;
@@ -228,7 +228,7 @@ public partial class UserInputDialogView : UserControl {
             SizeToContent = SizeToContent.WidthAndHeight,
             CanResize = false,
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
-            BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
+            BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
         });
 
         window.Control.AddHandler(KeyDownEvent, WindowOnKeyDown);
@@ -240,15 +240,17 @@ public partial class UserInputDialogView : UserControl {
         view.UserInputInfo = null; // unhook models' event handlers
         return result;
 
-        void WindowOnWindowOpening(IWindow s, EventArgs e) => view.OnWindowOpening(s);
+        void WindowOnWindowOpening(IWindow s, EventArgs e) {
+            s.SizingInfo.SizeToContent = SizeToContent.Manual;
+            view.OnWindowOpening(s);
+        }
+
         void WindowOnWindowOpened(IWindow s, EventArgs e) => view.OnWindowOpened(s);
         void WindowOnWindowClosed(IWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
 
         void WindowOnKeyDown(object? s, KeyEventArgs e) {
-            if (!e.Handled && e.Key == Key.Escape) {
-                if (view.Window != null && view.Window.IsOpenAndNotClosing) {
-                    view.RequestClose(false);
-                }
+            if (!e.Handled && e.Key == Key.Escape && view.Window != null) {
+                view.RequestClose(false);
             }
         }
     }

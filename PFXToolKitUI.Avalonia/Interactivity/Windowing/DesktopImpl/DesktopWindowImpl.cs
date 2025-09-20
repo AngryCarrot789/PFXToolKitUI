@@ -54,6 +54,7 @@ public sealed class DesktopWindowImpl : IWindow {
     private TaskCompletionSource? tcsShowAsync;
     private TaskCompletionSource? tcsWaitForClosed;
     private readonly List<CancellableTaskCompletionSource> listTcsWaitForClosed;
+    private bool isProcessingClosingInternal;
 
     public IContextData ContextData => DataManager.GetFullContextData(this.myNativeWindow);
 
@@ -66,11 +67,7 @@ public sealed class DesktopWindowImpl : IWindow {
     public IEnumerable<IWindow> OwnedWindows => this.myVisibleChildWindows; // this.myNativeWindow.OwnedWindows.Select(x => ((DesktopNativeWindow) x).Window);
 
     public bool IsMainWindow { get; }
-    public bool IsOpening { get; private set; }
-    public bool IsOpen { get; private set; }
-    public bool IsTryingToClose { get; private set; }
-    public bool IsClosing { get; private set; }
-    public bool IsClosed { get; private set; }
+    public OpenState OpenState { get; private set; }
     public bool IsDialog { get; private set; } // we set this after showing
     public bool IsActivated => this.myNativeWindow.IsActive;
 
@@ -173,6 +170,7 @@ public sealed class DesktopWindowImpl : IWindow {
 
         this.ComponentStorage.AddComponent<IWebLauncher>(new WebLauncherImpl(this.myNativeWindow));
 
+        this.myNativeWindow.IsToolWindow = builder.IsToolWindow;
         this.myNativeWindow.ShowTitleBarIcon = builder.ShowTitleBarIcon;
         this.myNativeWindow.CanResize = builder.CanResize;
         this.myNativeWindow.SizeToContent = builder.SizeToContent;
@@ -224,30 +222,20 @@ public sealed class DesktopWindowImpl : IWindow {
     }
 
     internal void OnNativeWindowOpening() {
-        if (this.IsClosing)
-            throw new InvalidOperationException("Already closing the window");
-        if (this.IsClosed)
-            throw new InvalidOperationException("Window is already closed");
-        if (this.IsOpen)
-            throw new InvalidOperationException("Window is already open");
+        if (this.OpenState != OpenState.NotOpened)
+            throw new InvalidOperationException("Window has already started to open");
 
-        this.IsClosing = this.IsClosed = false;
-        this.IsOpening = true;
+        this.OpenState = OpenState.Opening;
         this.IsDialog = this.myNativeWindow.IsDialog;
         this.myManager.OnWindowOpening(this);
         this.WindowOpening?.Invoke(this, EventArgs.Empty);
     }
 
     internal void OnNativeWindowOpened() {
-        if (this.IsClosing)
-            throw new InvalidOperationException("Already closing the window");
-        if (this.IsClosed)
-            throw new InvalidOperationException("Window is already closed");
-        if (this.IsOpen)
-            throw new InvalidOperationException("Window is already open");
+        if (this.OpenState != OpenState.Opening)
+            throw new InvalidOperationException("Window has not started to open yet");
 
-        this.IsOpen = true;
-        this.IsOpening = false;
+        this.OpenState = OpenState.Open;
         this.AllocateResourcesForOpening();
         this.WindowOpened?.Invoke(this, EventArgs.Empty);
         this.myManager.OnWindowOpened(this);
@@ -256,22 +244,16 @@ public sealed class DesktopWindowImpl : IWindow {
     }
 
     internal WindowCancelCloseEventArgs OnNativeWindowClosing(WindowCloseReason reason, bool isFromCode) {
-        if (this.IsClosing)
-            throw new InvalidOperationException("Already closing the window");
-        if (this.IsClosed)
-            throw new InvalidOperationException("Window is already closed");
-        if (!this.IsOpen)
-            throw new InvalidOperationException("Window is not open");
+        // this.requestToCloseTask != null || this.isProcessingClosingInternal
+        if (this.isProcessingClosingInternal)
+            throw new InvalidOperationException("Reentrancy of " + nameof(this.OnNativeWindowClosing));
+        
+        // set to TryingToClose by RequestCloseAsync
+        if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
+            throw new InvalidOperationException("Window is not in its normal open state");
 
-        this.IsClosing = true;
-        this.IsClosed = false;
-        if (this.IsTryingToClose) {
-            Debug.Fail("Reentrancy of OnNativeWindowClosing");
-            throw new InvalidOperationException("Reentrancy of OnNativeWindowClosing");
-        }
-
-        this.IsTryingToClose = true;
-
+        this.OpenState = OpenState.TryingToClose;
+        this.isProcessingClosingInternal = true;
         WindowCancelCloseEventArgs beforeClosingArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode);
         this.TryClose?.Invoke(this, beforeClosingArgs);
 
@@ -294,12 +276,13 @@ public sealed class DesktopWindowImpl : IWindow {
             }
         }
 
-        this.IsTryingToClose = false;
+        this.isProcessingClosingInternal = false;
         if (beforeClosingArgs.IsCancelled) {
-            this.IsClosing = false;
+            this.OpenState = OpenState.Open;
             return beforeClosingArgs;
         }
 
+        this.OpenState = OpenState.Closing;
         WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode);
         this.WindowClosing?.Invoke(this, closingArgs);
         Delegate[]? closingAsyncHandlers = this.WindowClosingAsync?.GetInvocationList();
@@ -325,16 +308,10 @@ public sealed class DesktopWindowImpl : IWindow {
     }
 
     internal void OnNativeWindowClosed(WindowCloseReason reason, bool isFromCode) {
-        if (!this.IsClosing)
-            throw new InvalidOperationException("Should be closing");
-        if (this.IsClosed)
-            throw new InvalidOperationException("Should not already be closed");
-        if (!this.IsOpen)
-            throw new InvalidOperationException("Window is not open");
+        if (this.OpenState != OpenState.Closing)
+            throw new InvalidOperationException("Window is not in the closing state");
 
-        this.IsClosing = false;
-        this.IsClosed = true;
-        this.IsOpen = false;
+        this.OpenState = OpenState.Closed;
         this.DisposeResourcesForClosed();
 
         this.myManager.OnWindowClosed(this);
@@ -375,16 +352,18 @@ public sealed class DesktopWindowImpl : IWindow {
     public Task ShowAsync() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (this.IsClosed)
-            throw new InvalidOperationException("Cannot show an already closed window");
-        if (this.IsClosing)
-            throw new InvalidOperationException("Cannot show because we are currently closing");
-
         if (this.tcsShowAsync != null) {
+            Debug.Assert(this.OpenState == OpenState.Opening);
+            
             Debugger.Break();
             AppLogger.Instance.WriteLine("Warning: call to " + nameof(this.ShowAsync) + " when already in the process of showing");
             return this.tcsShowAsync.Task;
         }
+        
+        if (this.OpenState == OpenState.Closed) // clarity exception message
+            throw new InvalidOperationException("Window has been closed; it cannot be opened again.");
+        if (this.OpenState != OpenState.NotOpened)
+            throw new InvalidOperationException("Window has already been opened");
 
         this.tcsShowAsync = new TaskCompletionSource();
         ApplicationPFX.Instance.Dispatcher.Post(() => {
@@ -408,10 +387,11 @@ public sealed class DesktopWindowImpl : IWindow {
     public Task<object?> ShowDialogAsync() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (this.IsClosed)
-            throw new InvalidOperationException("Cannot show an already closed window");
-        if (this.IsClosing)
-            throw new InvalidOperationException("Cannot show because we are currently closing");
+        if (this.OpenState == OpenState.Closed) // clarity exception message
+            throw new InvalidOperationException("Window has been closed; it cannot be opened again.");
+        if (this.OpenState != OpenState.NotOpened)
+            throw new InvalidOperationException("Window has already been opened");
+        
         if (this.tcsShowAsync != null)
             throw new InvalidOperationException("Cannot show as dialog because we are currently in the process of showing as a non-dialog window");
 
@@ -425,19 +405,18 @@ public sealed class DesktopWindowImpl : IWindow {
     public async Task<bool> RequestCloseAsync(object? dialogResult = null) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (this.IsClosed) {
-            const string Error = "Window is already closed. This is not a fatal error but closing a window " +
-                                 "multiple times is a logic/state bug, because the dialogResult given will be ignored";
-
-            AppLogger.Instance.WriteLine(Error);
-            Debug.Fail(Error);
-            return true;
-        }
-
-        if (this.IsClosing)
-            throw new InvalidOperationException("Window is currently closing");
-
+        if (this.OpenState < OpenState.Open)
+            throw new InvalidOperationException("Window has not fully opened yet, it cannot be requested to close yet.");
+        if (this.OpenState == OpenState.TryingToClose)
+            throw new InvalidOperationException("Window has already been requested to close");
+        if (this.OpenState == OpenState.Closing)
+            throw new InvalidOperationException("Window is already in the process of closing");
+        if (this.OpenState == OpenState.Closed)
+            throw new InvalidOperationException("Window has been closed; it cannot be opened again.");
+        Debug.Assert(this.OpenState == OpenState.Open);
+        
         using CancellationTokenSource cts = new CancellationTokenSource();
+
         ApplicationPFX.Instance.Dispatcher.Post(() => {
             try {
                 // Due to how we implemented our OnClosing logic, Close() will block even
@@ -459,13 +438,13 @@ public sealed class DesktopWindowImpl : IWindow {
 
         // We either wait for the window to close, or for the CTS to become cancelled (due to cancelled window close).
         await this.WaitForClosedAsync(cts.Token);
-        return this.IsClosed;
+        return this.OpenState == OpenState.Closed;
     }
 
     public async Task WaitForClosedAsync(CancellationToken cancellationToken = default) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (!this.IsClosed) {
+        if (this.OpenState != OpenState.Closed) {
             TaskCompletionSource tcs;
             if (cancellationToken.CanBeCanceled) {
                 tcs = new CancellableTaskCompletionSource(cancellationToken);

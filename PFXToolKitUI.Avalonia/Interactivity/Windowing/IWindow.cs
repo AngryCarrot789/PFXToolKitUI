@@ -86,46 +86,9 @@ public interface IWindow : ITopLevel {
     bool IsMainWindow { get; }
 
     /// <summary>
-    /// Gets whether the window is in the process of being opened. This is set to tru before <see cref="WindowOpening"/>
-    /// and is set to false before <see cref="WindowOpened"/> (which is also when <see cref="IsOpen"/> is set to true)
+    /// Gets the window's current opened state, which specifies whether it's open, closing, closed, etc.
     /// </summary>
-    bool IsOpening { get; }
-
-    /// <summary>
-    /// Gets whether this window is actually open. This is set to true before <see cref="WindowOpened"/>
-    /// is fired and is set to false before <see cref="WindowClosed"/> is fired
-    /// </summary>
-    bool IsOpen { get; }
-
-    /// <summary>
-    /// Returns true when the window is in the process of trying to close; <see cref="TryClose"/>
-    /// and <see cref="TryCloseAsync"/> will be invoked while this is true.
-    /// <para>
-    /// When this value is false but <see cref="IsClosing"/> is true,
-    /// the window close operation can no longer be cancelled
-    /// </para>
-    /// </summary>
-    bool IsTryingToClose { get; }
-
-    /// <summary>
-    /// Gets whether the window is in the process of closing. This property is false when <see cref="IsClosed"/> is true.
-    /// </summary>
-    bool IsClosing { get; }
-
-    /// <summary>
-    /// Gets whether the window is actually closed.
-    /// </summary>
-    bool IsClosed { get; }
-
-    /// <summary>
-    /// Returns true when <see cref="WindowOpened"/> has been fired
-    /// </summary>
-    bool HasOpenedBefore => this.IsOpen || this.IsClosing || this.IsClosed;
-
-    /// <summary>
-    /// Returns true when <see cref="IsOpen"/> is true and <see cref="IsClosed"/> is false
-    /// </summary>
-    bool IsOpenAndNotClosing => this.IsOpen && !this.IsClosing;
+    OpenState OpenState { get; }
 
     /// <summary>
     /// Returns whether this window was shown as a dialog. Note, this may return true even when closing or closed
@@ -296,23 +259,6 @@ public interface IWindow : ITopLevel {
     /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
     /// <returns>True if the window was actually closed, False if the close attempt was cancelled</returns>
     Task<bool> RequestCloseAsync(object? dialogResult = null);
-
-    /// <summary>
-    /// Tries to request the window to close by calling <see cref="RequestCloseAsync"/>.
-    /// <para>
-    /// Does nothing if already closed. If already closing, the dialog result will be ignored.
-    /// </para>
-    /// </summary>
-    /// <param name="dialogResult">The dialog result to use when not already closing</param>
-    /// <returns>A task that completes when the window closes</returns>
-    Task TryRequestCloseAsync(object? dialogResult = null) {
-        if (this.IsClosed)
-            return Task.CompletedTask;
-        if (this.IsClosing)
-            return this.WaitForClosedAsync();
-
-        return this.RequestCloseAsync(dialogResult);
-    }
 
     /// <summary>
     /// Waits for this window to become closed. Note this does not actually tell the window to close.

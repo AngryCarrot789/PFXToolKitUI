@@ -19,9 +19,11 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.ExceptionServices;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -84,7 +86,7 @@ public sealed class CommandManager {
         return !string.IsNullOrEmpty(id) && this.commands.TryGetValue(id, out CommandEntry? command) ? command.Command : null;
     }
 
-    public bool TryFindCommandById(string id, [NotNullWhen(true)] out Command? command) => (command = this.GetCommandById(id)) != null;
+    public bool TryFindCommandById(string? id, [NotNullWhen(true)] out Command? command) => (command = this.GetCommandById(id)) != null;
 
     /// <summary>
     /// Executes a command with the given ID and context
@@ -136,6 +138,35 @@ public sealed class CommandManager {
 
     public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
         return new CommandExecutionContext(commandId, command, this, context, isUserInitiated);
+    }
+
+    /// <summary>
+    /// Runs a function as a command. The function takes regular command args, and the context will be pushed in the <see cref="LocalContextManager"/>
+    /// </summary>
+    /// <param name="function">The function to execute</param>
+    /// <param name="context">The context data passed to the function via command args</param>
+    /// <param name="shortcut">The shortcut that caused the action to be run</param>
+    /// <param name="contextMenu">The context menu that owns the context entry that caused the action to be run</param>
+    /// <param name="isUserInitiated">Whether a user effectively caused the command to execute</param>
+    public async Task RunActionAsync(Func<CommandEventArgs, Task> function, IContextData context, ShortcutEntry? shortcut = null, ContextRegistry? contextMenu = null, bool isUserInitiated = true) {
+        CommandEventArgs args = new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated);
+        using IDisposable globalContextUsage = LocalContextManager.PushGlobalContext(context);
+
+        try {
+            await function(args);
+        }
+        catch (OperationCanceledException) {
+            // ignored
+        }
+        catch (Exception e) {
+            if (Debugger.IsAttached) {
+                Debugger.Break();
+                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
+            }
+            else {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Action Error", "Error executing application-specific command", e);
+            }
+        }
     }
 
     /// <summary>
