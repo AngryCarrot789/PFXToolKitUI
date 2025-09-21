@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.Interactivity.Contexts;
 
 /// <summary>
@@ -35,7 +37,7 @@ public interface IMutableContextData : IRandomAccessContextData {
     /// </summary>
     /// <param name="key">The key</param>
     /// <param name="value">The value to insert</param>
-    void Set(DataKey<bool> key, bool? value);
+    void Set(DataKey<bool> key, bool? value) => this.SetUnsafe(key.Id, value.BoxNullable());
 
     /// <summary>
     /// Safely sets a raw value for the given key by doing runtime type-checking. 

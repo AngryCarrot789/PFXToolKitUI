@@ -20,7 +20,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.LogicalTree;
-using Avalonia.Threading;
 
 namespace PFXToolKitUI.Avalonia.AvControls;
 

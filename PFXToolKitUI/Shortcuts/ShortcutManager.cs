@@ -17,7 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Runtime.ExceptionServices;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Shortcuts.Events;
 using PFXToolKitUI.Shortcuts.Inputs;

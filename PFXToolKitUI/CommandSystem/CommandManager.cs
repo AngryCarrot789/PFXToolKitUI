@@ -145,8 +145,10 @@ public sealed class CommandManager {
     /// <param name="contextMenu">The context menu that owns the context entry that caused the action to be run</param>
     /// <param name="isUserInitiated">Whether a user effectively caused the command to execute</param>
     public async Task RunActionAsync(Func<CommandEventArgs, Task> function, IContextData context, ShortcutEntry? shortcut = null, ContextRegistry? contextMenu = null, bool isUserInitiated = true) {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        
         CommandEventArgs args = new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated);
-        using IDisposable globalContextUsage = LocalContextManager.PushGlobalContext(context);
+        using IDisposable globalContextUsage = this.asyncContextManager.PushGlobalContext(context);
 
         try {
             await function(args);

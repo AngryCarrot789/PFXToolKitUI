@@ -170,13 +170,12 @@ public interface IWindow : ITopLevel {
     event WindowEventHandler? WindowOpening;
 
     /// <summary>
-    /// An event fired when the window is fully opening. This is fired before the task returned by <see cref="ShowAsync"/> is completed
+    /// An event fired when the window is fully opening.
     /// </summary>
     event WindowEventHandler? WindowOpened;
 
     /// <summary>
-    /// An event fired when the window is requested to close. <see cref="IsClosing"/> and <see cref="IsClosed"/>
-    /// will both be false at this time.
+    /// An event fired when the window is requested to close.
     /// <para>
     /// This and <see cref="TryCloseAsync"/> are the only times that cancelling window closure is possible
     /// </para>
@@ -193,20 +192,19 @@ public interface IWindow : ITopLevel {
     event AsyncWindowEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
 
     /// <summary>
-    /// An event fired when the window is actually about to close. This is fired after <see cref="IsClosing"/> is set as true,
-    /// but before <see cref="IsClosed"/> is set as true.
+    /// An event fired when the window is actually about to close.
     /// </summary>
     event WindowEventHandler<WindowCloseEventArgs>? WindowClosing;
 
     /// <summary>
-    /// An event fired when the window is actually about to close. The handlers are invoked in their own tasks once all handlers
+    /// An event fired when the window is actually about to close.
+    /// The handlers are invoked in their own tasks once all handlers
     /// of <see cref="WindowClosing"/> are invoked.
     /// </summary>
     event AsyncWindowEventHandler<WindowCloseEventArgs>? WindowClosingAsync;
 
     /// <summary>
-    /// An event fired when the window is fully closed. <see cref="IsClosing"/> is set to false and <see cref="IsClosed"/>
-    /// is set as true prior to this event.
+    /// An event fired when the window is fully closed.
     /// <para>
     /// This is fired before the task returned by <see cref="RequestCloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
     /// </para>

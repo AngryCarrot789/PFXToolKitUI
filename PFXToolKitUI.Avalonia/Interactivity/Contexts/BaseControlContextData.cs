@@ -65,8 +65,6 @@ public abstract class BaseControlContextData : IControlContextData {
 
     public void Set<T>(DataKey<T> key, T? value) => this.SetUnsafe(key.Id, value);
 
-    public void Set(DataKey<bool> key, bool? value) => this.SetUnsafe(key.Id, value.BoxNullable());
-
     public void SetSafely(DataKey key, object? value) {
         if (value == null) {
             this.Remove(key.Id);
