@@ -40,6 +40,28 @@ public sealed class DesktopNativeWindow : Window {
     public static readonly StyledProperty<IBrush?> TitleBarBrushProperty = AvaloniaProperty.Register<DesktopNativeWindow, IBrush?>(nameof(TitleBarBrush));
     public static readonly StyledProperty<TextAlignment> TitleBarTextAlignmentProperty = AvaloniaProperty.Register<DesktopNativeWindow, TextAlignment>(nameof(TitleBarTextAlignment));
 
+    private static readonly bool IsUsingLLdxgi =
+        AvUtils.TryGetService(out Win32PlatformOptions options) &&
+        options.CompositionMode.Any(x => x == Win32CompositionMode.LowLatencyDxgiSwapChain);
+
+    private VisualLayerManager? PART_VisualLayerManager;
+    private Panel? PART_TitleBarPanel;
+    private Button? PART_ButtonMinimize, PART_ButtonRestore, PART_ButtonMaximize, PART_ButtonClose;
+    private Image? PART_IconImage;
+    private TextBlock? PART_TitleBarTextBlock;
+    private IconControl? PART_IconControl;
+    private DockPanel? PART_TitleBar;
+    private DesktopNativeWindow? myPlacedCenteredToOverride;
+    private WindowCloseReason closingReason;
+    private bool isClosingFromCode;
+    internal bool doNotModifySizeToContent, isFullyOpened;
+    private Icon? titleBarIcon;
+    private bool showTitleBarIcon;
+    private bool isTitleBarVisible = true;
+    private bool isToolWindow;
+
+    protected override Type StyleKeyOverride => typeof(DesktopNativeWindow);
+
     public IBrush? TitleBarBrush {
         get => this.GetValue(TitleBarBrushProperty);
         set => this.SetValue(TitleBarBrushProperty, value);
@@ -50,8 +72,6 @@ public sealed class DesktopNativeWindow : Window {
         set => this.SetValue(TitleBarTextAlignmentProperty, value);
     }
 
-    protected override Type StyleKeyOverride => typeof(DesktopNativeWindow);
-    
     public WindowIcon? WindowIcon {
         get => base.Icon;
         set => base.Icon = value;
@@ -70,10 +90,8 @@ public sealed class DesktopNativeWindow : Window {
     public bool IsTitleBarVisible {
         get => this.isTitleBarVisible;
         set {
-            if (this.isTitleBarVisible != value) {
-                this.isTitleBarVisible = value;
-                this.UpdateTitleBarVisibility();
-            }
+            this.isTitleBarVisible = value;
+            this.UpdateTitleBarAndWindowChrome();
         }
     }
 
@@ -87,23 +105,15 @@ public sealed class DesktopNativeWindow : Window {
         }
     }
 
-    public bool IsToolWindow { get; set; }
+    public bool IsToolWindow {
+        get => this.isToolWindow;
+        set {
+            this.isToolWindow = value;
+            this.UpdateTitleBarAndWindowChrome();
+        }
+    }
 
     public DesktopWindowImpl Window { get; }
-
-    private VisualLayerManager? PART_VisualLayerManager;
-    private Panel? PART_TitleBarPanel;
-    private Button? PART_ButtonMinimize, PART_ButtonRestore, PART_ButtonMaximize, PART_ButtonClose;
-    private Image? PART_IconImage;
-    private IconControl? PART_IconControl;
-    private DockPanel? PART_TitleBar;
-    private DesktopNativeWindow? myPlacedCenteredToOverride;
-    private WindowCloseReason closingReason;
-    private bool isClosingFromCode;
-    internal bool doNotModifySizeToContent, isFullyOpened;
-    private Icon? titleBarIcon;
-    private bool showTitleBarIcon;
-    private bool isTitleBarVisible;
 
     public DesktopNativeWindow(DesktopWindowImpl impl) {
         this.Window = impl;
@@ -112,18 +122,7 @@ public sealed class DesktopNativeWindow : Window {
         this.HorizontalContentAlignment = HorizontalAlignment.Stretch;
         this.AddHandler(WindowOpenedEvent, this.OnOpening, RoutingStrategies.Direct, handledEventsToo: true);
 
-        if (AvUtils.TryGetService(out Win32PlatformOptions options)) {
-            if (options.CompositionMode.Any(x => x == Win32CompositionMode.LowLatencyDxgiSwapChain)) {
-                this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.PreferSystemChrome;
-                this.ExtendClientAreaToDecorationsHint = true;
-                this.ExtendClientAreaTitleBarHeightHint = -1;
-                return;
-            }
-        }
-
-        this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.SystemChrome;
-        this.ExtendClientAreaToDecorationsHint = true;
-        this.ExtendClientAreaTitleBarHeightHint = -1;
+        this.UpdateChromeState();
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
@@ -136,20 +135,12 @@ public sealed class DesktopNativeWindow : Window {
         (this.PART_ButtonClose = e.NameScope.GetTemplateChild<Button>("PART_ButtonClose")).Click += OnCloseButtonClick;
         this.PART_TitleBar = e.NameScope.GetTemplateChild<DockPanel>("PART_TitleBar");
         this.PART_IconImage = e.NameScope.GetTemplateChild<Image>("PART_IconImage");
+        this.PART_TitleBarTextBlock = e.NameScope.GetTemplateChild<TextBlock>("PART_TitleBarTextBlock");
         this.PART_IconControl = e.NameScope.GetTemplateChild<IconControl>("PART_IconControl");
         this.PART_IconControl.Icon = this.TitleBarIcon;
         this.UpdateTitleBarButtonVisibility();
         this.OnIconStateChanged(null, null);
-        this.UpdateTitleBarVisibility();
-        if (this.IsToolWindow) {
-            // Updated by UpdateTitleBarVisibility()
-            // this.PART_TitleBarPanel.Height = 24;
-            // this.ExtendClientAreaTitleBarHeightHint = 24;
-            this.PART_ButtonMinimize.Width = 27;
-            this.PART_ButtonRestore.Width = 27;
-            this.PART_ButtonMaximize.Width = 27;
-            this.PART_ButtonClose.Width = 27;
-        }
+        this.UpdateTitleBarAndWindowChrome();
     }
 
     protected override void OnLoaded(RoutedEventArgs e) {
@@ -250,23 +241,54 @@ public sealed class DesktopNativeWindow : Window {
         this.isFullyOpened = false;
         this.Window.OnNativeWindowClosed(this.closingReason, this.isClosingFromCode);
     }
+
+    private const int ButtonWidth_ToolWindow = 32;
+    private const int ButtonWidth_NormalWindow = 45;
+    private const int TitleBarHeight_ToolWindow = 25;
+    private const int TitleBarHeight_NormalWindow = 30;
     
-    private void UpdateTitleBarVisibility() {
-        if (this.PART_TitleBarPanel != null) {
-            if (this.IsTitleBarVisible) {
-                if (this.IsToolWindow) {
-                    this.PART_TitleBarPanel.Height = 24;
-                    this.ExtendClientAreaTitleBarHeightHint = 24;
-                }
-                else {
-                    this.PART_TitleBarPanel.Height = 30;
-                    this.ExtendClientAreaTitleBarHeightHint = 30;
-                }
-            }
-            else {
-                this.PART_TitleBarPanel.IsVisible = false;
-                this.ExtendClientAreaTitleBarHeightHint = 0;
-            }
+    private void UpdateTitleBarAndWindowChrome() {
+        if (this.PART_TitleBarPanel == null) {
+            return;
+        }
+
+        this.ShowInTaskbar = !this.IsToolWindow;
+        if (!this.IsTitleBarVisible) {
+            this.PART_TitleBarPanel.IsVisible = false;
+        }
+        else if (!this.IsToolWindow) {
+            this.PART_TitleBarPanel.Height = TitleBarHeight_NormalWindow;
+            this.PART_ButtonMinimize!.Width = ButtonWidth_NormalWindow;
+            this.PART_ButtonRestore!.Width = ButtonWidth_NormalWindow;
+            this.PART_ButtonMaximize!.Width = ButtonWidth_NormalWindow;
+            this.PART_ButtonClose!.Width = ButtonWidth_NormalWindow;
+        }
+        else {
+            this.PART_TitleBarPanel.Height = TitleBarHeight_ToolWindow;
+            this.PART_ButtonMinimize!.Width = ButtonWidth_ToolWindow;
+            this.PART_ButtonRestore!.Width = ButtonWidth_ToolWindow;
+            this.PART_ButtonMaximize!.Width = ButtonWidth_ToolWindow;
+            this.PART_ButtonClose!.Width = ButtonWidth_ToolWindow;
+        }
+
+        this.UpdateChromeState();
+    }
+    
+    private void UpdateChromeState() {
+        if (!this.IsTitleBarVisible) {
+            this.ExtendClientAreaTitleBarHeightHint = 0;
+            this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.NoChrome;
+            this.ExtendClientAreaToDecorationsHint = false;
+            this.SystemDecorations = SystemDecorations.BorderOnly;
+        }
+        else {
+            this.SystemDecorations = SystemDecorations.Full;
+            this.ExtendClientAreaToDecorationsHint = true;
+            this.ExtendClientAreaChromeHints = IsUsingLLdxgi
+                ? ExtendClientAreaChromeHints.PreferSystemChrome
+                : ExtendClientAreaChromeHints.SystemChrome;
+            
+            this.ExtendClientAreaTitleBarHeightHint = this.IsToolWindow ? TitleBarHeight_ToolWindow : TitleBarHeight_NormalWindow;
         }
     }
 
@@ -275,7 +297,7 @@ public sealed class DesktopNativeWindow : Window {
             if (this.PART_IconControl != null && this.TitleBarIcon != null) {
                 if (!pfxIconChange.HasValue || pfxIconChange.Value || this.PART_IconControl.Icon == null)
                     this.PART_IconControl.Icon = this.TitleBarIcon;
-                
+
                 this.PART_IconImage!.IsVisible = false;
                 this.PART_IconControl!.IsVisible = true;
                 return;
@@ -283,7 +305,7 @@ public sealed class DesktopNativeWindow : Window {
             else if (this.PART_IconImage != null && this.WindowIcon != null) {
                 if (!winIconChange.HasValue || winIconChange.Value || this.PART_IconImage.Source == null)
                     this.PART_IconImage.Source = IconImageConverter.WindowIconToBitmap(this.WindowIcon);
-                
+
                 this.PART_IconControl!.IsVisible = false;
                 this.PART_IconImage!.IsVisible = true;
                 return;
