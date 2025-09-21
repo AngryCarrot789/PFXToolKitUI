@@ -58,11 +58,6 @@ public delegate void WindowTitleBarTextAlignmentChangedEventHandler(IWindow wind
 /// </summary>
 public interface IWindow : ITopLevel {
     /// <summary>
-    /// The data key used to access the window from <see cref="IContextData"/> in, for example, a command
-    /// </summary>
-    public static readonly DataKey<IWindow> WindowDataKey = DataKey<IWindow>.Create("WindowingWindow");
-
-    /// <summary>
     /// Gets the window manager associated with this window
     /// </summary>
     IWindowManager WindowManager { get; }
@@ -296,7 +291,9 @@ public interface IWindow : ITopLevel {
     /// </summary>
     /// <param name="context">The context</param>
     /// <returns>The window</returns>
-    static IWindow? WindowFromContext(IContextData context) => WindowDataKey.GetContext(context);
+    static IWindow? WindowFromContext(IContextData context) {
+        return TopLevelDataKey.GetContext(context) as IWindow;
+    }
 
     /// <summary>
     /// Tries to get the window from the context data.
@@ -304,7 +301,9 @@ public interface IWindow : ITopLevel {
     /// <param name="context">The context</param>
     /// <param name="window">The window</param>
     /// <returns>True if a window was available</returns>
-    static bool TryGetWindowFromContext(IContextData context, [NotNullWhen(true)] out IWindow? window) => WindowDataKey.TryGetContext(context, out window);
+    static bool TryGetWindowFromContext(IContextData context, [NotNullWhen(true)] out IWindow? window) {
+        return (window = WindowFromContext(context)) != null;
+    }
 
     /// <summary>
     /// Tries to get the window from the visual, or returns null, if the visual isn't in a <see cref="IWindow"/>

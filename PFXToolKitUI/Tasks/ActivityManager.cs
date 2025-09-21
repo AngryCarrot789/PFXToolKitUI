@@ -38,9 +38,9 @@ public delegate void TaskManagerTaskEventHandler(ActivityManager activityManager
 /// // Providing a CTS makes the activity cancellable. It is not disposed by
 /// // the ActivityManager, which is why we use it in a using block
 /// using CancellationTokenSource cts = new CancellationTokenSource();
-/// byte[] bytes = await ActivityManager.Instance.RunTask(async () => {
+/// Result<byte[]> bytes = await ActivityManager.Instance.RunTask(async () => {
 ///     ActivityTask task = ActivityManager.Instance.CurrentTask;
-///     DefaultProgressTracker progress = task.Progress;
+///     IActivityProgress progress = task.Progress;
 ///     progress.Caption = "Produce data";
 ///     {
 ///         progress.Text = "Reading data from server...";
@@ -143,12 +143,12 @@ public sealed class ActivityManager : IDisposable {
 
     internal static Task InternalPreActivateTask(ActivityManager activityManager, ActivityTask task) {
         activityManager.threadToTask.Value = task;
-        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => InternalOnTaskStarted(activityManager, task));
+        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => InternalOnTaskStarted(activityManager, task), DispatchPriority.Send);
     }
 
     internal static Task InternalOnActivityCompleted(ActivityManager activityManager, ActivityTask task, int state) {
         activityManager.threadToTask.Value = null;
-        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => InternalOnTaskCompleted(activityManager, task, state));
+        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => InternalOnTaskCompleted(activityManager, task, state), DispatchPriority.Send);
     }
 
     // Main Thread

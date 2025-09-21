@@ -149,7 +149,7 @@ public partial class UserInputDialogView : UserControl {
         }
 
         this.DoUpdateAllErrors();
-        Dispatcher.UIThread.InvokeAsync(() => {
+        Dispatcher.UIThread.Post(() => {
             if ((this.PART_InputFieldContent.Content as IUserInputContent)?.FocusPrimaryInput() == true) {
                 return;
             }

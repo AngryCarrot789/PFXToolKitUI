@@ -48,6 +48,10 @@ public static class WindowContextUtils {
         return parentWindow;
     }
     
+    /// <summary>
+    /// Tries to find a window manager at least, and optionally tries to find a useful contextual window
+    /// </summary>
+    /// <returns>True when a manager is found</returns>
     public static bool TryGetWindowManagerWithUsefulWindow([NotNullWhen(true)] out IWindowManager? manager, out IWindow? parentWindow, IContextData? alternateContext = null, bool canUseActiveOrMainWindow = true) {
         parentWindow = null;
         manager = null;

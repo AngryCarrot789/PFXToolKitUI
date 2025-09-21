@@ -49,7 +49,7 @@ public abstract class RapidDispatchActionBase {
         }
 
         this.isScheduled = true;
-        ApplicationPFX.Instance.Dispatcher.InvokeAsync(this.doExecuteCallback, this.Priority);
+        ApplicationPFX.Instance.Dispatcher.Post(this.doExecuteCallback, this.Priority);
         return true;
     }
 

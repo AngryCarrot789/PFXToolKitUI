@@ -186,8 +186,7 @@ public sealed class DesktopWindowImpl : IWindow {
 
         UIInputManager.SetFocusPath(this.myNativeWindow, builder.FocusPath);
 
-        using MultiChangeToken change = DataManager.GetContextData(this.myNativeWindow).BeginChange();
-        change.Context.Set(IWindow.WindowDataKey, this).Set(ITopLevel.TopLevelDataKey, this);
+        DataManager.GetContextData(this.myNativeWindow).Set(ITopLevel.TopLevelDataKey, this);
     }
 
     private void ApplyBuilderSizing(WindowBuilder builder) {
@@ -414,9 +413,9 @@ public sealed class DesktopWindowImpl : IWindow {
         if (this.OpenState == OpenState.Closed)
             throw new InvalidOperationException("Window has been closed; it cannot be opened again.");
         Debug.Assert(this.OpenState == OpenState.Open);
-        
-        using CancellationTokenSource cts = new CancellationTokenSource();
 
+        this.OpenState = OpenState.TryingToClose;
+        using CancellationTokenSource cts = new CancellationTokenSource();
         ApplicationPFX.Instance.Dispatcher.Post(() => {
             try {
                 // Due to how we implemented our OnClosing logic, Close() will block even

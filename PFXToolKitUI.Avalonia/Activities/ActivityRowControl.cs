@@ -121,7 +121,7 @@ public class ActivityRowControl : TemplatedControl {
         if (newTask != null)
             newTask.PausedStateChanged += this.OnPausedStateChanged;
 
-        ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => this.UpdatePauseContinueButton(newTask));
+        ApplicationPFX.Instance.Dispatcher.Post(() => this.UpdatePauseContinueButton(newTask));
     }
 
     private void UpdateCancelButton() {
