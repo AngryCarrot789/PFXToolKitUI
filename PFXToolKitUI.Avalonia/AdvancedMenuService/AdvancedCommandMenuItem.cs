@@ -136,27 +136,15 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         }
 
         ContextRegistry? sourceMenu = this.SourceContextMenu;
-        Dispatcher.UIThread.Post(async void () => {
+        ApplicationPFX.Instance.Dispatcher.Post(async void () => {
             try {
                 await CommandManager.Instance.Execute(cmdId, context, null, sourceMenu);
-            }
-            catch (Exception e) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
             }
             finally {
                 this.IsExecuting = false;
                 this.UpdateCanExecute();
             }
-        }, DispatcherPriority.Render);
+        }, DispatchPriority.Render);
         return true;
-    }
-
-    public static async Task ExecuteCommandAndHandleError(string cmdId, IContextData context, ContextRegistry? sourceContextMenu) {
-        try {
-            await CommandManager.Instance.Execute(cmdId, context, null, sourceContextMenu);
-        }
-        catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
-        }
     }
 }

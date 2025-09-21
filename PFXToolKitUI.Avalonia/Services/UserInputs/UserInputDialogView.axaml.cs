@@ -149,7 +149,7 @@ public partial class UserInputDialogView : UserControl {
         }
 
         this.DoUpdateAllErrors();
-        Dispatcher.UIThread.Post(() => {
+        ApplicationPFX.Instance.Dispatcher.Post(() => {
             if ((this.PART_InputFieldContent.Content as IUserInputContent)?.FocusPrimaryInput() == true) {
                 return;
             }
@@ -162,7 +162,7 @@ public partial class UserInputDialogView : UserControl {
                     this.PART_CancelButton.Focus();
                 }
             }
-        }, DispatcherPriority.Loaded);
+        }, DispatchPriority.Loaded);
     }
 
     private void UpdateConfirmButton(UserInputInfo info) {

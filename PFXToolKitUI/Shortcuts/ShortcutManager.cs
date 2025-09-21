@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Runtime.ExceptionServices;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Shortcuts.Events;
 using PFXToolKitUI.Shortcuts.Inputs;
@@ -49,7 +50,7 @@ public abstract class ShortcutManager {
     /// Gets the shortcut currently being activated
     /// </summary>
     public ShortcutEntry? CurrentlyActivatingShortcut { get; private set; }
-    
+
     /// <summary>
     /// An event fired when a <see cref="ShortcutEntry"/>'s shortcut is modified
     /// </summary>
@@ -215,8 +216,12 @@ public abstract class ShortcutManager {
             return false;
         }
 
-        CommandManager.Instance.Execute(command, inputProcessor.ProvideCurrentContextInternal()!, shortcutEntry, null);
+        Execute(command, inputProcessor, shortcutEntry);
         return true;
+
+        static async void Execute(Command command, ShortcutInputProcessor processor, ShortcutEntry shortcut) {
+            await CommandManager.Instance.Execute(command, processor.ProvideCurrentContextInternal()!, shortcut, null);
+        }
     }
 
     /// <summary>
@@ -224,14 +229,16 @@ public abstract class ShortcutManager {
     /// </summary>
     /// <param name="inputProcessor">The processor which caused the state to be activated</param>
     /// <param name="stateEntry">The state that was activated</param>
-    protected internal virtual void OnInputStateActivated(ShortcutInputProcessor inputProcessor, InputStateEntry stateEntry) { }
+    protected internal virtual void OnInputStateActivated(ShortcutInputProcessor inputProcessor, InputStateEntry stateEntry) {
+    }
 
     /// <summary>
     /// Called by the <see cref="ShortcutInputProcessor"/> when an input state is deactivated
     /// </summary>
     /// <param name="inputProcessor">The processor which caused the state to be deactivated</param>
     /// <param name="stateEntry">The state that was activated</param>
-    protected internal virtual void OnInputStateDeactivated(ShortcutInputProcessor inputProcessor, InputStateEntry stateEntry) { }
+    protected internal virtual void OnInputStateDeactivated(ShortcutInputProcessor inputProcessor, InputStateEntry stateEntry) {
+    }
 
     /// <summary>
     /// Gets or creates an <see cref="InputStateManager"/> for the given path
@@ -249,15 +256,21 @@ public abstract class ShortcutManager {
         this.ShortcutModified?.Invoke(shortcutEntry, oldShortcut);
     }
 
-    protected internal virtual void OnSecondShortcutUsagesProgressed(ShortcutInputProcessor inputProcessor) { }
+    protected internal virtual void OnSecondShortcutUsagesProgressed(ShortcutInputProcessor inputProcessor) {
+    }
 
-    protected internal virtual void OnShortcutUsagesCreated(ShortcutInputProcessor inputProcessor) { }
+    protected internal virtual void OnShortcutUsagesCreated(ShortcutInputProcessor inputProcessor) {
+    }
 
-    protected internal virtual void OnCancelUsageForNoSuchNextMouseStroke(ShortcutInputProcessor inputProcessor, IShortcutUsage usage, ShortcutEntry shortcutEntry, MouseStroke stroke) { }
+    protected internal virtual void OnCancelUsageForNoSuchNextMouseStroke(ShortcutInputProcessor inputProcessor, IShortcutUsage usage, ShortcutEntry shortcutEntry, MouseStroke stroke) {
+    }
 
-    protected internal virtual void OnCancelUsageForNoSuchNextKeyStroke(ShortcutInputProcessor inputProcessor, IShortcutUsage usage, ShortcutEntry shortcutEntry, KeyStroke stroke) { }
+    protected internal virtual void OnCancelUsageForNoSuchNextKeyStroke(ShortcutInputProcessor inputProcessor, IShortcutUsage usage, ShortcutEntry shortcutEntry, KeyStroke stroke) {
+    }
 
-    protected internal virtual void OnNoSuchShortcutForMouseStroke(ShortcutInputProcessor inputProcessor, string? group, MouseStroke stroke) { }
+    protected internal virtual void OnNoSuchShortcutForMouseStroke(ShortcutInputProcessor inputProcessor, string? group, MouseStroke stroke) {
+    }
 
-    protected internal virtual void OnNoSuchShortcutForKeyStroke(ShortcutInputProcessor inputProcessor, string? group, KeyStroke stroke) { }
+    protected internal virtual void OnNoSuchShortcutForKeyStroke(ShortcutInputProcessor inputProcessor, string? group, KeyStroke stroke) {
+    }
 }

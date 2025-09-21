@@ -63,25 +63,25 @@ public abstract class BaseControlContextData : IControlContextData {
         }
     }
 
-    public IControlContextData Set<T>(DataKey<T> key, T? value) => this.SetUnsafe(key.Id, value);
+    public void Set<T>(DataKey<T> key, T? value) => this.SetUnsafe(key.Id, value);
 
-    public IControlContextData Set(DataKey<bool> key, bool? value) => this.SetUnsafe(key.Id, value.BoxNullable());
+    public void Set(DataKey<bool> key, bool? value) => this.SetUnsafe(key.Id, value.BoxNullable());
 
-    public IControlContextData SetSafely(DataKey key, object? value) {
+    public void SetSafely(DataKey key, object? value) {
         if (value == null) {
-            return this.Remove(key.Id);
+            this.Remove(key.Id);
         }
         else if (key.DataType.IsInstanceOfType(value)) {
-            return this.SetUnsafe(key.Id, value);
+            this.SetUnsafe(key.Id, value);
         }
         else {
             throw new ArgumentException($"Value is not an instance of the data key's data type. {value.GetType().Name} is not {key.DataType.Name}");
         }
     }
 
-    public IControlContextData SetUnsafe(string key, object? value) {
+    public void SetUnsafe(string key, object? value) {
         if (value == null) {
-            return this.Remove(key);
+            this.Remove(key);
         }
         else if (this.batchCounter > 0) {
             (this.myBatchModifications ??= []).Add(new ModificationEntry(key, value));
@@ -90,19 +90,15 @@ public abstract class BaseControlContextData : IControlContextData {
             (this.myData ??= new Dictionary<string, object>())[key] = value;
             DataManager.InvalidateInheritedContext(this.Owner);
         }
-
-        return this;
     }
 
-    public IControlContextData Remove(string key) {
+    public void Remove(string key) {
         if (this.batchCounter > 0) {
             (this.myBatchModifications ??= []).Add(new ModificationEntry(key));
         }
         else if (this.myData != null && this.myData.Remove(key)) {
             DataManager.InvalidateInheritedContext(this.Owner);
         }
-
-        return this;
     }
 
     public virtual bool TryGetContext(string key, [NotNullWhen(true)] out object? value) {

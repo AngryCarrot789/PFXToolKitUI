@@ -17,13 +17,13 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Contexts;
+namespace PFXToolKitUI.Interactivity.Contexts;
 
 public abstract class MultiChangeToken : IDisposable {
-    public readonly IControlContextData Context;
+    public readonly IMutableContextData Context;
     private bool disposed;
 
-    protected MultiChangeToken(IControlContextData context) {
+    protected MultiChangeToken(IMutableContextData context) {
         this.Context = context;
     }
 

@@ -19,11 +19,9 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.ExceptionServices;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -36,7 +34,7 @@ public sealed class CommandManager {
     /// Gets the global command manager instance
     /// </summary>
     public static CommandManager Instance => ApplicationPFX.GetComponent<CommandManager>();
-    
+
     /// <summary>
     /// Gets the async local context manager, which is used to store and access context data for async command execution frames
     /// </summary>
@@ -101,14 +99,12 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the command threw ane exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public Task Execute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
+    public async Task Execute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         ArgumentNullException.ThrowIfNull(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            return command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
+            await command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -158,15 +154,11 @@ public sealed class CommandManager {
         catch (OperationCanceledException) {
             // ignored
         }
+#if !DEBUG
         catch (Exception e) {
-            if (Debugger.IsAttached) {
-                Debugger.Break();
-                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
-            }
-            else {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Action Error", "Error executing application-specific command", e);
-            }
+            await PFXToolKitUI.Utils.LogExceptionHelper.ShowMessageAndPrintToLogs("Command Action Error", "Error executing application-specific command", e);
         }
+#endif
     }
 
     /// <summary>
@@ -204,7 +196,7 @@ public sealed class CommandManager {
 
     private class CommandEntry {
         public readonly Command Command;
-        
+
 #if DEBUG
         public readonly string CreationStackTrace;
 #endif

@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
+using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
@@ -114,9 +115,9 @@ public abstract class Command {
     protected abstract Task ExecuteCommandAsync(CommandEventArgs e);
 
     internal async Task InternalExecuteImpl(CommandEventArgs args) {
-        using IDisposable globalContextUsage = CommandManager.LocalContextManager.PushGlobalContext(args.ContextData);
-
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+
+        using IDisposable globalContextUsage = CommandManager.LocalContextManager.PushGlobalContext(args.ContextData);
         int executing;
         if (this.AllowMultipleExecutions) {
             executing = Interlocked.Increment(ref this.executingCount);
@@ -126,9 +127,10 @@ public abstract class Command {
             return;
         }
 
-        if (executing < 0)
+        if (executing < 0) {
             Debugger.Break();
-        if (executing == 0) {
+        }
+        else if (executing == 0) {
             try {
                 this.ExecutingChanged?.Invoke(this, args);
             }
@@ -140,29 +142,17 @@ public abstract class Command {
         try {
             await (this.theLastRunTask = this.ExecuteCommandAsync(args));
         }
-        catch (OperationCanceledException) {
-            // ignored
-        }
         catch (Exception e) {
-            if (Debugger.IsAttached) {
-                Debugger.Break();
-                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
-            }
-            else {
-                try {
-                    await this.OnExecutionException(args, e);
-                }
-                catch {
-                    // ignored -- oopsie
-                }
+            if (!await this.OnExecutionException(args, e)) {
+                throw;
             }
         }
         finally {
-            int value = Interlocked.Decrement(ref this.executingCount);
-            if (value < 0)
+            executing = Interlocked.Decrement(ref this.executingCount);
+            if (executing < 0) {
                 Debugger.Break();
-
-            if (value == 0) {
+            }
+            else if (executing == 0) {
                 try {
                     this.ExecutingChanged?.Invoke(this, args);
                 }
@@ -187,7 +177,17 @@ public abstract class Command {
         return Task.CompletedTask;
     }
 
-    protected virtual Task OnExecutionException(CommandEventArgs args, Exception e) {
-        return LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", e);
+    protected virtual async Task<bool> OnExecutionException(CommandEventArgs args, Exception e) {
+        if (e is OperationCanceledException) {
+            AppLogger.Instance.WriteLine("Caught " + nameof(OperationCanceledException) + $" during execution of command '{this.GetType().Name}'");
+            return true; // ignored
+        }
+
+        if (Debugger.IsAttached) {
+            return false;
+        }
+        
+        await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", e);
+        return true;
     }
 }

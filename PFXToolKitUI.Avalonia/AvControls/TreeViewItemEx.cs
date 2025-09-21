@@ -37,7 +37,7 @@ public abstract class TreeViewItemEx : TreeViewItem {
     }
 
     private void OnIsExpandedChanged() {
-        Dispatcher.UIThread.Post(() => this.PropagateIsVisible(false), DispatcherPriority.Loaded);
+        ApplicationPFX.Instance.Dispatcher.Post(() => this.PropagateIsVisible(false), DispatchPriority.Loaded);
     }
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {

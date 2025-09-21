@@ -156,7 +156,7 @@ public partial class MessageBoxView : UserControl {
 
         this.UpdateVisibleButtons();
         if (newData != null) {
-            Dispatcher.UIThread.Post(() => {
+            ApplicationPFX.Instance.Dispatcher.Post(() => {
                 switch (newData.DefaultButton) {
                     case MessageBoxResult.None: break;
                     case MessageBoxResult.Yes:
@@ -173,7 +173,7 @@ public partial class MessageBoxView : UserControl {
                             this.PART_NoButton.Focus();
                         break;
                 }
-            }, DispatcherPriority.Loaded);
+            }, DispatchPriority.Loaded);
         }
     }
 

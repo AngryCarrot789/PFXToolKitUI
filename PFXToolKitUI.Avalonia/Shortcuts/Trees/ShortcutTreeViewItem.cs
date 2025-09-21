@@ -24,11 +24,11 @@ using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity;
-using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Avalonia.Shortcuts.Trees.InputStrokeControls;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Configurations.Shortcuts;
+using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
 
@@ -148,8 +148,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.ParentNode = null;
         this.Entry = null;
 
-        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange();
-        change.Context.Set(ShortcutContextRegistry.ShortcutEntryKey, null).Set(IKeyMapEntry.DataKey, null);
+        DataManager.GetContextData(this).Remove(ShortcutContextRegistry.ShortcutEntryKey, IKeyMapEntry.DataKey);
     }
 
     #endregion

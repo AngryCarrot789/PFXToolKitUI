@@ -22,7 +22,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;

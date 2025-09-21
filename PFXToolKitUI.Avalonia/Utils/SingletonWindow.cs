@@ -17,7 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 
 namespace PFXToolKitUI.Avalonia.Utils;

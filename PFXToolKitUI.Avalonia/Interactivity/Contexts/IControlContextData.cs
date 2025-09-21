@@ -23,89 +23,16 @@ using PFXToolKitUI.Interactivity.Contexts;
 namespace PFXToolKitUI.Avalonia.Interactivity.Contexts;
 
 /// <summary>
-/// An interface for context data used to store context within a control. This is a special
-/// implementation of <see cref="IContextData"/> that notifies the data manager of changes,
-/// and supports batching multiple changes to avoid excessive calls to <see cref="DataManager.InvalidateInheritedContext"/>
+/// An interface for mutable context data used to store context within a control.
+/// This is a special implementation of <see cref="IContextData"/> that notifies
+/// the data manager of changes, and supports batching multiple changes to avoid
+/// excessive calls to <see cref="DataManager.InvalidateInheritedContext"/>
 /// </summary>
-public interface IControlContextData : IRandomAccessContextData {
+public interface IControlContextData : IMutableContextData {
     /// <summary>
     /// Gets the control that owns this context data
     /// </summary>
     AvaloniaObject Owner { get; }
-
-    /// <summary>
-    /// Sets a value with the given data key. This method invokes <see cref="DataManager.InvalidateInheritedContext"/> if no batches are in progress
-    /// </summary>
-    /// <param name="key">The key</param>
-    /// <param name="value">The value to insert</param>
-    /// <returns>The current instance</returns>
-    IControlContextData Set<T>(DataKey<T> key, T? value);
-
-    /// <summary>
-    /// Sets a boolean value with the given key, using a pre-boxed value to avoid boxing.
-    /// This method invokes <see cref="DataManager.InvalidateInheritedContext"/> if no batches are in progress
-    /// </summary>
-    /// <param name="key">The key</param>
-    /// <param name="value">The value to insert</param>
-    /// <returns>The current instance</returns>
-    IControlContextData Set(DataKey<bool> key, bool? value);
-
-    /// <summary>
-    /// Safely sets a raw value for the given key by doing runtime type-checking. 
-    /// This method invokes <see cref="DataManager.InvalidateInheritedContext"/> if no batches are in progress
-    /// </summary>
-    /// <param name="key">The key</param>
-    /// <param name="value">The value to insert, or null, to remove</param>
-    /// <returns>The current instance</returns>
-    IControlContextData SetSafely(DataKey key, object? value);
-    
-    /// <summary>
-    /// Unsafely sets a raw value for the given key. Care must be taken using this method,
-    /// since <see cref="DataKey{T}"/> will throw if it doesn't receive the correct value.
-    /// This method invokes <see cref="DataManager.InvalidateInheritedContext"/> if no batches are in progress
-    /// </summary>
-    /// <param name="key">The key</param>
-    /// <param name="value">The value to insert, or null, to remove</param>
-    /// <returns>The current instance</returns>
-    IControlContextData SetUnsafe(string key, object? value);
-
-    /// <summary>
-    /// Removes the value with the given key. This is the same as calling <see cref="SetUnsafe"/> with a null value
-    /// </summary>
-    /// <param name="key">The key</param>
-    /// <returns>The current instance</returns>
-    IControlContextData Remove(string key) => this.SetUnsafe(key, null);
-
-    /// <summary>
-    /// Removes the value by the given key
-    /// </summary>
-    /// <returns>The current instance</returns>
-    IControlContextData Remove(DataKey key) => this.Remove(key.Id);
-
-    /// <summary>
-    /// Batch removes the two values by the keys
-    /// </summary>
-    /// <returns>The current instance</returns>
-    IControlContextData Remove(DataKey key1, DataKey key2) {
-        using (this.BeginChange())
-            return this.Remove(key1.Id).Remove(key2.Id);
-    }
-
-    /// <summary>
-    /// Batch removes the three values by the keys
-    /// </summary>
-    /// <returns>The current instance</returns>
-    IControlContextData Remove(DataKey key1, DataKey key2, DataKey key3) {
-        using (this.BeginChange())
-            return this.Remove(key1.Id).Remove(key2.Id).Remove(key3.Id);
-    }
-
-    /// <summary>
-    /// Begins a multi-change process. These processes can be stacked, and the data will only
-    /// be applied once all tokens are disposed (but this can be optionally overridden)
-    /// </summary>
-    /// <returns>A disposable token instance</returns>
-    MultiChangeToken BeginChange();
 
     /// <summary>
     /// Creates a new context data instance, which inherits data from the given context data. Inherited data is not prioritised 

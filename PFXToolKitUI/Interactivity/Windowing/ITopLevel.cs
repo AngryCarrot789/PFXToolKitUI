@@ -14,9 +14,9 @@ public interface ITopLevel : IComponentManager {
     public static readonly DataKey<ITopLevel> TopLevelDataKey = DataKey<ITopLevel>.Create("WindowingTopLevel");
 
     /// <summary>
-    /// Gets the full context data of this top level
+    /// Gets the local context data of this top level (not the fully inherited context). This
     /// </summary>
-    IContextData ContextData { get; }
+    IMutableContextData LocalContextData { get; }
 
     /// <summary>
     /// Tries to get the clipboard component

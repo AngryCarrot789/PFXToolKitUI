@@ -122,7 +122,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
             return false;
         }
 
-        Dispatcher.UIThread.Post(() => this.ExecuteCommand(entry, context), DispatcherPriority.Render);
+        ApplicationPFX.Instance.Dispatcher.Post(() => this.ExecuteCommand(entry, context), DispatchPriority.Render);
         return true;
     }
 

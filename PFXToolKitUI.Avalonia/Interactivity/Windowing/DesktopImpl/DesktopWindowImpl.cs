@@ -27,8 +27,6 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
-using PFXToolKitUI.AdvancedMenuService;
-using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Composition;
@@ -46,7 +44,7 @@ namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl;
 /// The implementation of <see cref="IWindow"/> for a <see cref="DesktopWindowManager"/>
 /// </summary>
 public sealed class DesktopWindowImpl : IWindow {
-    public IContextData ContextData => DataManager.GetFullContextData(this.myNativeWindow);
+    public IMutableContextData LocalContextData => DataManager.GetContextData(this.myNativeWindow);
 
     public ComponentStorage ComponentStorage { get; }
 
@@ -376,6 +374,11 @@ public sealed class DesktopWindowImpl : IWindow {
                     this.myNativeWindow.Show(parent);
             }
             catch (Exception e) {
+                if (this.tcsShowAsync == null) { // wtf?
+                    Debug.Assert(this.OpenState >= OpenState.Open);
+                    throw;
+                }
+                
                 this.tcsShowAsync.SetException(new Exception("Failed to show window", e));
                 this.tcsShowAsync = null;
                 throw;

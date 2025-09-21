@@ -183,12 +183,12 @@ public abstract class BaseModelBasedListBoxItem : ListBoxItem {
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
-        Dispatcher.UIThread.Post(() => {
+        ApplicationPFX.Instance.Dispatcher.Post(() => {
             if (this.isMovingBetweenTracks) {
                 this.isMovingBetweenTracks = false;
                 this.dragInitiator.Focus(NavigationMethod.Pointer);
                 this.initiatedDragPointer?.Capture(this.dragInitiator);
             }
-        }, DispatcherPriority.Send);
+        }, DispatchPriority.Send);
     }
 }

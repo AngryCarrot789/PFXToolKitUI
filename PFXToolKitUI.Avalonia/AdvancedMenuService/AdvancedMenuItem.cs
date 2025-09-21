@@ -88,7 +88,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     protected virtual void OnLoadedOverride(RoutedEventArgs e) {
         BaseContextEntry.InternalOnBecomeVisible(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
         AdvancedMenuHelper.GenerateDynamicVisualItems(this);
-        Dispatcher.UIThread.Post(() => AdvancedMenuHelper.NormaliseSeparators(this), DispatcherPriority.Loaded);
+        ApplicationPFX.Instance.Dispatcher.Post(() => AdvancedMenuHelper.NormaliseSeparators(this), DispatchPriority.Loaded);
     }
 
     protected virtual void OnUnloadedOverride(RoutedEventArgs e) {
@@ -189,7 +189,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
         if (!this.IsVisibilityChanging) {
             AdvancedMenuHelper.GenerateDynamicVisualItems(this);
-            Dispatcher.UIThread.Post(() => AdvancedMenuHelper.NormaliseSeparators(this), DispatcherPriority.Loaded);
+            ApplicationPFX.Instance.Dispatcher.Post(() => AdvancedMenuHelper.NormaliseSeparators(this), DispatchPriority.Loaded);
         }
     }
 

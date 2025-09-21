@@ -18,7 +18,6 @@
 // 
 
 using Avalonia.Controls;
-using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Themes;

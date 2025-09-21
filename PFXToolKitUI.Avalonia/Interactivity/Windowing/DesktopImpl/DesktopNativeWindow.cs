@@ -26,7 +26,6 @@ using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
 using Avalonia.Threading;
-using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Themes.Converters;
 using PFXToolKitUI.Avalonia.Utils;
@@ -228,12 +227,12 @@ public sealed class DesktopNativeWindow : Window {
         // this.UpdatePlacement();
         // this.StartRendering();
 
-        Dispatcher.UIThread.Invoke(void () => {
+        ApplicationPFX.Instance.Dispatcher.Post(void () => {
             this.isFullyOpened = true;
             this.doNotModifySizeToContent = false;
             this.SizeToContent = this.Window.SizingInfo.SizeToContent;
             this.UpdatePlacement();
-        }, DispatcherPriority.Loaded);
+        }, DispatchPriority.Loaded);
     }
 
     protected override void OnClosing(WindowClosingEventArgs e) {
