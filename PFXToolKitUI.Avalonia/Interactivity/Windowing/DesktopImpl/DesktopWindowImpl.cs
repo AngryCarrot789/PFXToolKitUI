@@ -46,16 +46,6 @@ namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl;
 /// The implementation of <see cref="IWindow"/> for a <see cref="DesktopWindowManager"/>
 /// </summary>
 public sealed class DesktopWindowImpl : IWindow {
-    internal readonly DesktopNativeWindow myNativeWindow;
-    internal readonly DesktopWindowManager myManager;
-    internal readonly DesktopWindowImpl? parentWindow;
-    internal readonly List<DesktopWindowImpl> myVisibleChildWindows;
-
-    private TaskCompletionSource? tcsShowAsync;
-    private TaskCompletionSource? tcsWaitForClosed;
-    private readonly List<CancellableTaskCompletionSource> listTcsWaitForClosed;
-    private bool isProcessingClosingInternal;
-
     public IContextData ContextData => DataManager.GetFullContextData(this.myNativeWindow);
 
     public ComponentStorage ComponentStorage { get; }
@@ -75,20 +65,20 @@ public sealed class DesktopWindowImpl : IWindow {
         get => this.myNativeWindow.WindowIcon;
         set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.WindowIcon, (x, y) => x.WindowIcon = y, value, this, (t, o, n) => t.IconChanged?.Invoke(t, o, n));
     }
-
+    
     public Icon? TitleBarIcon {
         get => this.myNativeWindow.TitleBarIcon;
         set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.TitleBarIcon, (x, y) => x.TitleBarIcon = y, value, this, (t, o, n) => t.TitleBarIconChanged?.Invoke(t, o, n));
     }
 
+    public bool IsTitleBarVisible {
+        get => this.myNativeWindow.IsTitleBarVisible;
+        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.IsTitleBarVisible, (x, y) => x.IsTitleBarVisible = y, value, this, t => t.IsTitleBarVisibleChanged?.Invoke(t, EventArgs.Empty));
+    }
+
     public string? Title {
         get => this.myNativeWindow.Title;
         set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.Title, (x, y) => x.Title = y, value, this, (t, o, n) => t.TitleChanged?.Invoke(t, o, n));
-    }
-
-    public TopLevelMenuRegistry? Menu {
-        get => this.myNativeWindow.Menu;
-        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.Menu, (x, y) => x.Menu = y, value, this, (t, o, n) => t.MenuChanged?.Invoke(t, o, n));
     }
 
     public IColourBrush? TitleBarBrush {
@@ -129,15 +119,27 @@ public sealed class DesktopWindowImpl : IWindow {
     public event WindowEventHandler<WindowCloseEventArgs>? WindowClosing;
     public event AsyncWindowEventHandler<WindowCloseEventArgs>? WindowClosingAsync;
     public event WindowEventHandler<WindowCloseEventArgs>? WindowClosed;
-
     public event WindowIconChangedEventHandler? IconChanged;
     public event WindowTitleBarIconChangedEventHandler? TitleBarIconChanged;
-    public event WindowTitleBarTitleChangedEventHandler? TitleChanged;
-    public event WindowMenuChangedEventHandler? MenuChanged;
+    public event WindowEventHandler? IsTitleBarVisibleChanged;
+    public event WindowTitleBarCaptionChangedEventHandler? TitleChanged;
     public event WindowTitleBarBrushChangedEventHandler? TitleBarBrushChanged;
     public event WindowBorderBrushChangedEventHandler? BorderBrushChanged;
     public event WindowTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
+    
+    // owner+owned tracking
+    internal readonly DesktopNativeWindow myNativeWindow;
+    internal readonly DesktopWindowManager myManager;
+    internal readonly DesktopWindowImpl? parentWindow;
+    internal readonly List<DesktopWindowImpl> myVisibleChildWindows;
 
+    // open+close operation tracking
+    private TaskCompletionSource? tcsShowAsync;
+    private TaskCompletionSource? tcsWaitForClosed;
+    private readonly List<CancellableTaskCompletionSource> listTcsWaitForClosed;
+    private bool isProcessingClosingInternal;
+    
+    // utils for "binding" brushes from the BrushManager api
     private readonly ColourBrushHandler titleBarBrushHandler;
     private readonly ColourBrushHandler borderBrushHandler;
 
@@ -176,12 +178,12 @@ public sealed class DesktopWindowImpl : IWindow {
         this.myNativeWindow.SizeToContent = builder.SizeToContent;
         this.ApplyBuilderSizing(builder);
 
+        this.IsTitleBarVisible = builder.IsTitleBarVisible;
         this.Icon = builder.Icon.HasValue ? builder.Icon.Value : this.myManager.GetDefaultWindowIcon();
         this.TitleBarIcon = builder.TitleBarIcon;
         this.Title = builder.Title ?? "Window";
         this.TitleBarBrush = builder.TitleBarBrush;
         this.BorderBrush = builder.BorderBrush;
-        this.Menu = builder.Menu;
         this.Content = builder.Content;
 
         UIInputManager.SetFocusPath(this.myNativeWindow, builder.FocusPath);

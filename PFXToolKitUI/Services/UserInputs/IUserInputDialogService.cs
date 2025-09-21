@@ -29,8 +29,8 @@ public interface IUserInputDialogService {
     /// </summary>
     /// <param name="info">The information to present in the dialog</param>
     /// <param name="parentTopLevel">
-    /// The top level who should be the parent of the dialog. When null, the currently 
-    /// active window will be used, or worse case, the app's main window
+    /// The top level that should be the parent of the dialog window. When null, either the best window from
+    /// the current command context is used, or at worst, the active window or a main window will be used
     /// </param>
     /// <returns>
     /// An async boolean. True when closed successfully (you can accept the results, and trust the

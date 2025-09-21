@@ -116,6 +116,14 @@ public static class PropertyHelper {
             onValueChanged();
         }
     }
+
+    public static void SetAndRaiseINEEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance> onValueChanged) {
+        T oldValue = getter(propertyOwner);
+        if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
+            setter(propertyOwner, newValue);
+            onValueChanged(instance);
+        }
+    }
     
     public static void SetAndRaiseINEEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
         T oldValue = getter(propertyOwner);

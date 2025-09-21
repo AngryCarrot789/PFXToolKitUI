@@ -68,6 +68,16 @@ public sealed class DesktopNativeWindow : Window {
         }
     }
 
+    public bool IsTitleBarVisible {
+        get => this.isTitleBarVisible;
+        set {
+            if (this.isTitleBarVisible != value) {
+                this.isTitleBarVisible = value;
+                this.UpdateTitleBarVisibility();
+            }
+        }
+    }
+
     public bool ShowTitleBarIcon {
         get => this.showTitleBarIcon;
         set {
@@ -79,8 +89,6 @@ public sealed class DesktopNativeWindow : Window {
     }
 
     public bool IsToolWindow { get; set; }
-
-    public TopLevelMenuRegistry? Menu { get; set; }
 
     public DesktopWindowImpl Window { get; }
 
@@ -94,8 +102,9 @@ public sealed class DesktopNativeWindow : Window {
     private WindowCloseReason closingReason;
     private bool isClosingFromCode;
     internal bool doNotModifySizeToContent, isFullyOpened;
-    private bool showTitleBarIcon;
     private Icon? titleBarIcon;
+    private bool showTitleBarIcon;
+    private bool isTitleBarVisible;
 
     public DesktopNativeWindow(DesktopWindowImpl impl) {
         this.Window = impl;
@@ -132,9 +141,11 @@ public sealed class DesktopNativeWindow : Window {
         this.PART_IconControl.Icon = this.TitleBarIcon;
         this.UpdateTitleBarButtonVisibility();
         this.OnIconStateChanged(null, null);
+        this.UpdateTitleBarVisibility();
         if (this.IsToolWindow) {
-            this.PART_TitleBarPanel.Height = 24;
-            this.ExtendClientAreaTitleBarHeightHint = 24;
+            // Updated by UpdateTitleBarVisibility()
+            // this.PART_TitleBarPanel.Height = 24;
+            // this.ExtendClientAreaTitleBarHeightHint = 24;
             this.PART_ButtonMinimize.Width = 27;
             this.PART_ButtonRestore.Width = 27;
             this.PART_ButtonMaximize.Width = 27;
@@ -239,6 +250,25 @@ public sealed class DesktopNativeWindow : Window {
         base.OnClosed(e);
         this.isFullyOpened = false;
         this.Window.OnNativeWindowClosed(this.closingReason, this.isClosingFromCode);
+    }
+    
+    private void UpdateTitleBarVisibility() {
+        if (this.PART_TitleBarPanel != null) {
+            if (this.IsTitleBarVisible) {
+                if (this.IsToolWindow) {
+                    this.PART_TitleBarPanel.Height = 24;
+                    this.ExtendClientAreaTitleBarHeightHint = 24;
+                }
+                else {
+                    this.PART_TitleBarPanel.Height = 30;
+                    this.ExtendClientAreaTitleBarHeightHint = 30;
+                }
+            }
+            else {
+                this.PART_TitleBarPanel.IsVisible = false;
+                this.ExtendClientAreaTitleBarHeightHint = 0;
+            }
+        }
     }
 
     private void OnIconStateChanged(bool? pfxIconChange, bool? winIconChange) {

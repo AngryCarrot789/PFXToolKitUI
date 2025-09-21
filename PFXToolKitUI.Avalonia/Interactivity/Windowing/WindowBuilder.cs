@@ -42,6 +42,11 @@ public sealed class WindowBuilder {
     public bool MainWindow { get; set; }
 
     /// <summary>
+    /// Gets or sets if the window's title bar should be visible. Default is true. See <see cref="IWindow.IsTitleBarVisible"/> for more info
+    /// </summary>
+    public bool IsTitleBarVisible { get; set; } = true;
+
+    /// <summary>
     /// Gets or sets the initial title
     /// </summary>
     public string? Title { get; set; }
@@ -131,11 +136,6 @@ public sealed class WindowBuilder {
     /// Gets or sets the initial height of the window
     /// </summary>
     public double? Height { get; set; }
-
-    /// <summary>
-    /// Gets or sets the window's main menu registry
-    /// </summary>
-    public TopLevelMenuRegistry? Menu { get; set; }
 
     /// <summary>
     /// Gets or sets the size-to-content mode, which tells the window how to automatically size to the content.

@@ -43,9 +43,7 @@ public delegate void WindowIconChangedEventHandler(IWindow window, WindowIcon? o
 
 public delegate void WindowTitleBarIconChangedEventHandler(IWindow window, Icon? oldValue, Icon? newValue);
 
-public delegate void WindowTitleBarTitleChangedEventHandler(IWindow window, string? oldValue, string? newValue);
-
-public delegate void WindowMenuChangedEventHandler(IWindow window, TopLevelMenuRegistry? oldValue, TopLevelMenuRegistry? newValue);
+public delegate void WindowTitleBarCaptionChangedEventHandler(IWindow window, string? oldValue, string? newValue);
 
 public delegate void WindowTitleBarBrushChangedEventHandler(IWindow window, IColourBrush? oldValue, IColourBrush? newValue);
 
@@ -110,14 +108,15 @@ public interface IWindow : ITopLevel {
     Icon? TitleBarIcon { get; set; }
 
     /// <summary>
-    /// Gets or sets the title bar text
+    /// Gets or sets if the title bar should be visible. Note, when invisible, the window cannot be dragged around.
+    /// Resizing may still work, unless our <see cref="SizingInfo"/>'s <see cref="WindowSizingInfo.CanResize"/> property is false
+    /// </summary>
+    bool IsTitleBarVisible { get; set; }
+    
+    /// <summary>
+    /// Gets or sets the title bar text, aka the caption
     /// </summary>
     string? Title { get; set; }
-
-    /// <summary>
-    /// Gets or sets this window's main menu. Setting as null will remove the visual menu
-    /// </summary>
-    TopLevelMenuRegistry? Menu { get; set; }
 
     /// <summary>
     /// Gets or sets the brush that colours the title bar background
@@ -215,12 +214,13 @@ public interface IWindow : ITopLevel {
     /// </summary>
     event WindowEventHandler<WindowCloseEventArgs>? WindowClosed;
 
-    event WindowIconChangedEventHandler IconChanged;
-    event WindowTitleBarIconChangedEventHandler TitleBarIconChanged;
-    event WindowMenuChangedEventHandler MenuChanged;
-    event WindowTitleBarBrushChangedEventHandler TitleBarBrushChanged;
-    event WindowBorderBrushChangedEventHandler BorderBrushChanged;
-    event WindowTitleBarTextAlignmentChangedEventHandler TitleBarTextAlignmentChanged;
+    event WindowIconChangedEventHandler? IconChanged;
+    event WindowTitleBarIconChangedEventHandler? TitleBarIconChanged;
+    event WindowEventHandler? IsTitleBarVisibleChanged;
+    event WindowTitleBarCaptionChangedEventHandler? TitleChanged;
+    event WindowTitleBarBrushChangedEventHandler? TitleBarBrushChanged;
+    event WindowBorderBrushChangedEventHandler? BorderBrushChanged;
+    event WindowTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
 
     /// <summary>
     /// Tries to get a top level object from this window. Note, the top level may not actually equal the <see cref="Control"/> instance.
