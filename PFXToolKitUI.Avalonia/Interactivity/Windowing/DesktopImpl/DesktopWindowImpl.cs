@@ -374,11 +374,6 @@ public sealed class DesktopWindowImpl : IWindow {
                     this.myNativeWindow.Show(parent);
             }
             catch (Exception e) {
-                if (this.tcsShowAsync == null) { // wtf?
-                    Debug.Assert(this.OpenState >= OpenState.Open);
-                    throw;
-                }
-                
                 this.tcsShowAsync.SetException(new Exception("Failed to show window", e));
                 this.tcsShowAsync = null;
                 throw;
