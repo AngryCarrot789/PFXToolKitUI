@@ -30,64 +30,20 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Icons;
 
 public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
-    public IEnumerable<GeometryEntry> GeometryEntries => this.Elements.Select(x => x.entry);
+    public IEnumerable<GeometryEntry> GeometryEntries => this.myGeometryEntries;
 
-    private readonly GeometryEntryRef[] Elements;
-    public readonly StretchMode Stretch;
-    private Geometry?[]? geometries;
-
-    private class GeometryEntryRef : IDisposable {
-        private readonly GeometryIconImpl iconImpl;
-        public readonly GeometryEntry entry;
-        public IDisposable? disposeFillBrush, disposeStrokeBrush;
-        public IBrush? myFillBrush, myPenBrush;
-        public IPen? myPen;
-
-        public GeometryEntryRef(GeometryIconImpl iconImpl, GeometryEntry entry) {
-            this.iconImpl = iconImpl;
-            this.entry = entry;
-            if (entry.Fill is DynamicAvaloniaColourBrush b) {
-                this.disposeFillBrush = b.Subscribe(this.OnFillBrushInvalidated);
-            }
-            else if (entry.Fill != null) {
-                this.myFillBrush = ((AvaloniaColourBrush) entry.Fill).Brush;
-            }
-
-            if (entry.Stroke is DynamicAvaloniaColourBrush s) {
-                this.disposeStrokeBrush = s.Subscribe(this.OnStrokeBrushInvalidated);
-            }
-            else if (entry.Stroke != null) {
-                this.myPenBrush = ((AvaloniaColourBrush) entry.Stroke).Brush;
-            }
-        }
-
-        private void OnFillBrushInvalidated(IBrush? brush) {
-            this.myFillBrush = brush;
-            this.iconImpl.OnRenderInvalidated();
-        }
-
-        private void OnStrokeBrushInvalidated(IBrush? brush) {
-            this.myPenBrush = brush;
-            this.myPen = null;
-            this.iconImpl.OnRenderInvalidated();
-        }
-
-        public void Dispose() {
-            DisposableUtils.Dispose(ref this.disposeFillBrush);
-            DisposableUtils.Dispose(ref this.disposeStrokeBrush);
-        }
-    }
+    private GeometryEntryRef[] GeometryEntryRefs => this.myGeometryEntryRefs ??= this.myGeometryEntries.Select(e => new GeometryEntryRef(this, e)).ToArray();
 
     public Geometry?[] Geometries {
         get {
             if (this.geometries == null) {
-                this.geometries = new Geometry[this.Elements.Length];
-                for (int i = 0; i < this.Elements.Length; i++) {
+                this.geometries = new Geometry[this.myGeometryEntries.Length];
+                for (int i = 0; i < this.myGeometryEntries.Length; i++) {
                     try {
-                        this.geometries[i] = Geometry.Parse(this.Elements[i].entry.Geometry);
+                        this.geometries[i] = Geometry.Parse(this.myGeometryEntries[i].Geometry);
                     }
                     catch (Exception e) {
-                        AppLogger.Instance.WriteLine("Error parsing SVG for svg icon: \n" + e);
+                        AppLogger.Instance.WriteLine("Error parsing SVG for svg icon: " + e);
                     }
                 }
             }
@@ -95,9 +51,14 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
             return this.geometries!;
         }
     }
+    
+    private readonly GeometryEntry[] myGeometryEntries;
+    private GeometryEntryRef[]? myGeometryEntryRefs;
+    public readonly StretchMode Stretch;
+    private Geometry?[]? geometries;
 
     public GeometryIconImpl(string name, GeometryEntry[] geometry, StretchMode stretch) : base(name) {
-        this.Elements = geometry.Select(e => new GeometryEntryRef(this, e)).ToArray();
+        this.myGeometryEntries = geometry;
         this.Stretch = stretch;
     }
 
@@ -105,9 +66,11 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
         using DrawingContext.PushedState? state = transform != SKMatrix.Identity ? context.PushTransform(transform.ToAvMatrix()) : null;
 
         Geometry?[] geoArray = this.Geometries;
+        GeometryEntryRef[] elementArray = this.GeometryEntryRefs;
+        
         for (int i = 0; i < geoArray.Length; i++) {
             if (geoArray[i] != null) {
-                GeometryEntryRef geo = this.Elements[i];
+                GeometryEntryRef geo = elementArray[i];
                 if (geo.myPen == null && geo.myPenBrush != null) {
                     geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
                 }
@@ -139,5 +102,44 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
     public override (Size Size, SKMatrix Transform) Measure(Size availableSize, StretchMode stretch) {
         (Size size, Matrix t) = SkiaAvUtils.CalculateSizeAndTransform(availableSize, this.GetBounds(), (Stretch) this.Stretch);
         return (size, t.ToSKMatrix());
+    }
+
+    private class GeometryEntryRef {
+        private readonly GeometryIconImpl iconImpl;
+        public readonly GeometryEntry entry;
+        private IDisposable? disposeFillBrush, disposeStrokeBrush;
+        public IBrush? myFillBrush, myPenBrush;
+        public IPen? myPen;
+
+        public GeometryEntryRef(GeometryIconImpl iconImpl, GeometryEntry entry) {
+            this.iconImpl = iconImpl;
+            this.entry = entry;
+            
+            if (entry.Fill is DynamicAvaloniaColourBrush b)
+                this.disposeFillBrush = b.Subscribe(this.OnFillBrushInvalidated, false);
+            if (entry.Stroke is DynamicAvaloniaColourBrush s)
+                this.disposeStrokeBrush = s.Subscribe(this.OnStrokeBrushInvalidated, false);
+            
+            if (entry.Fill != null)
+                this.myFillBrush = ((AvaloniaColourBrush) entry.Fill).Brush;
+            if (entry.Stroke != null)
+                this.myPenBrush = ((AvaloniaColourBrush) entry.Stroke).Brush;
+        }
+
+        private void OnFillBrushInvalidated(IBrush? brush) {
+            this.myFillBrush = brush;
+            this.iconImpl.OnRenderInvalidated();
+        }
+
+        private void OnStrokeBrushInvalidated(IBrush? brush) {
+            this.myPenBrush = brush;
+            this.myPen = null;
+            this.iconImpl.OnRenderInvalidated();
+        }
+
+        public void Dispose() {
+            DisposableUtils.Dispose(ref this.disposeFillBrush);
+            DisposableUtils.Dispose(ref this.disposeStrokeBrush);
+        }
     }
 }

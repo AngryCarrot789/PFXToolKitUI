@@ -234,14 +234,11 @@ public class StaticAvaloniaColourBrush : AvaloniaColourBrush, IStaticColourBrush
 }
 
 public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicColourBrush {
-    private int usageCounter;
-    private List<Action<IBrush?>>? handlers;
-
     public string ThemeKey { get; }
 
     public override IBrush? Brush => this.CurrentBrush;
 
-    public int ReferenceCount => this.usageCounter;
+    public int ReferenceCount { get; private set; }
 
     /// <summary>
     /// Gets the fully resolved brush
@@ -250,6 +247,8 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
 
     public event DynamicColourBrushChangedEventHandler? BrushChanged;
 
+    private List<Action<IBrush?>>? handlers;
+    
     internal DynamicAvaloniaColourBrush(string themeKey) {
         this.ThemeKey = themeKey;
     }
@@ -266,22 +265,28 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
     /// <param name="onBrushChanged">An optional handler for when our internal brush changes for any reason</param>
     /// <param name="invokeHandlerImmediately">True to invoke the given handler in this method if we currently have a valid brush</param>
     /// <returns>A disposable to unsubscribe</returns>
-    public IDisposable Subscribe(Action<IBrush?>? onBrushChanged, bool invokeHandlerImmediately = true) {
+    public IDisposable Subscribe(Action<IBrush?> onBrushChanged, bool invokeHandlerImmediately = true) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (onBrushChanged != null)
-            (this.handlers ??= new List<Action<IBrush?>>()).Add(onBrushChanged);
-
-        if (this.usageCounter++ == 0) {
+        if (this.ReferenceCount++ == 0) {
             // We expect the handler list to be empty due to the logic in Unsubscribe
-            Debug.Assert(onBrushChanged != null ? this.handlers?.Count == 1 : (this.handlers == null || this.handlers.Count < 1));
-
-            global::Avalonia.Application.Current!.ActualThemeVariantChanged += this.OnApplicationThemeChanged;
-            global::Avalonia.Application.Current.ResourcesChanged += this.CurrentOnResourcesChanged;
-            this.FindBrush();
+            Debug.Assert(this.handlers == null || this.handlers.Count < 1);
+            
+            if (invokeHandlerImmediately)
+                (this.handlers ??= new List<Action<IBrush?>>()).Add(onBrushChanged);
+            
+            this.HookResourceAndFindBrush();
+            
+            if (!invokeHandlerImmediately)
+                (this.handlers ??= new List<Action<IBrush?>>()).Add(onBrushChanged);
         }
-        else if (invokeHandlerImmediately && onBrushChanged != null && this.CurrentBrush != null) {
-            onBrushChanged(this.CurrentBrush);
+        else {
+            Debug.Assert(this.handlers != null && this.handlers.Count > 0);
+            this.handlers.Add(onBrushChanged);
+            
+            if (invokeHandlerImmediately && this.CurrentBrush != null) {
+                onBrushChanged(this.CurrentBrush);
+            }
         }
 
         return new UsageToken(this, onBrushChanged);
@@ -294,27 +299,15 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
     private void Unsubscribe(UsageToken token) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (this.usageCounter == 0) {
+        if (this.ReferenceCount == 0) {
             throw new InvalidOperationException("Excessive unsubscribe count");
         }
 
-        if (token.invalidatedHandler != null) {
-            Debug.Assert(this.handlers != null);
-            this.handlers.Remove(token.invalidatedHandler);
-        }
+        Debug.Assert(this.handlers != null);
+        this.handlers.Remove(token.invalidatedHandler);
 
-        if (--this.usageCounter == 0) {
-            // Since token.invalidatedHandler cannot change and is readonly,
-            // it should be impossible for it to not get removed
-            Debug.Assert(this.handlers == null || this.handlers.Count < 1);
-
-            global::Avalonia.Application.Current!.ActualThemeVariantChanged -= this.OnApplicationThemeChanged;
-            global::Avalonia.Application.Current.ResourcesChanged -= this.CurrentOnResourcesChanged;
-
-            if (this.CurrentBrush != null) {
-                this.CurrentBrush = null;
-                this.NotifyHandlersBrushChanged();
-            }
+        if (--this.ReferenceCount == 0) {
+            this.UnhookResourceAndClearBrush();
         }
     }
 
@@ -359,12 +352,32 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
 
         this.BrushChanged?.Invoke(this);
     }
+    
+    private void HookResourceAndFindBrush() {
+        global::Avalonia.Application.Current!.ActualThemeVariantChanged += this.OnApplicationThemeChanged;
+        global::Avalonia.Application.Current.ResourcesChanged += this.CurrentOnResourcesChanged;
+        this.FindBrush();
+    }
+    
+    private void UnhookResourceAndClearBrush() {
+        // Since token.invalidatedHandler cannot change and is readonly,
+        // it should be impossible for it to not get removed
+        Debug.Assert(this.handlers == null || this.handlers.Count < 1);
+        
+        global::Avalonia.Application.Current!.ActualThemeVariantChanged -= this.OnApplicationThemeChanged;
+        global::Avalonia.Application.Current.ResourcesChanged -= this.CurrentOnResourcesChanged;
+
+        if (this.CurrentBrush != null) {
+            this.CurrentBrush = null;
+            this.NotifyHandlersBrushChanged();
+        }
+    }
 
     private class UsageToken : IDisposable {
         private DynamicAvaloniaColourBrush? brush;
-        public readonly Action<IBrush?>? invalidatedHandler;
+        public readonly Action<IBrush?> invalidatedHandler;
 
-        public UsageToken(DynamicAvaloniaColourBrush brush, Action<IBrush?>? invalidatedHandler) {
+        public UsageToken(DynamicAvaloniaColourBrush brush, Action<IBrush?> invalidatedHandler) {
             this.brush = brush;
             this.invalidatedHandler = invalidatedHandler;
         }
