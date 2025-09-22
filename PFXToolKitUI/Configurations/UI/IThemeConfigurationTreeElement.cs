@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Configurations.UI;
 /// A theme configuration tree UI control
 /// </summary>
 public interface IThemeConfigurationTreeElement {
-    public static DataKey<IThemeConfigurationTreeElement> TreeElementKey { get; } = DataKey<IThemeConfigurationTreeElement>.Create("ThemeConfigurationTreeElement");
+    public static DataKey<IThemeConfigurationTreeElement> TreeElementKey { get; } = DataKeys.Create<IThemeConfigurationTreeElement>("ThemeConfigurationTreeElement");
 
     /// <summary>
     /// Gets the theme configuration page. This value is null when the page is not being viewed/edited

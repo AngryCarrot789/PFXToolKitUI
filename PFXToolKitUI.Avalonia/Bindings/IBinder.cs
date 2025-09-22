@@ -80,10 +80,12 @@ public interface IBinder<TModel> : IBinder where TModel : class {
     bool HasModel { get; }
     
     /// <summary>
-    /// An event fired when a control is attached but no model is attached yet,
-    /// or when the model is detached and the control is still attached.
+    /// An event fired when <see cref="AttachControl"/> is invoked but no model is attached,
+    /// <see cref="IBinder.UpdateControl"/> is invoked when a control is attached but no model
+    /// is attached, or when the model becomes detached and the control is still attached.
     /// <para>
-    /// When using <see cref="SwitchModel"/>, this event is fired when the new model is null and a control is attached
+    /// When using <see cref="SwitchModel"/>, this event is fired when the new model is
+    /// null and a control is still attached
     /// </para>
     /// </summary>
     event BinderEventHandler<TModel> UpdateControlWithoutModel;

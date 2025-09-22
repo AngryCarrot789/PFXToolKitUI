@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Avalonia.Themes.ContextMenus;
 
 public static class TextBoxContextRegistry {
     public static readonly ContextRegistry Registry = new ContextRegistry("Text Box");
-    public static readonly DataKey<TextBox> TextBoxDataKey = DataKey<TextBox>.Create(nameof(TextBox));
+    public static readonly DataKey<TextBox> TextBoxDataKey = DataKeys.Create<TextBox>(nameof(TextBox));
 
     static TextBoxContextRegistry() {
         FixedContextGroup group = Registry.GetFixedGroup("general");

@@ -45,9 +45,9 @@ public interface IContextData {
     /// The returned instance has no effect on the current instance.
     /// </summary>
     ContextData ToMutable() {
-        ContextData data = new ContextData();
+        ContextData builder = new ContextData();
         foreach (KeyValuePair<string, object> entry in this.Entries)
-            data.SetRaw(entry.Key, entry.Value);
-        return data;
+            ((IMutableContextData) builder).SetUnsafe(entry.Key, entry.Value);
+        return builder;
     }
 }

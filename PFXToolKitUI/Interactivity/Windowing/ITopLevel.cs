@@ -11,7 +11,7 @@ public interface ITopLevel : IComponentManager {
     /// <summary>
     /// Gets the data key for a top level
     /// </summary>
-    public static readonly DataKey<ITopLevel> TopLevelDataKey = DataKey<ITopLevel>.Create("WindowingTopLevel");
+    public static readonly DataKey<ITopLevel> TopLevelDataKey = DataKeys.Create<ITopLevel>("WindowingTopLevel");
 
     /// <summary>
     /// Gets the local context data of this top level (not the fully inherited context). This

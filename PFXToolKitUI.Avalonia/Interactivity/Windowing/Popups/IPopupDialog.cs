@@ -41,7 +41,7 @@ public interface IPopupDialog {
     /// <summary>
     /// The data key used to access the popup from <see cref="IContextData"/> in, for example, a command
     /// </summary>
-    public static readonly DataKey<IPopupDialog> PopupDataKey = DataKey<IPopupDialog>.Create("SingleViewWindowingPopup");
+    public static readonly DataKey<IPopupDialog> PopupDataKey = DataKeys.Create<IPopupDialog>("SingleViewWindowingPopup");
 
     /// <summary>
     /// Gets the popup manager associated with this popup

@@ -41,7 +41,7 @@ public abstract class BaseContextEntry : IContextObject {
     /// <summary>
     /// Ges the data key used to access the context entry of a menu item or context menu item
     /// </summary>
-    public static readonly DataKey<BaseContextEntry> DataKey = DataKey<BaseContextEntry>.Create(nameof(BaseContextEntry));
+    public static readonly DataKey<BaseContextEntry> DataKey = DataKeys.Create<BaseContextEntry>(nameof(BaseContextEntry));
     
     private string? displayName, description;
     private Icon? icon;

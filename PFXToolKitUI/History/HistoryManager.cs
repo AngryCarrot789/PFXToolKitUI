@@ -32,7 +32,7 @@ public delegate void HistoryManagerOperationEventHandler(HistoryManager sender, 
 /// A class that manages a collection of undo-able and redo-able actions
 /// </summary>
 public sealed class HistoryManager {
-    public static readonly DataKey<HistoryManager> DataKey = DataKey<HistoryManager>.Create(nameof(HistoryManager));
+    public static readonly DataKey<HistoryManager> DataKey = DataKeys.Create<HistoryManager>(nameof(HistoryManager));
     private static readonly ThreadLocal<HistoryManager?> threadActiveHistory = new ThreadLocal<HistoryManager?>();
 
     private readonly LinkedList<HistoryOperation> undoList;

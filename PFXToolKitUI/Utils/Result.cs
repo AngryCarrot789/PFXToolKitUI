@@ -18,12 +18,11 @@
 // 
 
 using System.Diagnostics;
-using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Tasks;
+namespace PFXToolKitUI.Utils;
 
 /// <summary>
-/// A result-exception pair
+/// Stores the result of an operation, or stores the exception encountered
 /// </summary>
 /// <typeparam name="T">The type of value to store</typeparam>
 [DebuggerDisplay("{ToString()}")]
@@ -31,13 +30,14 @@ public readonly struct Result<T> {
     private readonly T? value;
 
     /// <summary>
-    /// Gets the value or throws
+    /// Gets the result value, or throws an exception if the result is faulted
     /// </summary>
     /// <exception cref="Exception">The exception that caused the creation of this <see cref="Result{T}"/></exception>
     public T Value {
         get {
             if (this.Exception != null)
-                throw this.Exception; // maybe ExceptionDispatchInfo.Throw()?
+                throw new Exception("The result was from a faulted operation", this.Exception);
+            
             return this.value!;
         }
     }
@@ -47,6 +47,9 @@ public readonly struct Result<T> {
     /// </summary>
     public Exception? Exception { get; }
 
+    /// <summary>
+    /// Returns true when <see cref="Exception"/> is non-null
+    /// </summary>
     public bool HasException => this.Exception != null;
 
     private Result(T? value, Exception? exception) {
@@ -54,28 +57,39 @@ public readonly struct Result<T> {
         this.Exception = exception;
     }
 
+    /// <summary>
+    /// Gets <see cref="Value"/> without throwing, by returning <c>default(T)</c> instead
+    /// </summary>
+    /// <returns></returns>
     public T? GetValueOrDefault() => this.HasException ? default : this.value;
     
-    public static Result<T> FromException(Exception exception) => new Result<T>(default, exception);
-
-    public static Result<T> FromValue(T value) => new Result<T>(value, null);
-
-    public static Result<T> Run(Func<T> factory) {
-        T result;
-        try {
-            result = factory();
-        }
-        catch (Exception e) {
-            return FromException(e);
-        }
-
-        return FromValue(result);
+    /// <summary>
+    /// Creates a new result from an exception
+    /// </summary>
+    /// <param name="exception">The exception</param>
+    /// <returns>A new result</returns>
+    public static Result<T> FromException(Exception exception) {
+        ArgumentNullException.ThrowIfNull(exception); // the irony
+        return new Result<T>(default, exception);
     }
 
-    public static async Task<Result<T>> RunAsync(Func<Task<T>> factory) {
+    /// <summary>
+    /// Creates a new result from a value
+    /// </summary>
+    /// <param name="value">The value</param>
+    /// <returns>A new result</returns>
+    public static Result<T> FromValue(T value) => new Result<T>(value, null);
+
+    /// <summary>
+    /// Invokes the passed function and returns <see cref="FromValue"/>, or catches
+    /// the exception the function throws and returns <see cref="FromException"/>
+    /// </summary>
+    /// <param name="function">The function to invoke</param>
+    /// <returns>A potentially faulted result</returns>
+    public static Result<T> Run(Func<T> function) {
         T result;
         try {
-            result = await factory();
+            result = function();
         }
         catch (Exception e) {
             return FromException(e);
@@ -85,15 +99,34 @@ public readonly struct Result<T> {
     }
 
     /// <summary>
-    /// Maps our current value into a new value via the mapping function.
-    /// If this result has an exception, we return a new result with that exception.
+    /// Invokes the passed function and awaits it and returns <see cref="FromValue"/>,
+    /// or catches the exception the function throws and returns <see cref="FromException"/>
+    /// </summary>
+    /// <param name="function">The function to invoke</param>
+    /// <returns>A potentially faulted result</returns>
+    public static async Task<Result<T>> RunAsync(Func<Task<T>> function) {
+        T result;
+        try {
+            result = await function();
+        }
+        catch (Exception e) {
+            return FromException(e);
+        }
+
+        return FromValue(result);
+    }
+
+    /// <summary>
+    /// Maps our current value into a new value via the mapping function. If this result has
+    /// an exception, we return a result containing a new exception containing this result's
+    /// <see cref="Exception"/> as an inner exception
     /// </summary>
     /// <param name="mapper">The mapping function to convert <see cref="T"/> into <see cref="V"/></param>
     /// <typeparam name="V">The new value type</typeparam>
-    /// <returns>A new result</returns>
+    /// <returns>A new result, or a faulted result</returns>
     public Result<V> Map<V>(Func<T, V> mapper) {
         if (this.Exception != null)
-            return Result<V>.FromException(this.Exception);
+            return Result<V>.FromException(new Exception("Attempt to map a faulted result", this.Exception));
 
         V result;
         try {
@@ -107,12 +140,13 @@ public readonly struct Result<T> {
     }
 
     /// <summary>
-    /// Maps our current value into a new value via the mapping function as an async operation.
-    /// If this result has an exception, we return a new result with that exception.
+    /// Maps our current value into a new value via the mapping function, as an async operation.
+    /// If this result has an exception, we return a result containing a new exception containing
+    /// this result's <see cref="Exception"/> as an inner exception
     /// </summary>
     /// <param name="mapper">The mapping function to convert <see cref="T"/> into a task that produces <see cref="V"/></param>
     /// <typeparam name="V">The new value type</typeparam>
-    /// <returns>A new result</returns>
+    /// <returns>A new result, or a faulted result</returns>
     public async Task<Result<V>> MapAsync<V>(Func<T, Task<V>> mapper) {
         if (this.Exception != null)
             return Result<V>.FromException(this.Exception);

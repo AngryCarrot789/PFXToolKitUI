@@ -62,21 +62,7 @@ public abstract class BaseControlContextData : IControlContextData {
             }
         }
     }
-
-    public void Set<T>(DataKey<T> key, T? value) => this.SetUnsafe(key.Id, value);
-
-    public void SetSafely(DataKey key, object? value) {
-        if (value == null) {
-            this.Remove(key.Id);
-        }
-        else if (key.DataType.IsInstanceOfType(value)) {
-            this.SetUnsafe(key.Id, value);
-        }
-        else {
-            throw new ArgumentException($"Value is not an instance of the data key's data type. {value.GetType().Name} is not {key.DataType.Name}");
-        }
-    }
-
+    
     public void SetUnsafe(string key, object? value) {
         if (value == null) {
             this.Remove(key);

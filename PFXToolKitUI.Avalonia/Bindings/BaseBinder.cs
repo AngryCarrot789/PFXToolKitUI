@@ -73,6 +73,9 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         if (this.IsFullyAttached) {
             this.UpdateControlInternal(false);
         }
+        else if (this.myControl != null) {
+            this.UpdateControlWithoutModel?.Invoke(this);
+        }
     }
 
     private void UpdateControlInternal(bool isFirstUpdateControl) {

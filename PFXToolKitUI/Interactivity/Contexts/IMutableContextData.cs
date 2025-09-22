@@ -30,7 +30,7 @@ public interface IMutableContextData : IRandomAccessContextData {
     /// </summary>
     /// <param name="key">The key</param>
     /// <param name="value">The value to insert</param>
-    void Set<T>(DataKey<T> key, T? value);
+    void Set<T>(DataKey<T> key, T? value) => this.SetUnsafe(key.Id, value);
 
     /// <summary>
     /// Sets a boolean value with the given key, using a pre-boxed value to avoid boxing.
@@ -44,7 +44,17 @@ public interface IMutableContextData : IRandomAccessContextData {
     /// </summary>
     /// <param name="key">The key</param>
     /// <param name="value">The value to insert, or null, to remove</param>
-    void SetSafely(DataKey key, object? value);
+    void SetSafely(DataKey key, object? value) {
+        if (value == null) {
+            this.Remove(key);
+        }
+        else if (key.DataType.IsInstanceOfType(value)) {
+            this.SetUnsafe(key.Id, value);
+        }
+        else {
+            throw new ArgumentException($"Value is not an instance of the data key's data type. {value.GetType().Name} is not {key.DataType.Name}");
+        }
+    }
 
     /// <summary>
     /// Unsafely sets a raw value for the given key. Care must be taken using this method,

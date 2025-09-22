@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Configurations.Shortcuts;
 
 public static class ShortcutContextRegistry {
     public static readonly ContextRegistry Registry = new ContextRegistry("Shortcut Options");
-    public static readonly DataKey<ShortcutEntry> ShortcutEntryKey = DataKey<ShortcutEntry>.Create("ShortcutTreeEntry");
+    public static readonly DataKey<ShortcutEntry> ShortcutEntryKey = DataKeys.Create<ShortcutEntry>("ShortcutTreeEntry");
 
     static ShortcutContextRegistry() {
         Registry.GetFixedGroup("root").AddCommand("commands.shortcuts.AddKeyStrokeToShortcut", "Add Key Stroke", "Add a new key stroke");

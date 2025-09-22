@@ -83,9 +83,9 @@ public class ProviderContextData : IContextData, IRandomAccessContextData {
         };
     }
 
-    public void Merge(IContextData ctx) {
+    public void AddAll(IContextData context) {
         Dictionary<string, ObjectProvider>? myMap;
-        if (ctx is ProviderContextData provider) {
+        if (context is ProviderContextData provider) {
             if (provider.myData != null) {
                 if ((myMap = this.myData) == null) {
                     this.myData = new Dictionary<string, ObjectProvider>(provider.myData);
@@ -97,8 +97,8 @@ public class ProviderContextData : IContextData, IRandomAccessContextData {
                 }
             }
         }
-        else if (!(ctx is EmptyContext)) {
-            using IEnumerator<KeyValuePair<string, object>> enumerator = ctx.Entries.GetEnumerator();
+        else if (!(context is EmptyContext)) {
+            using IEnumerator<KeyValuePair<string, object>> enumerator = context.Entries.GetEnumerator();
             if (!enumerator.MoveNext())
                 return;
 

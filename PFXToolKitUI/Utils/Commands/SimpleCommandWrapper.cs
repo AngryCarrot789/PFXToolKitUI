@@ -54,16 +54,16 @@ public class SimpleCommandWrapper : BaseAsyncRelayCommand {
         if (this.ContextData != null) {
             ContextData data = new ContextData(this.ContextData);
             if (this.ParameterDataKey != null && parameter != null) {
-                data.SetRaw(this.ParameterDataKey.Id, parameter);
+                data.SetSafely(this.ParameterDataKey, parameter);
             }
             else if (parameter is IContextData) {
-                data.Merge((IContextData)parameter);
+                data.AddAll((IContextData)parameter);
             }
 
             finalData = data;
         }
         else if (this.ParameterDataKey != null && parameter != null) {
-            finalData = new ContextData().SetRaw(this.ParameterDataKey.Id, parameter);
+            finalData = new ContextData().SetSafely(this.ParameterDataKey, parameter);
         }
         else if (parameter is IContextData) {
             finalData = (IContextData) parameter;

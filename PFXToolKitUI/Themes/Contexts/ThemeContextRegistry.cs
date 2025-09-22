@@ -27,8 +27,8 @@ namespace PFXToolKitUI.Themes.Contexts;
 
 public static class ThemeContextRegistry {
     public static readonly ContextRegistry Registry = new ContextRegistry("Theme Options");
-    public static readonly DataKey<IThemeTreeEntry> ThemeTreeEntryKey = DataKey<IThemeTreeEntry>.Create("IThemeTreeEntry");
-    public static readonly DataKey<ThemeConfigurationPage> ThemeConfigurationPageKey = DataKey<ThemeConfigurationPage>.Create("ThemeConfigurationPage");
+    public static readonly DataKey<IThemeTreeEntry> ThemeTreeEntryKey = DataKeys.Create<IThemeTreeEntry>("IThemeTreeEntry");
+    public static readonly DataKey<ThemeConfigurationPage> ThemeConfigurationPageKey = DataKeys.Create<ThemeConfigurationPage>("ThemeConfigurationPage");
 
     static ThemeContextRegistry() {
         Registry.GetFixedGroup("root").AddCommand("commands.themes.ShowKeysInheritingFromThemeCommand", "Show Inherited By", "Shows a list of theme keys that currently inherit from this");

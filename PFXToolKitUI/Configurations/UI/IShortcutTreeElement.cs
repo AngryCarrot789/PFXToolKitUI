@@ -25,7 +25,7 @@ namespace PFXToolKitUI.Configurations.UI;
 /// A shortcut tree UI control
 /// </summary>
 public interface IShortcutTreeElement {
-    public static DataKey<IShortcutTreeElement> TreeElementKey { get; } = DataKey<IShortcutTreeElement>.Create("ShortcutTreeElement");
+    public static DataKey<IShortcutTreeElement> TreeElementKey { get; } = DataKeys.Create<IShortcutTreeElement>("ShortcutTreeElement");
 
     /// <summary>
     /// Expands the entire tree

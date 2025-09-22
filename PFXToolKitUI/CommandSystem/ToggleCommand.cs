@@ -22,7 +22,7 @@ using PFXToolKitUI.Interactivity.Contexts;
 namespace PFXToolKitUI.CommandSystem;
 
 public abstract class ToggleCommand : Command {
-    public static readonly DataKey<bool> IsToggledKey = DataKey<bool>.Create("Toggled");
+    public static readonly DataKey<bool> IsToggledKey = DataKeys.Create<bool>("Toggled");
 
     /// <summary>
     /// Gets whether the given event context is toggled or not

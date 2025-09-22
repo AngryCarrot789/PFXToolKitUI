@@ -25,7 +25,7 @@ namespace PFXToolKitUI.Shortcuts;
 /// An interface implemented by <see cref="ShortcutGroupEntry"/>, <see cref="ShortcutEntry"/> and <see cref="InputStateEntry"/>
 /// </summary>
 public interface IKeyMapEntry {
-    public static readonly DataKey<IKeyMapEntry> DataKey = DataKey<IKeyMapEntry>.Create(nameof(IKeyMapEntry));
+    public static readonly DataKey<IKeyMapEntry> DataKey = DataKeys.Create<IKeyMapEntry>(nameof(IKeyMapEntry));
     
     /// <summary>
     /// Gets the manager that this object belongs to. This typically is equal to <see cref="ShortcutManager.Instance"/>

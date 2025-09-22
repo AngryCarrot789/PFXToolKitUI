@@ -30,6 +30,7 @@ using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Interactivity.Windowing;
+using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Avalonia.Interactivity;
 
@@ -316,19 +317,19 @@ public class DataManager {
             AvaloniaObject control = hierarchy[i];
             IControlContextData? data = control.GetBaseValue(ContextDataProperty).GetValueOrDefault();
             if (data != null && data.Count > 0) {
-                ctx.Merge(data);
+                ctx.AddAll(data);
             }
 
             DataKey? key;
             if (control is StyledElement element && (key = GetDataContextDataKey(control)) != null) {
                 object? dc = element.DataContext;
                 if (dc == null || key.DataType.IsInstanceOfType(dc)) {
-                    ctx.SetValueRaw(key.Id, element.DataContext);
+                    ctx.SetValueRaw(key.Id, dc);
                 }
                 else {
-                    Debug.WriteLine($"DataContextDataKey of {control.GetType().Name} was invalid for its actual data context.");
-                    Debug.WriteLine($"  DataContext = {dc.GetType()}");
-                    Debug.WriteLine($"  DataKey ID = {key.Id}, Data Type = {key.DataType}");
+                    AppLogger.Instance.WriteLine($"{nameof(DataContextDataKeyProperty)} on '{control.GetType().Name}' was invalid for its actual data context.");
+                    AppLogger.Instance.WriteLine($"  DataContext = {dc.GetType()}");
+                    AppLogger.Instance.WriteLine($"  DataKey ID = {key.Id}, Data Type = {key.DataType}");
                 }
             }
 
@@ -352,8 +353,8 @@ public class DataManager {
         if (obj.GetValue((AvaloniaProperty) InheritedContextDataProperty) != null)
             obj.SetValue(InheritedContextDataProperty, null);
 
-        if (obj is Visual) {
-            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(Unsafe.As<AvaloniaObject, Visual>(ref obj).GetVisualChildren());
+        if (obj is Visual visualObject) {
+            AvaloniaList<Visual> list = Unsafe.As<AvaloniaList<Visual>>(visualObject.GetVisualChildren());
             foreach (Visual child in list)
                 InvalidateInheritedContextAndChildren(child);
         }

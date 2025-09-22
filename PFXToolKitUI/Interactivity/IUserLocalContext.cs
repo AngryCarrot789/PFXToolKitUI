@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2025-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -17,15 +17,16 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Interactivity;
 using PFXToolKitUI.Interactivity.Contexts;
 
-namespace PFXToolKitUI.Configurations.Dialogs;
+namespace PFXToolKitUI.Interactivity;
 
-public interface IPersistentDialogResultConfigurationPageUI {
-    public static DataKey<IPersistentDialogResultConfigurationPageUI> DataKey = DataKeys.Create<IPersistentDialogResultConfigurationPageUI>("IPersistentDialogResultConfigurationPage");
-    
-    PersistentDialogResultConfigurationPage Page { get; }
-    
-    IListSelectionManager<PersistentDialogResultViewModel> SelectionManager { get; }
+/// <summary>
+/// An interface added to an object that supports storing local context data
+/// </summary>
+public interface IUserLocalContext {
+    /// <summary>
+    /// Gets this object's local context data
+    /// </summary>
+    IMutableContextData UserContext { get; }
 }

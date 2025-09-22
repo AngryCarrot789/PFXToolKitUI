@@ -19,14 +19,15 @@
 
 namespace PFXToolKitUI.Interactivity.Contexts;
 
-public abstract class MultiChangeToken : IDisposable {
-    public readonly IMutableContextData Context;
+public abstract class MultiChangeToken(IMutableContextData context) : IDisposable {
+    public readonly IMutableContextData Context = context;
     private bool disposed;
 
-    protected MultiChangeToken(IMutableContextData context) {
-        this.Context = context;
-    }
-
+    /// <summary>
+    /// Creates an empty change token that does nothing
+    /// </summary>
+    public static MultiChangeToken CreateEmpty(IMutableContextData context) => new BlankChangeTokenImpl(context);
+    
     /// <summary>
     /// Disposes this token
     /// </summary>
@@ -37,4 +38,9 @@ public abstract class MultiChangeToken : IDisposable {
     }
 
     protected abstract void OnDisposed();
+}
+
+internal class BlankChangeTokenImpl(IMutableContextData context) : MultiChangeToken(context) {
+    protected override void OnDisposed() {
+    }
 }

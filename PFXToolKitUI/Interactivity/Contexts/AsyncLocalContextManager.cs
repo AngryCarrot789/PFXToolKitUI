@@ -107,7 +107,7 @@ public sealed class AsyncLocalContextManager {
     }
 
     /// <summary>
-    /// Gets the global context or returns <see cref="EmptyContext.Instance"/>
+    /// Gets the global context, which may be empty
     /// </summary>
     public IContextData GetGlobalContext() => this.TryGetGlobalContext(out IContextData? context) ? context : EmptyContext.Instance;
 

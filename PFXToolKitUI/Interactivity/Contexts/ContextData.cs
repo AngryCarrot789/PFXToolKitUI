@@ -17,14 +17,12 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
-
 namespace PFXToolKitUI.Interactivity.Contexts;
 
 /// <summary>
-/// An implementation of <see cref="IContextData"/> that stores static entries in an internal dictionary
+/// An implementation of <see cref="IMutableContextData"/> that stores entries in a dictionary
 /// </summary>
-public class ContextData : IRandomAccessContextData {
+public sealed class ContextData : IMutableContextData {
     private Dictionary<string, object>? map;
 
     /// <summary>
@@ -35,61 +33,132 @@ public class ContextData : IRandomAccessContextData {
     public IEnumerable<KeyValuePair<string, object>> Entries => this.map ?? EmptyContext.EmptyDictionary;
 
     /// <summary>
-    /// Creates a new empty instance
+    /// Creates a new empty context data instance
     /// </summary>
-    public ContextData() { }
+    public ContextData() {
+    }
 
     /// <summary>
     /// Copy constructor, effectively the same as <see cref="Clone"/>
     /// </summary>
-    /// <param name="ctx">The context to copy, if non-null</param>
-    public ContextData(ContextData ctx) {
-        if (ctx.map != null && ctx.map.Count > 0)
-            this.map = new Dictionary<string, object>(ctx.map);
+    /// <param name="context">The context to copy from</param>
+    public ContextData(ContextData context) {
+        if (context.map != null && context.map.Count > 0)
+            this.map = new Dictionary<string, object>(context.map);
     }
 
-    public ContextData(IContextData context) => this.Merge(context);
+    /// <summary>
+    /// Adds all entries from the given context to this instance
+    /// </summary>
+    /// <param name="context">The context to copy from</param>
+    public ContextData(IContextData context) {
+        this.AddAll(context);
+    }
+    
+    /// <summary>
+    /// Adds all entries from the given context to this instance
+    /// </summary>
+    /// <param name="context">The context to copy the entires from</param>
+    public void AddAll(IContextData context) {
+        if (context is ContextData cd && cd.map != null) {
+            using Dictionary<string, object>.Enumerator enumerator = cd.map.GetEnumerator();
+            if (enumerator.MoveNext()) {
+                Dictionary<string, object> myMap = this.map ??= new Dictionary<string, object>();
+                do {
+                    KeyValuePair<string, object> entry = enumerator.Current;
+                    myMap[entry.Key] = entry.Value;
+                } while (enumerator.MoveNext());
+            }
+        }
+        else if (!(context is EmptyContext)) {
+            using IEnumerator<KeyValuePair<string, object>> enumerator = context.Entries.GetEnumerator();
+            if (enumerator.MoveNext()) {
+                Dictionary<string, object> myMap = this.map ??= new Dictionary<string, object>();
+                do {
+                    KeyValuePair<string, object> entry = enumerator.Current;
+                    myMap[entry.Key] = entry.Value;
+                } while (enumerator.MoveNext());
+            }
+        }
+    }
+    
+    #region New Overrides, for builder-styled syntax
 
-    public ContextData Set<T>(DataKey<T> key, T? value) => this.SetRaw(key.Id, value);
+    /// <summary>
+    /// Sets a value with the given data key.
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <param name="value">The value to insert</param>
+    public ContextData Set<T>(DataKey<T> key, T? value) {
+        ((IMutableContextData) this).Set(key, value);
+        return this;
+    }
 
-    public ContextData Set(DataKey<bool> key, bool? value) => this.SetRaw(key.Id, value.BoxNullable());
+    /// <summary>
+    /// Sets a boolean value with the given key, using a pre-boxed value to avoid boxing.
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <param name="value">The value to insert</param>
+    public ContextData Set(DataKey<bool> key, bool? value) {
+        ((IMutableContextData) this).Set(key, value);
+        return this;
+    }
 
-    public ContextData SetRaw(string key, object? value) {
+    /// <summary>
+    /// Safely sets a raw value for the given key by doing runtime type-checking. 
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <param name="value">The value to insert, or null, to remove</param>
+    public ContextData SetSafely(DataKey key, object? value) {
+        ((IMutableContextData) this).SetSafely(key, value);
+        return this;
+    }
+
+    /// <summary>
+    /// Unsafely sets a raw value for the given key. Care must be taken using this method,
+    /// since <see cref="DataKey{T}"/> will throw if it doesn't receive the correct value.
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <param name="value">The value to insert, or null, to remove</param>
+    public ContextData SetUnsafe(string key, object? value) {
+        ((IMutableContextData) this).SetUnsafe(key, value);
+        return this;
+    }
+
+    /// <summary>
+    /// Removes the value with the given key. This is the same as calling <see cref="SetUnsafe"/> with a null value
+    /// </summary>
+    /// <param name="key">The key</param>
+    public ContextData Remove(string key) {
+        ((IMutableContextData) this).SetUnsafe(key, null);
+        return this;
+    }
+
+    /// <summary>
+    /// Removes the value by the given key
+    /// </summary>
+    public ContextData Remove(DataKey key) {
+        ((IMutableContextData) this).SetUnsafe(key.Id, null);
+        return this;
+    }
+
+    #endregion
+
+    #region Hidden inteface implementations
+    
+    void IMutableContextData.SetUnsafe(string key, object? value) {
         if (value == null) {
             this.map?.Remove(key);
         }
         else {
             (this.map ??= new Dictionary<string, object>())[key] = value;
         }
-
-        return this;
     }
 
-    /// <summary>
-    /// Tries to replace an existing value with the given value or tries to remove the given key.
-    /// Returns true when value is null and the key is in this context data, or when value is non-null
-    /// and was not in this context data. Returns false when value is null and the key did not exist or
-    /// the value is non-null and existed in this context data
-    /// </summary>
-    /// <param name="key"></param>
-    /// <param name="value"></param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    public bool TryReplace<T>(DataKey<T> key, T value) => this.TryReplaceRaw(key.Id, value);
-
-    public bool TryReplaceRaw(string key, object? value) {
-        if (value == null) {
-            return this.map != null && this.map.Remove(key);
-        }
-        else if (this.map == null || this.map.TryGetValue(key, out object? oldVal) && value.Equals(oldVal)) {
-            return false;
-        }
-        else {
-            this.map[key] = value;
-            return true;
-        }
-    }
-
+    MultiChangeToken IMutableContextData.BeginChange() => MultiChangeToken.CreateEmpty(this);
+    
+    #endregion
+    
     public bool TryGetContext(string key, out object value) {
         if (this.map != null && this.map.TryGetValue(key, out value!))
             return true;
@@ -99,6 +168,9 @@ public class ContextData : IRandomAccessContextData {
 
     public bool ContainsKey(string key) => this.map != null && this.map.ContainsKey(key);
 
+    
+    public ContextData ToMutable() => this.Clone();
+    
     /// <summary>
     /// Creates a new instance of <see cref="ContextData"/> containing all entries from this instance
     /// </summary>
@@ -110,36 +182,6 @@ public class ContextData : IRandomAccessContextData {
         return ctx;
     }
 
-    public ContextData ToMutable() => this.Clone();
-
-    public ContextData? ToNullIfEmpty() => this.Count > 0 ? this : null;
-
-    public ContextData Merge(IContextData ctx) {
-        if (ctx is ContextData cd && cd.map != null) {
-            using Dictionary<string, object>.Enumerator enumerator = cd.map.GetEnumerator();
-            if (!enumerator.MoveNext())
-                return this;
-
-            Dictionary<string, object> myMap = this.map ??= new Dictionary<string, object>();
-            do {
-                KeyValuePair<string, object> entry = enumerator.Current;
-                myMap[entry.Key] = entry.Value;
-            } while (enumerator.MoveNext());
-        }
-        else if (!(ctx is EmptyContext)) {
-            using IEnumerator<KeyValuePair<string, object>> enumerator = ctx.Entries.GetEnumerator();
-            if (enumerator.MoveNext()) {
-                Dictionary<string, object> myMap = this.map ??= new Dictionary<string, object>();
-                do {
-                    KeyValuePair<string, object> entry = enumerator.Current;
-                    myMap[entry.Key] = entry.Value;
-                } while (enumerator.MoveNext());
-            }
-        }
-
-        return this;
-    }
-
     public override string ToString() {
         string details = "";
         if (this.map != null && this.map.Count > 0) {
@@ -147,17 +189,5 @@ public class ContextData : IRandomAccessContextData {
         }
 
         return "ContextData[" + details + "]";
-    }
-
-    /// <summary>
-    /// Creates a new context data instance containing the values of dataA, and then merges that with dataB,
-    /// ensuring any existing entries in dataA and replaced by the entries in dataB. Always returns a unique
-    /// instance and does not modify dataA or dataB
-    /// </summary>
-    /// <param name="dataA">Source</param>
-    /// <param name="dataB">Merge</param>
-    /// <returns>A new context data containing entries from dataA and dataB</returns>
-    public static ContextData Merge(ContextData dataA, ContextData dataB) {
-        return new ContextData(dataA).Merge(dataB);
     }
 }

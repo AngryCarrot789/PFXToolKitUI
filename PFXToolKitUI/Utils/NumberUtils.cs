@@ -67,7 +67,6 @@ public static class NumberUtils {
     /// <param name="value">The value to convert to hex</param>
     /// <param name="dstAsciiChars">The destination character buffer</param>
     /// <param name="offset">The starting offset in <see cref="dstAsciiChars"/></param>
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void UInt32ToHexAscii(uint value, ref byte dstAsciiChars, int offset) {
         ref byte asciiHexChars = ref MemoryMarshal.GetArrayDataReference(HEX_CHARS_ASCII);
         for (int j = 7; j >= 0; j--, value >>= 4) {
@@ -75,7 +74,6 @@ public static class NumberUtils {
         }
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static string BytesToHexAscii(ReadOnlySpan<byte> srcBuffer, char? join = ' ') {
         if (srcBuffer.Length < 1) {
             return "";
@@ -93,7 +91,6 @@ public static class NumberUtils {
         return new string(dstBuffer);
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static bool TryParseHexAsciiToBytes(ReadOnlySpan<char> srcText, [NotNullWhen(true)] out byte[]? bytes, char? join = ' ') {
         if (srcText.Length < 1) {
             bytes = [];
