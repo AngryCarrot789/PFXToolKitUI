@@ -90,7 +90,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.ParentNode = parentNode;
         this.Entry = resource;
 
-        using MultiChangeToken change = DataManager.GetContextData(this).BeginChange();
+        using IMutableContextData.BatchToken change = DataManager.GetContextData(this).BeginChange();
         if (resource is ShortcutEntry entry)
             change.Context.Set(ShortcutContextRegistry.ShortcutEntryKey, entry);
         change.Context.Set(IKeyMapEntry.DataKey, resource);

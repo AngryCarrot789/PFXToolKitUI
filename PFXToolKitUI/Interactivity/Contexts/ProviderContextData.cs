@@ -77,12 +77,6 @@ public class ProviderContextData : IContextData, IRandomAccessContextData {
 
     public bool ContainsKey(string key) => this.TryGetContext(key, out _);
 
-    public IContextData Clone() {
-        return new ProviderContextData() {
-            myData = this.myData != null ? new Dictionary<string, ObjectProvider>(this.myData) : null
-        };
-    }
-
     public void AddAll(IContextData context) {
         Dictionary<string, ObjectProvider>? myMap;
         if (context is ProviderContextData provider) {

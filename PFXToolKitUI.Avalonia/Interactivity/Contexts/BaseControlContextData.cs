@@ -21,7 +21,6 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Contexts;
 
@@ -138,13 +137,18 @@ public abstract class BaseControlContextData : IControlContextData {
         DataManager.InvalidateInheritedContext(this.Owner);
     }
 
-    public abstract MultiChangeToken BeginChange();
-
     public IControlContextData CreateInherited(IContextData inherited) {
         return new InheritingControlContextData(this, inherited);
     }
+    
+    void IMutableContextData.OnEnterBatchScope() {
+        this.batchCounter++;
+    }
 
-    protected void OnMultiChangeTokenDisposed() {
+    void IMutableContextData.OnExitBatchScope() {
+        if (this.batchCounter == 0)
+            Debug.Fail("Excessive calls to OnExitBatchScope");
+        
         if (--this.batchCounter == 0)
             this.ProcessBatches();
     }

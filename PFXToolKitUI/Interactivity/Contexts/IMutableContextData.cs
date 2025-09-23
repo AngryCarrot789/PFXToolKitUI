@@ -17,8 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
-
 namespace PFXToolKitUI.Interactivity.Contexts;
 
 /// <summary>
@@ -26,25 +24,19 @@ namespace PFXToolKitUI.Interactivity.Contexts;
 /// </summary>
 public interface IMutableContextData : IRandomAccessContextData {
     /// <summary>
-    /// Sets a value with the given data key.
+    /// Sets the value for a data key, or removes the entry if the value is null.
     /// </summary>
     /// <param name="key">The key</param>
-    /// <param name="value">The value to insert</param>
-    void Set<T>(DataKey<T> key, T? value) => this.SetUnsafe(key.Id, value);
+    /// <param name="value">The value to insert, or null to remove</param>
+    public void Set<T>(DataKey<T> key, T? value) => this.SetUnsafe(key.Id, value);
 
     /// <summary>
-    /// Sets a boolean value with the given key, using a pre-boxed value to avoid boxing.
+    /// Safely sets a raw value for the given key by doing runtime type-checking,
+    /// or removes the entry if the value is null.
     /// </summary>
     /// <param name="key">The key</param>
-    /// <param name="value">The value to insert</param>
-    void Set(DataKey<bool> key, bool? value) => this.SetUnsafe(key.Id, value.BoxNullable());
-
-    /// <summary>
-    /// Safely sets a raw value for the given key by doing runtime type-checking. 
-    /// </summary>
-    /// <param name="key">The key</param>
-    /// <param name="value">The value to insert, or null, to remove</param>
-    void SetSafely(DataKey key, object? value) {
+    /// <param name="value">The value to insert, or null to remove</param>
+    public void SetSafely(DataKey key, object? value) {
         if (value == null) {
             this.Remove(key);
         }
@@ -57,28 +49,27 @@ public interface IMutableContextData : IRandomAccessContextData {
     }
 
     /// <summary>
-    /// Unsafely sets a raw value for the given key. Care must be taken using this method,
-    /// since <see cref="DataKey{T}"/> will throw if it doesn't receive the correct value.
+    /// Sets the raw value for a key, or removes the entry if the value is null.
     /// </summary>
     /// <param name="key">The key</param>
-    /// <param name="value">The value to insert, or null, to remove</param>
-    void SetUnsafe(string key, object? value);
+    /// <param name="value">The value to insert</param>
+    public void SetUnsafe(string key, object? value);
 
     /// <summary>
-    /// Removes the value with the given key. This is the same as calling <see cref="SetUnsafe"/> with a null value
+    /// Removes the value with the given key. This is the same as invoking <see cref="SetUnsafe"/> with a null value
     /// </summary>
     /// <param name="key">The key</param>
-    void Remove(string key) => this.SetUnsafe(key, null);
+    public void Remove(string key) => this.SetUnsafe(key, null);
 
     /// <summary>
     /// Removes the value by the given key
     /// </summary>
-    void Remove(DataKey key) => this.Remove(key.Id);
+    public void Remove(DataKey key) => this.Remove(key.Id);
 
     /// <summary>
     /// Batch removes the two values by the keys
     /// </summary>
-    void Remove(DataKey key1, DataKey key2) {
+    public void Remove(DataKey key1, DataKey key2) {
         using (this.BeginChange()) {
             this.Remove(key1.Id);
             this.Remove(key2.Id);
@@ -88,7 +79,7 @@ public interface IMutableContextData : IRandomAccessContextData {
     /// <summary>
     /// Batch removes the three values by the keys
     /// </summary>
-    void Remove(DataKey key1, DataKey key2, DataKey key3) {
+    public void Remove(DataKey key1, DataKey key2, DataKey key3) {
         using (this.BeginChange()) {
             this.Remove(key1.Id);
             this.Remove(key2.Id);
@@ -97,9 +88,49 @@ public interface IMutableContextData : IRandomAccessContextData {
     }
 
     /// <summary>
-    /// Begins a multi-change process. These processes can be stacked, and the data will only
-    /// be applied once all tokens are disposed (but this can be optionally overridden)
+    /// Begins a multi-change process. These processes can be stacked, and the data will only be applied
+    /// once all tokens are disposed (unless explicitly done by derived context data typed).
     /// </summary>
     /// <returns>A disposable token instance</returns>
-    MultiChangeToken BeginChange();
+    /// <remarks>
+    /// It's important not to create local copies of the token and/or dispose them excessively, since this
+    /// can lead to undefined behaviour (e.g. say three batch scopes are entered, and you dispose the same
+    /// token three times, now all scopes are exited)
+    /// </remarks>
+    public sealed BatchToken BeginChange() {
+        this.OnEnterBatchScope();
+        return new BatchToken(this);
+    }
+
+    /// <summary>
+    /// Invoked by <see cref="BeginChange"/>
+    /// </summary>
+    protected void OnEnterBatchScope();
+    
+    /// <summary>
+    /// Invoked when the token returned by <see cref="BeginChange"/> is disposed
+    /// </summary>
+    protected void OnExitBatchScope();
+    
+    /// <summary>
+    /// A token used to automatically exit a batch-change scope
+    /// </summary>
+    public ref struct BatchToken : IDisposable {
+        private IMutableContextData? myContext;
+
+        /// <summary>
+        /// Gets the context data this token was created by
+        /// </summary>
+        public IMutableContextData Context => this.myContext ?? throw new ObjectDisposedException(nameof(BatchToken), "Token is disposed");
+
+        internal BatchToken(IMutableContextData myContext) => this.myContext = myContext;
+
+        void IDisposable.Dispose() {
+            IMutableContextData? ctx = this.myContext;
+            if (ctx != null) {
+                this.myContext = null;
+                ctx.OnExitBatchScope();
+            }
+        }
+    }
 }

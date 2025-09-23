@@ -85,7 +85,7 @@ public class DataManager {
                 sb.AppendLine($"  DataKey ID = {key.Id}, Data Type = {key.DataType}");
                 throw new InvalidOperationException(sb.ToString());
             }
-            
+
             return key;
         });
 
@@ -116,16 +116,18 @@ public class DataManager {
     private static void OnDataContextDataKeyPropertyChanged(AvaloniaObject sender, AvaloniaPropertyChangedEventArgs<DataKey?> e) {
         if (sender is StyledElement element) {
             if (!e.NewValue.HasValue)
-                element.DataContextChanged -= OnDataContextChanged;
+                element.DataContextChanged -= DataContextChangedHandler;
             else if (!e.OldValue.HasValue)
-                element.DataContextChanged += OnDataContextChanged;
+                element.DataContextChanged += DataContextChangedHandler;
         }
-        
+
         if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
             InvalidateInheritedContext(sender);
         }
     }
 
+    private static readonly EventHandler DataContextChangedHandler = OnDataContextChanged; 
+    
     private static void OnDataContextChanged(object? sender, EventArgs e) {
         Debug.Assert(((AvaloniaObject) sender!).GetValue(DataContextDataKeyProperty) != null);
         if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
@@ -334,6 +336,8 @@ public class DataManager {
             }
 
             if ((key = GetSelfDataKey(control)) != null) {
+                // We don't need to do runtime type-checking here, since
+                // we do it in the coerce function of the SelfDataKey property 
                 ctx.SetValueRaw(key.Id, control);
             }
         }
@@ -408,7 +412,8 @@ public class DataManager {
     }
 
     /// <summary>
-    /// Sets the data key used to key the data context object
+    /// Sets the data key used to key the data context object. This should only be used if absolutely
+    /// necessary, since runtime type-checking is required in <see cref="EvaluateContextDataRaw"/>
     /// </summary>
     public static void SetDataContextDataKey(AvaloniaObject obj, DataKey? value) => obj.SetValue(DataContextDataKeyProperty, value);
 
@@ -418,7 +423,7 @@ public class DataManager {
     public static DataKey? GetDataContextDataKey(AvaloniaObject obj) => obj.GetValue(DataContextDataKeyProperty);
 
     /// <summary>
-    /// Sets the data key used to key the control instance itself
+    /// Sets the data key used to key the control instance itself.
     /// </summary>
     public static void SetSelfDataKey(AvaloniaObject obj, DataKey? value) => obj.SetValue(SelfDataKeyProperty, value);
 

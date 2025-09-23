@@ -90,17 +90,7 @@ public sealed class ContextData : IMutableContextData {
     /// <param name="key">The key</param>
     /// <param name="value">The value to insert</param>
     public ContextData Set<T>(DataKey<T> key, T? value) {
-        ((IMutableContextData) this).Set(key, value);
-        return this;
-    }
-
-    /// <summary>
-    /// Sets a boolean value with the given key, using a pre-boxed value to avoid boxing.
-    /// </summary>
-    /// <param name="key">The key</param>
-    /// <param name="value">The value to insert</param>
-    public ContextData Set(DataKey<bool> key, bool? value) {
-        ((IMutableContextData) this).Set(key, value);
+        ((IMutableContextData) this).SetUnsafe(key.Id, value);
         return this;
     }
 
@@ -142,10 +132,17 @@ public sealed class ContextData : IMutableContextData {
         return this;
     }
 
+    void IMutableContextData.OnEnterBatchScope() {
+    }
+
+    void IMutableContextData.OnExitBatchScope() {
+    }
+
     #endregion
 
     #region Hidden inteface implementations
     
+    // We hide the interface impl so that we can overwrite it with the builder-style version
     void IMutableContextData.SetUnsafe(string key, object? value) {
         if (value == null) {
             this.map?.Remove(key);
@@ -155,8 +152,6 @@ public sealed class ContextData : IMutableContextData {
         }
     }
 
-    MultiChangeToken IMutableContextData.BeginChange() => MultiChangeToken.CreateEmpty(this);
-    
     #endregion
     
     public bool TryGetContext(string key, out object value) {

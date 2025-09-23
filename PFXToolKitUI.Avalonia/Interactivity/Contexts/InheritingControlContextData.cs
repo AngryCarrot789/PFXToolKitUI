@@ -53,16 +53,4 @@ public sealed class InheritingControlContextData : BaseControlContextData {
     public override bool ContainsKey(string key) {
         return base.ContainsKey(key) || this.Inherited.ContainsKey(key);
     }
-
-    public override MultiChangeToken BeginChange() => new MultiChangeTokenImpl(this);
-
-    private class MultiChangeTokenImpl : MultiChangeToken {
-        public MultiChangeTokenImpl(InheritingControlContextData context) : base(context) {
-            context.batchCounter++;
-        }
-
-        protected override void OnDisposed() {
-            ((InheritingControlContextData) this.Context).OnMultiChangeTokenDisposed();
-        }
-    }
 }

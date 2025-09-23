@@ -28,12 +28,12 @@ using PFXToolKitUI.Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Configurations.UI;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Themes.Contexts;
 using PFXToolKitUI.Utils.Events;
 using SkiaSharp;
-using IThemeConfigurationTreeElement = PFXToolKitUI.Configurations.UI.IThemeConfigurationTreeElement;
 
 namespace PFXToolKitUI.Avalonia.Themes.Configurations;
 
@@ -218,7 +218,7 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
         this.Page!.TargetThemeChanged -= this.OnTargetThemeChanged;
         this.Page!.ThemeEntryModified -= this.OnThemeEntryModified;
         this.Page!.ModifiedThemeEntriesCleared -= this.OnThemeModifiedThemeEntriesCleared;
-        DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeConfigurationPageKey, null);
+        DataManager.GetContextData(this).Remove(ThemeContextRegistry.ThemeConfigurationPageKey);
     }
 
     #region CONTROL USAGE SAFE

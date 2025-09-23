@@ -164,7 +164,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.DynamicInsertion = null;
         this.DynamicInserted = null;
         
-        DataManager.GetContextData(this).Set(BaseContextEntry.DataKey, null);
+        DataManager.GetContextData(this).Remove(BaseContextEntry.DataKey);
     }
 
     public virtual void OnRemoved() {

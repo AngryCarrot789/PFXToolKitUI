@@ -235,7 +235,7 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         this.ThemeConfigTree = null;
         this.ParentNode = null;
         this.Entry = null;
-        DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeTreeEntryKey, null);
+        DataManager.GetContextData(this).Remove(ThemeContextRegistry.ThemeTreeEntryKey);
     }
 
     #endregion
