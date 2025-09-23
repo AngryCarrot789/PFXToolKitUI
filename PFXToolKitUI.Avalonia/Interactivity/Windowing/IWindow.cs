@@ -230,6 +230,7 @@ public interface IWindow : ITopLevel {
     /// Shows this window in a non-modal mode as an asynchronous operation.
     /// </summary>
     /// <returns>A task that completes once the window has opened</returns>
+    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
     Task ShowAsync();
 
     /// <summary>
@@ -239,17 +240,16 @@ public interface IWindow : ITopLevel {
     /// A task that completes when the window closes, and whose result is the first value passed
     /// to <see cref="RequestCloseAsync"/> when the window was not already trying to close.
     /// </returns>
+    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
     Task<object?> ShowDialogAsync();
 
     /// <summary>
     /// Requests the window to close. The returned task is completed when the window either closes
     /// or the close operation was cancelled, where the bool result represents the closed state.
-    /// <para>
-    /// Note, invoking this method when already closed or closing is permitted but is a bug.
-    /// </para>
     /// </summary>
     /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
     /// <returns>True if the window was actually closed, False if the close attempt was cancelled</returns>
+    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.Open"/></exception>
     Task<bool> RequestCloseAsync(object? dialogResult = null);
 
     /// <summary>

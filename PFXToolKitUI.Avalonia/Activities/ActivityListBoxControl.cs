@@ -17,12 +17,16 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Tasks;
+using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 
@@ -42,71 +46,61 @@ public class ActivityListBoxControl : TemplatedControl {
         get => this.GetValue(ActivityManagerProperty);
         set => this.SetValue(ActivityManagerProperty, value);
     }
-    
+
     private ItemsControl? PART_ItemsControl;
     private readonly Stack<ActivityListItem> itemCache = new Stack<ActivityListItem>();
-    
+    private ObservableItemProcessorIndexing<ActivityTask>? backgroundActivityListProcessor;
+
+    private readonly LazyHelper2<ActivityManager, ActivityListBoxControl> lazyProcessor;
+
     public ActivityListBoxControl() {
+        this.lazyProcessor = new LazyHelper2<ActivityManager, ActivityListBoxControl>(static (actMan, self, hasBoth) => {
+            if (hasBoth) {
+                Debug.Assert(self.backgroundActivityListProcessor == null);
+                self.backgroundActivityListProcessor = ObservableItemProcessor.MakeIndexable(
+                    actMan.BackgroundTasks,
+                    (_, index, item) => self.InsertItem(index, item),
+                    (_, index, _) => self.RemoveItem(index),
+                    (_, oldIdx, newIdx, item) => {
+                        self.RemoveItem(oldIdx);
+                        self.InsertItem(newIdx, item);
+                    }
+                );
+
+                self.backgroundActivityListProcessor.AddExistingItems();
+            }
+            else {
+                self.backgroundActivityListProcessor!.RemoveExistingItems();
+                self.backgroundActivityListProcessor!.Dispose();
+                self.backgroundActivityListProcessor = null;
+            }
+        });
     }
-    
+
     static ActivityListBoxControl() {
         ActivityManagerProperty.Changed.AddClassHandler<ActivityListBoxControl, ActivityManager?>((o, e) => o.OnActivityManagerChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
 
     private void OnActivityManagerChanged(ActivityManager? oldManager, ActivityManager? newManager) {
-        if (oldManager != null) {
-            oldManager.TaskStarted -= this.ActivityManagerOnTaskStarted;
-            oldManager.TaskCompleted -= this.ActivityManagerOnTaskCompleted;
-            if (this.PART_ItemsControl != null) {
-                for (int i = this.PART_ItemsControl!.Items.Count - 1; i >= 0; i--) {
-                    this.RemoveItem(i);
-                }
-            }
-        }
-        
-        if (newManager != null) {
-            newManager.TaskStarted += this.ActivityManagerOnTaskStarted;
-            newManager.TaskCompleted += this.ActivityManagerOnTaskCompleted;
-            if (this.PART_ItemsControl != null) {
-                int i = 0;
-                foreach (ActivityTask task in newManager.ActiveTasks) {
-                    this.InsertItem(i++, task);
-                }
-            }
-        }
+        this.lazyProcessor.Value1 = newManager != null ? Optionals.Of(newManager) : default;
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_ItemsControl = e.NameScope.GetTemplateChild<ItemsControl>(nameof(this.PART_ItemsControl));
-        if (this.ActivityManager is ActivityManager manager) {
-            int i = 0;
-            foreach (ActivityTask task in manager.ActiveTasks) {
-                this.InsertItem(i++, task);
-            }
-        }
-    }
-    
-    private void ActivityManagerOnTaskStarted(ActivityManager actMan, ActivityTask task, int index) {
-        if (this.PART_ItemsControl != null)
-            this.InsertItem(index, task);
-    }
-    
-    private void ActivityManagerOnTaskCompleted(ActivityManager actMan, ActivityTask task, int index) {
-        if (this.PART_ItemsControl != null)
-            this.RemoveItem(index);
+        this.lazyProcessor.Value2 = this;
     }
 
-    private void InsertItem(int index, ActivityTask task) {
+    public void InsertItem(int index, ActivityTask task) {
         if (!this.itemCache.TryPop(out ActivityListItem? item))
             item = new ActivityListItem();
-        
+
         this.PART_ItemsControl!.Items.Insert(index, item);
         TemplateUtils.Apply(item);
         item.ActivityTask = task;
     }
-    
-    private void RemoveItem(int index) {
+
+    public void RemoveItem(int index) {
         ActivityListItem item = (ActivityListItem) this.PART_ItemsControl!.Items[index]!;
         item.ActivityTask = null;
         this.PART_ItemsControl!.Items.RemoveAt(index);

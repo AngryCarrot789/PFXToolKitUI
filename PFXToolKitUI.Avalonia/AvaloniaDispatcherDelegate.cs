@@ -66,6 +66,10 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
     public void Post(Action action, DispatchPriority priority = DispatchPriority.Default) {
         this.dispatcher.Post(action, ToAvaloniaPriority(priority));
     }
+    
+    public void Post(Action<object?> action, object? state, DispatchPriority priority = DispatchPriority.Default) {
+        this.dispatcher.Post(new SendOrPostCallback(action), state, ToAvaloniaPriority(priority));
+    }
 
     public Task Process(DispatchPriority priority) => this.InvokeAsync(EmptyAction, priority);
 

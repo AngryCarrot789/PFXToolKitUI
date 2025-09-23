@@ -30,22 +30,22 @@ public static class WindowContextUtils {
     /// Failing those, we attempt to access the application's currently active window, or worst case, one of the main windows
     /// </summary>
     public static IWindow? GetUsefulWindow(IContextData? alternateContext = null, bool canUseActiveOrMainWindow = true) {
-        IWindow? parentWindow = null;
+        IWindow? window = null;
         if (CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? context)) {
-            parentWindow = IWindow.WindowFromContext(context);
+            window = IWindow.WindowFromContext(context);
         }
 
-        if (parentWindow == null && alternateContext != null) {
-            parentWindow = IWindow.WindowFromContext(alternateContext);
+        if (window == null && alternateContext != null) {
+            window = IWindow.WindowFromContext(alternateContext);
         }
 
-        if (parentWindow == null && canUseActiveOrMainWindow) {
+        if (window == null && canUseActiveOrMainWindow) {
             if (!IWindowManager.TryGetInstance(out IWindowManager? manager))
                 return null;
-            manager.TryGetActiveOrMainWindow(out parentWindow);
+            manager.TryGetActiveOrMainWindow(out window);
         }
 
-        return parentWindow;
+        return window;
     }
     
     /// <summary>

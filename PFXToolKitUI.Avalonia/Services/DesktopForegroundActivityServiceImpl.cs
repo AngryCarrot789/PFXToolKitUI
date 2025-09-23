@@ -30,25 +30,25 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
-    public async Task ShowActivity(ITopLevel topLevel, ActivityTask task, CancellationToken dialogCancellation) {
+    public async Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation) {
         if (!ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
             if (!dialogCancellation.IsCancellationRequested) {
-                await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForActivityImpl(topLevel, task, dialogCancellation), token: CancellationToken.None);
+                await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForActivityImpl(parentTopLevel, activity, dialogCancellation), token: CancellationToken.None);
             }
         }
         else {
-            await ShowForActivityImpl(topLevel, task, dialogCancellation);
+            await ShowForActivityImpl(parentTopLevel, activity, dialogCancellation);
         }
     }
 
-    public async Task ShowMultipleProgressions(ITopLevel topLevel, IEnumerable<(IActivityProgress Progress, Task Task)> progressions, CancellationToken dialogCancellation = default) {
+    public async Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default) {
         if (!ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
             if (!dialogCancellation.IsCancellationRequested) {
-                await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForMultipleProgressionsImpl(topLevel, progressions, dialogCancellation), token: CancellationToken.None);
+                await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForMultipleSubActivitiesImpl(parentTopLevel, activities, dialogCancellation), token: CancellationToken.None);
             }
         }
         else {
-            await ShowForMultipleProgressionsImpl(topLevel, progressions, dialogCancellation);
+            await ShowForMultipleSubActivitiesImpl(parentTopLevel, activities, dialogCancellation);
         }
     }
 
@@ -60,7 +60,7 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
             throw new InvalidOperationException("Invalid top level object");
 
         IWindowManager manager = theWindow.WindowManager;
-        ActivityRowControl row = new ActivityRowControl() {
+        ActivityProgressRowControl row = new ActivityProgressRowControl() {
             ActivityTask = task,
             ShowCaption = false,
             Margin = new Thickness(8)
@@ -78,68 +78,86 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
             CanResize = false,
             IsToolWindow = true
         });
-
+        
         ActivityProgressEventHandler captionChangedHandler = prog => window.Title = prog.Caption;
         progress.CaptionChanged += captionChangedHandler;
 
         window.TryClose += (sender, args) => {
-            if (task.IsCompleted)
-                return; // closed due to task completing
-
+            if (task.IsCompleted || dialogCancellation.IsCancellationRequested) {
+                return; // closed due to task completing or dialog cancellation
+            }
+            
             // try cancel the task when the user clicks the X button
             task.TryCancel();
             args.SetCancelled();
         };
 
+        window.WindowOpened += (sender, args) => {
+            ActivityTask theTask = ((ActivityProgressRowControl) sender.Content!).ActivityTask!;
+            Debug.Assert(theTask != null);
+            ActivityTask.InternalOnPresentInDialogChanged(theTask, true);
+        };
+
+        window.WindowClosed += (sender, args) => {
+            ActivityProgressRowControl myContent = (ActivityProgressRowControl) sender.Content!;
+            ActivityTask theTask = myContent.ActivityTask!;
+            Debug.Assert(theTask != null);
+            
+            ActivityTask.InternalOnPresentInDialogChanged(theTask, false);
+            myContent.ActivityTask = null;
+        };
+
         // Add continuation that closes the window
-        _ = task.Task.ContinueWith(t => ApplicationPFX.Instance.Dispatcher.Post(void () => _ = window.RequestCloseAsync()), CancellationToken.None);
+        await using CancellationTokenRegistration register = dialogCancellation.Register(PostCloseToMainThread, window);
+        _ = task.Task.ContinueWith((t, w) => PostCloseToMainThread((IWindow) w!), window, CancellationToken.None);
 
         window.Title = progress.Caption ?? "Activity Progress";
         await window.ShowDialogAsync();
-        window.Activate();
 
-        await window.WaitForClosedAsync(dialogCancellation);
-        row.ActivityTask = null;
         progress.CaptionChanged -= captionChangedHandler;
-
-        Debug.Assert((window.OpenState == OpenState.Open) == dialogCancellation.IsCancellationRequested);
         if (window.OpenState == OpenState.Open) {
-            await window.RequestCloseAsync();
+            bool isClosed = await window.RequestCloseAsync(); // should not get cancelled
+            Debug.Assert(isClosed);
         }
     }
-    
-    private static async Task ShowForMultipleProgressionsImpl(ITopLevel topLevel, IEnumerable<(IActivityProgress Progress, Task Task)> progressions, CancellationToken dialogCancellation) {
+
+    private static void PostCloseToMainThread(object? window) {
+        ApplicationPFX.Instance.Dispatcher.Post(void (w) => {
+            IWindow win = (IWindow) w!;
+            if (win.OpenState == OpenState.Open)
+                _ = win.RequestCloseAsync();
+        }, window);
+    }
+
+    private static async Task ShowForMultipleSubActivitiesImpl(ITopLevel topLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation) {
         if (dialogCancellation.IsCancellationRequested)
             return;
         if (!(topLevel is IWindow theWindow))
             throw new InvalidOperationException("Invalid top level object");
 
-        if (!(progressions is IList<(IActivityProgress Progress, Task Task)> progressionList))
-            progressionList = progressions.ToList();
-
-        if (progressionList.Any(task => progressionList.Count(x => x == task) != 1))
-            throw new ArgumentException("Duplicate task references in the list");
+        if (!(activities is IList<SubActivity> activityList))
+            activityList = activities.ToList();
 
         StackPanel panel = new StackPanel() {
             Margin = new Thickness(8),
             Spacing = 5
         };
 
-        foreach ((IActivityProgress Progress, Task Task) entry in progressionList) {
-            if (entry.Task.IsCompleted) {
+        foreach (SubActivity activity in activityList) {
+            if (activity.Task.IsCompleted) {
                 continue;
             }
 
-            ProgressRowControl control = new ProgressRowControl() {
-                ActivityProgress = entry.Progress,
-                ShowCaption = true
+            SubActivityProgressRowControl control = new SubActivityProgressRowControl() {
+                SubActivity = activity,
+                ShowCaption = true,
             };
 
             panel.Children.Add(control);
 
-            _ = entry.Task.ContinueWith(t => {
+            _ = activity.Task.ContinueWith(t => {
                 ApplicationPFX.Instance.Dispatcher.Post(() => {
-                    control.ActivityProgress = null;
+                    control.SubActivity = null;
                     panel.Children.Remove(control);
                 });
             }, CancellationToken.None);
@@ -149,7 +167,7 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
             return;
         }
 
-        Task allTasksCompletedTask = Task.WhenAll(progressionList.Select(x => x.Task));
+        Task allTasksCompletedTask = Task.WhenAll(activityList.Select(x => x.Task));
 
         IWindow window = theWindow.WindowManager.CreateWindow(new WindowBuilder() {
             Title = "Waiting for multiple activities",

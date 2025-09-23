@@ -19,10 +19,14 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using PFXToolKitUI.Logging;
+using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Tasks;
 
-public delegate void TaskManagerTaskEventHandler(ActivityManager activityManager, ActivityTask task, int index);
+public delegate void ActivityManagerTaskIndexEventHandler(ActivityManager activityManager, ActivityTask task, int index);
+
+public delegate void ActivityManagerPrimaryActivityChangedEventHandler(ActivityManager activityManager, ActivityTask? oldActivityTask, ActivityTask? newActivity);
 
 /// <summary>
 /// A service which manages activity tasks.
@@ -69,27 +73,36 @@ public sealed class ActivityManager : IDisposable {
 
     // private readonly ThreadLocal<ActivityTask> threadToTask;
     private readonly AsyncLocal<ActivityTask?> threadToTask;
-    private readonly List<ActivityTask> tasks;
-    private readonly Lock lockObj = new Lock();
-
-    /// <summary>
-    /// Fired when a task is started. This is fired on the main thread
-    /// </summary>
-    public event TaskManagerTaskEventHandler? TaskStarted;
-
-    /// <summary>
-    /// Fired when a task is completed in any way. Fired on the main thread
-    /// </summary>
-    public event TaskManagerTaskEventHandler? TaskCompleted;
+    private readonly List<ActivityTask> activeTasks; // all tasks
+    private readonly ObservableList<ActivityTask> backgroundTasks; // tasks not present in a dialog
 
     /// <summary>
     /// Returns a list of activities currently running. This list is only modified on the main thread
     /// </summary>
-    public IReadOnlyList<ActivityTask> ActiveTasks => this.tasks;
+    public IReadOnlyList<ActivityTask> ActiveTasks { get; }
+
+    /// <summary>
+    /// Gets a read-only observable list of the activity tasks running in the background and are therefore
+    /// not present in a foreground dialog. This list is only modified on the main thread
+    /// </summary>
+    public ReadOnlyObservableList<ActivityTask> BackgroundTasks { get; }
+
+    /// <summary>
+    /// Fired when a task is started. This is fired on the main thread
+    /// </summary>
+    public event ActivityManagerTaskIndexEventHandler? TaskStarted;
+
+    /// <summary>
+    /// Fired when a task is completed in any way. Fired on the main thread
+    /// </summary>
+    public event ActivityManagerTaskIndexEventHandler? TaskCompleted;
 
     public ActivityManager() {
         this.threadToTask = new AsyncLocal<ActivityTask?>();
-        this.tasks = new List<ActivityTask>();
+        this.activeTasks = new List<ActivityTask>();
+        this.ActiveTasks = this.activeTasks.AsReadOnly();
+        this.backgroundTasks = new ObservableList<ActivityTask>();
+        this.BackgroundTasks = new ReadOnlyObservableList<ActivityTask>(this.backgroundTasks);
     }
 
     public ActivityTask RunTask(Func<Task> action, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, (CancellationTokenSource?) null, creationOptions);
@@ -153,30 +166,78 @@ public sealed class ActivityManager : IDisposable {
 
     // Main Thread
 
-    internal static void InternalOnTaskStarted(ActivityManager activityManager, ActivityTask task) {
-        lock (activityManager.lockObj) {
-            int index = activityManager.tasks.Count;
-            activityManager.tasks.Insert(index, task);
-            activityManager.TaskStarted?.Invoke(activityManager, task, index);
+    internal static void InternalOnTaskStarted(ActivityManager manager, ActivityTask task) {
+        int index = manager.activeTasks.Count;
+        manager.activeTasks.Insert(index, task);
+        manager.TaskStarted?.Invoke(manager, task, index);
+        
+        // The activity task object can be used before the even get started, since starting
+        // one requires starting a Task which then calls InternalPreActivateTask which
+        // has to dispatch this method call to the main thread.
+        if (!task.IsPresentInDialog) {
+            manager.backgroundTasks.Add(task);
         }
 
         ActivityTask.InternalPostActivate(task);
     }
 
-    internal static void InternalOnTaskCompleted(ActivityManager activityManager, ActivityTask task, int state) {
+    internal static void InternalOnTaskCompleted(ActivityManager manager, ActivityTask task, int state) {
         ActivityTask.InternalComplete(task, state);
-        lock (activityManager.lockObj) {
-            int index = activityManager.tasks.IndexOf(task);
-            if (index == -1) {
-                Debug.WriteLine("[FATAL] Completed activity task did not exist in this task manager's internal task list");
-                Debugger.Break();
+        int index = manager.activeTasks.IndexOf(task);
+        if (index == -1) {
+            AppLogger.Instance.WriteLine("Completed ActivityTask did not exist in activeTasks list");
+            Debug.Fail("Oops");
+            manager.backgroundTasks.Remove(task); // don't care if not removed
+            return;
+        }
+
+        manager.activeTasks.RemoveAt(index);
+        manager.TaskCompleted?.Invoke(manager, task, index);
+        manager.backgroundTasks.Remove(task); // don't care if not removed
+
+        task.InternalOnCompletedOnMainThread();
+    }
+
+    internal static void InternalOnIsPresentInDialogChanged(ActivityManager manager, ActivityTask task) {
+        if (task.IsPresentInDialog) {
+            manager.backgroundTasks.Remove(task);
+        }
+        else {
+            Debug.Assert(!manager.backgroundTasks.Contains(task), "ActivityTask should not already be in the background task list");
+            int realIdx = manager.activeTasks.IndexOf(task);
+            if (realIdx == -1) {
+                // Either:
+                //   Activity was shown in a dialog and then the dialog closed, all before
+                //   InternalOnTaskCompleted managed to run. Unlikely, but not impossible
+                // Or:
+                //   Activity has already completed and is still being used for some reason
+                Debug.Assert(!task.IsRunning || task.IsCompleted);
                 return;
             }
+            
+            int dstIdx = manager.backgroundTasks.Count;
+            for (int i = 0; i < manager.backgroundTasks.Count; i++) {
+                int taskIdx = manager.activeTasks.IndexOf(manager.backgroundTasks[i]);
+                if (taskIdx > realIdx) {
+                    dstIdx = i;
+                    break;
+                }
+            }
 
-            activityManager.tasks.RemoveAt(index);
-            activityManager.TaskCompleted?.Invoke(activityManager, task, index);
+            manager.backgroundTasks.Insert(dstIdx, task);
 
-            task.InternalOnCompletedOnMainThread();
+            // int realIndex = manager.activeTasks.IndexOf(task);
+            // int dstIdx = 0;
+            // foreach (ActivityTask bgTask in manager.backgroundTasks) {
+            //     int j = manager.activeTasks.IndexOf(bgTask);
+            //     if (j > realIndex) {
+            //         break;
+            //     }
+            //
+            //     dstIdx++;
+            // }
+            //
+            // manager.backgroundTasks.Insert(dstIdx, task);
         }
     }
 }

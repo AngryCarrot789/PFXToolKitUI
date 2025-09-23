@@ -31,9 +31,9 @@ using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 
-public class ActivityRowControl : TemplatedControl {
-    public static readonly StyledProperty<ActivityTask?> ActivityTaskProperty = AvaloniaProperty.Register<ActivityRowControl, ActivityTask?>(nameof(ActivityTask));
-    public static readonly StyledProperty<bool> ShowCaptionProperty = AvaloniaProperty.Register<ActivityRowControl, bool>(nameof(ShowCaption), true);
+public class ActivityProgressRowControl : TemplatedControl {
+    public static readonly StyledProperty<ActivityTask?> ActivityTaskProperty = AvaloniaProperty.Register<ActivityProgressRowControl, ActivityTask?>(nameof(ActivityTask));
+    public static readonly StyledProperty<bool> ShowCaptionProperty = AvaloniaProperty.Register<ActivityProgressRowControl, bool>(nameof(ShowCaption), true);
 
     public ActivityTask? ActivityTask {
         get => this.GetValue(ActivityTaskProperty);
@@ -52,12 +52,12 @@ public class ActivityRowControl : TemplatedControl {
     private IconButton? PART_PlayPauseButton;
     private readonly AsyncRelayCommand pauseActivityCommand;
 
-    private readonly IBinder<IActivityProgress> binderCaption = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.CaptionChanged), (b) => ((ActivityRowControl) b.Control).PART_Header!.Text = b.Model.Caption);
-    private readonly IBinder<IActivityProgress> binderText = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.TextChanged), (b) => ((ActivityRowControl) b.Control).PART_Footer!.Text = b.Model.Text);
-    private readonly IBinder<IActivityProgress> binderIsIndeterminate = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.IsIndeterminateChanged), (b) => ((ActivityRowControl) b.Control).PART_ProgressBar!.IsIndeterminate = b.Model.IsIndeterminate);
-    private readonly IBinder<CompletionState> binderCompletionValue = new EventUpdateBinder<CompletionState>(nameof(CompletionState.CompletionValueChanged), (b) => ((ActivityRowControl) b.Control).PART_ProgressBar!.Value = b.Model.TotalCompletion);
+    private readonly IBinder<IActivityProgress> binderCaption = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.CaptionChanged), (b) => ((ActivityProgressRowControl) b.Control).PART_Header!.Text = b.Model.Caption);
+    private readonly IBinder<IActivityProgress> binderText = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.TextChanged), (b) => ((ActivityProgressRowControl) b.Control).PART_Footer!.Text = b.Model.Text);
+    private readonly IBinder<IActivityProgress> binderIsIndeterminate = new EventUpdateBinder<IActivityProgress>(nameof(IActivityProgress.IsIndeterminateChanged), (b) => ((ActivityProgressRowControl) b.Control).PART_ProgressBar!.IsIndeterminate = b.Model.IsIndeterminate);
+    private readonly IBinder<CompletionState> binderCompletionValue = new EventUpdateBinder<CompletionState>(nameof(CompletionState.CompletionValueChanged), (b) => ((ActivityProgressRowControl) b.Control).PART_ProgressBar!.Value = b.Model.TotalCompletion);
 
-    public ActivityRowControl() {
+    public ActivityProgressRowControl() {
         this.pauseActivityCommand = new AsyncRelayCommand(async () => {
             AdvancedPausableTask? task = this.ActivityTask?.PausableTask;
             if (task != null) {
@@ -66,9 +66,9 @@ public class ActivityRowControl : TemplatedControl {
         });
     }
 
-    static ActivityRowControl() {
-        ActivityTaskProperty.Changed.AddClassHandler<ActivityRowControl, ActivityTask?>((s, e) => s.OnActivityTaskChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
-        ShowCaptionProperty.Changed.AddClassHandler<ActivityRowControl, bool>((s, e) => {
+    static ActivityProgressRowControl() {
+        ActivityTaskProperty.Changed.AddClassHandler<ActivityProgressRowControl, ActivityTask?>((s, e) => s.OnActivityTaskChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+        ShowCaptionProperty.Changed.AddClassHandler<ActivityProgressRowControl, bool>((s, e) => {
             if (s.PART_Header != null)
                 s.PART_Header.IsVisible = e.NewValue.GetValueOrDefault();
         });

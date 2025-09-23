@@ -20,13 +20,14 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
+using PFXToolKitUI.Interactivity.Windowing;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
 
 /// <summary>
 /// Manages <see cref="IWindow"/> instances and facilitates creating windows
 /// </summary>
-public interface IWindowManager {
+public interface IWindowManager : ITopLevelManager {
     /// <summary>
     /// Enumerates all top-level windows, as in, windows that have no <see cref="IWindow.Owner"/> set
     /// </summary>
@@ -70,9 +71,13 @@ public interface IWindowManager {
     /// <summary>
     /// Tries to get the window that is currently activated (as in, has control focus).
     /// </summary>
-    /// <param name="window">The active window</param>
+    /// <param name="window">The active or main window</param>
     /// <returns>True if an active window was found</returns>
     bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IWindow? window);
+
+    bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {
+        return (topLevel = this.GetActiveWindowOrNull()) != null;
+    }
 
     /// <summary>
     /// Returns the window produced by <see cref="TryGetActiveOrMainWindow"/> or returns null

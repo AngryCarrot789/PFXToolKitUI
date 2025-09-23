@@ -33,28 +33,61 @@ public interface IForegroundActivityService {
     /// <summary>
     /// Shows a dialog that closes when the activity completes
     /// </summary>
-    /// <param name="topLevel">The window to show the dialog in</param>
-    /// <param name="task">The task to show the progress of</param>
+    /// <param name="parentTopLevel">The top-level that should be parented to the dialog</param>
+    /// <param name="activity">The activity task to show the progress of</param>
     /// <param name="dialogCancellation">
-    ///     A cancellation token that forces the dialog to close and therefore
-    ///     this method to return, even if the task is still running
+    /// A cancellation token that forces the dialog to close and therefore
+    /// this method to return, even if the activity is still running
     /// </param>
     /// <returns>A task that becomes completed once the activity completes and the dialog closes</returns>
-    Task ShowActivity(ITopLevel topLevel, ActivityTask task, CancellationToken dialogCancellation = default);
+    Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation = default);
 
     /// <summary>
-    /// Shows a dialog that closes when the activity completes
+    /// Shows a dialog that closes when all the sub-activities all complete
     /// </summary>
-    /// <param name="topLevel"></param>
-    /// <param name="progressions">
-    ///     A list of <see cref="IActivityProgress"/> objects with an associated
-    ///     <see cref="TaskCompletionSource"/> that represents its completion state
+    /// <param name="parentTopLevel"></param>
+    /// <param name="activities">
+    /// A list of <see cref="SubActivity"/> structures that contain the information
+    /// required to present the progress and optionally cancel the operation
     /// </param>
     /// <param name="dialogCancellation">
-    ///     A cancellation token that forces the dialog to close and therefore
-    ///     this method to return, even if the task is still running
+    /// A cancellation token that forces the dialog to close and therefore
+    /// this method to return, even if the task is still running
     /// </param>
-    /// <param name="task">The task</param>
-    /// <returns>A task that becomes completed once the activity completes and the dialog closes</returns>
-    Task ShowMultipleProgressions(ITopLevel topLevel, IEnumerable<(IActivityProgress Progress, Task Task)> progressions, CancellationToken dialogCancellation = default);
+    /// <returns>A task that becomes completed once all the sub-activities complete and the dialog closes</returns>
+    Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default);
+}
+
+/// <summary>
+/// Represents a "sub-activity", which represents a lightweight version of <see cref="ActivityTask"/> 
+/// </summary>
+public readonly struct SubActivity(IActivityProgress progress, Task task, CancellationTokenSource? cancellation) {
+    /// <summary>
+    /// Gets the progression object for tracking progress of the activity
+    /// </summary>
+    public IActivityProgress Progress { get; } = progress;
+
+    /// <summary>
+    /// Gets the task that represents the activity's operation
+    /// </summary>
+    public Task Task { get; } = task;
+
+    /// <summary>
+    /// Gets the optional cancellation token source that can be used to
+    /// request <see cref="Task"/> to stop as soon as possible
+    /// </summary>
+    public CancellationTokenSource? Cancellation { get; } = cancellation;
+    
+    /// <summary>
+    /// Creates a sub-activity from an <see cref="ActivityTask"/>
+    /// </summary>
+    /// <param name="activityTask">The activity task</param>
+    /// <returns>A new sub-activity</returns>
+    /// <remarks>
+    /// Note that the <see cref="ActivityTask"/> will not be notified that it is being shown in a dialog when
+    /// using this method for <see cref="IForegroundActivityService.WaitForSubActivities"/>
+    /// </remarks>
+    public static SubActivity FromActivity(ActivityTask activityTask) {
+        return new SubActivity(activityTask.Progress, activityTask.Task, activityTask.cancellationTokenSource);
+    }
 }

@@ -153,7 +153,7 @@ public sealed class DesktopWindowImpl : IWindow {
         this.SizingInfo = new WindowSizingInfo(this, builder);
         this.SizingInfo.DoubleValueChanged += OnSizingInfoPropertyChanged;
         this.SizingInfo.CanResizeChanged += static info => ((DesktopWindowImpl) info.Window).myNativeWindow.CanResize = info.CanResize;
-        this.SizingInfo.SizeToContentChanged += static (info, ov, nv) => {
+        this.SizingInfo.SizeToContentChanged += static (info, _, nv) => {
             DesktopWindowImpl window = (DesktopWindowImpl) info.Window;
             if (!window.myNativeWindow.doNotModifySizeToContent) {
                 window.myNativeWindow.SizeToContent = nv;
@@ -404,17 +404,16 @@ public sealed class DesktopWindowImpl : IWindow {
     public async Task<bool> RequestCloseAsync(object? dialogResult = null) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        if (this.OpenState < OpenState.Open)
-            throw new InvalidOperationException("Window has not fully opened yet, it cannot be requested to close yet.");
-        if (this.OpenState == OpenState.TryingToClose)
-            throw new InvalidOperationException("Window has already been requested to close");
-        if (this.OpenState == OpenState.Closing)
-            throw new InvalidOperationException("Window is already in the process of closing");
-        if (this.OpenState == OpenState.Closed)
-            throw new InvalidOperationException("Window has been closed; it cannot be opened again.");
-        Debug.Assert(this.OpenState == OpenState.Open);
+        switch (this.OpenState) {
+            case < OpenState.Open:        throw new InvalidOperationException("Window has not fully opened yet, it cannot be requested to close yet.");
+            case OpenState.TryingToClose: throw new InvalidOperationException("Window has already been requested to close");
+            case OpenState.Closing:       throw new InvalidOperationException("Window is already in the process of closing");
+            case OpenState.Closed:        throw new InvalidOperationException("Window has already been closed");
+        }
 
+        Debug.Assert(this.OpenState == OpenState.Open);
         this.OpenState = OpenState.TryingToClose;
+        
         using CancellationTokenSource cts = new CancellationTokenSource();
         ApplicationPFX.Instance.Dispatcher.Post(() => {
             try {

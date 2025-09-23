@@ -77,9 +77,19 @@ public interface IDispatcher {
     /// this method will cause any exception the actions throws and will throw it on the main thread, causing the app to crash,
     /// as apposed to silencing it and stuffing it into the Task object
     /// </summary>
-    /// <param name="action"></param>
-    /// <param name="priority"></param>
+    /// <param name="action">The callback to invoke</param>
+    /// <param name="priority">The priority to invoke the callback at</param>
     void Post(Action action, DispatchPriority priority = DispatchPriority.Default);
+    
+    /// <summary>
+    /// Invokes the action asynchronously on this dispatcher thread. This differs from <see cref="InvokeAsync"/> where
+    /// this method will cause any exception the actions throws and will throw it on the main thread, causing the app to crash,
+    /// as apposed to silencing it and stuffing it into the Task object
+    /// </summary>
+    /// <param name="action">The callback to invoke</param>
+    /// <param name="state">The state object to pass to the callback</param>
+    /// <param name="priority">The priority to invoke the callback at</param>
+    void Post(Action<object?> action, object? state, DispatchPriority priority = DispatchPriority.Default);
 
     /// <summary>
     /// Process all queued events at and above the given priority. Once the task is complete,

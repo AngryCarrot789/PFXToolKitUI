@@ -64,6 +64,16 @@ public readonly struct Optional<T> : IEquatable<Optional<T>> {
     public static bool operator !=(Optional<T> left, Optional<T> right) => !left.Equals(right);
 }
 
+public static class Optionals {
+    /// <summary>
+    /// Creates a new optional value
+    /// </summary>
+    /// <param name="value">The optional's value</param>
+    /// <typeparam name="T">The value type</typeparam>
+    /// <returns>The new optional</returns>
+    public static Optional<T> Of<T>(T value) => new Optional<T>(value);
+}
+
 public static class OptionalExtensions {
     /// <summary>
     /// Casts the type of an <see cref="Optional{T}"/> using only the C# cast operator.

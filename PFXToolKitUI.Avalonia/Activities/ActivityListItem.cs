@@ -38,7 +38,7 @@ public class ActivityListItem : TemplatedControl {
         set => this.SetValue(ShowCaptionProperty, value);
     }
 
-    private ActivityRowControl? PART_Row;
+    private ActivityProgressRowControl? PART_Row;
 
     public ActivityListItem() {
     }
@@ -60,7 +60,7 @@ public class ActivityListItem : TemplatedControl {
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
-        this.PART_Row = e.NameScope.GetTemplateChild<ActivityRowControl>(nameof(this.PART_Row));
+        this.PART_Row = e.NameScope.GetTemplateChild<ActivityProgressRowControl>(nameof(this.PART_Row));
         this.PART_Row.ActivityTask = this.ActivityTask;
         this.PART_Row.ShowCaption = this.ShowCaption;
     }

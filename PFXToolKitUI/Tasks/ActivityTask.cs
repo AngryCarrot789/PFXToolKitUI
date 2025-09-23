@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using PFXToolKitUI.Tasks.Pausable;
 using PFXToolKitUI.Utils;
@@ -33,6 +34,7 @@ public delegate void ActivityTaskPausableTaskChangedEventHandler(ActivityTask se
 public class ActivityTask {
     private readonly ActivityManager activityManager;
     private readonly Func<Task> action;
+    private readonly TaskCompletionSource<ActivityTask> tcsStarted;
     private volatile Exception? exception;
 
     //  0 = waiting for activation
@@ -44,6 +46,9 @@ public class ActivityTask {
     protected Task? theMainTask; // task we created
     internal readonly CancellationTokenSource? cancellationTokenSource;
     private AdvancedPausableTask? myInternalPausableTask;
+
+    // Counts how many dialogs the activity is present in (via IForegroundActivityService)
+    private int dialogPresence;
 
     /// <summary>
     /// Gets the task returned by the user's function when running the activity
@@ -117,15 +122,25 @@ public class ActivityTask {
     }
 
     /// <summary>
+    /// Gets whether this activity is being shown in one or more foreground dialogs via <see cref="IForegroundActivityService"/>
+    /// </summary>
+    public bool IsPresentInDialog => this.dialogPresence > 0;
+
+    /// <summary>
     /// An event fired when <see cref="PausableTask"/> changes. This event is fired from a task thread,
     /// so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/> if they need to
     /// </summary>
     public event ActivityTaskPausableTaskChangedEventHandler? PausableTaskChanged;
 
     /// <summary>
-    /// Fired (on the main thread) when <see cref="IsCompleted"/> changes
+    /// An event fired when <see cref="IsCompleted"/> changes. This event is fired on the application main thread.
     /// </summary>
     public event ActivityTaskEventHandler? IsCompletedChanged;
+
+    /// <summary>
+    /// An event fired when <see cref="IsPresentInDialog"/> changes. This event is fired on the application main thread.
+    /// </summary>
+    public event ActivityTaskEventHandler? IsPresentInDialogChanged;
 
     protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellationTokenSource) {
         this.activityManager = activityManager ?? throw new ArgumentNullException(nameof(activityManager));
@@ -133,6 +148,7 @@ public class ActivityTask {
         this.Progress = activityProgress ?? throw new ArgumentNullException(nameof(activityProgress));
         this.cancellationTokenSource = cancellationTokenSource;
         this.CancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;
+        this.tcsStarted = new TaskCompletionSource<ActivityTask>();
     }
 
     protected void ValidateNotStarted() {
@@ -149,11 +165,17 @@ public class ActivityTask {
     }
 
     /// <summary>
-    /// Gets this activity's awaiter that can be used to await the activity. This calls <see cref="System.Threading.Tasks.Task.GetAwaiter"/>
-    /// on our internal task, which cannot be cancelled in the standard manner
+    /// Returns an awaiter used to await completion of this activity. Awaiting this will not throw <see cref="OperationCanceledException"/>
     /// </summary>
     /// <returns>The awaiter</returns>
     public TaskAwaiter GetAwaiter() => this.Task.GetAwaiter();
+    
+    /// <summary>
+    /// Returns an awaitable that can be used to await when this activity has started (i.e. <see cref="IsRunning"/> becomes true).
+    /// Awaiting this will not throw <see cref="OperationCanceledException"/>
+    /// </summary>
+    /// <returns>The awaitable</returns>
+    public RunningTaskAwaitable GetRunningAwaitable() => new RunningTaskAwaitable(this);
 
     protected async Task TaskMain() {
         try {
@@ -210,13 +232,30 @@ public class ActivityTask {
 
     public static void InternalPostActivate(ActivityTask task) {
         task.state = 1;
+        task.tcsStarted.SetResult(task);
     }
 
     public static void InternalComplete(ActivityTask task, int state) {
         task.state = state;
     }
 
+    public static void InternalOnPresentInDialogChanged(ActivityTask task, bool isPresent) {
+        Debug.Assert(isPresent ? (task.dialogPresence >= 0) : (task.dialogPresence > 0), "Excessive calls to " + nameof(InternalOnPresentInDialogChanged));
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+
+        int oldValue = task.dialogPresence;
+        task.dialogPresence += (isPresent ? 1 : -1);
+        if (oldValue == (isPresent ? 0 : 1)) {
+            task.IsPresentInDialogChanged?.Invoke(task);
+            ActivityManager.InternalOnIsPresentInDialogChanged(task.activityManager, task);
+        }
+    }
+
     internal void InternalOnCompletedOnMainThread() => this.IsCompletedChanged?.Invoke(this);
+
+    public readonly struct RunningTaskAwaitable(ActivityTask task) {
+        public TaskAwaiter<ActivityTask> GetAwaiter() => task.tcsStarted.Task.GetAwaiter();
+    }
 }
 
 // This system isn't great but it just about works... i'd rather not use public new ... methods but oh well
@@ -251,14 +290,14 @@ public class ActivityTask<T> : ActivityTask {
         this.ValidateNotStarted();
         return System.Threading.Tasks.Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap().ContinueWith(x => this.myResult, TaskContinuationOptions.ExecuteSynchronously);
     }
-    
+
     protected override Task OnCancelled(OperationCanceledException e) {
-        this.myResult = Result<T>.FromException(e); 
+        this.myResult = Result<T>.FromException(e);
         return base.OnCancelled(e);
     }
 
     protected override Task OnCompleted(Exception? e) {
-        this.myResult = e != null 
+        this.myResult = e != null
             ? Result<T>.FromException(e)
             : Result<T>.FromValue(((Task<T>) this.UserTask!).Result);
         return base.OnCompleted(e);
