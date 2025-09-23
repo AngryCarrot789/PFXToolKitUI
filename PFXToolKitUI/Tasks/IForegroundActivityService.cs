@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Tasks;
 /// A service for 
 /// </summary>
 public interface IForegroundActivityService {
-    public static bool TryGetInstance([NotNullWhen(true)] out IForegroundActivityService? service) {
+    static bool TryGetInstance([NotNullWhen(true)] out IForegroundActivityService? service) {
         return ApplicationPFX.Instance.ComponentStorage.TryGetComponent(out service);
     }
 

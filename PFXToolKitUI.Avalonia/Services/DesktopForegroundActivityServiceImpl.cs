@@ -31,42 +31,38 @@ namespace PFXToolKitUI.Avalonia.Services;
 
 public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
     public async Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation) {
-        if (!ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
-            if (!dialogCancellation.IsCancellationRequested) {
-                await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForActivityImpl(parentTopLevel, activity, dialogCancellation), token: CancellationToken.None);
-            }
-        }
-        else {
+        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
             await ShowForActivityImpl(parentTopLevel, activity, dialogCancellation);
+        }
+        else if (!dialogCancellation.IsCancellationRequested) {
+            await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForActivityImpl(parentTopLevel, activity, dialogCancellation), token: CancellationToken.None);
         }
     }
 
     public async Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default) {
-        if (!ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
-            if (!dialogCancellation.IsCancellationRequested) {
-                await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForMultipleSubActivitiesImpl(parentTopLevel, activities, dialogCancellation), token: CancellationToken.None);
-            }
-        }
-        else {
+        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
             await ShowForMultipleSubActivitiesImpl(parentTopLevel, activities, dialogCancellation);
+        }
+        else if (!dialogCancellation.IsCancellationRequested) {
+            await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForMultipleSubActivitiesImpl(parentTopLevel, activities, dialogCancellation), token: CancellationToken.None);
         }
     }
 
-    private static async Task ShowForActivityImpl(ITopLevel topLevel, ActivityTask task, CancellationToken dialogCancellation) {
-        if (dialogCancellation.IsCancellationRequested)
-            return;
-
+    private static async Task ShowForActivityImpl(ITopLevel topLevel, ActivityTask activity, CancellationToken dialogCancellation) {
         if (!(topLevel is IWindow theWindow))
             throw new InvalidOperationException("Invalid top level object");
+        
+        if (dialogCancellation.IsCancellationRequested || activity.IsCompleted)
+            return;
 
         IWindowManager manager = theWindow.WindowManager;
         ActivityProgressRowControl row = new ActivityProgressRowControl() {
-            ActivityTask = task,
+            ActivityTask = activity,
             ShowCaption = false,
             Margin = new Thickness(8)
         };
 
-        IActivityProgress progress = task.Progress;
+        IActivityProgress progress = activity.Progress;
         IWindow window = manager.CreateWindow(new WindowBuilder() {
             Title = progress.Caption,
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone6.Background.Static"),
@@ -78,65 +74,66 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
             CanResize = false,
             IsToolWindow = true
         });
-        
+
         ActivityProgressEventHandler captionChangedHandler = prog => window.Title = prog.Caption;
         progress.CaptionChanged += captionChangedHandler;
 
         window.TryClose += (sender, args) => {
-            if (task.IsCompleted || dialogCancellation.IsCancellationRequested) {
+            if (activity.IsCompleted || dialogCancellation.IsCancellationRequested) {
                 return; // closed due to task completing or dialog cancellation
             }
-            
+
             // try cancel the task when the user clicks the X button
-            task.TryCancel();
+            activity.TryCancel();
             args.SetCancelled();
         };
 
-        window.WindowOpened += (sender, args) => {
+        window.WindowOpened += static (sender, args) => {
             ActivityTask theTask = ((ActivityProgressRowControl) sender.Content!).ActivityTask!;
             Debug.Assert(theTask != null);
             ActivityTask.InternalOnPresentInDialogChanged(theTask, true);
         };
 
-        window.WindowClosed += (sender, args) => {
+        window.WindowClosed += static (sender, args) => {
             ActivityProgressRowControl myContent = (ActivityProgressRowControl) sender.Content!;
             ActivityTask theTask = myContent.ActivityTask!;
             Debug.Assert(theTask != null);
-            
+
             ActivityTask.InternalOnPresentInDialogChanged(theTask, false);
             myContent.ActivityTask = null;
         };
 
-        // Add continuation that closes the window
-        await using CancellationTokenRegistration register = dialogCancellation.Register(PostCloseToMainThread, window);
-        _ = task.Task.ContinueWith((t, w) => PostCloseToMainThread((IWindow) w!), window, CancellationToken.None);
+        WeakReference dialogRef = new WeakReference(window);
+
+        // Register cancellation to force-close dialog even if myTask is not completed
+        await using CancellationTokenRegistration register = dialogCancellation.Register(PostCloseToMainThread, dialogRef);
+
+        // Add activity continuation that closes the window.
+        _ = activity.Task.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, CancellationToken.None);
 
         window.Title = progress.Caption ?? "Activity Progress";
         await window.ShowDialogAsync();
-
         progress.CaptionChanged -= captionChangedHandler;
+
         if (window.OpenState == OpenState.Open) {
+            // dialogCancellation cancelled so close quickly
             bool isClosed = await window.RequestCloseAsync(); // should not get cancelled
             Debug.Assert(isClosed);
         }
     }
 
-    private static void PostCloseToMainThread(object? window) {
-        ApplicationPFX.Instance.Dispatcher.Post(void (w) => {
-            IWindow win = (IWindow) w!;
-            if (win.OpenState == OpenState.Open)
-                _ = win.RequestCloseAsync();
-        }, window);
-    }
-
     private static async Task ShowForMultipleSubActivitiesImpl(ITopLevel topLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation) {
-        if (dialogCancellation.IsCancellationRequested)
-            return;
         if (!(topLevel is IWindow theWindow))
             throw new InvalidOperationException("Invalid top level object");
+        
+        if (dialogCancellation.IsCancellationRequested)
+            return;
 
         if (!(activities is IList<SubActivity> activityList))
             activityList = activities.ToList();
+        
+        if (activityList.All(x => x.Task.IsCompleted))
+            return;
 
         StackPanel panel = new StackPanel() {
             Margin = new Thickness(8),
@@ -155,12 +152,8 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
 
             panel.Children.Add(control);
 
-            _ = activity.Task.ContinueWith(t => {
-                ApplicationPFX.Instance.Dispatcher.Post(() => {
-                    control.SubActivity = null;
-                    panel.Children.Remove(control);
-                });
-            }, CancellationToken.None);
+            // Register continuation for when the task completes. Use weakref in case task lasts a long time and outlives dialog
+            _ = activity.Task.ContinueWith(OnSubActivityTaskCompleted, new WeakReference(control), CancellationToken.None);
         }
 
         if (panel.Children.Count < 1 || dialogCancellation.IsCancellationRequested) {
@@ -182,22 +175,65 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
         });
 
         window.TryClose += (sender, args) => {
-            // user may have clicked the close button
-            if (!allTasksCompletedTask.IsCompleted) {
-                args.SetCancelled();
+            if (allTasksCompletedTask.IsCompleted || dialogCancellation.IsCancellationRequested) {
+                return; // closed due to tasks completing or dialog cancellation
             }
+            
+            // user may have clicked the close button. try cancel all sub activities still running
+            foreach (Control control in panel.Children) {
+                SubActivity? subActivity = ((SubActivityProgressRowControl) control).SubActivity;
+                CancellationTokenSource? cancellation = subActivity?.Cancellation;
+                cancellation?.Cancel();
+            }
+            
+            args.SetCancelled();
         };
 
-        // Add continuation that closes the window
-        _ = allTasksCompletedTask.ContinueWith(t => ApplicationPFX.Instance.Dispatcher.Post(void () => _ = window.RequestCloseAsync()), CancellationToken.None);
+        // clean up sub activity controls in case dialogCancellation becomes cancelled
+        window.WindowClosing += static (sender, args) => {
+            StackPanel panel = (StackPanel) sender.Content!;
+            foreach (Control control in panel.Children)
+                ((SubActivityProgressRowControl) control).SubActivity = null;
+
+            panel.Children.Clear();
+        };
+
+        WeakReference dialogRef = new WeakReference(window);
+
+        // Register cancellation to force-close dialog even if myTask is not completed
+        await using CancellationTokenRegistration register = dialogCancellation.Register(PostCloseToMainThread, dialogRef);
+
+        // Add activity continuation that closes the window.
+        _ = allTasksCompletedTask.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, CancellationToken.None);
 
         await window.ShowDialogAsync();
-        window.Activate();
 
-        await window.WaitForClosedAsync(dialogCancellation);
-        Debug.Assert((window.OpenState == OpenState.Open) == dialogCancellation.IsCancellationRequested);
         if (window.OpenState == OpenState.Open) {
-            await window.RequestCloseAsync();
+            // dialogCancellation cancelled so close quickly
+            bool isClosed = await window.RequestCloseAsync(); // should not get cancelled
+            Debug.Assert(isClosed);
         }
+    }
+
+    private static void OnSubActivityTaskCompleted(Task task, object? controlWeakRef) {
+        SubActivityProgressRowControl? target = (SubActivityProgressRowControl?) ((WeakReference) controlWeakRef!).Target;
+        if (target != null) {
+            ApplicationPFX.Instance.Dispatcher.Post(static ctrl => {
+                SubActivityProgressRowControl control = (SubActivityProgressRowControl) ctrl!;
+                control.SubActivity = null;
+                if (control.Parent is StackPanel ctrlPanel) {
+                    ctrlPanel.Children.Remove(control);
+                }
+            }, target);
+        }
+    }
+
+    private static void PostCloseToMainThread(object? weakRef) {
+        ApplicationPFX.Instance.Dispatcher.Post(static void (winRef) => {
+            IWindow? win = (IWindow?) ((WeakReference) winRef!).Target;
+            if (win != null && win.OpenState == OpenState.Open) {
+                _ = win.RequestCloseAsync();
+            }
+        }, weakRef);
     }
 }

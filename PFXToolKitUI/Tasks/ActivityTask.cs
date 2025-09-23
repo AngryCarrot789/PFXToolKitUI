@@ -31,6 +31,7 @@ public delegate void ActivityTaskPausableTaskChangedEventHandler(ActivityTask se
 /// <summary>
 /// Represents a task that can be run by a <see cref="ActivityManager"/> on a background thread
 /// </summary>
+[DebuggerDisplay("{ToString()}")]
 public class ActivityTask {
     private readonly ActivityManager activityManager;
     private readonly Func<Task> action;
@@ -156,12 +157,12 @@ public class ActivityTask {
             throw new InvalidOperationException("An activity task cannot be restarted");
     }
 
-    protected virtual Task CreateTask(TaskCreationOptions creationOptions) {
+    protected virtual Task CreateTask() {
         this.ValidateNotStarted();
 
         // We don't provide the cancellation token, because we want to handle it
         // separately. Awaiting this activity task should never throw an exception
-        return Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap();
+        return Task.Factory.StartNew(this.TaskMain, CancellationToken.None).Unwrap();
     }
 
     /// <summary>
@@ -169,7 +170,7 @@ public class ActivityTask {
     /// </summary>
     /// <returns>The awaiter</returns>
     public TaskAwaiter GetAwaiter() => this.Task.GetAwaiter();
-    
+
     /// <summary>
     /// Returns an awaitable that can be used to await when this activity has started (i.e. <see cref="IsRunning"/> becomes true).
     /// Awaiting this will not throw <see cref="OperationCanceledException"/>
@@ -218,15 +219,15 @@ public class ActivityTask {
         await ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 2);
     }
 
-    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions, AdvancedPausableTask? pausableTask = null) {
+    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, AdvancedPausableTask? pausableTask = null) {
         ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DispatcherActivityProgress(), cts) { myInternalPausableTask = pausableTask };
         if (pausableTask != null)
             pausableTask.activity = task;
-        return InternalStartActivityImpl(task, creationOptions);
+        return InternalStartActivityImpl(task);
     }
 
-    internal static ActivityTask InternalStartActivityImpl(ActivityTask task, TaskCreationOptions creationOptions) {
-        task.Task = task.CreateTask(creationOptions);
+    internal static ActivityTask InternalStartActivityImpl(ActivityTask task) {
+        task.Task = task.CreateTask();
         return task;
     }
 
@@ -256,6 +257,18 @@ public class ActivityTask {
     public readonly struct RunningTaskAwaitable(ActivityTask task) {
         public TaskAwaiter<ActivityTask> GetAwaiter() => task.tcsStarted.Task.GetAwaiter();
     }
+
+    public override string ToString() {
+        string textState = this.state switch {
+            0 => "Waiting for activation",
+            1 => "Running",
+            2 => "Completed",
+            3 => "Cancelled",
+            _ => "INVALID"
+        };
+
+        return $"{this.GetType().Name}({textState}, {this.Progress.Caption}: {this.Progress.Text})";
+    }
 }
 
 // This system isn't great but it just about works... i'd rather not use public new ... methods but oh well
@@ -268,8 +281,8 @@ public class ActivityTask<T> : ActivityTask {
     protected ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts) : base(activityManager, action, activityProgress, cts) {
     }
 
-    internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions) {
-        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new DispatcherActivityProgress(), cts), creationOptions);
+    internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts) {
+        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new DispatcherActivityProgress(), cts));
     }
 
     /// <summary>
@@ -281,14 +294,12 @@ public class ActivityTask<T> : ActivityTask {
     /// </returns>
     public new TaskAwaiter<Result<T>> GetAwaiter() => this.Task.GetAwaiter();
 
-    protected override Task CreateTask(TaskCreationOptions creationOptions) {
+    protected override Task CreateTask() {
         this.ValidateNotStarted();
-        return this.DoCreateTask(creationOptions);
-    }
-
-    protected Task<Result<T>> DoCreateTask(TaskCreationOptions creationOptions) {
-        this.ValidateNotStarted();
-        return System.Threading.Tasks.Task.Factory.StartNew(this.TaskMain, creationOptions).Unwrap().ContinueWith(x => this.myResult, TaskContinuationOptions.ExecuteSynchronously);
+        return System.Threading.Tasks.Task.Factory.
+                      StartNew(this.TaskMain, CancellationToken.None).
+                      Unwrap().
+                      ContinueWith(x => this.myResult, TaskContinuationOptions.ExecuteSynchronously);
     }
 
     protected override Task OnCancelled(OperationCanceledException e) {

@@ -69,6 +69,9 @@ public delegate void ActivityManagerPrimaryActivityChangedEventHandler(ActivityM
 /// </para>
 /// </summary>
 public sealed class ActivityManager : IDisposable {
+    /// <summary>
+    /// Gets the application's main activity manager
+    /// </summary>
     public static ActivityManager Instance => ApplicationPFX.GetComponent<ActivityManager>();
 
     // private readonly ThreadLocal<ActivityTask> threadToTask;
@@ -105,24 +108,24 @@ public sealed class ActivityManager : IDisposable {
         this.BackgroundTasks = new ReadOnlyObservableList<ActivityTask>(this.backgroundTasks);
     }
 
-    public ActivityTask RunTask(Func<Task> action, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, (CancellationTokenSource?) null, creationOptions);
+    public ActivityTask RunTask(Func<Task> action) => this.RunTask(action, (CancellationTokenSource?) null);
 
-    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, progress, null, creationOptions);
+    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress) => this.RunTask(action, progress, null);
 
-    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new DispatcherActivityProgress(), cts, creationOptions);
+    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cts) => this.RunTask(action, new DispatcherActivityProgress(), cts);
 
-    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) {
-        return ActivityTask.InternalStartActivity(this, action, progress, cts, creationOptions);
+    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, CancellationTokenSource? cts) {
+        return ActivityTask.InternalStartActivity(this, action, progress, cts);
     }
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, (CancellationTokenSource?) null, creationOptions);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action) => this.RunTask(action, (CancellationTokenSource?) null);
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, progress, null, creationOptions);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress) => this.RunTask(action, progress, null);
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) => this.RunTask(action, new DispatcherActivityProgress(), cts, creationOptions);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cts) => this.RunTask(action, new DispatcherActivityProgress(), cts);
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, CancellationTokenSource? cts, TaskCreationOptions creationOptions = TaskCreationOptions.None) {
-        return ActivityTask<T>.InternalStartActivity(this, action, progress, cts, creationOptions);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, CancellationTokenSource? cts) {
+        return ActivityTask<T>.InternalStartActivity(this, action, progress, cts);
     }
 
     /// <summary>

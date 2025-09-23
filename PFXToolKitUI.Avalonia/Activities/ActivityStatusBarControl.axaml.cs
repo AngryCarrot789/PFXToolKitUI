@@ -102,7 +102,7 @@ public partial class ActivityStatusBarControl : UserControl {
 
         ActivityManager am = ActivityManager.Instance;
         am.BackgroundTasks.CollectionChanged += this.OnBackgroundTasksCollectionChanged;
-        if (am.ActiveTasks.Count > 0) {
+        if (am.BackgroundTasks.Count > 0) {
             this.ActivityTask = am.BackgroundTasks[0];
         }
     }
