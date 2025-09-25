@@ -132,9 +132,7 @@ public sealed class DesktopWindowManager : IWindowManager {
 
     private void OnWindowActivated(object? sender, EventArgs e) {
         DesktopWindowImpl window = ((DesktopNativeWindow) sender!).Window;
-        Debug.Assert(window.OpenState > OpenState.NotOpened && window.OpenState <= OpenState.Open);
-
-        this.lastActivated = window;
+        this.lastActivated = window.OpenState == OpenState.Open || window.OpenState == OpenState.TryingToClose ? window : null;
     }
 
     #region Internal Show/Close Handling

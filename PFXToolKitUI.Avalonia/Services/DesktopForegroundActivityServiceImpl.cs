@@ -103,13 +103,15 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
             myContent.ActivityTask = null;
         };
 
+        // Use WeakReference just in case the task continuation doesn't get removed
+        // from the parent task for some reason when dialogCancellation is cancelled
         WeakReference dialogRef = new WeakReference(window);
 
         // Register cancellation to force-close dialog even if myTask is not completed
         await using CancellationTokenRegistration register = dialogCancellation.Register(PostCloseToMainThread, dialogRef);
 
         // Add activity continuation that closes the window.
-        _ = activity.Task.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, CancellationToken.None);
+        _ = activity.Task.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, dialogCancellation);
 
         window.Title = progress.Caption ?? "Activity Progress";
         await window.ShowDialogAsync();
@@ -198,13 +200,15 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
             panel.Children.Clear();
         };
 
+        // Use WeakReference just in case the task continuation doesn't get removed
+        // from the parent task for some reason when dialogCancellation is cancelled
         WeakReference dialogRef = new WeakReference(window);
 
         // Register cancellation to force-close dialog even if myTask is not completed
         await using CancellationTokenRegistration register = dialogCancellation.Register(PostCloseToMainThread, dialogRef);
 
         // Add activity continuation that closes the window.
-        _ = allTasksCompletedTask.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, CancellationToken.None);
+        _ = allTasksCompletedTask.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, dialogCancellation);
 
         await window.ShowDialogAsync();
 
