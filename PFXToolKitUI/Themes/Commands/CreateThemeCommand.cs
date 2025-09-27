@@ -62,7 +62,7 @@ public class CreateThemeCommand : Command {
         }
 
         info.Text = TextIncrement.GetIncrementableString((x) => theme.ThemeManager.GetTheme(x) == null, theme.Name, out string? value, true) ? value : theme.Name;
-        if (await IUserInputDialogService.Instance.ShowInputDialogAsync(info, ITopLevel.FromContext(e.ContextData)) != true) {
+        if (await IUserInputDialogService.Instance.ShowInputDialogAsync(info) != true) {
             return;
         }
 

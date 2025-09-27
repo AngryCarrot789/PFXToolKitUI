@@ -40,7 +40,9 @@ public interface IForegroundActivityService {
     /// A cancellation token that forces the dialog to close and therefore
     /// this method to return, even if the activity is still running
     /// </param>
-    /// <returns>A task that becomes completed once the activity completes and the dialog closes</returns>
+    /// <returns>
+    /// A task that becomes completed once the dialog closes (either the activity completes or <see cref="dialogCancellation"/> becomes cancelled)
+    /// </returns>
     Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation = default);
 
     /// <summary>
@@ -55,8 +57,57 @@ public interface IForegroundActivityService {
     /// A cancellation token that forces the dialog to close and therefore
     /// this method to return, even if the task is still running
     /// </param>
-    /// <returns>A task that becomes completed once all the sub-activities complete and the dialog closes</returns>
+    /// <returns>
+    /// A task that becomes completed once the dialog closes (either the activities complete or <see cref="dialogCancellation"/> becomes cancelled)
+    /// </returns>
     Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default);
+
+    /// <summary>
+    /// Waits an amount of milliseconds before showing the dialog via <see cref="WaitForActivity"/>.
+    /// This method is useful to prevent the dialog flashing onscreen for a tiny amount of time
+    /// if the activity is likely to complete very quickly.
+    /// </summary>
+    /// <param name="parentTopLevel">The top-level that should be parented to the dialog</param>
+    /// <param name="activity">The activity task to show the progress of</param>
+    /// <param name="showDelay">
+    /// The amount of milliseconds to wait before showing the dialog.
+    /// When 0 is specified, this is the same as calling <see cref="WaitForActivity"/> directly
+    /// </param>
+    /// <param name="dialogCancellation">
+    /// A cancellation token that forces the dialog to close and therefore
+    /// this method to return, even if the activity is still running
+    /// </param>
+    /// <returns>
+    /// A task that becomes completed either when the activity becomes completed before the dialog opens,
+    /// or the dialog closes (either the activity completed or <see cref="dialogCancellation"/> becomes cancelled)
+    /// </returns>
+    async Task DelayedWaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, int showDelay, CancellationToken dialogCancellation = default) {
+        if (showDelay < 0)
+            throw new ArgumentOutOfRangeException(nameof(showDelay), showDelay, "Show delay cannot be negative");
+        
+        if (showDelay > 0) {
+            // Create a CTS that becomes cancelled when either
+            // the activity is cancelled or dialogCancellation gets cancelled
+            using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(activity.CancellationToken, dialogCancellation);
+
+            try {
+                // Wait for either the activity to complete, or for the show delay to elapse
+                await Task.WhenAny(activity.Task, Task.Delay(showDelay, linkedCts.Token));
+            }
+            catch (OperationCanceledException) {
+                // ignored
+            }
+            
+            if (!activity.IsCompleted && !linkedCts.Token.IsCancellationRequested) {
+                // Activity still running and no request to cancel it, and dialogCancellation is not cancelled, so we
+                // show the dialog and blow it a kiss before this code fails somehow, I'm sure I missed something...
+                await this.WaitForActivity(parentTopLevel, activity, dialogCancellation);
+            }
+        }
+        else {
+            await this.WaitForActivity(parentTopLevel, activity, dialogCancellation);
+        }
+    }
 }
 
 /// <summary>
@@ -78,7 +129,7 @@ public readonly struct SubActivity(IActivityProgress progress, Task task, Cancel
     /// request <see cref="Task"/> to stop as soon as possible
     /// </summary>
     public CancellationTokenSource? Cancellation { get; } = cancellation;
-    
+
     /// <summary>
     /// Creates a sub-activity from an <see cref="ActivityTask"/>
     /// </summary>

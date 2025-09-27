@@ -35,7 +35,7 @@ public class AddKeyStrokeToShortcutUsingDialogCommand : Command {
             return;
         }
 
-        KeyStroke? stroke = await IInputStrokeQueryService.Instance.GetKeyStrokeInput(null, ITopLevel.FromContext(e.ContextData));
+        KeyStroke? stroke = await IInputStrokeQueryService.Instance.GetKeyStrokeInput(null);
         if (stroke.HasValue) {
             if (entry.Shortcut is KeyboardShortcut shortcut) {
                 entry.Shortcut = new KeyboardShortcut(shortcut.KeyStrokes.Append(stroke.Value).ToList());
