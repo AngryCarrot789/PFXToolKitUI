@@ -23,14 +23,14 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Notifications;
 
-public delegate void NotificationCommandEventHandler(NotificationCommand sender);
+public delegate void NotificationActionEventHandler(NotificationAction sender);
 
-public delegate void NotificationCommandContextDataChangedEventHandler(NotificationCommand sender, IContextData? oldData, IContextData? newData);
+public delegate void NotificationActionContextDataChangedEventHandler(NotificationAction sender, IContextData? oldData, IContextData? newData);
 
 /// <summary>
-/// A command that may be executed from within a notification
+/// An action that can be executed from within a notification
 /// </summary>
-public abstract class NotificationCommand {
+public abstract class NotificationAction {
     private Notification? notification;
     private string? text, tooltip;
 
@@ -72,40 +72,45 @@ public abstract class NotificationCommand {
 
     /// <summary>
     /// Gets the current context data for this command. This changes when <see cref="Notification"/> 
-    /// changes or the notification's <see cref="Notifications.Notification.ContextData"/> changes
+    /// changes or the notification's <see cref="Notification.ContextData"/> changes
     /// </summary>
     public IContextData? ContextData { get; private set; }
 
-    public event NotificationCommandEventHandler? NotificationChanged;
-    public event NotificationCommandEventHandler? TextChanged;
-    public event NotificationCommandEventHandler? ToolTipChanged;
-    public event NotificationCommandContextDataChangedEventHandler? ContextDataChanged;
+    public event NotificationActionEventHandler? NotificationChanged;
+    public event NotificationActionEventHandler? TextChanged;
+    public event NotificationActionEventHandler? ToolTipChanged;
+    public event NotificationActionContextDataChangedEventHandler? ContextDataChanged;
 
     /// <summary>
     /// Fired as a hint that <see cref="CanExecute"/> may return a different value prior to this event being fired
     /// </summary>
-    public event NotificationCommandEventHandler? CanExecuteChanged;
+    public event NotificationActionEventHandler? CanExecuteChanged;
 
-    protected NotificationCommand() {
+    protected NotificationAction() {
     }
 
-    protected NotificationCommand(string? text) : this() {
+    protected NotificationAction(string? text) : this() {
         this.text = text;
     }
 
     /// <summary>
-    /// Returns true when this command can execute, false when it cannot
+    /// Gets whether this action can be executed
     /// </summary>
-    /// <returns></returns>
+    /// <returns>True if <see cref="Execute"/> will (most likely) do useful work</returns>
     public virtual bool CanExecute() {
         return true;
     }
 
     /// <summary>
-    /// Executes the command
+    /// Executes this notification action
     /// </summary>
     public abstract Task Execute();
 
+    /// <summary>
+    /// Invoked when our <see cref="Notification"/>'s <see cref="Notification.ContextData"/> changes
+    /// </summary>
+    /// <param name="oldData">The previous context data</param>
+    /// <param name="newData">The new context data</param>
     protected virtual void OnContextChanged(IContextData? oldData, IContextData? newData) {
         this.ContextDataChanged?.Invoke(this, oldData, newData);
         this.RaiseCanExecuteChanged();
@@ -115,10 +120,10 @@ public abstract class NotificationCommand {
         this.CanExecuteChanged?.Invoke(this);
     }
 
-    internal static void InternalOnNotificationContextChanged(NotificationCommand command, IContextData? oldCtx, IContextData? newCtx) {
-        Debug.Assert(command.ContextData == oldCtx);
+    internal static void InternalOnNotificationContextChanged(NotificationAction action, IContextData? oldCtx, IContextData? newCtx) {
+        Debug.Assert(action.ContextData == oldCtx);
 
-        command.ContextData = newCtx;
-        command.OnContextChanged(command.ContextData, newCtx);
+        action.ContextData = newCtx;
+        action.OnContextChanged(action.ContextData, newCtx);
     }
 }

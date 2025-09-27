@@ -121,7 +121,7 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     /// <summary>
     /// Enumerates the selected items
     /// </summary>
-    IEnumerable<T> SelectedItems { get; }
+    IReadOnlyList<T> SelectedItems { get; }
 
     /// <summary>
     /// Enumerates the selected indices and pairs them with the item itself

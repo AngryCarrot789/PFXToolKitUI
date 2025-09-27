@@ -331,7 +331,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             if (this.ItemsAdded?.GetInvocationList().Length > 1 ||
                 this.ItemsRemoved?.GetInvocationList().Length > 1 ||
                 this.ItemReplaced?.GetInvocationList().Length > 1 ||
-                this.ItemMoved?.GetInvocationList().Length > 1)
+                this.ItemMoved?.GetInvocationList().Length > 1 ||
+                this.CollectionChanged?.GetInvocationList().Length > 1)
                 throw new InvalidOperationException("Reentrancy Not Allowed");
         }
     }
@@ -344,17 +345,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
     private SimpleMonitor EnsureMonitorInitialized() => this._monitor ??= new SimpleMonitor(this);
 
-    private sealed class SimpleMonitor : IDisposable {
-        internal int _busyCount; // Only used during (de)serialization to maintain compatibility with desktop. Do not rename (binary serialization)
-
-        [NonSerialized] internal ObservableList<T> _collection;
-
-        public SimpleMonitor(ObservableList<T> collection) {
-            Debug.Assert(collection != null);
-            this._collection = collection;
-        }
-
-        public void Dispose() => this._collection.blockReentrancyCount--;
+    private sealed class SimpleMonitor(ObservableList<T> collection) : IDisposable {
+        public void Dispose() => collection.blockReentrancyCount--;
     }
 
     public static void Test() {

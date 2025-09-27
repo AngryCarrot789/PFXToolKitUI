@@ -51,6 +51,11 @@ public class CommandEventArgs {
     /// Gets the context registry for the context menu that caused a command to execute
     /// </summary>
     public ContextRegistry? SourceContextMenu { get; }
+    
+    /// <summary>
+    /// Gets the UI focus area that's used by the shortcut system
+    /// </summary>
+    public string? ShortcutFocusArea { get; }
 
     /// <summary>
     /// Whether this command event was originally caused by a user or not, e.g. via a button/menu click or clicking a check box.
@@ -68,5 +73,6 @@ public class CommandEventArgs {
         this.Shortcut = shortcut;
         this.SourceContextMenu = sourceContextMenu;
         this.IsUserInitiated = isUserInitiated;
+        this.ShortcutFocusArea = ShortcutManager.Instance.CurrentFocusPath;
     }
 }

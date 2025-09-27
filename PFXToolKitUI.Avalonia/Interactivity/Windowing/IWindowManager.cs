@@ -76,14 +76,14 @@ public interface IWindowManager : ITopLevelManager {
     bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IWindow? window);
 
     bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {
-        return (topLevel = this.GetActiveWindowOrNull()) != null;
+        return (topLevel = this.GetActiveOrMainWindow()) != null;
     }
 
     /// <summary>
     /// Returns the window produced by <see cref="TryGetActiveOrMainWindow"/> or returns null
     /// </summary>
     /// <returns>The active window or null</returns>
-    IWindow? GetActiveWindowOrNull() => this.TryGetActiveOrMainWindow(out IWindow? window) ? window : null;
+    IWindow? GetActiveOrMainWindow() => this.TryGetActiveOrMainWindow(out IWindow? window) ? window : null;
     
     /// <summary>
     /// Tries to get the <see cref="IWindow"/> instance that a specific visual control exists in.

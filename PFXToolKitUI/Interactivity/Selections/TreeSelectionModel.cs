@@ -18,13 +18,21 @@
 // 
 
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Interactivity.Selections;
 
 /// <summary>
-/// Manages a hierarchy of selected items. Items must be equal by reference
+/// Manages a hierarchy of selected items. Items must be equal by reference.
+/// <para>
+/// The tree structure should be such that:
+/// <list type="bullet">
+/// <item><description>There's a singular "root" item, which only acts as a container object and cannot be seen at all</description></item>
+/// <item><description>The <see cref="GetParentFunction"/> returns the direct parent, which may be compared to <see cref="RootItem"/></description></item>
+/// </list>
+/// </para>
 /// </summary>
 /// <typeparam name="T">The item type</typeparam>
 public sealed class TreeSelectionModel<T> where T : class {
@@ -32,58 +40,76 @@ public sealed class TreeSelectionModel<T> where T : class {
 
     private readonly HashSet<T> selectedItems;
 
-    /// <summary>Gets the list of top-level items</summary>
-    public ObservableList<T> TopLevelItems { get; }
-
-    /// <summary>Gets a function that gets the parent of a node</summary>
-    public Func<T, T?> GetParentFunction { get; }
-
-    /// <summary>Gets a function that enumerates the child nodes of an node</summary>
-    public Func<T, IEnumerable<T>> GetChildrenFunction { get; }
-
-    /// <summary>Enumerates the selected items</summary>
-    public IEnumerable<T> SelectedItems => this.selectedItems;
-
-    /// <summary>Returns the amount of selected items</summary>
-    public int Count => this.selectedItems.Count;
-
-    /// <summary>An event fired when the selection state changes</summary>
-    public event EventHandler<ChangedEventArgs>? SelectionChanged;
-
-    public TreeSelectionModel(ObservableList<T> topLevelItems, Func<T, T?> getParentFunction, Func<T, IEnumerable<T>> getChildrenFunction) {
-        this.TopLevelItems = topLevelItems ?? throw new ArgumentNullException(nameof(topLevelItems));
-        this.GetParentFunction = getParentFunction ?? throw new ArgumentNullException(nameof(getParentFunction));
-        this.GetChildrenFunction = getChildrenFunction ?? throw new ArgumentNullException(nameof(getChildrenFunction));
-        this.selectedItems = new HashSet<T>(EqualityComparer<T>.Create(ReferenceEquals, t => t.GetHashCode()));
-    }
+    /// <summary>
+    /// Gets the root item
+    /// </summary>
+    public T RootItem { get; }
 
     /// <summary>
-    /// Enumerates every single items in the tree, selected or not
+    /// Gets a function that returns true when an item exists in the tree, even if it
+    /// has a parent. E.g. the item's tree "manager" reference is not set, so it's not valid)
     /// </summary>
-    /// <returns></returns>
-    public List<T> GetItemsRecursive() {
-        List<T> list = new List<T>();
-        foreach (T item in this.TopLevelItems) {
-            list.Add(item);
-            this.GetItemsRecursive(item, list);
-        }
+    public Func<T, bool> IsItemInTreeFunction { get; }
 
-        return list;
-    }
+    /// <summary>
+    /// Gets a function that gets the parent of a node
+    /// </summary>
+    public Func<T, T?> GetParentFunction { get; }
 
-    public void GetItemsRecursive(T item, List<T> list) {
-        foreach (T node in this.GetChildrenFunction(item)) {
-            list.Add(node);
-            this.GetItemsRecursive(node, list);
-        }
+    /// <summary>
+    /// Gets a function that enumerates the child nodes of an node
+    /// </summary>
+    public Func<T, IObservableList<T>?> GetChildrenFunction { get; }
+
+    /// <summary>
+    /// Enumerates the selected items.
+    /// </summary>
+    public IEnumerable<T> SelectedItems => this.selectedItems;
+
+    /// <summary>
+    /// Returns the amount of selected items
+    /// </summary>
+    public int Count => this.selectedItems.Count;
+
+    /// <summary>
+    /// Returns true when we only have a single selected item
+    /// </summary>
+    public bool HasOneSelectedItem => this.Count == 1;
+
+    /// <summary>
+    /// An event fired when the selection state changes
+    /// </summary>
+    public event EventHandler<ChangedEventArgs>? SelectionChanged;
+
+    private readonly ObservableListMultipleItemsEventHandler<T> ItemsRemovedHandler;
+    private readonly ObservableListReplaceEventHandler<T> ItemReplacedHandler;
+    private readonly Func<T, bool> CanSelectItem;
+
+    public TreeSelectionModel(T rootItem, Func<T, bool> isItemInTree, Func<T, T?> getParentFunction, Func<T, IObservableList<T>?> getChildrenFunction) {
+        this.RootItem = rootItem ?? throw new ArgumentNullException(nameof(rootItem));
+        this.IsItemInTreeFunction = isItemInTree ?? throw new ArgumentNullException(nameof(isItemInTree));
+        this.GetParentFunction = getParentFunction ?? throw new ArgumentNullException(nameof(getParentFunction));
+        this.GetChildrenFunction = getChildrenFunction ?? throw new ArgumentNullException(nameof(getChildrenFunction));
+        this.CanSelectItem = item => {
+            Debug.Assert(item != null, "Attempt to use null item in " + nameof(TreeSelectionModel<T>));
+            return item != null! && item != this.RootItem && this.IsItemInTreeFunction(item);
+        };
+
+        this.ItemsRemovedHandler = this.OnItemsRemoved;
+        this.ItemReplacedHandler = this.OnItemReplaced;
+        this.selectedItems = new HashSet<T>(EqualityComparer<T>.Create(ReferenceEquals, t => t.GetHashCode()));
+
+        IObservableList<T>? list = getChildrenFunction(rootItem)!;
+        list.ItemsRemoved += this.ItemsRemovedHandler;
+        list.ItemReplaced += this.ItemReplacedHandler;
     }
 
     /// <summary>
     /// Select a single item
     /// </summary>
     public void Select(T item) {
-        if (this.selectedItems.Add(item)) {
-            this.SelectionChanged?.Invoke(this, new ChangedEventArgs(new SingletonList<T>(item), EmptyList));
+        if (this.CanSelectItem(item) && this.selectedItems.Add(item)) {
+            this.RaiseSelectionChanged(new SingletonList<T>(item), EmptyList);
         }
     }
 
@@ -91,9 +117,9 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// Select multiple items
     /// </summary>
     public void SelectItems(IEnumerable<T> items) {
-        List<T> added = this.selectedItems.UnionAddEx(items);
+        List<T> added = this.selectedItems.UnionAddEx(items.Where(this.CanSelectItem));
         if (added.Count > 0) {
-            this.SelectionChanged?.Invoke(this, new ChangedEventArgs(added.AsReadOnly(), EmptyList));
+            this.RaiseSelectionChanged(added.AsReadOnly(), EmptyList);
         }
     }
 
@@ -102,7 +128,7 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// </summary>
     public void Deselect(T item) {
         if (this.selectedItems.Remove(item)) {
-            this.SelectionChanged?.Invoke(this, new ChangedEventArgs(EmptyList, new SingletonList<T>(item)));
+            this.RaiseSelectionChanged(EmptyList, new SingletonList<T>(item));
         }
     }
 
@@ -112,7 +138,7 @@ public sealed class TreeSelectionModel<T> where T : class {
     public void DeselectItems(IEnumerable<T> items) {
         List<T> removed = this.selectedItems.UnionRemoveEx(items);
         if (removed.Count > 0) {
-            this.SelectionChanged?.Invoke(this, new ChangedEventArgs(EmptyList, removed.AsReadOnly()));
+            this.RaiseSelectionChanged(EmptyList, removed.AsReadOnly());
         }
     }
 
@@ -126,10 +152,26 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// Selects all items
     /// </summary>
     public void SelectAll() {
-        List<T> items = this.GetItemsRecursive();
-        List<T> added = this.selectedItems.UnionAddEx(items);
+        List<T> allItems = new List<T>();
+        Recurse(this.RootItem, allItems);
+        Debug.Assert(allItems.All(this.CanSelectItem));
+
+        List<T> added = this.selectedItems.UnionAddEx(allItems);
         if (added.Count > 0) {
-            this.SelectionChanged?.Invoke(this, new ChangedEventArgs(added.AsReadOnly(), EmptyList));
+            this.RaiseSelectionChanged(added.AsReadOnly(), EmptyList);
+        }
+
+        return;
+
+        void Recurse(T item, List<T> sink) {
+            IObservableList<T>? items = this.GetChildrenFunction(item);
+            if (items != null) {
+                for (int i = 0; i < items.Count; i++) {
+                    T node = items[i];
+                    sink.Add(node);
+                    Recurse(node, sink);
+                }
+            }
         }
     }
 
@@ -137,7 +179,7 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// Selects all items
     /// </summary>
     public void SelectTopLevelItems() {
-        this.SelectItems(this.TopLevelItems);
+        this.SelectItems(this.GetChildrenFunction(this.RootItem)!);
     }
 
     /// <summary>
@@ -145,12 +187,18 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// </summary>
     /// <param name="item">The item to select</param>
     public void SetSelection(T item) {
-        bool isSelected = this.selectedItems.Remove(item);
+        bool wasSelected = this.selectedItems.Remove(item);
         List<T> removed = this.selectedItems.ToList();
         this.selectedItems.Clear();
-        this.selectedItems.Add(item);
 
-        this.SelectionChanged?.Invoke(this, new ChangedEventArgs(isSelected ? EmptyList : new SingletonList<T>(item), removed));
+        if (this.CanSelectItem(item)) {
+            this.selectedItems.Add(item);
+        }
+
+        IList<T> added = wasSelected ? EmptyList : this.selectedItems.ToList();
+        if (added.Count > 0 || removed.Count > 0) {
+            this.RaiseSelectionChanged(added, removed);
+        }
     }
 
     /// <summary>
@@ -158,7 +206,7 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// </summary>
     /// <param name="items">The items to select</param>
     public void SetSelection(IEnumerable<T> items) {
-        HashSet<T> newSet = new HashSet<T>(items);
+        HashSet<T> newSet = new HashSet<T>(items.Where(this.CanSelectItem));
         List<T> removed = this.selectedItems.Except(newSet).ToList();
         List<T> added = newSet.Except(this.selectedItems).ToList();
 
@@ -167,8 +215,9 @@ public sealed class TreeSelectionModel<T> where T : class {
         foreach (T t in added)
             this.selectedItems.Add(t);
 
-        if (added.Count > 0 || removed.Count > 0)
-            this.SelectionChanged?.Invoke(this, new ChangedEventArgs(added.AsReadOnly(), removed.AsReadOnly()));
+        if (added.Count > 0 || removed.Count > 0) {
+            this.RaiseSelectionChanged(added.AsReadOnly(), removed.AsReadOnly());
+        }
     }
 
     /// <summary>
@@ -178,7 +227,64 @@ public sealed class TreeSelectionModel<T> where T : class {
         if (this.selectedItems.Count > 0) {
             IList<T> items = new ReadOnlyCollection<T>(this.selectedItems.ToList());
             this.selectedItems.Clear();
-            this.SelectionChanged?.Invoke(this, new ChangedEventArgs(EmptyList, items));
+            this.RaiseSelectionChanged(EmptyList, items);
+        }
+    }
+
+    private void RaiseSelectionChanged(IList<T> addedItems, IList<T> removedItems) {
+        Debug.Assert(addedItems.Count > 0 || removedItems.Count > 0);
+        for (int i = 0; i < addedItems.Count; i++) {
+            IObservableList<T>? list = this.GetChildrenFunction(addedItems[i]);
+            if (list != null) {
+                list.ItemsRemoved += this.ItemsRemovedHandler;
+                list.ItemReplaced += this.ItemReplacedHandler;
+            }
+        }
+
+        for (int i = 0; i < removedItems.Count; i++) {
+            IObservableList<T>? list = this.GetChildrenFunction(removedItems[i]);
+            if (list != null) {
+                list.ItemsRemoved -= this.ItemsRemovedHandler;
+                list.ItemReplaced -= this.ItemReplacedHandler;
+            }
+        }
+
+        this.SelectionChanged?.Invoke(this, new ChangedEventArgs(addedItems, removedItems));
+    }
+
+    private void OnItemsRemoved(IObservableList<T> list, int index, IList<T> items) {
+        if (this.selectedItems.Count > 0) {
+            List<T> deselect = new List<T>(32);
+            for (int i = 0; i < items.Count; i++) {
+                this.RecursiveDeselect(items[i], deselect);
+            }
+
+            if (deselect.Count > 0) {
+                this.RaiseSelectionChanged(EmptyList, deselect);
+            }
+        }
+    }
+
+    private void OnItemReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
+        if (this.selectedItems.Count > 0) {
+            List<T> deselect = new List<T>(32);
+            this.RecursiveDeselect(olditem, deselect);
+            if (deselect.Count > 0) {
+                this.RaiseSelectionChanged(EmptyList, deselect);
+            }
+        }
+    }
+
+    private void RecursiveDeselect(T removedItem, List<T> sink) {
+        if (this.selectedItems.Remove(removedItem)) {
+            sink.Add(removedItem);
+        }
+
+        IObservableList<T>? children = this.GetChildrenFunction(removedItem);
+        if (children != null) {
+            foreach (T node in children) {
+                this.RecursiveDeselect(node, sink);
+            }
         }
     }
 

@@ -23,7 +23,8 @@ using PFXToolKitUI.Interactivity.Windowing;
 namespace PFXToolKitUI.Tasks;
 
 /// <summary>
-/// A service for 
+/// A service for showing activities as foreground operations that stop the user doing anything until
+/// the activity has completed, or until other special cases (i.e. external dialog cancellation)
 /// </summary>
 public interface IForegroundActivityService {
     static bool TryGetInstance([NotNullWhen(true)] out IForegroundActivityService? service) {

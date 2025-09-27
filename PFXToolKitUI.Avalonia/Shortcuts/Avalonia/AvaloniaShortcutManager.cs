@@ -68,6 +68,8 @@ public sealed class AvaloniaShortcutManager : ShortcutManager {
 
     public override ShortcutInputProcessor NewProcessor() => new AvaloniaShortcutInputProcessor(this);
 
+    public override string? CurrentFocusPath => UIInputManager.Instance.FocusedPath;
+
     public override void ReloadFromStream(Stream stream) {
         this.InvalidateShortcutCache();
         Keymap map = KeyMapSerialiser.Instance.Deserialise(this, stream);

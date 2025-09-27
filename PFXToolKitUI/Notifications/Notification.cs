@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Composition;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
@@ -27,7 +28,15 @@ public delegate void NotificationEventHandler(Notification sender);
 
 public delegate void NotificationContextDataChangedEventHandler(Notification sender, IContextData? oldContextData, IContextData? newContextData);
 
-public abstract class Notification {
+/// <summary>
+/// The base class for a notification type. The standard notification types
+/// are <see cref="TextNotification"/> and <see cref="ActivityNotification"/>
+/// <para>
+/// A custom notification type requires a custom control.
+/// </para>
+/// </summary>
+public abstract class Notification : IComponentManager {
+    private readonly ComponentStorage myComponentStorage;
     private string? caption;
     private bool canAutoHide = true;
     private bool isAutoHideActive;
@@ -36,6 +45,8 @@ public abstract class Notification {
     private IContextData? ctxData;
     private TimeSpan autoHideDelay = TimeSpan.FromSeconds(5);
     private NotificationAlertMode alertMode;
+
+    ComponentStorage IComponentManager.ComponentStorage => this.myComponentStorage;
 
     /// <summary>
     /// Gets or sets the text displayed in the notification's header
@@ -107,7 +118,7 @@ public abstract class Notification {
     public DateTime AutoHideStartTime { get; private set; }
 
     /// <summary>
-    /// Gets or sets the context data for this notification. This is used by our commands
+    /// Gets or sets the context data for this notification. This is used by our <see cref="Actions"/>
     /// </summary>
     public IContextData? ContextData {
         get => this.ctxData;
@@ -116,8 +127,8 @@ public abstract class Notification {
             if (!Equals(oldContextData, value)) {
                 this.ctxData = value;
                 this.ContextDataChanged?.Invoke(this, oldContextData, value);
-                foreach (NotificationCommand command in this.Commands) {
-                    NotificationCommand.InternalOnNotificationContextChanged(command, oldContextData, value);
+                foreach (NotificationAction action in this.Actions) {
+                    NotificationAction.InternalOnNotificationContextChanged(action, oldContextData, value);
                 }
             }
         }
@@ -133,7 +144,10 @@ public abstract class Notification {
 
     public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
 
-    public ObservableList<NotificationCommand> Commands { get; }
+    /// <summary>
+    /// Gets the list of notification actions that the user can execute
+    /// </summary>
+    public ObservableList<NotificationAction> Actions { get; }
 
     /// <summary>
     /// Gets the notification manager this notification exists in
@@ -153,15 +167,16 @@ public abstract class Notification {
     public event NotificationEventHandler? AlertModeChanged;
 
     protected Notification() {
-        this.Commands = new ObservableList<NotificationCommand>();
-        this.Commands.BeforeItemsAdded += (list, index, items) => {
-            foreach (NotificationCommand item in items) {
+        this.myComponentStorage = new ComponentStorage(this);
+        this.Actions = new ObservableList<NotificationAction>();
+        this.Actions.BeforeItemsAdded += (list, index, items) => {
+            foreach (NotificationAction item in items) {
                 if (item.Notification != null)
-                    throw new InvalidOperationException("Command already exists in another notification");
+                    throw new InvalidOperationException($"{nameof(NotificationAction)} already exists in another notification");
             }
         };
 
-        ObservableItemProcessor.MakeSimple(this.Commands, c => c.Notification = this, c => c.Notification = null);
+        ObservableItemProcessor.MakeSimple(this.Actions, c => c.Notification = this, c => c.Notification = null);
     }
 
     public void StartAutoHide() {
@@ -222,8 +237,8 @@ public abstract class Notification {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
         ArgumentNullException.ThrowIfNull(notificationManager);
         if (!ReferenceEquals(this.NotificationManager, notificationManager)) {
-            this.NotificationManager?.HideNotification(this);
-            notificationManager.ShowNotification(this);
+            this.NotificationManager?.Toasts.Remove(this);
+            notificationManager.Toasts.Add(this);
         }
         else if (this.IsAutoHideActive && !this.flagRestartAutoHide) {
             this.flagRestartAutoHide = true;
@@ -232,10 +247,10 @@ public abstract class Notification {
     }
 
     /// <summary>
-    /// Closes this notification, removing it from the <see cref="NotificationManager"/>
+    /// Hides this notification, removing it from the <see cref="NotificationManager"/>
     /// </summary>
     public void Hide() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-        this.NotificationManager?.HideNotification(this);
+        this.NotificationManager?.Toasts.Remove(this);
     }
 }

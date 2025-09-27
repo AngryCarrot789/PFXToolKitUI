@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Collections;
 using System.Collections.ObjectModel;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
@@ -45,15 +46,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     /// <summary>
     /// Enumerates the selected items
     /// </summary>
-    public IEnumerable<T> SelectedItems {
-        get {
-            foreach (IntRange range in this.selectedIndices) {
-                for (int i = range.Start; i < range.End; i++) {
-                    yield return this.SourceList[i];
-                }
-            }
-        }
-    }
+    public IReadOnlyList<T> SelectedItems { get; }
 
     public IEnumerable<KeyValuePair<int, T>> SelectedEntries {
         get {
@@ -90,10 +83,11 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public ListSelectionModel(ObservableList<T> sourceList) {
         this.SourceList = sourceList ?? throw new ArgumentNullException(nameof(sourceList));
+        this.selectedIndices = new IntRangeUnion();
+        this.SelectedItems = new ReadOnlyListDelegate(this);
         this.SourceList.BeforeItemsRemoved += this.SourceListBeforeItemsRemoved;
         this.SourceList.BeforeItemReplace += this.SourceListBeforeItemReplaced;
         this.SourceList.ItemMoved += this.SourceListOnItemMoved;
-        this.selectedIndices = new IntRangeUnion();
     }
 
     private void SourceListBeforeItemsRemoved(IObservableList<T> list, int index, int count) {
@@ -110,17 +104,19 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     }
 
     public void Select(int index) => this.SelectRange(index, 1);
+
     public void SelectItem(T item) {
         int index = this.SourceList.IndexOf(item);
         if (index != -1) {
             this.Select(index);
         }
     }
-    
+
     public void SelectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, true);
     public void SelectRange(int index, int count) => this.SetSelection(index, count, true);
     public void SelectRanges(IntRangeUnion union) => this.SetSelectionForRanges(union, true);
     public void Deselect(int index) => this.DeselectRange(index, 1);
+
     public void DeselectItem(T item) {
         int index = this.SourceList.IndexOf(item);
         if (index != -1) {
@@ -135,7 +131,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     public void DeselectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, false);
 
     public bool IsSelected(int index) => this.selectedIndices.Contains(index);
-    
+
     public bool? IsItemSelected(T item) {
         int index = this.SourceList.IndexOf(item);
         return index == -1 ? null : this.IsSelected(index);
@@ -233,6 +229,24 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
                     this.selectedIndices.Remove(range);
                 }
             }
+        }
+    }
+
+    private sealed class ReadOnlyListDelegate(ListSelectionModel<T> selection) : IReadOnlyList<T> {
+        public int Count => selection.Count;
+
+        public T this[int index] => selection[index];
+        
+        public IEnumerator<T> GetEnumerator() {
+            foreach (IntRange range in selection.selectedIndices) {
+                for (int i = range.Start; i < range.End; i++) {
+                    yield return selection.SourceList[i];
+                }
+            }
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            return this.GetEnumerator();
         }
     }
 }

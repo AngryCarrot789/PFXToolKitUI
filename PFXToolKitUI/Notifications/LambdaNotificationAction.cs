@@ -22,14 +22,14 @@ namespace PFXToolKitUI.Notifications;
 /// <summary>
 /// A notification command that invokes a callback lambda, optionally only when context data is available
 /// </summary>
-public class LambdaNotificationCommand : NotificationCommand {
-    private readonly Func<LambdaNotificationCommand, Task> action;
+public class LambdaNotificationAction : NotificationAction {
+    private readonly Func<LambdaNotificationAction, Task> action;
     private readonly bool requireContext;
 
-    public LambdaNotificationCommand(Func<LambdaNotificationCommand, Task> action, bool requireContext = true) : this(null, action, requireContext) {
+    public LambdaNotificationAction(Func<LambdaNotificationAction, Task> action, bool requireContext = true) : this(null, action, requireContext) {
     }
 
-    public LambdaNotificationCommand(string? text, Func<LambdaNotificationCommand, Task> action, bool requireContext = true) : base(text) {
+    public LambdaNotificationAction(string? text, Func<LambdaNotificationAction, Task> action, bool requireContext = true) : base(text) {
         this.action = action;
         this.requireContext = requireContext;
     }

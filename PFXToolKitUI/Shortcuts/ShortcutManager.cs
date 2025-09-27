@@ -51,6 +51,11 @@ public abstract class ShortcutManager {
     public ShortcutEntry? CurrentlyActivatingShortcut { get; private set; }
 
     /// <summary>
+    /// Gets the current UI focus path
+    /// </summary>
+    public abstract string? CurrentFocusPath { get; }
+    
+    /// <summary>
     /// An event fired when a <see cref="ShortcutEntry"/>'s shortcut is modified
     /// </summary>
     public event ShortcutModifiedEventHandler<ShortcutEntry>? ShortcutModified;

@@ -37,6 +37,19 @@ public interface IMutableContextData : IRandomAccessContextData {
     /// <param name="key">The key</param>
     /// <param name="value">The value to insert, or null to remove</param>
     public void SetSafely(DataKey key, object? value) {
+        if (!this.TrySetSafely(key, value)) {
+            throw new ArgumentException($"Value is not an instance of the data key's data type. {value!.GetType().Name} is not {key.DataType.Name}");
+        }
+    }
+    
+    /// <summary>
+    /// Tries to safely set a raw value for the given key by doing runtime type-checking, or removes the entry if the value is null.
+    /// If the value is incompatible, false is returned and nothing else happens.
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <param name="value">The value to insert, or null to remove</param>
+    /// <returns>True if the entry was added/replaced/removed, False if trying to add/replace an entry with an incompatible value</returns>
+    public bool TrySetSafely(DataKey key, object? value) {
         if (value == null) {
             this.Remove(key);
         }
@@ -44,8 +57,10 @@ public interface IMutableContextData : IRandomAccessContextData {
             this.SetUnsafe(key.Id, value);
         }
         else {
-            throw new ArgumentException($"Value is not an instance of the data key's data type. {value.GetType().Name} is not {key.DataType.Name}");
+            return false;
         }
+
+        return true;
     }
 
     /// <summary>

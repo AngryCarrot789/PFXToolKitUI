@@ -103,6 +103,16 @@ public sealed class ContextData : IMutableContextData {
         ((IMutableContextData) this).SetSafely(key, value);
         return this;
     }
+    
+    /// <summary>
+    /// Tries to safely sets a raw value for the given key by doing runtime type-checking, or does nothing. 
+    /// </summary>
+    /// <param name="key">The key</param>
+    /// <param name="value">The value to insert, or null, to remove</param>
+    public ContextData TrySetSafely(DataKey key, object? value) {
+        ((IMutableContextData) this).TrySetSafely(key, value);
+        return this;
+    }
 
     /// <summary>
     /// Unsafely sets a raw value for the given key. Care must be taken using this method,

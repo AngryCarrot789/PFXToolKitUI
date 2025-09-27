@@ -78,13 +78,13 @@ public sealed class DesktopWindowManager : IWindowManager {
         // Get last activated, or find the first that is activated
         if ((window = this.lastActivated) != null && window.OpenState == OpenState.Open)
             return true;
-        
+
         // lastActivated not set somehow, so find an activated window
         if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState == OpenState.Open && x.IsActivated)) != null)
             return true;
         if ((window = this.allWindows.LastOrDefault(x => x.OpenState == OpenState.Open && x.IsActivated)) != null)
             return true;
-        
+
         // bad case of the software bugs. Find an open window
         if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState == OpenState.Open)) != null)
             return true;

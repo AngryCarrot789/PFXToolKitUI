@@ -109,17 +109,8 @@ public class ObservableListEx<T> : Collection<T>, IObservableListEx<T> {
 
     private SimpleMonitor EnsureMonitorInitialized() => this._monitor ??= new SimpleMonitor(this);
 
-    private sealed class SimpleMonitor : IDisposable {
-        internal int _busyCount; // Only used during (de)serialization to maintain compatibility with desktop. Do not rename (binary serialization)
-
-        [NonSerialized] internal ObservableListEx<T> _collection;
-
-        public SimpleMonitor(ObservableListEx<T> collection) {
-            Debug.Assert(collection != null);
-            this._collection = collection;
-        }
-
-        public void Dispose() => this._collection.blockReentrancyCount--;
+    private sealed class SimpleMonitor(ObservableListEx<T> collection) : IDisposable {
+        public void Dispose() => collection.blockReentrancyCount--;
     }
 }
 

@@ -71,6 +71,10 @@ public class DebugContextCommand : Command {
                 }
             }
 
+            if (!string.IsNullOrWhiteSpace(e.ShortcutFocusArea)) {
+                sb.Append("Focus Path: ").AppendLine(e.ShortcutFocusArea);
+            }
+            
             await service.ShowMessage("Context Available", "Debugging Context", sb.ToString());
         }
     }

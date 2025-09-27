@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Notifications;
 /// <summary>
 /// A notification command that fired a <see cref="Command"/>
 /// </summary>
-public class RegisteredNotificationCommand : NotificationCommand {
+public class CommandNotificationAction : NotificationAction {
     private string? commandId;
 
     public string? CommandId {
@@ -34,12 +34,12 @@ public class RegisteredNotificationCommand : NotificationCommand {
         set => PropertyHelper.SetAndRaiseINE(ref this.commandId, value, this, static t => t.CommandIdChanged?.Invoke(t));
     }
 
-    public event NotificationCommandEventHandler? CommandIdChanged;
+    public event NotificationActionEventHandler? CommandIdChanged;
 
-    public RegisteredNotificationCommand() {
+    public CommandNotificationAction() {
     }
 
-    public RegisteredNotificationCommand(string? text, string commandId) : base(text) {
+    public CommandNotificationAction(string? text, string commandId) : base(text) {
         this.commandId = commandId;
     }
 

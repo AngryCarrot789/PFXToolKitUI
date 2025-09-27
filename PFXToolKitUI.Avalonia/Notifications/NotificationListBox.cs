@@ -43,7 +43,7 @@ public class NotificationListBox : ModelBasedListBox<Notification> {
     }
     
     private void OnNotificationManagerChanged(NotificationManager? oldSeq, NotificationManager? newSeq) {
-        this.SetItemsSource(newSeq?.Notifications);
+        this.SetItemsSource(newSeq?.Toasts);
     }
 
     protected override ModelBasedListBoxItem<Notification> CreateItem() => new NotificationListBoxItem();

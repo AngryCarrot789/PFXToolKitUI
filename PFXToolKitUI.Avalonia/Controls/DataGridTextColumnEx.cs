@@ -91,7 +91,7 @@ public class DataGridTextColumnEx : DataGridTextColumn {
     private void CellOnDataContextChanged(object? sender, EventArgs e) {
         if (this.cellDataKeyForDC != null) {
             DataGridCell cell = (DataGridCell) sender!;
-            DataManager.GetContextData(cell).SetSafely(this.cellDataKeyForDC, cell.DataContext);
+            DataManager.GetContextData(cell).TrySetSafely(this.cellDataKeyForDC, cell.DataContext);
         }
     }
 
