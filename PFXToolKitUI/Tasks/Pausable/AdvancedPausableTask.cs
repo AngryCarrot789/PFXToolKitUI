@@ -154,7 +154,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     public ActivityTask Run(IActivityProgress? progress = null) {
         this.actualCts = this.isIndicatedAsCancellable ? new CancellationTokenSource() : null;
         this.isOwnerOfActivity = true;
-        return ActivityTask.InternalStartActivity(ActivityManager.Instance, this.RunMainInternal, progress ?? new DispatcherActivityProgress(), this.actualCts, this);
+        return ActivityTask.InternalStartActivity(ActivityManager.Instance, this.PausableTaskMain, progress ?? new DispatcherActivityProgress(), this.actualCts, this);
     }
 
     /// <summary>
@@ -162,26 +162,23 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     /// </summary>
     /// <returns></returns>
     /// <exception cref="InvalidOperationException">
-    /// No activity on the current thread or the activity already has
-    /// a task running alongside it, and it has not completed, or this
-    /// pausable task has already completed and cannot run again
+    /// No activity with the current async control flow, or the activity already has a pausable task
+    /// running alongside it and it has not completed, or this pausable task has already completed
+    /// and cannot run again
     /// </exception>
     /// <exception cref="OperationCanceledException">The activity was cancelled</exception>
     public async Task RunWithCurrentActivity() {
-        if (!ActivityManager.Instance.TryGetCurrentTask(out ActivityTask? theActivity)) {
+        if (!ActivityManager.Instance.TryGetCurrentTask(out ActivityTask? theActivity))
             throw new InvalidOperationException("No activity on the current thread");
-        }
-
-        if (theActivity.PausableTask != null && !theActivity.PausableTask.IsCompleted) {
+        
+        if (theActivity.PausableTask != null && !theActivity.PausableTask.IsCompleted)
             throw new InvalidOperationException("Activity already has an incomplete pausable task associated");
-        }
-
-        if (this.state != TASK_STATE.WAITING || this.activity != null) {
+        
+        if (this.state != TASK_STATE.WAITING || this.activity != null)
             throw new InvalidOperationException("This pausable task is already running with another activity");
-        }
 
         this.isOwnerOfActivity = false;
-        this.actualCts = this.isIndicatedAsCancellable ? theActivity.cancellationTokenSource : null;
+        this.actualCts = this.isIndicatedAsCancellable ? theActivity.myCts : null;
         if (this.isIndicatedAsCancellable && this.actualCts == null) {
             Debug.WriteLine($"Warning: {this.GetType().FullName} is cancellable but was run within an activity that was not");
         }
@@ -190,31 +187,29 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         theActivity.PausableTask = this;
 
         OperationCanceledException? oce = null;
-        using ErrorList errorList = new ErrorList("Multiple exceptions while awaiting pausable task", throwOnDispose: false, tryUseFirstException: true);
-        try {
-            await this.RunMainInternal();
-        }
-        catch (OperationCanceledException e) {
-            oce = e;
-        }
-        catch (Exception e) {
-            errorList.Add(e);
+        using (ErrorList errorList = new ErrorList("Multiple exceptions while awaiting pausable task", throwOnDispose: true, tryUseFirstException: true)) {
+            try {
+                await this.PausableTaskMain();
+            }
+            catch (OperationCanceledException e) {
+                oce = e;
+            }
+            catch (Exception e) {
+                errorList.Add(e);
+            }
+
+            Debug.Assert(this.IsCompleted, "Expected this pausable task to be completed at this point");
+            this.activity = null;
+
+            try {
+                theActivity.PausableTask = null;
+            }
+            catch (Exception e) {
+                errorList.Add(e);
+            }
         }
 
-        Debug.Assert(this.IsCompleted, "Expected this pausable task to be completed at this point");
-        this.activity = null;
-
-        try {
-            theActivity.PausableTask = null;
-        }
-        catch (Exception e) {
-            errorList.Add(e);
-        }
-
-        if (errorList.TryGetException(out Exception? ex)) {
-            throw ex;
-        }
-        else if (oce != null) {
+        if (oce != null) {
             throw oce;
         }
     }
@@ -554,7 +549,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         }
     }
 
-    private async Task RunMainInternal() {
+    private async Task PausableTaskMain() {
         CancellationToken trueCancelToken;
         if (this.actualCts != null) {
             trueCancelToken = this.actualCts.Token;
@@ -572,7 +567,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             this.myTcs = new TaskCompletionSource();
         }
 
-        bool ranToSuccess;
+        bool ranToSuccess = false;
         CancellationToken pauseOrCancelToken = this.myPauseOrCancelSource.Token;
 
         try {
@@ -584,7 +579,6 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             if (this.pauseState == PAUSE_STATE.REQUESTED && !trueCancelToken.IsCancellationRequested) {
                 await this.OnPausedInternalAsync(false);
                 await this.TryCancelAfterPausing(trueCancelToken);
-                return;
             }
             else {
                 await this.OnCancelledInternal();

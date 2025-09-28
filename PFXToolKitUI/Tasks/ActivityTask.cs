@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using PFXToolKitUI.Tasks.Pausable;
 using PFXToolKitUI.Utils;
@@ -33,48 +34,42 @@ public delegate void ActivityTaskPausableTaskChangedEventHandler(ActivityTask se
 /// </summary>
 [DebuggerDisplay("{ToString()}")]
 public class ActivityTask {
+    internal enum EnumRunState { Waiting, Running, Completed, Cancelled }
+    
     private readonly ActivityManager activityManager;
-    private readonly Func<Task> action;
-    private readonly TaskCompletionSource<ActivityTask> tcsStarted;
-    private volatile Exception? exception;
-
-    //  0 = waiting for activation
-    //  1 = running
-    //  2 = completed
-    //  3 = cancelled
-    private volatile int state;
-    private volatile Task? userTask; // task from action()
-    protected Task? theMainTask; // task we created
-    internal readonly CancellationTokenSource? cancellationTokenSource;
-    private AdvancedPausableTask? myInternalPausableTask;
-
-    // Counts how many dialogs the activity is present in (via IForegroundActivityService)
-    private int dialogPresence;
+    private readonly Func<Task> myAction;  // user-specified procedure
+    internal readonly CancellationTokenSource? myCts;
+    private readonly TaskCompletionSource<ActivityTask> myTcsForRunning;
+    private EnumRunState myState; // Current running state
+    private Task? myMainTask;     // task we created
+    private int myDialogPresence; // Counts how many dialogs the activity is present in (via IForegroundActivityService)
+    private AdvancedPausableTask? myPausableTask; // A ref to the APT that runs in this activity
 
     /// <summary>
-    /// Gets the task returned by the user's function when running the activity
+    /// Gets the activity running in the current asynchronous control flow
     /// </summary>
-    protected Task? UserTask => this.userTask;
-
+    /// <remarks>This delegates to <see cref="ActivityManager.CurrentTask"/></remarks>
+    public static ActivityTask Current => ActivityManager.Instance.CurrentTask;
+    
     /// <summary>
     /// Returns true if the task is currently still running
     /// </summary>
-    public bool IsRunning => this.state == 1;
+    public bool IsRunning => this.myState == EnumRunState.Running;
 
     /// <summary>
     /// Returns true if the task is completed. <see cref="Exception"/> may be non-null when this is true
     /// </summary>
-    public bool IsCompleted => this.state > 1;
+    public bool IsCompleted => this.myState > EnumRunState.Running;
 
     /// <summary>
     /// Returns true when this activity was completed due to cancellation
     /// </summary>
-    public bool IsCancelled => this.state == 3;
+    public bool IsCancelled => this.myState == EnumRunState.Cancelled;
 
     /// <summary>
     /// Returns true when this task can be cancelled via <see cref="TryCancel"/>
     /// </summary>
-    public bool IsDirectlyCancellable => this.cancellationTokenSource != null;
+    public bool IsDirectlyCancellable => this.myCts != null;
 
     /// <summary>
     /// Returns true when cancellation is requested 
@@ -84,7 +79,7 @@ public class ActivityTask {
     /// <summary>
     /// Gets the exception that was thrown during the execution of the user action
     /// </summary>
-    public Exception? Exception => this.exception;
+    public Exception? Exception { get; private set; }
 
     /// <summary>
     /// Gets the progress handler associated with this task. Will always be non-null
@@ -97,26 +92,23 @@ public class ActivityTask {
     public CancellationToken CancellationToken { get; }
 
     /// <summary>
-    /// Gets this activity's task, which can be used to await completion. This task is a proxy of the user
-    /// task function, and will not throw any exceptions, even if the activity is cancelled or faulted
+    /// Gets this activity's task, which can be used to await completion.
+    /// This task is a proxy of the user-specified function.
+    /// <para>
+    /// This task will always complete successfully.
+    /// </para>
     /// </summary>
-    public Task Task {
-        get => this.theMainTask!;
-        private set => this.theMainTask = value;
-    }
+    public Task Task => this.myMainTask!;
 
     /// <summary>
     /// Gets the pausable task associated with this activity. When non-null, pausing is supported.
-    /// <para>
-    /// This value never changes once the activity has started running
-    /// </para>
     /// </summary>
     public AdvancedPausableTask? PausableTask {
-        get => this.myInternalPausableTask;
+        get => this.myPausableTask;
         internal set {
-            AdvancedPausableTask? oldPausableTask = this.myInternalPausableTask;
+            AdvancedPausableTask? oldPausableTask = this.myPausableTask;
             if (oldPausableTask != value) {
-                this.myInternalPausableTask = value;
+                this.myPausableTask = value;
                 this.PausableTaskChanged?.Invoke(this, oldPausableTask, value);
             }
         }
@@ -125,7 +117,7 @@ public class ActivityTask {
     /// <summary>
     /// Gets whether this activity is being shown in one or more foreground dialogs via <see cref="IForegroundActivityService"/>
     /// </summary>
-    public bool IsPresentInDialog => this.dialogPresence > 0;
+    public bool IsPresentInDialog => this.myDialogPresence > 0;
 
     /// <summary>
     /// An event fired when <see cref="PausableTask"/> changes. This event is fired from a task thread,
@@ -143,26 +135,45 @@ public class ActivityTask {
     /// </summary>
     public event ActivityTaskEventHandler? IsPresentInDialogChanged;
 
-    protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellationTokenSource) {
+    protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellation) {
         this.activityManager = activityManager ?? throw new ArgumentNullException(nameof(activityManager));
-        this.action = action ?? throw new ArgumentNullException(nameof(action));
+        this.myAction = action ?? throw new ArgumentNullException(nameof(action));
         this.Progress = activityProgress ?? throw new ArgumentNullException(nameof(activityProgress));
-        this.cancellationTokenSource = cancellationTokenSource;
-        this.CancellationToken = cancellationTokenSource?.Token ?? CancellationToken.None;
-        this.tcsStarted = new TaskCompletionSource<ActivityTask>();
+        this.myCts = cancellation;
+        this.CancellationToken = cancellation?.Token ?? CancellationToken.None;
+        this.myTcsForRunning = new TaskCompletionSource<ActivityTask>();
+    }
+    
+    private async Task TaskMain() {
+        Task? userTask = null;
+        
+        try {
+            await ActivityManager.InternalActivateTask(this.activityManager, this);
+            this.ThrowIfCancellationRequested();
+            await (userTask = this.myAction());
+            await this.OnCompleted(null, userTask);
+        }
+        catch (OperationCanceledException e) {
+            await this.OnCancelled(e, userTask);
+        }
+        catch (Exception e) {
+            await this.OnCompleted(e, userTask);
+        }
     }
 
     protected void ValidateNotStarted() {
-        if (this.state != 0)
+        if (this.myState != EnumRunState.Waiting)
             throw new InvalidOperationException("An activity task cannot be restarted");
     }
 
-    protected virtual Task CreateTask() {
+    /// <summary>
+    /// Creates the user task
+    /// </summary>
+    /// <param name="mainTask">The main function for the activity, which must be called</param>
+    /// <returns>A delegate task to <see cref="mainTask"/></returns>
+    protected virtual Task RunMainTask(Func<Task> mainTask) {
         this.ValidateNotStarted();
-
-        // We don't provide the cancellation token, because we want to handle it
-        // separately. Awaiting this activity task should never throw an exception
-        return Task.Factory.StartNew(this.TaskMain, CancellationToken.None).Unwrap();
+        return Task.Run(mainTask, CancellationToken.None);
     }
 
     /// <summary>
@@ -178,30 +189,18 @@ public class ActivityTask {
     /// <returns>The awaitable</returns>
     public RunningTaskAwaitable GetRunningAwaitable() => new RunningTaskAwaitable(this);
 
-    protected async Task TaskMain() {
-        try {
-            await ActivityManager.InternalPreActivateTask(this.activityManager, this);
-            this.CheckCancelled();
-            await (this.userTask = this.action());
-            await this.OnCompleted(null);
-        }
-        catch (OperationCanceledException e) {
-            await this.OnCancelled(e);
-        }
-        catch (Exception e) {
-            await this.OnCompleted(e);
-        }
-    }
-
-    public void CheckCancelled() => this.CancellationToken.ThrowIfCancellationRequested();
+    /// <summary>
+    /// Throws <see cref="OperationCanceledException"/> if our <see cref="CancellationToken"/> is cancelled
+    /// </summary>
+    public void ThrowIfCancellationRequested() => this.CancellationToken.ThrowIfCancellationRequested();
 
     public bool TryCancel() {
-        if (this.cancellationTokenSource == null) {
+        if (this.myCts == null) {
             return false;
         }
 
         try {
-            this.cancellationTokenSource.Cancel();
+            this.myCts.Cancel();
         }
         catch (ObjectDisposedException) {
             // ignored
@@ -210,60 +209,58 @@ public class ActivityTask {
         return true;
     }
 
-    protected virtual Task OnCancelled(OperationCanceledException e) {
-        return ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 3);
+    protected virtual Task OnCancelled(OperationCanceledException e, Task? userTask) {
+        return ActivityManager.InternalOnActivityCompleted(this.activityManager, this, EnumRunState.Cancelled);
     }
 
-    protected virtual async Task OnCompleted(Exception? e) {
-        this.exception = e;
-        await ActivityManager.InternalOnActivityCompleted(this.activityManager, this, 2);
+    protected virtual async Task OnCompleted(Exception? e, Task? userTask) {
+        this.Exception = e;
+        await ActivityManager.InternalOnActivityCompleted(this.activityManager, this, EnumRunState.Completed);
     }
 
-    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cts, AdvancedPausableTask? pausableTask = null) {
-        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DispatcherActivityProgress(), cts) { myInternalPausableTask = pausableTask };
+    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cancellation, AdvancedPausableTask? pausableTask = null) {
+        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DispatcherActivityProgress(), cancellation) { myPausableTask = pausableTask };
         if (pausableTask != null)
             pausableTask.activity = task;
         return InternalStartActivityImpl(task);
     }
 
     internal static ActivityTask InternalStartActivityImpl(ActivityTask task) {
-        task.Task = task.CreateTask();
+        task.myMainTask = task.RunMainTask(task.TaskMain);
         return task;
     }
 
-    public static void InternalPostActivate(ActivityTask task) {
-        task.state = 1;
-        task.tcsStarted.SetResult(task);
+    internal static void InternalOnActivated(ActivityTask task) {
+        task.myState = EnumRunState.Running;
+        task.myTcsForRunning.SetResult(task);
     }
 
-    public static void InternalComplete(ActivityTask task, int state) {
-        task.state = state;
-    }
+    internal static void InternalPreComplete(ActivityTask task, EnumRunState state) => task.myState = state;
 
-    public static void InternalOnPresentInDialogChanged(ActivityTask task, bool isPresent) {
-        Debug.Assert(isPresent ? (task.dialogPresence >= 0) : (task.dialogPresence > 0), "Excessive calls to " + nameof(InternalOnPresentInDialogChanged));
+    internal static void InternalPostCompleted(ActivityTask task) => task.IsCompletedChanged?.Invoke(task);
+    
+    internal static void InternalOnPresentInDialogChanged(ActivityTask task, bool isPresent) {
+        Debug.Assert(isPresent ? (task.myDialogPresence >= 0) : (task.myDialogPresence > 0), "Excessive calls to " + nameof(InternalOnPresentInDialogChanged));
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        int oldValue = task.dialogPresence;
-        task.dialogPresence += (isPresent ? 1 : -1);
+        int oldValue = task.myDialogPresence;
+        task.myDialogPresence += (isPresent ? 1 : -1);
         if (oldValue == (isPresent ? 0 : 1)) {
             task.IsPresentInDialogChanged?.Invoke(task);
             ActivityManager.InternalOnIsPresentInDialogChanged(task.activityManager, task);
         }
     }
 
-    internal void InternalOnCompletedOnMainThread() => this.IsCompletedChanged?.Invoke(this);
-
     public readonly struct RunningTaskAwaitable(ActivityTask task) {
-        public TaskAwaiter<ActivityTask> GetAwaiter() => task.tcsStarted.Task.GetAwaiter();
+        public TaskAwaiter<ActivityTask> GetAwaiter() => task.myTcsForRunning.Task.GetAwaiter();
     }
 
     public override string ToString() {
-        string textState = this.state switch {
-            0 => "Waiting for activation",
-            1 => "Running",
-            2 => "Completed",
-            3 => "Cancelled",
+        string textState = this.myState switch {
+            EnumRunState.Waiting => "Waiting for activation",
+            EnumRunState.Running => "Running",
+            EnumRunState.Completed => "Completed",
+            EnumRunState.Cancelled => "Cancelled",
             _ => "INVALID"
         };
 
@@ -273,12 +270,12 @@ public class ActivityTask {
 
 // This system isn't great but it just about works... i'd rather not use public new ... methods but oh well
 
-public class ActivityTask<T> : ActivityTask {
+public sealed class ActivityTask<T> : ActivityTask {
     private Result<T> myResult;
 
-    public new Task<Result<T>> Task => (Task<Result<T>>) this.theMainTask!;
+    public new Task<Result<T>> Task => (Task<Result<T>>) base.Task;
 
-    protected ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts) : base(activityManager, action, activityProgress, cts) {
+    private ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts) : base(activityManager, action, activityProgress, cts) {
     }
 
     internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts) {
@@ -294,23 +291,22 @@ public class ActivityTask<T> : ActivityTask {
     /// </returns>
     public new TaskAwaiter<Result<T>> GetAwaiter() => this.Task.GetAwaiter();
 
-    protected override Task CreateTask() {
-        this.ValidateNotStarted();
-        return System.Threading.Tasks.Task.Factory.
-                      StartNew(this.TaskMain, CancellationToken.None).
-                      Unwrap().
-                      ContinueWith(x => this.myResult, TaskContinuationOptions.ExecuteSynchronously);
+    protected override Task RunMainTask(Func<Task> mainTask) {
+        Task task = base.RunMainTask(mainTask);
+        
+        // Create a Task<T>
+        return task.ContinueWith(static (_, a) => ((ActivityTask<T>) a!).myResult, this, TaskContinuationOptions.ExecuteSynchronously);
     }
 
-    protected override Task OnCancelled(OperationCanceledException e) {
+    protected override Task OnCancelled(OperationCanceledException e, Task? userTask) {
         this.myResult = Result<T>.FromException(e);
-        return base.OnCancelled(e);
+        return base.OnCancelled(e, userTask);
     }
 
-    protected override Task OnCompleted(Exception? e) {
+    protected override Task OnCompleted(Exception? e, Task? userTask) {
         this.myResult = e != null
             ? Result<T>.FromException(e)
-            : Result<T>.FromValue(((Task<T>) this.UserTask!).Result);
-        return base.OnCompleted(e);
+            : Result<T>.FromValue(((Task<T>) userTask!).Result);
+        return base.OnCompleted(e, userTask);
     }
 }

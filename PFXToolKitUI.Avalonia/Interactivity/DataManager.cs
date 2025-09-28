@@ -49,8 +49,8 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 /// </para>
 /// <para>
 /// With the addition of the <see cref="IWindowManager"/> service, controls that exist in the visual tree
-/// of a window created by this service, will have two keys always associated with them:
-/// <see cref="ITopLevel.TopLevelDataKey"/>.
+/// of a window created by this service, will have the key <see cref="ITopLevel.TopLevelDataKey"/> 
+/// always associated with them.
 /// </para>
 /// </summary>
 public class DataManager {

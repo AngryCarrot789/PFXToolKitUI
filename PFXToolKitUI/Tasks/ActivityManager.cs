@@ -74,8 +74,7 @@ public sealed class ActivityManager : IDisposable {
     /// </summary>
     public static ActivityManager Instance => ApplicationPFX.GetComponent<ActivityManager>();
 
-    // private readonly ThreadLocal<ActivityTask> threadToTask;
-    private readonly AsyncLocal<ActivityTask?> threadToTask;
+    private readonly AsyncLocal<ActivityTask?> localActivities;
     private readonly List<ActivityTask> activeTasks; // all tasks
     private readonly ObservableList<ActivityTask> backgroundTasks; // tasks not present in a dialog
 
@@ -101,50 +100,114 @@ public sealed class ActivityManager : IDisposable {
     public event ActivityManagerTaskIndexEventHandler? TaskCompleted;
 
     public ActivityManager() {
-        this.threadToTask = new AsyncLocal<ActivityTask?>();
+        this.localActivities = new AsyncLocal<ActivityTask?>();
         this.activeTasks = new List<ActivityTask>();
         this.ActiveTasks = this.activeTasks.AsReadOnly();
         this.backgroundTasks = new ObservableList<ActivityTask>();
         this.BackgroundTasks = new ReadOnlyObservableList<ActivityTask>(this.backgroundTasks);
     }
 
+    /// <summary>
+    /// Creates and starts an activity task.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <returns>The activity task</returns>
     public ActivityTask RunTask(Func<Task> action) => this.RunTask(action, (CancellationTokenSource?) null);
 
+    /// <summary>
+    /// Creates and starts an activity task.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="progress">The progress storage object to be used by the activity</param>
+    /// <returns>The activity task</returns>
     public ActivityTask RunTask(Func<Task> action, IActivityProgress progress) => this.RunTask(action, progress, null);
 
-    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cts) => this.RunTask(action, new DispatcherActivityProgress(), cts);
+    /// <summary>
+    /// Creates and starts an activity task.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="cancellation">
+    /// The cancellation token source that is used to directly cancel the activity.
+    /// When null, the activity cannot be cancelled and must run to completion or complete exceptionally
+    /// </param>
+    /// <returns>The activity task</returns>
+    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cancellation) => this.RunTask(action, new DispatcherActivityProgress(), cancellation);
 
-    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, CancellationTokenSource? cts) {
-        return ActivityTask.InternalStartActivity(this, action, progress, cts);
+    /// <summary>
+    /// Creates and starts an activity task.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="progress">The progress storage object to be used by the activity</param>
+    /// <param name="cancellation">
+    /// The cancellation token source that is used to directly cancel the activity.
+    /// When null, the activity cannot be cancelled and must run to completion or complete exceptionally
+    /// </param>
+    /// <returns>The activity task</returns>
+    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, CancellationTokenSource? cancellation) {
+        return ActivityTask.InternalStartActivity(this, action, progress, cancellation);
     }
 
+    /// <summary>
+    /// Creates and starts an activity that produces a result.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <typeparam name="T">The type of return value</typeparam>
+    /// <returns>The activity task</returns>
     public ActivityTask<T> RunTask<T>(Func<Task<T>> action) => this.RunTask(action, (CancellationTokenSource?) null);
 
+    /// <summary>
+    /// Creates and starts an activity that produces a result.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="progress">The progress storage object to be used by the activity</param>
+    /// <typeparam name="T">The type of return value</typeparam>
+    /// <returns>The activity task</returns>
     public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress) => this.RunTask(action, progress, null);
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cts) => this.RunTask(action, new DispatcherActivityProgress(), cts);
+    /// <summary>
+    /// Creates and starts an activity that produces a result.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="cancellation">
+    /// The cancellation token source that is used to directly cancel the activity.
+    /// When null, the activity cannot be cancelled and must run to completion or complete exceptionally
+    /// </param>
+    /// <typeparam name="T">The type of return value</typeparam>
+    /// <returns>The activity task</returns>
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, CancellationTokenSource? cancellation) => this.RunTask(action, new DispatcherActivityProgress(), cancellation);
 
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, CancellationTokenSource? cts) {
-        return ActivityTask<T>.InternalStartActivity(this, action, progress, cts);
+    /// <summary>
+    /// Creates and starts an activity that produces a result.
+    /// </summary>
+    /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="progress">The progress storage object to be used by the activity</param>
+    /// <param name="cancellation">
+    /// The cancellation token source that is used to directly cancel the activity.
+    /// When null, the activity cannot be cancelled and must run to completion or complete exceptionally
+    /// </param>
+    /// <typeparam name="T">The type of return value</typeparam>
+    /// <returns>The activity task</returns>
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, CancellationTokenSource? cancellation) {
+        return ActivityTask<T>.InternalStartActivity(this, action, progress, cancellation);
     }
 
     /// <summary>
-    /// Tries to get the activity task associated with the current caller thread
+    /// Tries to get the activity task associated with the current asynchronous control flow
     /// </summary>
-    /// <param name="task">The task associated with the current thread</param>
-    /// <returns>True if this thread is running a task</returns>
+    /// <param name="task">The task associated with the current control flow</param>
+    /// <returns>True if there's an activity associated with the current control flow</returns>
     public bool TryGetCurrentTask([NotNullWhen(true)] out ActivityTask? task) {
-        return (task = this.threadToTask.Value) != null;
+        return (task = this.localActivities.Value) != null;
     }
 
     /// <summary>
-    /// Gets the activity running on this thread
+    /// Gets the activity running in the current asynchronous control flow
     /// </summary>
-    /// <exception cref="InvalidOperationException">No task running on this thread</exception>
-    public ActivityTask CurrentTask => this.threadToTask.Value ?? throw new Exception("No task running on this thread");
+    /// <exception cref="InvalidOperationException">No task in the current control flow</exception>
+    public ActivityTask CurrentTask => this.localActivities.Value ?? throw new InvalidOperationException("No task running on this thread");
 
     /// <summary>
-    /// Gets either the current task's activity progress tracker, or the <see cref="EmptyActivityProgress"/> instance (for convenience over null-checks)
+    /// Gets either the current task's activity progress tracker, or the <see cref="EmptyActivityProgress"/> instance
     /// </summary>
     /// <returns></returns>
     public IActivityProgress GetCurrentProgressOrEmpty() {
@@ -155,25 +218,27 @@ public sealed class ActivityManager : IDisposable {
         // this.threadToTask.Dispose();
     }
 
-    // Activity thread
+    #region Activity Thread
 
-    internal static Task InternalPreActivateTask(ActivityManager activityManager, ActivityTask task) {
-        activityManager.threadToTask.Value = task;
+    internal static Task InternalActivateTask(ActivityManager activityManager, ActivityTask task) {
+        activityManager.localActivities.Value = task;
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => InternalOnTaskStarted(activityManager, task), DispatchPriority.Send);
     }
 
-    internal static Task InternalOnActivityCompleted(ActivityManager activityManager, ActivityTask task, int state) {
-        activityManager.threadToTask.Value = null;
+    internal static Task InternalOnActivityCompleted(ActivityManager activityManager, ActivityTask task, ActivityTask.EnumRunState state) {
+        activityManager.localActivities.Value = null;
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => InternalOnTaskCompleted(activityManager, task, state), DispatchPriority.Send);
     }
 
-    // Main Thread
+    #endregion
+
+    #region Application Main Thread
 
     internal static void InternalOnTaskStarted(ActivityManager manager, ActivityTask task) {
         int index = manager.activeTasks.Count;
         manager.activeTasks.Insert(index, task);
         manager.TaskStarted?.Invoke(manager, task, index);
-        
+
         // The activity task object can be used before the even get started, since starting
         // one requires starting a Task which then calls InternalPreActivateTask which
         // has to dispatch this method call to the main thread.
@@ -181,11 +246,11 @@ public sealed class ActivityManager : IDisposable {
             manager.backgroundTasks.Add(task);
         }
 
-        ActivityTask.InternalPostActivate(task);
+        ActivityTask.InternalOnActivated(task);
     }
 
-    internal static void InternalOnTaskCompleted(ActivityManager manager, ActivityTask task, int state) {
-        ActivityTask.InternalComplete(task, state);
+    internal static void InternalOnTaskCompleted(ActivityManager manager, ActivityTask task, ActivityTask.EnumRunState state) {
+        ActivityTask.InternalPreComplete(task, state);
         int index = manager.activeTasks.IndexOf(task);
         if (index == -1) {
             AppLogger.Instance.WriteLine("Completed ActivityTask did not exist in activeTasks list");
@@ -198,7 +263,7 @@ public sealed class ActivityManager : IDisposable {
         manager.TaskCompleted?.Invoke(manager, task, index);
         manager.backgroundTasks.Remove(task); // don't care if not removed
 
-        task.InternalOnCompletedOnMainThread();
+        ActivityTask.InternalPostCompleted(task);
     }
 
     internal static void InternalOnIsPresentInDialogChanged(ActivityManager manager, ActivityTask task) {
@@ -217,7 +282,7 @@ public sealed class ActivityManager : IDisposable {
                 Debug.Assert(!task.IsRunning || task.IsCompleted);
                 return;
             }
-            
+
             int dstIdx = manager.backgroundTasks.Count;
             for (int i = 0; i < manager.backgroundTasks.Count; i++) {
                 int taskIdx = manager.activeTasks.IndexOf(manager.backgroundTasks[i]);
@@ -243,4 +308,6 @@ public sealed class ActivityManager : IDisposable {
             // manager.backgroundTasks.Insert(dstIdx, task);
         }
     }
+
+    #endregion
 }

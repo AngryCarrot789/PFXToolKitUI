@@ -131,6 +131,6 @@ public readonly struct SubActivity(IActivityProgress progress, Task task, Cancel
     /// using this method for <see cref="IForegroundActivityService.WaitForSubActivities"/>
     /// </remarks>
     public static SubActivity FromActivity(ActivityTask activityTask) {
-        return new SubActivity(activityTask.Progress, activityTask.Task, activityTask.cancellationTokenSource);
+        return new SubActivity(activityTask.Progress, activityTask.Task, activityTask.myCts);
     }
 }

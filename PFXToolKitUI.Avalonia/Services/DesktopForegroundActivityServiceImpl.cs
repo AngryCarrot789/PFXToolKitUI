@@ -29,9 +29,9 @@ using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
-public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
-    public async Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation) {
-        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
+public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundActivityService {
+    public override async Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation = default) {
+        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {            
             await ShowForActivityImpl(parentTopLevel, activity, dialogCancellation);
         }
         else if (!dialogCancellation.IsCancellationRequested) {
@@ -39,7 +39,7 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
         }
     }
 
-    public async Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default) {
+    public override async Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default) {
         if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
             await ShowForMultipleSubActivitiesImpl(parentTopLevel, activities, dialogCancellation);
         }
@@ -91,7 +91,7 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
         window.WindowOpened += static (sender, args) => {
             ActivityTask theTask = ((ActivityProgressRowControl) sender.Content!).ActivityTask!;
             Debug.Assert(theTask != null);
-            ActivityTask.InternalOnPresentInDialogChanged(theTask, true);
+            SetIsActivityPresentInDialog(theTask, true);
         };
 
         window.WindowClosed += static (sender, args) => {
@@ -99,7 +99,7 @@ public class DesktopForegroundActivityServiceImpl : IForegroundActivityService {
             ActivityTask theTask = myContent.ActivityTask!;
             Debug.Assert(theTask != null);
 
-            ActivityTask.InternalOnPresentInDialogChanged(theTask, false);
+            SetIsActivityPresentInDialog(theTask, false);
             myContent.ActivityTask = null;
         };
 
