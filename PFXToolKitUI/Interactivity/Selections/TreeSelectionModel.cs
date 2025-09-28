@@ -57,7 +57,7 @@ public sealed class TreeSelectionModel<T> where T : class {
     public Func<T, T?> GetParentFunction { get; }
 
     /// <summary>
-    /// Gets a function that enumerates the child nodes of an node
+    /// Gets a function that enumerates the child nodes of a node
     /// </summary>
     public Func<T, IObservableList<T>?> GetChildrenFunction { get; }
 
@@ -92,6 +92,7 @@ public sealed class TreeSelectionModel<T> where T : class {
         this.GetChildrenFunction = getChildrenFunction ?? throw new ArgumentNullException(nameof(getChildrenFunction));
         this.CanSelectItem = item => {
             Debug.Assert(item != null, "Attempt to use null item in " + nameof(TreeSelectionModel<T>));
+            Debug.Assert(item != this.RootItem, "Attempt to select the root item in " + nameof(TreeSelectionModel<T>));
             return item != null! && item != this.RootItem && this.IsItemInTreeFunction(item);
         };
 
@@ -236,7 +237,8 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// </summary>
     /// <param name="item">The item whose hierarchy should be processed</param>
     /// <param name="deselectSelf">True to deselect the item itself, False to only deselect its descendents</param>
-    public void DeselectHierarchy(T item, bool deselectSelf = false) {
+    /// <returns>The list of deselected items. This list may be read-only when empty</returns>
+    public IList<T> DeselectHierarchy(T item, bool deselectSelf = false) {
         List<T> deselected;
         if (deselectSelf) {
             deselected = new List<T>(32);
@@ -245,7 +247,7 @@ public sealed class TreeSelectionModel<T> where T : class {
         else {
             IObservableList<T>? items = this.GetChildrenFunction(item);
             if (items == null) {
-                return;
+                return EmptyList;
             }
 
             deselected = new List<T>(32);
@@ -257,6 +259,8 @@ public sealed class TreeSelectionModel<T> where T : class {
         if (deselected.Count > 0) {
             this.RaiseSelectionChanged(EmptyList, deselected);
         }
+
+        return deselected;
     }
 
     private void RaiseSelectionChanged(IList<T> addedItems, IList<T> removedItems) {
