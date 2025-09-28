@@ -27,6 +27,11 @@ using PFXToolKitUI.Interactivity.Selections;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx2;
 
+/// <summary>
+/// A helper class that "binds" the selection of a <see cref="global::Avalonia.Controls.TreeView"/>
+/// to a <see cref="TreeSelectionModel{T}"/>
+/// </summary>
+/// <typeparam name="T">The model type</typeparam>
 public sealed class TreeViewSelectionModelBinder<T> where T : class {
     private readonly Func<TreeViewItem, T> tviToModel;
     private readonly Func<T, TreeViewItem> modelToTvi;
@@ -38,46 +43,63 @@ public sealed class TreeViewSelectionModelBinder<T> where T : class {
     public TreeSelectionModel<T> Selection { get; }
 
     public TreeViewSelectionModelBinder(TreeView treeView, TreeSelectionModel<T> selection, Func<TreeViewItem, T> tviToModel, Func<T, TreeViewItem> modelToTvi) {
-        this.tviToModel = tviToModel;
-        this.modelToTvi = modelToTvi;
-        this.TreeView = treeView;
-        this.Selection = selection;
-
-        if (!(this.TreeView.SelectedItems is INotifyCollectionChanged ncc)) {
+        this.tviToModel = tviToModel ?? throw new ArgumentNullException(nameof(tviToModel));
+        this.modelToTvi = modelToTvi ?? throw new ArgumentNullException(nameof(modelToTvi));
+        this.TreeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
+        this.Selection = selection ?? throw new ArgumentNullException(nameof(selection));
+        
+        if (!(treeView.SelectedItems is INotifyCollectionChanged ncc)) {
             throw new InvalidOperationException($"TreeView's selected items list does not inherit from {nameof(INotifyCollectionChanged)}");
+        }
+
+        treeView.UnselectAll();
+        if (selection.Count > 0) {
+            this.OnModelSelectionChanged(selection, new TreeSelectionModel<T>.ChangedEventArgs(selection.SelectedItems.ToList(), ReadOnlyCollection<T>.Empty));
         }
 
         this.myNcc = ncc;
         this.myNcc.CollectionChanged += this.OnTreeViewSelectedItemsChanged;
-        if (selection.Count > 0) {
-            this.OnModelSelectionChanged(selection, new TreeSelectionModel<T>.ChangedEventArgs(selection.SelectedItems.ToList(), ReadOnlyCollection<T>.Empty));
-        }
 
         treeView.SelectionChanged += this.OnTreeViewSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
 
     private void OnModelSelectionChanged(object? o, TreeSelectionModel<T>.ChangedEventArgs e) {
-        Debug.WriteLine($"[TVI Selection]{(this.isUpdatingModel ? " [Reentry]" : "")} Model Changed | {e.AddedItems.Count} added | {e.RemovedItems.Count} removed");
-        
+        // Debug.WriteLine($"[TVI Selection]{(this.isUpdatingModel ? " [Reentry]" : "")} Model Changed | {e.AddedItems.Count} added | {e.RemovedItems.Count} removed");
         if (!this.isUpdatingModel) {
             Debug.Assert(!this.isUpdatingControl);
             this.isUpdatingControl = true;
 
             if (this.TreeView.SelectedItems is AvaloniaList<object> avList) {
                 avList.RemoveAll(e.RemovedItems.Select(this.modelToTvi));
-                avList.AddRange(e.AddedItems.Select(this.modelToTvi));
+
+                List<TreeViewItem> addedList = e.AddedItems.Select(this.modelToTvi).ToList();
+                foreach (TreeViewItem tvi in addedList) {
+                    ExpandParents(tvi);
+                }
+                
+                avList.AddRange(addedList);
             }
             else {
                 IList list = this.TreeView.SelectedItems;
                 foreach (TreeViewItem tvi in e.RemovedItems.Select(this.modelToTvi))
                     list.Remove(tvi);
-                foreach (TreeViewItem tvi in e.AddedItems.Select(this.modelToTvi))
+                foreach (TreeViewItem tvi in e.AddedItems.Select(this.modelToTvi)) {
+                    ExpandParents(tvi);
                     list.Add(tvi);
+                }
             }
-            
+
             this.isUpdatingControl = false;
         }
+    }
+
+    private static void ExpandParents(TreeViewItem item) {
+        List<TreeViewItem> list = new List<TreeViewItem>();
+        for (TreeViewItem? tvi = item.Parent as TreeViewItem; tvi != null; tvi = tvi.Parent as TreeViewItem)
+            list.Add(tvi);
+        for (int i = list.Count - 1; i >= 0; i--)
+            list[i].IsExpanded = true;
     }
 
     private void ProcessTreeSelection(IList removedItems, IList addedItems) {
@@ -86,37 +108,38 @@ public sealed class TreeViewSelectionModelBinder<T> where T : class {
         if (addedItems.Count > 0)
             this.Selection.SelectItems(addedItems.Cast<TreeViewItem>().Select(this.tviToModel));
     }
-    
+
     // Handle the INotifyPropertyChanged.CollectionChanged for the SelectedItems list
     private void OnTreeViewSelectedItemsChanged(object? sender, NotifyCollectionChangedEventArgs e) {
-        if (e.Action == NotifyCollectionChangedAction.Reset) {
-            Debug.WriteLine($"[TVI Selection]{(this.isUpdatingControl ? " [Reentry]" : "")} Tree View Reset");
-        }
-        else {
-            Debug.WriteLine($"[TVI Selection]{(this.isUpdatingControl ? " [Reentry]" : "")} Tree View Changed | {e.NewItems?.Count ?? 0} added | {e.OldItems?.Count ?? 0} removed");
-        }
-        
+        // if (e.Action == NotifyCollectionChangedAction.Reset) {
+        //     Debug.WriteLine($"[TVI Selection]{(this.isUpdatingControl ? " [Reentry]" : "")} Tree View Reset");
+        // }
+        // else {
+        //     Debug.WriteLine($"[TVI Selection]{(this.isUpdatingControl ? " [Reentry]" : "")} Tree View Changed | {e.NewItems?.Count ?? 0} added | {e.OldItems?.Count ?? 0} removed");
+        // }
+
         if (!this.isUpdatingControl) {
             Debug.Assert(!this.isUpdatingModel);
             this.isUpdatingModel = true;
 
-            IList oldList = e.OldItems ?? ReadOnlyCollection<object>.Empty; 
-            IList newList = e.NewItems ?? ReadOnlyCollection<object>.Empty; 
+            IList oldList = e.OldItems ?? ReadOnlyCollection<object>.Empty;
+            IList newList = e.NewItems ?? ReadOnlyCollection<object>.Empty;
             switch (e.Action) {
                 case NotifyCollectionChangedAction.Add:
                     Debug.Assert(oldList.Count < 1 && newList.Count > 0);
                     this.ProcessTreeSelection(ReadOnlyCollection<object>.Empty, newList);
                     break;
-                case NotifyCollectionChangedAction.Remove:  
+                case NotifyCollectionChangedAction.Remove:
                     Debug.Assert(newList.Count < 1 && oldList.Count > 0);
-                    this.ProcessTreeSelection(oldList, ReadOnlyCollection<object>.Empty); break;
+                    this.ProcessTreeSelection(oldList, ReadOnlyCollection<object>.Empty);
+                    break;
                 case NotifyCollectionChangedAction.Replace:
                     Debug.Assert(newList.Count > 0 && oldList.Count > 0);
-                    this.ProcessTreeSelection(oldList, newList); 
+                    this.ProcessTreeSelection(oldList, newList);
                     break;
-                case NotifyCollectionChangedAction.Reset:   this.Selection.Clear(); break;
-                case NotifyCollectionChangedAction.Move:    break;
-                default:                                    throw new ArgumentOutOfRangeException();
+                case NotifyCollectionChangedAction.Reset: this.Selection.Clear(); break;
+                case NotifyCollectionChangedAction.Move:  break;
+                default:                                  throw new ArgumentOutOfRangeException();
             }
 
             this.isUpdatingModel = false;
@@ -129,7 +152,7 @@ public sealed class TreeViewSelectionModelBinder<T> where T : class {
             IList newList = this.TreeView.SelectedItems;
             if (!ReferenceEquals(newList, this.myNcc)) {
                 if (!(newList is INotifyCollectionChanged ncc)) {
-                    throw new InvalidOperationException($"TreeView's selected items list does not inherit from {nameof(INotifyCollectionChanged)}");
+                    throw new InvalidOperationException($"TreeView's new selected items list does not inherit from {nameof(INotifyCollectionChanged)}: {newList.GetType().Name}");
                 }
 
                 this.myNcc.CollectionChanged -= this.OnTreeViewSelectedItemsChanged;

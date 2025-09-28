@@ -231,6 +231,34 @@ public sealed class TreeSelectionModel<T> where T : class {
         }
     }
 
+    /// <summary>
+    /// Deselects all selected items that exist in the item's hierarchy
+    /// </summary>
+    /// <param name="item">The item whose hierarchy should be processed</param>
+    /// <param name="deselectSelf">True to deselect the item itself, False to only deselect its descendents</param>
+    public void DeselectHierarchy(T item, bool deselectSelf = false) {
+        List<T> deselected;
+        if (deselectSelf) {
+            deselected = new List<T>(32);
+            this.RecursiveDeselect(item, deselected);
+        }
+        else {
+            IObservableList<T>? items = this.GetChildrenFunction(item);
+            if (items == null) {
+                return;
+            }
+
+            deselected = new List<T>(32);
+            foreach (T node in items) {
+                this.RecursiveDeselect(node, deselected);
+            }
+        }
+
+        if (deselected.Count > 0) {
+            this.RaiseSelectionChanged(EmptyList, deselected);
+        }
+    }
+
     private void RaiseSelectionChanged(IList<T> addedItems, IList<T> removedItems) {
         Debug.Assert(addedItems.Count > 0 || removedItems.Count > 0);
         for (int i = 0; i < addedItems.Count; i++) {

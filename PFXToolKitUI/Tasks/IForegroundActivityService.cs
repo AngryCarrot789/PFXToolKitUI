@@ -74,8 +74,9 @@ public interface IForegroundActivityService {
     /// When 0 is specified, this is the same as calling <see cref="WaitForActivity"/> directly
     /// </param>
     /// <param name="dialogCancellation">
-    /// A cancellation token that forces the dialog to close and therefore
-    /// this method to return, even if the activity is still running
+    /// A cancellation token that forces the dialog to close and therefore this method to return,
+    /// even if the activity is still running. Passing this as the activity's
+    /// <see cref="ActivityTask.CancellationToken"/> is not necessary
     /// </param>
     /// <returns>
     /// A task that becomes completed either when the activity becomes completed before the dialog opens,
@@ -84,23 +85,13 @@ public interface IForegroundActivityService {
     async Task DelayedWaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, int showDelay, CancellationToken dialogCancellation = default) {
         if (showDelay < 0)
             throw new ArgumentOutOfRangeException(nameof(showDelay), showDelay, "Show delay cannot be negative");
-        
-        if (showDelay > 0) {
-            // Create a CTS that becomes cancelled when either
-            // the activity is cancelled or dialogCancellation gets cancelled
-            using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(activity.CancellationToken, dialogCancellation);
 
-            try {
-                // Wait for either the activity to complete, or for the show delay to elapse
-                await Task.WhenAny(activity.Task, Task.Delay(showDelay, linkedCts.Token));
-            }
-            catch (OperationCanceledException) {
-                // ignored
-            }
-            
-            if (!activity.IsCompleted && !linkedCts.Token.IsCancellationRequested) {
-                // Activity still running and no request to cancel it, and dialogCancellation is not cancelled, so we
-                // show the dialog and blow it a kiss before this code fails somehow, I'm sure I missed something...
+        if (showDelay > 0) {
+            // Wait for either the activity to complete, or for the show delay to elapse
+            await Task.WhenAny(activity.Task, Task.Delay(showDelay, dialogCancellation));
+
+            if (!activity.IsCompleted && !dialogCancellation.IsCancellationRequested) {
+                // Activity still running, and dialogCancellation is not cancelled
                 await this.WaitForActivity(parentTopLevel, activity, dialogCancellation);
             }
         }
