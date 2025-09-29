@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils;
+
 namespace PFXToolKitUI.Tasks;
 
 public delegate void ActivityProgressEventHandler(IActivityProgress tracker);
@@ -68,6 +70,24 @@ public interface IActivityProgress {
     /// A struct that stores the current property values and can restore them when disposed
     /// </returns>
     State SaveState() => new(this);
+    
+    /// <summary>
+    /// Creates a save state via <see cref="SaveState()"/> and then updates our properties with the provided values, if non-null
+    /// </summary>
+    /// <param name="text">The new text, if present</param>
+    /// <param name="caption">The new caption, if present</param>
+    /// <param name="isIndeterminate">The new indeterminate state, if present</param>
+    /// <returns></returns>
+    State SaveState(Optional<string?> text, Optional<string?> caption = default, Optional<bool> isIndeterminate = default) {
+        State state = new State(this);
+        if (caption.HasValue)
+            this.Caption = caption.Value;
+        if (text.HasValue)
+            this.Text = text.Value;
+        if (isIndeterminate.HasValue)
+            this.IsIndeterminate = isIndeterminate.Value;
+        return state;
+    }
 
     void SetCaptionAndText(string value) {
         this.Caption = value;

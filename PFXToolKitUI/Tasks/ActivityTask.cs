@@ -48,6 +48,7 @@ public class ActivityTask {
     /// <summary>
     /// Gets the activity running in the current asynchronous control flow
     /// </summary>
+    /// <exception cref="InvalidOperationException">No task in the current control flow</exception>
     /// <remarks>This delegates to <see cref="ActivityManager.CurrentTask"/></remarks>
     public static ActivityTask Current => ActivityManager.Instance.CurrentTask;
     

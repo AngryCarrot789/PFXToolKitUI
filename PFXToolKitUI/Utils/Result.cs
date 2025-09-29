@@ -22,6 +22,99 @@ using System.Diagnostics;
 namespace PFXToolKitUI.Utils;
 
 /// <summary>
+/// A result of an operation, or stores the exception encountered
+/// </summary>
+[DebuggerDisplay("{ToString()}")]
+public readonly struct Result {
+    /// <summary>
+    /// Creates a successful result
+    /// </summary>
+    public static Result Success => default;
+    
+    /// <summary>
+    /// Gets the exception
+    /// </summary>
+    public Exception? Exception { get; }
+
+    /// <summary>
+    /// Returns true when <see cref="Exception"/> is non-null
+    /// </summary>
+    public bool HasException => this.Exception != null;
+
+    private Result(Exception? exception) {
+        this.Exception = exception;
+    }
+
+    /// <summary>
+    /// Creates a new result from an exception
+    /// </summary>
+    /// <param name="exception">The exception</param>
+    /// <returns>A new result</returns>
+    public static Result FromException(Exception exception) {
+        ArgumentNullException.ThrowIfNull(exception); // the irony
+        return new Result(exception);
+    }
+
+    public static Result Run(Action function) {
+        try {
+            function();
+        }
+        catch (Exception e) {
+            return FromException(e);
+        }
+
+        return default;
+    }
+
+    public static async Task<Result> RunAsync(Func<Task> function) {
+        try {
+            await function();
+        }
+        catch (Exception e) {
+            return FromException(e);
+        }
+
+        return default;
+    }
+
+    public Result<V> Map<V>(Func<V> mapper) {
+        if (this.Exception != null)
+            return Result<V>.FromException(new Exception("Attempt to map a faulted result", this.Exception));
+
+        V result;
+        try {
+            result = mapper();
+        }
+        catch (Exception e) {
+            return Result<V>.FromException(e);
+        }
+
+        return Result<V>.FromValue(result);
+    }
+
+    public async Task<Result<V>> MapAsync<V>(Func<Task<V>> mapper) {
+        if (this.Exception != null)
+            return Result<V>.FromException(this.Exception);
+
+        V result;
+        try {
+            result = await mapper();
+        }
+        catch (Exception e) {
+            return Result<V>.FromException(e);
+        }
+
+        return Result<V>.FromValue(result);
+    }
+
+    public override string ToString() {
+        return this.HasException
+            ? $"{nameof(Result)} (error = {this.Exception})"
+            : $"{nameof(Result)} (success)";
+    }
+}
+
+/// <summary>
 /// Stores the result of an operation, or stores the exception encountered
 /// </summary>
 /// <typeparam name="T">The type of value to store</typeparam>
