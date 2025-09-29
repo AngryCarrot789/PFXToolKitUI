@@ -30,7 +30,7 @@ public readonly struct Result {
     /// Creates a successful result
     /// </summary>
     public static Result Success => default;
-    
+
     /// <summary>
     /// Gets the exception
     /// </summary>
@@ -53,28 +53,6 @@ public readonly struct Result {
     public static Result FromException(Exception exception) {
         ArgumentNullException.ThrowIfNull(exception); // the irony
         return new Result(exception);
-    }
-
-    public static Result Run(Action function) {
-        try {
-            function();
-        }
-        catch (Exception e) {
-            return FromException(e);
-        }
-
-        return default;
-    }
-
-    public static async Task<Result> RunAsync(Func<Task> function) {
-        try {
-            await function();
-        }
-        catch (Exception e) {
-            return FromException(e);
-        }
-
-        return default;
     }
 
     public Result<V> Map<V>(Func<V> mapper) {
@@ -130,7 +108,7 @@ public readonly struct Result<T> {
         get {
             if (this.Exception != null)
                 throw new Exception("The result was from a faulted operation", this.Exception);
-            
+
             return this.value!;
         }
     }
@@ -155,7 +133,7 @@ public readonly struct Result<T> {
     /// </summary>
     /// <returns></returns>
     public T? GetValueOrDefault() => this.HasException ? default : this.value;
-    
+
     /// <summary>
     /// Creates a new result from an exception
     /// </summary>
@@ -172,42 +150,6 @@ public readonly struct Result<T> {
     /// <param name="value">The value</param>
     /// <returns>A new result</returns>
     public static Result<T> FromValue(T value) => new Result<T>(value, null);
-
-    /// <summary>
-    /// Invokes the passed function and returns <see cref="FromValue"/>, or catches
-    /// the exception the function throws and returns <see cref="FromException"/>
-    /// </summary>
-    /// <param name="function">The function to invoke</param>
-    /// <returns>A potentially faulted result</returns>
-    public static Result<T> Run(Func<T> function) {
-        T result;
-        try {
-            result = function();
-        }
-        catch (Exception e) {
-            return FromException(e);
-        }
-
-        return FromValue(result);
-    }
-
-    /// <summary>
-    /// Invokes the passed function and awaits it and returns <see cref="FromValue"/>,
-    /// or catches the exception the function throws and returns <see cref="FromException"/>
-    /// </summary>
-    /// <param name="function">The function to invoke</param>
-    /// <returns>A potentially faulted result</returns>
-    public static async Task<Result<T>> RunAsync(Func<Task<T>> function) {
-        T result;
-        try {
-            result = await function();
-        }
-        catch (Exception e) {
-            return FromException(e);
-        }
-
-        return FromValue(result);
-    }
 
     /// <summary>
     /// Maps our current value into a new value via the mapping function. If this result has
@@ -296,38 +238,98 @@ public readonly struct Result<T, TError> {
     }
 
     public T? GetValueOrDefault() => this.HasError ? default : this.value;
-    
+
     public static Result<T, TError> FromError(TError error) => new Result<T, TError>(default, new Optional<TError>(error));
 
     public static Result<T, TError> FromValue(T value) => new Result<T, TError>(value, default);
-
-    public static Result<T, TError> Run(Func<T> factory, Func<Exception, TError> exceptionToError) {
-        T result;
-        try {
-            result = factory();
-        }
-        catch (Exception e) {
-            return FromError(exceptionToError(e));
-        }
-
-        return FromValue(result);
-    }
-
-    public static async Task<Result<T, TError>> RunAsync(Func<Task<T>> factory, Func<Exception, TError> exceptionToError) {
-        T result;
-        try {
-            result = await factory();
-        }
-        catch (Exception e) {
-            return FromError(exceptionToError(e));
-        }
-
-        return FromValue(result);
-    }
 
     public override string ToString() {
         return this.HasError
             ? $"{nameof(Result<T, TError>)} (error = {this.Error})"
             : $"{nameof(Result<T, TError>)} (value = {this.value!})";
+    }
+}
+
+public static class Results {
+    public static Result Run(Action function) {
+        try {
+            function();
+        }
+        catch (Exception e) {
+            return Result.FromException(e);
+        }
+
+        return default;
+    }
+
+    public static async Task<Result> RunAsync(Func<Task> function) {
+        try {
+            await function();
+        }
+        catch (Exception e) {
+            return Result.FromException(e);
+        }
+
+        return default;
+    }
+    
+    /// <summary>
+    /// Invokes the passed function and returns <see cref="FromValue"/>, or catches
+    /// the exception the function thrown and returns <see cref="FromException"/>
+    /// </summary>
+    /// <param name="function">The function to invoke</param>
+    /// <returns>A potentially faulted result</returns>
+    public static Result<T> Run<T>(Func<T> function) {
+        T result;
+        try {
+            result = function();
+        }
+        catch (Exception e) {
+            return Result<T>.FromException(e);
+        }
+
+        return Result<T>.FromValue(result);
+    }
+
+    /// <summary>
+    /// Invokes the passed function and awaits it and returns <see cref="FromValue"/>,
+    /// or catches the exception the function thrown and returns <see cref="FromException"/>
+    /// </summary>
+    /// <param name="function">The function to invoke</param>
+    /// <returns>A potentially faulted result</returns>
+    public static async Task<Result<T>> RunAsync<T>(Func<Task<T>> function) {
+        T result;
+        try {
+            result = await function();
+        }
+        catch (Exception e) {
+            return Result<T>.FromException(e);
+        }
+
+        return Result<T>.FromValue(result);
+    }
+
+    public static Result<T, TError> Run<T, TError>(Func<T> factory, Func<Exception, TError> exceptionToError) {
+        T result;
+        try {
+            result = factory();
+        }
+        catch (Exception e) {
+            return Result<T, TError>.FromError(exceptionToError(e));
+        }
+
+        return Result<T, TError>.FromValue(result);
+    }
+
+    public static async Task<Result<T, TError>> RunAsync<T, TError>(Func<Task<T>> factory, Func<Exception, TError> exceptionToError) {
+        T result;
+        try {
+            result = await factory();
+        }
+        catch (Exception e) {
+            return Result<T, TError>.FromError(exceptionToError(e));
+        }
+
+        return Result<T, TError>.FromValue(result);
     }
 }
