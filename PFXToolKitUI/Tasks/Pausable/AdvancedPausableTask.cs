@@ -132,20 +132,13 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     }
 
     /// <summary>
-    /// Runs the operation for the first time. This is guaranteed to run before <see cref="OnPaused"/> or <see cref="OnCompleted"/>
+    /// Runs the operation. This is guaranteed to run before <see cref="OnPaused"/> or <see cref="OnCompleted"/>
     /// </summary>
     /// <param name="pauseOrCancelToken">A token that becomes 'cancelled' when this task is either paused or actually cancelled</param>
-    /// <returns>The first run of the activity, and hopefully the only run. When this returns normally, the activity is completed</returns>
+    /// <param name="isFirstRun">True when this is the first run, false when the activity has been paused and then continued</param>
+    /// <returns>The operation task</returns>
     /// <exception cref="OperationCanceledException">The operation was paused or cancelled</exception>
-    protected internal abstract Task RunFirst(CancellationToken pauseOrCancelToken);
-
-    /// <summary>
-    /// Continues running this task after being paused. This can for example re-obtain locks
-    /// </summary>
-    /// <param name="pauseOrCancelToken">A token that becomes 'cancelled' when this task is either paused or actually cancelled</param>
-    /// <returns>The second+ run of the activity. When this returns normally, the activity is completed</returns>
-    /// <exception cref="OperationCanceledException">The operation was paused or cancelled</exception>
-    protected internal abstract Task Continue(CancellationToken pauseOrCancelToken);
+    protected internal abstract Task RunOperation(CancellationToken pauseOrCancelToken, bool isFirstRun);
 
     /// <summary>
     /// Runs this task as a complete activity operation
@@ -572,7 +565,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
 
         try {
             this.continueAttempts = -1;
-            await (this.firstTask = this.RunFirst(pauseOrCancelToken));
+            await (this.firstTask = this.RunOperation(pauseOrCancelToken, true));
             ranToSuccess = true;
         }
         catch (OperationCanceledException) {
@@ -646,7 +639,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
 
             try {
                 Interlocked.Increment(ref this.continueAttempts);
-                await (this.continueTask = this.Continue(pauseOrCancelToken));
+                await (this.continueTask = this.RunOperation(pauseOrCancelToken, false));
             }
             catch (OperationCanceledException) {
                 if (this.pauseState == PAUSE_STATE.REQUESTED && !trueCancelToken.IsCancellationRequested) {
