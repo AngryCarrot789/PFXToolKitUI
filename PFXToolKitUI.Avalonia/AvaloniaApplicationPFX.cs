@@ -133,7 +133,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         manager.AddComponent<IUserInputDialogService>(new InputDialogServiceImpl());
         manager.AddComponent<IColourPickerDialogService>(new ColourPickerDialogServiceImpl());
         manager.AddComponent<IFilePickDialogService>(new FilePickDialogServiceImpl());
-        manager.AddComponent<IConfigurationDialogService>(new ConfigurationDialogServiceImpl());
+        manager.AddComponent<IConfigurationDialogService>(new DesktopConfigurationDialogServiceImpl());
         manager.AddComponent<IInputStrokeQueryService>(new InputStrokeQueryDialogImpl());
         manager.AddComponent<BrushManager>(new BrushManagerImpl());
         manager.AddComponent<ToolbarButtonFactory>(new ToolbarButtonFactoryImpl());

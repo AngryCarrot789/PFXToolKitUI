@@ -22,25 +22,25 @@ using Avalonia;
 using Avalonia.Controls;
 using PFXToolKitUI.Interactivity.Windowing;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 
 /// <summary>
-/// Manages <see cref="IWindow"/> instances and facilitates creating windows
+/// Manages <see cref="IDesktopWindow"/> instances and facilitates creating windows
 /// </summary>
 public interface IWindowManager : ITopLevelManager {
     /// <summary>
-    /// Enumerates all top-level windows, as in, windows that have no <see cref="IWindow.Owner"/> set
+    /// Enumerates all top-level windows, as in, windows that have no <see cref="IDesktopWindow.Owner"/> set
     /// </summary>
-    IEnumerable<IWindow> TopLevelWindows { get; }
+    IEnumerable<IDesktopWindow> TopLevelWindows { get; }
 
     /// <summary>
     /// Enumerates all visible windows, recursively.
     /// </summary>
-    IEnumerable<IWindow> AllWindows {
+    IEnumerable<IDesktopWindow> AllWindows {
         get {
-            foreach (IWindow window in this.TopLevelWindows) {
+            foreach (IDesktopWindow window in this.TopLevelWindows) {
                 yield return window;
-                foreach (IWindow child in window.OwnedWindows) {
+                foreach (IDesktopWindow child in window.OwnedWindows) {
                     yield return child;
                 }
             }
@@ -48,10 +48,10 @@ public interface IWindowManager : ITopLevelManager {
     }
 
     /// <summary>
-    /// An event fired when a <see cref="IWindow"/> is shown via <see cref="IWindow.ShowAsync"/> or <see cref="IWindow.ShowDialogAsync"/>.
-    /// Note -- this is fired after all of the window's <see cref="IWindow.WindowOpened"/> event handlers are invoked
+    /// An event fired when a <see cref="IDesktopWindow"/> is shown via <see cref="IDesktopWindow.ShowAsync"/> or <see cref="IDesktopWindow.ShowDialogAsync"/>.
+    /// Note -- this is fired after all of the window's <see cref="IDesktopWindow.Opened"/> event handlers are invoked
     /// <para>
-    /// Handlers of this event can use this to for example attach a <see cref="IWindow.WindowClosed"/> event handler
+    /// Handlers of this event can use this to for example attach a <see cref="IDesktopWindow.Closed"/> event handler
     /// </para>
     /// </summary>
     event EventHandler<WindowEventArgs>? WindowOpened;
@@ -66,14 +66,14 @@ public interface IWindowManager : ITopLevelManager {
     /// </summary>
     /// <param name="builder">The builder</param>
     /// <returns>The newly created window</returns>
-    IWindow CreateWindow(WindowBuilder builder);
+    IDesktopWindow CreateWindow(WindowBuilder builder);
 
     /// <summary>
     /// Tries to get the window that is currently activated (as in, has control focus).
     /// </summary>
     /// <param name="window">The active or main window</param>
     /// <returns>True if an active window was found</returns>
-    bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IWindow? window);
+    bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IDesktopWindow? window);
 
     bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {
         return (topLevel = this.GetActiveOrMainWindow()) != null;
@@ -83,11 +83,11 @@ public interface IWindowManager : ITopLevelManager {
     /// Returns the window produced by <see cref="TryGetActiveOrMainWindow"/> or returns null
     /// </summary>
     /// <returns>The active window or null</returns>
-    IWindow? GetActiveOrMainWindow() => this.TryGetActiveOrMainWindow(out IWindow? window) ? window : null;
+    IDesktopWindow? GetActiveOrMainWindow() => this.TryGetActiveOrMainWindow(out IDesktopWindow? window) ? window : null;
     
     /// <summary>
-    /// Tries to get the <see cref="IWindow"/> instance that a specific visual control exists in.
-    /// This method always returns true when passing <see cref="IWindow.Control"/> as the visual.
+    /// Tries to get the <see cref="IDesktopWindow"/> instance that a specific visual control exists in.
+    /// This method always returns true when passing <see cref="IDesktopWindow.Control"/> as the visual.
     /// <para>
     /// This is effectively equivalent to <see cref="TopLevel.GetTopLevel"/>, except this method
     /// may work in cases where that method will not
@@ -96,7 +96,7 @@ public interface IWindowManager : ITopLevelManager {
     /// <param name="visual">The visual</param>
     /// <param name="window">The window that the visual exists in</param>
     /// <returns>True if the window was found</returns>
-    bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IWindow? window);
+    bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window);
 
     /// <summary>
     /// Tries to get the window manager service
@@ -108,7 +108,7 @@ public interface IWindowManager : ITopLevelManager {
     }
 
     /// <summary>
-    /// Tries to get the <see cref="IWindow"/> instance that a visual exists in. This is effectively
+    /// Tries to get the <see cref="IDesktopWindow"/> instance that a visual exists in. This is effectively
     /// equivalent to <see cref="TopLevel.GetTopLevel"/>, except this method may work in cases where
     /// that method will not
     /// </summary>
@@ -118,7 +118,7 @@ public interface IWindowManager : ITopLevelManager {
     /// True if the visual existed in a window. False if either no <see cref="IWindowManager"/>
     /// existed or <see cref="TryGetWindowFromVisual"/> returned false
     /// </returns>
-    static bool TryGetWindow(Visual visual, [NotNullWhen(true)] out IWindow? window) {
+    static bool TryGetWindow(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window) {
         if (!TryGetInstance(out IWindowManager? manager)) {
             window = null;
             return false;

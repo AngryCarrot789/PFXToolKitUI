@@ -17,47 +17,46 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
+
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
 
 /// <summary>
-/// An enum that specifies the opened state of an <see cref="IWindow"/>
+/// An enum that specifies the opened state of an <see cref="IDesktopWindow"/> or <see cref="IOverlayWindow"/>
 /// </summary>
 public enum OpenState {
     /// <summary>
-    /// The window has not been shown yet. This is the default state for created windows.
+    /// The window or popup has not been shown yet. This is the default state for a newly created windows or popups.
     /// </summary>
     NotOpened,
     
     /// <summary>
-    /// The window is in the process of opening; <see cref="IWindow.ShowAsync"/> or <see cref="IWindow.ShowDialogAsync"/>
-    /// has been invoked, and <see cref="IWindow.WindowOpening"/> handlers will be invoked.
+    /// The window or popup is in the process of opening
     /// </summary>
     Opening,
     
     /// <summary>
-    /// The window is open and visible on screen. <see cref="IWindow.WindowOpened"/> handlers will be invoked.
+    /// The window or popup is open and visible on screen
     /// </summary>
     Open,
     
     /// <summary>
-    /// The window has been requested to close; <see cref="IWindow.TryClose"/> and <see cref="IWindow.TryCloseAsync"/>
-    /// handlers are invoked to try and cancel the close operation.
+    /// The window or popup has been requested to close. Its "try" close event handlers will be invoked which may wish to cancel the close operation.
     /// <para>
-    /// The window will still be open at this point, and the window's <see cref="IWindow.OpenState"/> may
-    /// return back to <see cref="Open"/> if the close operation is cancelled
+    /// The window or popup will still be open at this point, and its open state may return back to <see cref="Open"/> if the close operation is cancelled
     /// </para>
     /// </summary>
     TryingToClose,
     
     /// <summary>
-    /// The window is actually starting to close because the close operation was not cancelled. <see cref="IWindow.WindowClosing"/>
-    /// and <see cref="IWindow.WindowClosingAsync"/> handlers will be invoked, and afterwards, the actual window UI will be closed.
+    /// The window or popup is actually starting to close because the close operation was not cancelled.
+    /// The closing and closed event handlers will be invoked, and once they completed, the window or popup will finally close
     /// </summary>
     Closing,
     
     /// <summary>
-    /// The window has fully closed and is no longer visible (although the closing animation might still be playing; platform dependent).
-    /// <see cref="IWindow.WindowClosed"/> handlers will be invoked.
+    /// The window or popup has fully closed and is no longer visible (although the closing animation might still be playing; platform dependent).
     /// </summary>
     Closed
 }

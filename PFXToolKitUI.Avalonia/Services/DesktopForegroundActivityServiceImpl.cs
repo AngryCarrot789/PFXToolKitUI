@@ -22,6 +22,7 @@ using Avalonia;
 using Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Themes;
@@ -49,7 +50,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
     }
 
     private static async Task ShowForActivityImpl(ITopLevel topLevel, ActivityTask activity, CancellationToken dialogCancellation) {
-        if (!(topLevel is IWindow theWindow))
+        if (!(topLevel is IDesktopWindow theWindow))
             throw new InvalidOperationException("Invalid top level object");
         
         if (dialogCancellation.IsCancellationRequested || activity.IsCompleted)
@@ -63,7 +64,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         };
 
         IActivityProgress progress = activity.Progress;
-        IWindow window = manager.CreateWindow(new WindowBuilder() {
+        IDesktopWindow window = manager.CreateWindow(new WindowBuilder() {
             Title = progress.Caption,
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone6.Background.Static"),
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
@@ -88,13 +89,13 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             args.SetCancelled();
         };
 
-        window.WindowOpened += static (sender, args) => {
+        window.Opened += static (sender, args) => {
             ActivityTask theTask = ((ActivityProgressRowControl) sender.Content!).ActivityTask!;
             Debug.Assert(theTask != null);
             SetIsActivityPresentInDialog(theTask, true);
         };
 
-        window.WindowClosed += static (sender, args) => {
+        window.Closed += static (sender, args) => {
             ActivityProgressRowControl myContent = (ActivityProgressRowControl) sender.Content!;
             ActivityTask theTask = myContent.ActivityTask!;
             Debug.Assert(theTask != null);
@@ -125,7 +126,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
     }
 
     private static async Task ShowForMultipleSubActivitiesImpl(ITopLevel topLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation) {
-        if (!(topLevel is IWindow theWindow))
+        if (!(topLevel is IDesktopWindow theWindow))
             throw new InvalidOperationException("Invalid top level object");
         
         if (dialogCancellation.IsCancellationRequested)
@@ -164,7 +165,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
 
         Task allTasksCompletedTask = Task.WhenAll(activityList.Select(x => x.Task));
 
-        IWindow window = theWindow.WindowManager.CreateWindow(new WindowBuilder() {
+        IDesktopWindow window = theWindow.WindowManager.CreateWindow(new WindowBuilder() {
             Title = "Waiting for multiple activities",
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone6.Background.Static"),
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
@@ -192,7 +193,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         };
 
         // clean up sub activity controls in case dialogCancellation becomes cancelled
-        window.WindowClosing += static (sender, args) => {
+        window.Closing += static (sender, args) => {
             StackPanel panel = (StackPanel) sender.Content!;
             foreach (Control control in panel.Children)
                 ((SubActivityProgressRowControl) control).SubActivity = null;
@@ -234,7 +235,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
 
     private static void PostCloseToMainThread(object? weakRef) {
         ApplicationPFX.Instance.Dispatcher.Post(static void (winRef) => {
-            IWindow? win = (IWindow?) ((WeakReference) winRef!).Target;
+            IDesktopWindow? win = (IDesktopWindow?) ((WeakReference) winRef!).Target;
             if (win != null && win.OpenState == OpenState.Open) {
                 _ = win.RequestCloseAsync();
             }

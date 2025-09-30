@@ -18,7 +18,7 @@
 // 
 
 using Avalonia.Controls;
-using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Utils.Commands;
 
@@ -30,7 +30,7 @@ public partial class ConfigurationDialogView : UserControl {
     internal readonly AsyncRelayCommand ApplyThenCloseCommand;
     internal readonly AsyncRelayCommand CancelCommand;
 
-    public IWindow? Window { get; internal set; }
+    public IDesktopWindow? Window { get; internal set; }
 
     public ConfigurationDialogView(ConfigurationManager manager) {
         this.InitializeComponent();

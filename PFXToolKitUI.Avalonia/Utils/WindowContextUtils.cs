@@ -18,53 +18,35 @@
 // 
 
 using System.Diagnostics.CodeAnalysis;
+using Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Interactivity.Windowing;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Utils;
 
 public static class WindowContextUtils {
     /// <summary>
-    /// Tries to get a useful window from the current command context as well as the optional alternate context.
-    /// Failing those, we attempt to access the application's currently active window, or worst case, one of the main windows
-    /// </summary>
-    public static IWindow? GetUsefulWindow(IContextData? alternateContext = null, bool canUseActiveOrMainWindow = true) {
-        IWindow? window = null;
-        if (CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? context)) {
-            window = IWindow.WindowFromContext(context);
-        }
-
-        if (window == null && alternateContext != null) {
-            window = IWindow.WindowFromContext(alternateContext);
-        }
-
-        if (window == null && canUseActiveOrMainWindow) {
-            if (!IWindowManager.TryGetInstance(out IWindowManager? manager))
-                return null;
-            manager.TryGetActiveOrMainWindow(out window);
-        }
-
-        return window;
-    }
-    
-    /// <summary>
     /// Tries to find a window manager at least, and optionally tries to find a useful contextual window
     /// </summary>
     /// <returns>True when a manager is found</returns>
-    public static bool TryGetWindowManagerWithUsefulWindow([NotNullWhen(true)] out IWindowManager? manager, out IWindow? parentWindow, IContextData? alternateContext = null, bool canUseActiveOrMainWindow = true) {
+    public static bool TryGetWindowManagerWithUsefulWindow([NotNullWhen(true)] out IWindowManager? manager, out IDesktopWindow? parentWindow, IContextData? alternateContext = null, bool canUseActiveOrMainWindow = true) {
         parentWindow = null;
         manager = null;
-        
+
         if (CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? context)) {
-            if ((parentWindow = IWindow.WindowFromContext(context)) != null) {
+            if ((parentWindow = IDesktopWindow.WindowFromContext(context)) != null) {
                 manager = parentWindow.WindowManager;
                 return true;
             }
         }
 
         if (parentWindow == null && alternateContext != null) {
-            if ((parentWindow = IWindow.WindowFromContext(alternateContext)) != null) {
+            if ((parentWindow = IDesktopWindow.WindowFromContext(alternateContext)) != null) {
                 manager = parentWindow.WindowManager;
                 return true;
             }
@@ -77,5 +59,41 @@ public static class WindowContextUtils {
         }
 
         return (manager != null);
+    }
+
+    public static bool TryGetTopLevel(ITopLevel srcTopLevel, [NotNullWhen(true)] out TopLevel? topLevel) {
+        if (srcTopLevel is IDesktopWindow desktop)
+            return desktop.TryGetTopLevel(out topLevel);
+        if (srcTopLevel is IOverlayWindow overlay)
+            return overlay.TryGetTopLevel(out topLevel);
+        if (srcTopLevel is IOverlayWindowHost host)
+            return host.OverlayManager.TryGetTopLevel(out topLevel);
+
+        topLevel = null;
+        return false;
+    }
+
+    public static IWindowBase? CreateWindow(ITopLevel parentTopLevel, Func<IDesktopWindow, IDesktopWindow> windowFactory, Func<IOverlayWindowManager, IOverlayWindow?, IOverlayWindow> overlayFactory) {
+        if (parentTopLevel is IDesktopWindow window1)
+            return windowFactory(window1);
+        if (parentTopLevel is IOverlayWindow overlay)
+            return overlayFactory(overlay.OverlayManager, overlay);
+        if (parentTopLevel is IOverlayWindowHost overlayHost)
+            return overlayFactory(overlayHost.OverlayManager, null);
+        if (IOverlayWindowManager.TryGetInstance(out IOverlayWindowManager? manager))
+            return overlayFactory(manager, manager.GetActiveWindow());
+        return null;
+    }
+
+    public static async Task<Optional<T>> UseWindowAsync<T>(ITopLevel parentTopLevel, Func<IDesktopWindow, Task<T>> windowFactory, Func<IOverlayWindowManager, IOverlayWindow?, Task<T>> overlayFactory) {
+        if (parentTopLevel is IDesktopWindow window1)
+            return await windowFactory(window1);
+        if (parentTopLevel is IOverlayWindow overlay)
+            return await overlayFactory(overlay.OverlayManager, overlay);
+        if (parentTopLevel is IOverlayWindowHost overlayHost)
+            return await overlayFactory(overlayHost.OverlayManager, null);
+        if (IOverlayWindowManager.TryGetInstance(out IOverlayWindowManager? manager))
+            return await overlayFactory(manager, manager.GetActiveWindow());
+        return default;
     }
 }

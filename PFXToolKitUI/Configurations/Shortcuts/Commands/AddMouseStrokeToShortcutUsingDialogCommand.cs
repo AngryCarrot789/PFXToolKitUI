@@ -18,7 +18,6 @@
 // 
 
 using PFXToolKitUI.CommandSystem;
-using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;

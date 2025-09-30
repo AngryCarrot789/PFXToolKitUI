@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2023-2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -17,16 +17,16 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Avalonia.Services.UserInputs;
 using PFXToolKitUI.Interactivity.Windowing;
-using PFXToolKitUI.Services.UserInputs;
 
-namespace PFXToolKitUI.Avalonia.Services;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 
-public class InputDialogServiceImpl : IUserInputDialogService {
-    public Task<bool?> ShowInputDialogAsync(UserInputInfo info, ITopLevel? parentTopLevel = null) {
-        return parentTopLevel != null 
-            ? UserInputDialogView.ShowDialogWindowOrPopup(info, parentTopLevel) 
-            : UserInputDialogView.ShowDialogWindowOrPopup(info);
-    }
+/// <summary>
+/// The root control of a <see cref="IOverlayWindowManager"/>
+/// </summary>
+public interface IOverlayWindowHost : ITopLevel {
+    /// <summary>
+    /// Gets the overlay window manager for this overlay window host
+    /// </summary>
+    IOverlayWindowManager OverlayManager { get; }
 }

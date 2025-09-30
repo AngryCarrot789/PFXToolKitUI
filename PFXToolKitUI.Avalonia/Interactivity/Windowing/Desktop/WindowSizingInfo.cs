@@ -19,10 +19,10 @@
 
 using Avalonia.Controls;
 using Avalonia.Layout;
-using PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 
 public delegate void WindowSizingInfoChangedEventHandler(WindowSizingInfo sender);
 
@@ -101,9 +101,9 @@ public sealed class WindowSizingInfo {
     /// <summary>
     /// Gets the window that owns this window size info object
     /// </summary>
-    public IWindow Window { get; }
+    public IDesktopWindow Window { get; }
 
-    internal WindowSizingInfo(IWindow window, WindowBuilder builder) {
+    internal WindowSizingInfo(IDesktopWindow window, WindowBuilder builder) {
         this.Window = window;
         this.minWidth = builder.MinWidth;
         this.minHeight = builder.MinHeight;

@@ -17,24 +17,14 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Popups;
+using Avalonia.Controls;
 
-/// <summary>
-/// A builder object for building a popup for a single-view popup manager
-/// </summary>
-public class PopupDialogBuilder {
-    /// <summary>
-    /// Gets or sets the parent popup
-    /// </summary>
-    public IPopupDialog? Parent { get; set; }
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 
-    /// <summary>
-    /// Gets or sets the title bar builder object, which describes the information for a standard title bar. When set to null, no title bar is present 
-    /// </summary>
-    public PopupTitleBarInfo? TitleBar { get; set; }
+public class PopupOverlayControlImpl : ContentControl {
+    internal readonly OverlayWindowImpl overlayWindow;
 
-    /// <summary>
-    /// Gets or sets the popup's content
-    /// </summary>
-    public object? Content { get; set; }
+    public PopupOverlayControlImpl(OverlayWindowImpl overlayWindow) {
+        this.overlayWindow = overlayWindow;
+    }
 }

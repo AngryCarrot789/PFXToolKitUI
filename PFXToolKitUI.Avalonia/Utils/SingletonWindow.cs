@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 
 namespace PFXToolKitUI.Avalonia.Utils;
 
@@ -26,17 +27,17 @@ namespace PFXToolKitUI.Avalonia.Utils;
 /// </summary>
 public sealed class SingletonWindow {
     private readonly IWindowManager? manager;
-    private readonly Func<IWindowManager, IWindow> factory;
+    private readonly Func<IWindowManager, IDesktopWindow> factory;
     
     /// <summary>
     /// Gets the current window
     /// </summary>
-    public IWindow? Current { get; private set; }
+    public IDesktopWindow? Current { get; private set; }
 
     /// <summary>
     /// A helper class for managing a single view of a window
     /// </summary>
-    public SingletonWindow(Func<IWindowManager, IWindow> factory) {
+    public SingletonWindow(Func<IWindowManager, IDesktopWindow> factory) {
         this.factory = factory;
         if (!IWindowManager.TryGetInstance(out this.manager))
             throw new InvalidOperationException("No window manager available");
@@ -50,13 +51,13 @@ public sealed class SingletonWindow {
         }
         else {
             this.Current = this.factory(this.manager!);
-            this.Current.WindowClosed += this.OnWindowClosed;
+            this.Current.Closed += this.OnWindowClosed;
             this.Current.ShowAsync();
         }
     }
 
-    private void OnWindowClosed(IWindow sender, EventArgs e) {
-        sender.WindowClosed -= this.OnWindowClosed;
+    private void OnWindowClosed(IDesktopWindow sender, EventArgs e) {
+        sender.Closed -= this.OnWindowClosed;
         this.Current = null;
     }
 }

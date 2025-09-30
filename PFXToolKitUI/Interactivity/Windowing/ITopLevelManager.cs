@@ -26,7 +26,9 @@ namespace PFXToolKitUI.Interactivity.Windowing;
 /// </summary>
 public interface ITopLevelManager {
     /// <summary>
-    /// Tries to get the current active top-level or at worst a main top level
+    /// Tries to get the current active top-level, or at worst, a main top level.
+    /// This method is not recommended since it can result in dialogs showing relative to top levels
+    /// it has no business with. Instead, use <see cref="ITopLevel.FromContext"/>
     /// </summary>
     /// <param name="topLevel">The active or main top level</param>
     /// <returns>True if a top level was found</returns>

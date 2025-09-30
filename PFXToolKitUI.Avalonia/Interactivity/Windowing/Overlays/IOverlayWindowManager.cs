@@ -20,8 +20,9 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
+using PFXToolKitUI.Interactivity.Windowing;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Popups;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 
 /// <summary>
 /// Manages popups.
@@ -31,37 +32,42 @@ namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Popups;
 /// the application's main content (which will likely be a page control to present pages).
 /// </para>
 /// <para>
-/// The application's content isn't a <see cref="IPopupDialog"/>; by default, no windows exists.
+/// The application's content isn't a <see cref="IOverlayWindow"/>; by default, no popups exists.
 /// </para>
 /// </summary>
-public interface IPopupDialogManager {
+public interface IOverlayWindowManager : ITopLevelManager {
     /// <summary>
-    /// Enumerates all top-level windows, as in, windows that have no <see cref="IPopupDialog.Owner"/> set
+    /// Enumerates all top-level windows, as in, windows that have no <see cref="IOverlayWindow.OwnerPopup"/> set
     /// </summary>
-    IEnumerable<IPopupDialog> TopLevelWindows { get; }
+    IEnumerable<IOverlayWindow> TopLevelWindows { get; }
 
     /// <summary>
     /// Enumerates all visible windows, recursively.
     /// </summary>
-    IEnumerable<IPopupDialog> AllWindows {
+    IEnumerable<IOverlayWindow> AllWindows {
         get {
-            foreach (IPopupDialog window in this.TopLevelWindows) {
+            foreach (IOverlayWindow window in this.TopLevelWindows) {
                 yield return window;
-                foreach (IPopupDialog child in window.OwnedWindows) {
+                foreach (IOverlayWindow child in window.OwnedPopups) {
                     yield return child;
                 }
             }
         }
     }
+    
+    /// <summary>
+    /// Gets the root of the popup manager, i.e., the owner control
+    /// </summary>
+    public IOverlayWindowHost OverlayWindowHost { get; }
 
     /// <summary>
-    /// An event fired when a <see cref="IPopupDialog"/> is shown via <see cref="IPopupDialog.ShowAsync"/> or <see cref="IPopupDialog.ShowDialog"/>.
-    /// Note -- this is fired after all of the window's <see cref="IPopupDialog.WindowOpened"/> event handlers are invoked
+    /// An event fired when a <see cref="IOverlayWindow"/> is shown via <see cref="IOverlayWindow.ShowAsync"/> or <see cref="IOverlayWindow.ShowDialogAsync"/>.
+    /// Note -- this is fired after all of the window's <see cref="IOverlayWindow.Opened"/> event handlers are invoked
     /// <para>
-    /// Handlers of this event can use this to for example attach a <see cref="IPopupDialog.WindowClosed"/> event handler
+    /// Handlers of this event can use this to for example attach a <see cref="IOverlayWindow.Closed"/> event handler
     /// </para>
     /// </summary>
-    event EventHandler<PopupEventArgs>? WindowOpened;
+    event EventHandler<OverlayWindowEventArgs>? PopupOpened;
 
     // /// <summary>
     // /// An event fired when a <see cref="IWindow"/> becomes activated
@@ -73,57 +79,68 @@ public interface IPopupDialogManager {
     /// </summary>
     /// <param name="builder">The builder</param>
     /// <returns>The newly created window</returns>
-    IPopupDialog CreatePopup(PopupDialogBuilder builder);
+    IOverlayWindow CreateWindow(OverlayWindowBuilder builder);
 
     /// <summary>
     /// Tries to get the window that is currently activated (as in, has control focus).
     /// </summary>
-    /// <param name="window">The active window</param>
+    /// <param name="popup">The active window</param>
     /// <returns>True if an active window was found</returns>
-    bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IPopupDialog? window);
+    bool TryGetActivePopup([NotNullWhen(true)] out IOverlayWindow? popup);
 
     /// <summary>
-    /// Returns the window produced by <see cref="TryGetActiveOrMainWindow"/> or returns null
+    /// Returns the window produced by <see cref="TryGetActivePopup"/> or returns null
     /// </summary>
     /// <returns>The active window or null</returns>
-    IPopupDialog? GetActiveWindowOrNull() => this.TryGetActiveOrMainWindow(out IPopupDialog? window) ? window : null;
+    IOverlayWindow? GetActiveWindow() => this.TryGetActivePopup(out IOverlayWindow? window) ? window : null;
 
     /// <summary>
-    /// Tries to get the <see cref="IPopupDialog"/> instance that a specific visual control exists in.
-    /// This method always returns true when passing <see cref="IPopupDialog.Control"/> as the visual.
+    /// Tries to get the <see cref="IOverlayWindow"/> instance that a specific visual control exists in.
+    /// This method always returns true when passing <see cref="IOverlayWindow.Control"/> as the visual.
     /// <para>
     /// This is effectively equivalent to <see cref="TopLevel.GetTopLevel"/>, except this method
     /// may work in cases where that method will not
     /// </para>
     /// </summary>
     /// <param name="visual">The visual</param>
-    /// <param name="window">The window that the visual exists in</param>
+    /// <param name="popup">The window that the visual exists in</param>
     /// <returns>True if the window was found</returns>
-    bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IPopupDialog? window);
+    bool TryGetPopupFromVisual(Visual visual, [NotNullWhen(true)] out IOverlayWindow? popup);
 
+    bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {
+        if ((topLevel = this.GetActiveWindow()) == null)
+            topLevel = this.OverlayWindowHost;
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to get the top level of this overlay window manager
+    /// </summary>
+    bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel);
+    
     /// <summary>
     /// Tries to get the window manager service
     /// </summary>
     /// <param name="windowManager">The manager, or null</param>
     /// <returns>True if a window manager exists</returns>
-    public static bool TryGetInstance([NotNullWhen(true)] out IPopupDialogManager? windowManager) {
+    public static bool TryGetInstance([NotNullWhen(true)] out IOverlayWindowManager? windowManager) {
         return ApplicationPFX.TryGetComponent(out windowManager);
     }
 
     /// <summary>
-    /// Tries to get the <see cref="IPopupDialog"/> instance that a visual exists in. This is effectively
+    /// Tries to get the <see cref="IOverlayWindow"/> instance that a visual exists in. This is effectively
     /// equivalent to <see cref="TopLevel.GetTopLevel"/>, except this method may work in cases where
     /// that method will not
     /// </summary>
     /// <param name="visual">The visual to get the window of</param>
     /// <param name="popup">The window the visual exists in</param>
     /// <returns>
-    /// True if the visual existed in a window. False if either no <see cref="IPopupDialogManager"/>
-    /// existed or <see cref="TryGetWindowFromVisual"/> returned false
+    /// True if the visual existed in a window. False if either no <see cref="IOverlayWindowManager"/>
+    /// existed or <see cref="TryGetPopupFromVisual"/> returned false
     /// </returns>
-    static bool TryGetWindow(Visual visual, [NotNullWhen(true)] out IPopupDialog? popup) {
-        if (TryGetInstance(out IPopupDialogManager? manager)) {
-            return manager.TryGetWindowFromVisual(visual, out popup);
+    static bool TryGetWindow(Visual visual, [NotNullWhen(true)] out IOverlayWindow? popup) {
+        if (TryGetInstance(out IOverlayWindowManager? manager)) {
+            return manager.TryGetPopupFromVisual(visual, out popup);
         }
 
         popup = null;

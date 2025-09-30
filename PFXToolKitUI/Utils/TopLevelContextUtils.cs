@@ -24,10 +24,7 @@ using PFXToolKitUI.Interactivity.Windowing;
 namespace PFXToolKitUI.Utils;
 
 public static class TopLevelContextUtils {
-    /// <summary>
-    /// Tries to get a useful top level from the current command context as well as the optional alternate context
-    /// </summary>
-    public static ITopLevel? GetUsefulTopLevel(IContextData? alternateContext = null, bool canUseActiveOrMainTopLevel = true) {
+    public static ITopLevel? GetTopLevelFromContext(IContextData? alternateContext = null, bool canUseActiveOrMainTopLevel = true) {
         ITopLevel? topLevel = null;
         if (CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? context)) {
             topLevel = ITopLevel.FromContext(context);
@@ -38,9 +35,9 @@ public static class TopLevelContextUtils {
         }
         
         if (topLevel == null && canUseActiveOrMainTopLevel) {
-            if (!ITopLevelManager.TryGetInstance(out ITopLevelManager? manager))
-                return null;
-            manager.TryGetActiveOrMainTopLevel(out topLevel);
+            if (ITopLevelManager.TryGetInstance(out ITopLevelManager? manager)) {
+                manager.TryGetActiveOrMainTopLevel(out topLevel);
+            }
         }
 
         return topLevel;

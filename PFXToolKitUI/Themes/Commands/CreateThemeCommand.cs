@@ -19,7 +19,6 @@
 
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Configurations.UI;
-using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.UserInputs;
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Utils;

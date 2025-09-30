@@ -27,6 +27,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
+using Avalonia.Platform.Storage;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Composition;
@@ -38,21 +39,21 @@ using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
 
 /// <summary>
-/// The implementation of <see cref="IWindow"/> for a <see cref="DesktopWindowManager"/>
+/// The implementation of <see cref="IDesktopWindow"/> for a <see cref="DesktopWindowManager"/>
 /// </summary>
-public sealed class DesktopWindowImpl : IWindow {
+public sealed class DesktopWindowImpl : IDesktopWindow {
     public IMutableContextData LocalContextData => DataManager.GetContextData(this.myNativeWindow);
 
     public ComponentStorage ComponentStorage { get; }
 
     public IWindowManager WindowManager => this.myManager;
 
-    public IWindow? Owner => this.parentWindow;
+    public IDesktopWindow? Owner => this.parentWindow;
 
-    public IEnumerable<IWindow> OwnedWindows => this.myVisibleChildWindows; // this.myNativeWindow.OwnedWindows.Select(x => ((DesktopNativeWindow) x).Window);
+    public IEnumerable<IDesktopWindow> OwnedWindows => this.myVisibleChildWindows; // this.myNativeWindow.OwnedWindows.Select(x => ((DesktopNativeWindow) x).Window);
 
     public bool IsMainWindow { get; }
     public OpenState OpenState { get; private set; }
@@ -110,13 +111,13 @@ public sealed class DesktopWindowImpl : IWindow {
         set => this.myNativeWindow.Position = value;
     }
 
-    public event WindowEventHandler? WindowOpening;
-    public event WindowEventHandler? WindowOpened;
+    public event WindowEventHandler? Opening;
+    public event WindowEventHandler? Opened;
     public event WindowEventHandler<WindowCancelCloseEventArgs>? TryClose;
     public event AsyncWindowEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
-    public event WindowEventHandler<WindowCloseEventArgs>? WindowClosing;
-    public event AsyncWindowEventHandler<WindowCloseEventArgs>? WindowClosingAsync;
-    public event WindowEventHandler<WindowCloseEventArgs>? WindowClosed;
+    public event WindowEventHandler<WindowCloseEventArgs>? Closing;
+    public event AsyncWindowEventHandler<WindowCloseEventArgs>? ClosingAsync;
+    public event WindowEventHandler<WindowCloseEventArgs>? Closed;
     public event WindowIconChangedEventHandler? IconChanged;
     public event WindowTitleBarIconChangedEventHandler? TitleBarIconChanged;
     public event WindowEventHandler? IsTitleBarVisibleChanged;
@@ -168,7 +169,7 @@ public sealed class DesktopWindowImpl : IWindow {
             this.ComponentStorage.AddComponent<IClipboardService>(new ClipboardServiceImpl(clip));
         }
 
-        this.ComponentStorage.AddComponent<IWebLauncher>(new WebLauncherImpl(this.myNativeWindow));
+        this.ComponentStorage.AddComponent<IWebLauncher>(new WebLauncherImpl(this.myNativeWindow.Launcher));
 
         this.myNativeWindow.IsToolWindow = builder.IsToolWindow;
         this.myNativeWindow.ShowTitleBarIcon = builder.ShowTitleBarIcon;
@@ -227,7 +228,7 @@ public sealed class DesktopWindowImpl : IWindow {
         this.OpenState = OpenState.Opening;
         this.IsDialog = this.myNativeWindow.IsDialog;
         this.myManager.OnWindowOpening(this);
-        this.WindowOpening?.Invoke(this, EventArgs.Empty);
+        this.Opening?.Invoke(this, EventArgs.Empty);
     }
 
     internal void OnNativeWindowOpened() {
@@ -236,9 +237,9 @@ public sealed class DesktopWindowImpl : IWindow {
 
         this.OpenState = OpenState.Open;
         this.AllocateResourcesForOpening();
-        this.WindowOpened?.Invoke(this, EventArgs.Empty);
+        this.Opened?.Invoke(this, EventArgs.Empty);
         this.myManager.OnWindowOpened(this);
-        this.tcsShowAsync?.SetResult();
+        this.tcsShowAsync?.TrySetResult();
         this.tcsShowAsync = null;
     }
 
@@ -283,8 +284,8 @@ public sealed class DesktopWindowImpl : IWindow {
 
         this.OpenState = OpenState.Closing;
         WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode);
-        this.WindowClosing?.Invoke(this, closingArgs);
-        Delegate[]? closingAsyncHandlers = this.WindowClosingAsync?.GetInvocationList();
+        this.Closing?.Invoke(this, closingArgs);
+        Delegate[]? closingAsyncHandlers = this.ClosingAsync?.GetInvocationList();
         if (closingAsyncHandlers != null && closingAsyncHandlers.Length > 0) {
             List<Task> tasks = new List<Task>();
             foreach (Delegate handler in closingAsyncHandlers) {
@@ -314,13 +315,13 @@ public sealed class DesktopWindowImpl : IWindow {
         this.DisposeResourcesForClosed();
 
         this.myManager.OnWindowClosed(this);
-        this.WindowClosed?.Invoke(this, new WindowCancelCloseEventArgs(this, reason, isFromCode));
-        this.tcsWaitForClosed?.SetResult();
+        this.Closed?.Invoke(this, new WindowCloseEventArgs(this, reason, isFromCode));
+        this.tcsWaitForClosed?.TrySetResult();
         this.tcsWaitForClosed = null;
 
         if (this.listTcsWaitForClosed.Count > 0) {
             foreach (CancellableTaskCompletionSource tcs in this.listTcsWaitForClosed) {
-                tcs.SetResult();
+                tcs.TrySetResult();
                 tcs.Dispose();
             }
 
@@ -466,11 +467,11 @@ public sealed class DesktopWindowImpl : IWindow {
         this.myNativeWindow.Activate();
     }
 
-    private class WebLauncherImpl(Window window) : IWebLauncher {
-        public Task<bool> LaunchUriAsync(Uri uri) => window.Launcher.LaunchUriAsync(uri);
+    internal class WebLauncherImpl(ILauncher launcher) : IWebLauncher {
+        public Task<bool> LaunchUriAsync(Uri uri) => launcher.LaunchUriAsync(uri);
     }
 
-    private class ClipboardServiceImpl(IClipboard clipboard) : IClipboardService {
+    internal class ClipboardServiceImpl(IClipboard clipboard) : IClipboardService {
         public async Task<string?> GetTextAsync() => await clipboard.GetTextAsync();
         public Task SetTextAsync(string? text) => clipboard.SetTextAsync(text);
         public Task ClearAsync() => clipboard.ClearAsync();

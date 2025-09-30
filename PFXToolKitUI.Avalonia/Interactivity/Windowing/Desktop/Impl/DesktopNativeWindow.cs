@@ -30,7 +30,7 @@ using PFXToolKitUI.Avalonia.Themes.Converters;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
 
 /// <summary>
 /// A derived window type that is only used for the <see cref="DesktopWindowManager"/>

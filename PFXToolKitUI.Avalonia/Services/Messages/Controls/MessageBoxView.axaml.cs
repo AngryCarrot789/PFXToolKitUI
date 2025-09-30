@@ -22,6 +22,8 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
@@ -37,9 +39,16 @@ public partial class MessageBoxView : UserControl {
     /// <summary>
     /// Gets the window this view is currently open in
     /// </summary>
-    public IWindow? Window { get; private set; }
+    public IWindowBase? OwnerWindow { get; private set; }
 
-    private readonly IBinder<MessageBoxInfo> captionBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CaptionChanged), (b) => ((MessageBoxView) b.Control).Window!.Title = b.Model.Caption);
+    private readonly IBinder<MessageBoxInfo> captionBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CaptionChanged), (b) => {
+        IWindowBase window = ((MessageBoxView) b.Control).OwnerWindow!;
+        if (window is IDesktopWindow desktop)
+            desktop.Title = b.Model.Caption;
+        if (window is IOverlayWindow overlay && overlay.TitleBarInfo != null)
+            overlay.TitleBarInfo.Title = b.Model.Caption;
+    });
+
     private readonly IBinder<MessageBoxInfo> headerBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.HeaderChanged), (b) => ((TextBlock) b.Control).Text = b.Model.Header);
     private readonly IBinder<MessageBoxInfo> messageBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.MessageChanged), (b) => ((TextBox) b.Control).Text = b.Model.Message);
     private readonly IBinder<MessageBoxInfo> yesOkTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.YesOkTextChanged), (b) => ((Button) b.Control).Content = b.Model.YesOkText);
@@ -60,7 +69,7 @@ public partial class MessageBoxView : UserControl {
         this.autrBinder.AttachControl(this.PART_AlwaysUseThisResult);
         this.autrUntilCloseBinder.AttachControl(this.PART_AUTR_UntilAppCloses);
         this.PART_Header.PropertyChanged += this.OnHeaderTextBlockPropertyChanged;
-        
+
         this.PART_YesOkButton.Click += this.OnConfirmButtonClicked;
         this.PART_NoButton.Click += this.OnNoButtonClicked;
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
@@ -224,22 +233,23 @@ public partial class MessageBoxView : UserControl {
     /// <param name="result">The dialog result wanted</param>
     /// <returns>True if the dialog was closed, false if it could not be closed due to a validation error or other error</returns>
     public void Close(MessageBoxResult result) {
-        if (this.Window != null && this.Window.OpenState == OpenState.Open) {
-            _ = this.Window.RequestCloseAsync(result);
+        if (this.OwnerWindow != null && this.OwnerWindow.OpenState == OpenState.Open) {
+            _ = this.OwnerWindow.RequestCloseAsync(result);
         }
     }
 
-    internal void OnWindowOpening(IWindow window) {
-        this.Window = window;
+    internal void OnWindowOpening(IWindowBase window) {
+        this.OwnerWindow = window;
         this.captionBinder.AttachControl(this);
     }
 
-    internal void OnWindowOpened(IWindow window) {
-        window.SizingInfo.SizeToContent = SizeToContent.Manual;
+    internal void OnWindowOpened(IWindowBase window) {
+        if (window is IDesktopWindow desktop)
+            desktop.SizingInfo.SizeToContent = SizeToContent.Manual;
     }
 
-    internal void OnWindowClosed(IWindow window) {
+    internal void OnWindowClosed(IWindowBase window) {
         this.captionBinder.DetachControl();
-        this.Window = null;
+        this.OwnerWindow = null;
     }
 }

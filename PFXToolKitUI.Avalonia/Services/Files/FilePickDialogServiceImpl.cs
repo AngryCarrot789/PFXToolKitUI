@@ -20,8 +20,8 @@
 using System.Collections.Immutable;
 using Avalonia.Controls;
 using Avalonia.Platform.Storage;
-using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.FilePicking;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
@@ -44,10 +44,10 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string?> OpenFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
+        ITopLevel? parentWindow = TopLevelContextUtils.GetTopLevelFromContext();
         if (parentWindow == null)
             return null;
-        if (!parentWindow.TryGetTopLevel(out TopLevel? parentTopLevel))
+        if (!WindowContextUtils.TryGetTopLevel(parentWindow, out TopLevel? parentTopLevel))
             return null;
 
         await Task.Delay(WaitTimeMillisForWM_ENABLE);
@@ -70,10 +70,10 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string[]?> OpenMultipleFiles(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null) {
-        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
+        ITopLevel? parentWindow = TopLevelContextUtils.GetTopLevelFromContext();
         if (parentWindow == null)
             return null;
-        if (!parentWindow.TryGetTopLevel(out TopLevel? parentTopLevel))
+        if (!WindowContextUtils.TryGetTopLevel(parentWindow, out TopLevel? parentTopLevel))
             return null;
 
         await Task.Delay(WaitTimeMillisForWM_ENABLE);
@@ -96,10 +96,10 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
     }
 
     public async Task<string?> OpenFolders(string? message, string? initialPath = null, bool allowMultiple = false) {
-        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
+        ITopLevel? parentWindow = TopLevelContextUtils.GetTopLevelFromContext();
         if (parentWindow == null)
             return null;
-        if (!parentWindow.TryGetTopLevel(out TopLevel? parentTopLevel))
+        if (!WindowContextUtils.TryGetTopLevel(parentWindow, out TopLevel? parentTopLevel))
             return null;
 
         await Task.Delay(WaitTimeMillisForWM_ENABLE);
@@ -117,14 +117,13 @@ public class FilePickDialogServiceImpl : IFilePickDialogService {
         });
 
         return list.Count != 1 ? null : list[0].Path.LocalPath;
-
     }
 
     public async Task<string?> SaveFile(string? message, IEnumerable<FileFilter>? filters = null, string? initialPath = null, bool warnOverwrite = true) {
-        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
+        ITopLevel? parentWindow = TopLevelContextUtils.GetTopLevelFromContext();
         if (parentWindow == null)
             return null;
-        if (!parentWindow.TryGetTopLevel(out TopLevel? parentTopLevel))
+        if (!WindowContextUtils.TryGetTopLevel(parentWindow, out TopLevel? parentTopLevel))
             return null;
 
         await Task.Delay(WaitTimeMillisForWM_ENABLE);

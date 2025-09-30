@@ -19,19 +19,21 @@
 
 using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
-using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Configurations;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Configurations;
 
-public class ConfigurationDialogServiceImpl : IConfigurationDialogService {
+public class DesktopConfigurationDialogServiceImpl : IConfigurationDialogService {
     public async Task ShowConfigurationDialog(ConfigurationManager configurationManager) {
-        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
-        if (parentWindow == null)
+        ITopLevel? topLevel = TopLevelContextUtils.GetTopLevelFromContext();
+        if (!(topLevel is IDesktopWindow parentWindow))
             return;
         
-        IWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
+        IDesktopWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
             Title = "Settings",
             Content = new ConfigurationDialogView(configurationManager),
             FocusPath = "Configuration",
@@ -43,10 +45,10 @@ public class ConfigurationDialogServiceImpl : IConfigurationDialogService {
         });
 
         window.Control.AddHandler(InputElement.KeyDownEvent, OnWindowKeyDown);
-        window.WindowOpened += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = s;
-        window.WindowClosed += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = null;
+        window.Opened += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = s;
+        window.Closed += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = null;
 
-        window.WindowClosingAsync += static (sender, args) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+        window.ClosingAsync += static (sender, args) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
             ConfigurationDialogView view = (ConfigurationDialogView) sender.Content!;
             await view.configManager.RevertLiveChangesInHierarchyAsync(null);
             view.PART_EditorPanel.ConfigurationManager = null;

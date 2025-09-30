@@ -17,7 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
 using SkiaSharp;
@@ -25,7 +25,7 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class LogViewServiceImpl : ILogViewService {
-    private IWindow? currentWindow;
+    private IDesktopWindow? currentWindow;
 
     public Task ShowLogsWindow() {
         if (IWindowManager.TryGetInstance(out IWindowManager? manager)) {
@@ -38,8 +38,8 @@ public class LogViewServiceImpl : ILogViewService {
                     Width = 900, Height = 700
                 });
 
-                this.currentWindow.WindowOpened += static (sender, args) => ((LogsView) sender.Content!).OnWindowOpened();
-                this.currentWindow.WindowClosed += (sender, args) => {
+                this.currentWindow.Opened += static (sender, args) => ((LogsView) sender.Content!).OnWindowOpened();
+                this.currentWindow.Closed += (sender, args) => {
                     ((LogsView) sender.Content!).OnWindowClosed();
                     this.currentWindow = null;
                 };

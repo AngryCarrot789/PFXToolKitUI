@@ -23,7 +23,7 @@ using PFXToolKitUI.Icons;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 
 /// <summary>
 /// A builder object for building a window
@@ -32,7 +32,7 @@ public sealed class WindowBuilder {
     /// <summary>
     /// Gets or sets the parent of the window
     /// </summary>
-    public IWindow? Parent { get; set; }
+    public IDesktopWindow? Parent { get; set; }
 
     /// <summary>
     /// Gets or sets if this window should become a main window when shown. Main windows are stacked,
@@ -41,7 +41,7 @@ public sealed class WindowBuilder {
     public bool MainWindow { get; set; }
 
     /// <summary>
-    /// Gets or sets if the window's title bar should be visible. Default is true. See <see cref="IWindow.IsTitleBarVisible"/> for more info
+    /// Gets or sets if the window's title bar should be visible. Default is true. See <see cref="IDesktopWindow.IsTitleBarVisible"/> for more info
     /// </summary>
     public bool IsTitleBarVisible { get; set; } = true;
 
@@ -80,7 +80,7 @@ public sealed class WindowBuilder {
     public IColourBrush? BorderBrush { get; set; }
 
     /// <summary>
-    /// Gets or sets the <see cref="UIInputManager.FocusPathProperty"/> of the <see cref="IWindow.Control"/> once created
+    /// Gets or sets the <see cref="UIInputManager.FocusPathProperty"/> of the <see cref="IDesktopWindow.Control"/> once created
     /// </summary>
     public string? FocusPath { get; set; }
 
@@ -146,5 +146,5 @@ public sealed class WindowBuilder {
     /// Builds the final window. Note, this does not actually show the window.
     /// </summary>
     /// <returns>The created window</returns>
-    public IWindow Build(IWindowManager manager) => manager.CreateWindow(this);
+    public IDesktopWindow Build(IWindowManager manager) => manager.CreateWindow(this);
 }

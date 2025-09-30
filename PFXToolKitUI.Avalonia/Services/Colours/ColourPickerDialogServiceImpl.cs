@@ -17,7 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
 using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.ColourPicking;
@@ -30,10 +29,10 @@ public class ColourPickerDialogServiceImpl : IColourPickerDialogService {
         ColourUserInputInfo info = new ColourUserInputInfo() {
             Colour = defaultColour ?? SKColors.Black
         };
-
-        Task<bool?> task = parentTopLevel != null
-            ? UserInputDialogView.ShowDialogAsync(info, IWindow.FromTopLevel(parentTopLevel))
-            : UserInputDialogView.ShowDialogAsync(info);
+        
+        Task<bool?> task = parentTopLevel != null 
+            ? UserInputDialogView.ShowDialogWindowOrPopup(info, parentTopLevel) 
+            : UserInputDialogView.ShowDialogWindowOrPopup(info);
 
         return await task == true ? info.Colour : null;
     }

@@ -23,10 +23,13 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 using PFXToolKitUI.Avalonia.Services.Colours;
 using PFXToolKitUI.Avalonia.Services.Messages.Controls;
 using PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.UserInputs;
@@ -54,11 +57,17 @@ public partial class UserInputDialogView : UserControl {
     }
 
     /// <summary>
-    /// Gets the window we are opened in
+    /// Gets the top level we exist in
     /// </summary>
-    public IWindow? Window { get; private set; }
+    public IWindowBase? OwnerWindow { get; private set; }
 
-    private readonly IBinder<UserInputInfo> captionBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.CaptionChanged), b => ((UserInputDialogView) b.Control).Window!.Title = b.Model.Caption);
+    private readonly IBinder<UserInputInfo> captionBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.CaptionChanged), b => {
+        IWindowBase? owner = ((UserInputDialogView) b.Control).OwnerWindow;
+        if (owner is IDesktopWindow dw)
+            dw.Title = b.Model.Caption;
+        if (owner is IOverlayWindow ow && ow.TitleBarInfo != null)
+            ow.TitleBarInfo.Title = b.Model.Caption;
+    });
 
     private readonly IBinder<UserInputInfo> messageBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.MessageChanged), b => {
         b.Control.SetValue(IsVisibleProperty, !string.IsNullOrWhiteSpace(b.Model.Message));
@@ -87,32 +96,32 @@ public partial class UserInputDialogView : UserControl {
         UserInputInfoProperty.Changed.AddClassHandler<UserInputDialogView, UserInputInfo?>((o, e) => o.OnUserInputDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
 
-    internal void OnWindowOpening(IWindow window) {
-        this.Window = window;
-        if (this.PART_InputFieldContent.Content is IUserInputContent content) {
+    internal void OnWindowOpening(IWindowBase view) {
+        this.OwnerWindow = view;
+        if (this.OwnerWindow is IDesktopWindow window && this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowOpening();
             PixelSize bounds = content.GetMinimumBounds();
             if (bounds.Width > 0)
-                this.Window.SizingInfo.MinWidth = bounds.Width;
+                window.SizingInfo.MinWidth = bounds.Width;
             if (bounds.Height > 0)
-                this.Window.SizingInfo.MinHeight = bounds.Height;
+                window.SizingInfo.MinHeight = bounds.Height;
         }
     }
 
-    internal void OnWindowOpened(IWindow window) {
+    internal void OnWindowOpened(IWindowBase view) {
         this.captionBinder.AttachControl(this);
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowOpened();
         }
     }
 
-    internal void OnWindowClosed(IWindow window) {
+    internal void OnWindowClosed(IWindowBase view) {
         this.captionBinder.DetachControl();
         if (this.PART_InputFieldContent.Content is IUserInputContent content) {
             content.OnWindowClosed();
         }
 
-        this.Window = null;
+        this.OwnerWindow = null;
     }
 
     protected override Size MeasureOverride(Size availableSize) {
@@ -191,18 +200,16 @@ public partial class UserInputDialogView : UserControl {
     /// false if it could not be closed due to a validation error or other error
     /// </returns>
     public void RequestClose(bool result) {
-        if (this.Window != null && this.Window.OpenState == OpenState.Open) {
+        if (this.OwnerWindow != null && this.OwnerWindow.OpenState == OpenState.Open) {
             if (!result) {
-                _ = this.Window!.RequestCloseAsync(BoolBox.False);
+                _ = this.OwnerWindow.RequestCloseAsync(BoolBox.False);
                 return;
             }
 
             UserInputInfo? data = this.UserInputInfo;
-            if (data == null || data.HasErrors()) {
-                return;
+            if (data != null && !data.HasErrors()) {
+                _ = this.OwnerWindow.RequestCloseAsync(BoolBox.True);
             }
-
-            _ = this.Window!.RequestCloseAsync(BoolBox.True);
         }
     }
 
@@ -212,7 +219,7 @@ public partial class UserInputDialogView : UserControl {
     /// <param name="info">The input info</param>
     /// <param name="parentWindow">The parent window for the dialog</param>
     /// <returns>A task to await the dialog close result</returns>
-    public static async Task<bool?> ShowDialogAsync(UserInputInfo info, IWindow parentWindow) {
+    public static async Task<bool?> ShowDialogWindowAsync(UserInputInfo info, IDesktopWindow parentWindow) {
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(parentWindow);
         
@@ -220,7 +227,7 @@ public partial class UserInputDialogView : UserControl {
             UserInputInfo = info
         };
 
-        IWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
+        IDesktopWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
             Title = info.Caption,
             Parent = parentWindow,
             Content = view,
@@ -231,24 +238,66 @@ public partial class UserInputDialogView : UserControl {
         });
 
         window.Control.AddHandler(KeyDownEvent, WindowOnKeyDown);
-        window.WindowOpening += WindowOnWindowOpening;
-        window.WindowOpened += WindowOnWindowOpened;
-        window.WindowClosed += WindowOnWindowClosed;
+        window.Opening += WindowOnWindowOpening;
+        window.Opened += WindowOnWindowOpened;
+        window.Closed += WindowOnWindowClosed;
 
         bool? result = await window.ShowDialogAsync() as bool?;
         view.UserInputInfo = null; // unhook models' event handlers
         return result;
 
-        void WindowOnWindowOpening(IWindow s, EventArgs e) {
+        void WindowOnWindowOpening(IDesktopWindow s, EventArgs e) {
             s.SizingInfo.SizeToContent = SizeToContent.Manual;
             view.OnWindowOpening(s);
         }
 
-        void WindowOnWindowOpened(IWindow s, EventArgs e) => view.OnWindowOpened(s);
-        void WindowOnWindowClosed(IWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
+        void WindowOnWindowOpened(IDesktopWindow s, EventArgs e) => view.OnWindowOpened(s);
+        void WindowOnWindowClosed(IDesktopWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
 
         void WindowOnKeyDown(object? s, KeyEventArgs e) {
-            if (!e.Handled && e.Key == Key.Escape && view.Window != null) {
+            if (!e.Handled && e.Key == Key.Escape && view.OwnerWindow != null) {
+                view.RequestClose(false);
+            }
+        }
+    }
+    
+    public static async Task<bool?> ShowDialogOverlayAsync(UserInputInfo info, IOverlayWindowManager overlayManager, IOverlayWindow? parent) {
+        ArgumentNullException.ThrowIfNull(info);
+        ArgumentNullException.ThrowIfNull(overlayManager);
+        
+        UserInputDialogView view = new UserInputDialogView() {
+            UserInputInfo = info
+        };
+
+        IOverlayWindow overlayWindow = overlayManager.CreateWindow(new OverlayWindowBuilder() {
+            TitleBar = new OverlayWindowTitleBarInfo() {
+                Title = info.Caption,
+                TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
+            },
+            Parent = parent,
+            Content = view,
+            BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
+            CloseOnLostFocus = true,
+        });
+        
+        overlayWindow.Control.AddHandler(KeyDownEvent, WindowOnKeyDown); // just in case on desktop
+        overlayWindow.Opening += WindowOnWindowOpening;
+        overlayWindow.Opened += WindowOnWindowOpened;
+        overlayWindow.Closed += WindowOnWindowClosed;
+
+        bool? result = await overlayWindow.ShowDialogAsync() as bool?;
+        view.UserInputInfo = null; // unhook models' event handlers
+        return result;
+
+        void WindowOnWindowOpening(IOverlayWindow s, EventArgs e) {
+            view.OnWindowOpening(s);
+        }
+
+        void WindowOnWindowOpened(IOverlayWindow s, EventArgs e) => view.OnWindowOpened(s);
+        void WindowOnWindowClosed(IOverlayWindow s, OverlayWindowCloseEventArgs popupCloseEventArgs) => view.OnWindowClosed(s);
+
+        void WindowOnKeyDown(object? s, KeyEventArgs e) {
+            if (!e.Handled && e.Key == Key.Escape && view.OwnerWindow != null) {
                 view.RequestClose(false);
             }
         }
@@ -259,13 +308,20 @@ public partial class UserInputDialogView : UserControl {
     /// </summary>
     /// <param name="info">The input info</param>
     /// <returns>A task to await the dialog close result</returns>
-    public static async Task<bool?> ShowDialogAsync(UserInputInfo info) {
+    public static async Task<bool?> ShowDialogWindowOrPopup(UserInputInfo info) {
+        ITopLevel? parent = TopLevelContextUtils.GetTopLevelFromContext();
+        return parent == null ? null : await ShowDialogWindowOrPopup(info, parent);
+    }
+    
+    public static async Task<bool?> ShowDialogWindowOrPopup(UserInputInfo info, ITopLevel parent) {
         ArgumentNullException.ThrowIfNull(info);
-        IWindow? parentWindow = WindowContextUtils.GetUsefulWindow();
-        if (parentWindow == null) {
-            return null;
-        }
+        ArgumentNullException.ThrowIfNull(parent);
 
-        return await ShowDialogAsync(info, parentWindow);
+        // if (IOverlayWindowManager.TryGetInstance(out IOverlayWindowManager? instance)) {
+        //     return await ShowDialogOverlayAsync(info, instance, instance.GetActiveWindow());
+        // }
+
+        Optional<bool?> window = await WindowContextUtils.UseWindowAsync(parent, w => ShowDialogWindowAsync(info, w), (m, w) => ShowDialogOverlayAsync(info, m, w));
+        return window.GetValueOrDefault();
     }
 }

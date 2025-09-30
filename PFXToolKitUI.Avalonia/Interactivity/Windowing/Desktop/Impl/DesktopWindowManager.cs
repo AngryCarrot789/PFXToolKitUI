@@ -27,7 +27,7 @@ using PFXToolKitUI.Avalonia.Services;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.DesktopImpl;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
 
 /// <summary>
 /// An implementation of <see cref="IWindowManager"/> that uses avalonia <see cref="global::Avalonia.Controls.Window"/> objects
@@ -49,9 +49,9 @@ public sealed class DesktopWindowManager : IWindowManager {
         set => this.desktop.ApplicationLifetime.MainWindow = value;
     }
 
-    public IEnumerable<IWindow> TopLevelWindows { get; }
+    public IEnumerable<IDesktopWindow> TopLevelWindows { get; }
 
-    public IEnumerable<IWindow> AllWindows { get; }
+    public IEnumerable<IDesktopWindow> AllWindows { get; }
 
     public event EventHandler<WindowEventArgs>? WindowOpened;
 
@@ -65,8 +65,8 @@ public sealed class DesktopWindowManager : IWindowManager {
         this.defaultWindowIconUri = defaultWindowIconUri;
     }
 
-    public IWindow CreateWindow(WindowBuilder builder) {
-        IWindow? parent = builder.Parent;
+    public IDesktopWindow CreateWindow(WindowBuilder builder) {
+        IDesktopWindow? parent = builder.Parent;
         if (parent != null && !(parent is DesktopWindowImpl)) {
             throw new InvalidOperationException("Attempt to create window using a non-desktop parent window");
         }
@@ -74,7 +74,7 @@ public sealed class DesktopWindowManager : IWindowManager {
         return new DesktopWindowImpl(this, parent as DesktopWindowImpl, builder);
     }
 
-    public bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IWindow? window) {
+    public bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IDesktopWindow? window) {
         // Get last activated, or find the first that is activated
         if ((window = this.lastActivated) != null && window.OpenState == OpenState.Open)
             return true;
@@ -91,7 +91,7 @@ public sealed class DesktopWindowManager : IWindowManager {
         return (window = this.allWindows.LastOrDefault(x => x.OpenState == OpenState.Open)) != null;
     }
 
-    public bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IWindow? window) {
+    public bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window) {
         if (visual is DesktopNativeWindow nativeWindow) {
             window = nativeWindow.Window;
             return true;

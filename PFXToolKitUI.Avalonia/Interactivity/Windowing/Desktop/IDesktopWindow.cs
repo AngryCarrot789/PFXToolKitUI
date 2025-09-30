@@ -20,40 +20,38 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Interactivity;
 using Avalonia.Media;
-using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Themes;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 
-public delegate void WindowEventHandler(IWindow sender, EventArgs e);
+public delegate void WindowEventHandler(IDesktopWindow sender, EventArgs e);
 
-public delegate void WindowEventHandler<in TEventArgs>(IWindow sender, TEventArgs e) where TEventArgs : EventArgs;
+public delegate void WindowEventHandler<in TEventArgs>(IDesktopWindow sender, TEventArgs e) where TEventArgs : EventArgs;
 
-public delegate Task AsyncWindowEventHandler(IWindow sender, EventArgs e);
+public delegate Task AsyncWindowEventHandler(IDesktopWindow sender, EventArgs e);
 
-public delegate Task AsyncWindowEventHandler<in TEventArgs>(IWindow sender, TEventArgs e) where TEventArgs : EventArgs;
+public delegate Task AsyncWindowEventHandler<in TEventArgs>(IDesktopWindow sender, TEventArgs e) where TEventArgs : EventArgs;
 
-public delegate void WindowIconChangedEventHandler(IWindow window, WindowIcon? oldValue, WindowIcon? newValue);
+public delegate void WindowIconChangedEventHandler(IDesktopWindow window, WindowIcon? oldValue, WindowIcon? newValue);
 
-public delegate void WindowTitleBarIconChangedEventHandler(IWindow window, Icon? oldValue, Icon? newValue);
+public delegate void WindowTitleBarIconChangedEventHandler(IDesktopWindow window, Icon? oldValue, Icon? newValue);
 
-public delegate void WindowTitleBarCaptionChangedEventHandler(IWindow window, string? oldValue, string? newValue);
+public delegate void WindowTitleBarCaptionChangedEventHandler(IDesktopWindow window, string? oldValue, string? newValue);
 
-public delegate void WindowTitleBarBrushChangedEventHandler(IWindow window, IColourBrush? oldValue, IColourBrush? newValue);
+public delegate void WindowTitleBarBrushChangedEventHandler(IDesktopWindow window, IColourBrush? oldValue, IColourBrush? newValue);
 
-public delegate void WindowBorderBrushChangedEventHandler(IWindow window, IColourBrush? oldValue, IColourBrush? newValue);
+public delegate void WindowBorderBrushChangedEventHandler(IDesktopWindow window, IColourBrush? oldValue, IColourBrush? newValue);
 
-public delegate void WindowTitleBarTextAlignmentChangedEventHandler(IWindow window, TextAlignment oldValue, TextAlignment newValue);
+public delegate void WindowTitleBarTextAlignmentChangedEventHandler(IDesktopWindow window, TextAlignment oldValue, TextAlignment newValue);
 
 /// <summary>
-/// Exposes window-like properties that delegate to either a native OS window or a single-view overlay (typically only used on mobile or rasp pi).
+/// A window that can be positioned and sized and dragged around by the user.
+/// Supports any number of owned windows and can be parented to any other window.
 /// </summary>
-public interface IWindow : ITopLevel {
+public interface IDesktopWindow : IWindowBase {
     /// <summary>
     /// Gets the window manager associated with this window
     /// </summary>
@@ -63,24 +61,19 @@ public interface IWindow : ITopLevel {
     /// Gets the parent window. This is usually only set for dialogs, however, it might be
     /// set for windows that want to stay on-top of another window without being a dialog.
     /// </summary>
-    IWindow? Owner { get; }
+    IDesktopWindow? Owner { get; }
 
     /// <summary>
     /// Enumerates the child windows of this window. Windows are added to this before
-    /// <see cref="WindowOpening"/> is fired, and removed before <see cref="WindowClosed"/> is fired 
+    /// <see cref="Opening"/> is fired, and removed before <see cref="Closed"/> is fired 
     /// </summary>
-    IEnumerable<IWindow> OwnedWindows { get; }
+    IEnumerable<IDesktopWindow> OwnedWindows { get; }
 
     /// <summary>
     /// Gets whether this window is a main window. When shown, it will replace the main
     /// window status of the previous main window until this window closes.
     /// </summary>
     bool IsMainWindow { get; }
-
-    /// <summary>
-    /// Gets the window's current opened state, which specifies whether it's open, closing, closed, etc.
-    /// </summary>
-    OpenState OpenState { get; }
 
     /// <summary>
     /// Returns whether this window was shown as a dialog. Note, this may return true even when closing or closed
@@ -111,7 +104,7 @@ public interface IWindow : ITopLevel {
     /// Resizing may still work, unless our <see cref="SizingInfo"/>'s <see cref="WindowSizingInfo.CanResize"/> property is false
     /// </summary>
     bool IsTitleBarVisible { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the title bar text, aka the caption
     /// </summary>
@@ -133,23 +126,6 @@ public interface IWindow : ITopLevel {
     TextAlignment TitleBarTextAlignment { get; set; }
 
     /// <summary>
-    /// Gets or sets the content of this window. This is equivalent to <see cref="ContentControl.Content"/>
-    /// </summary>
-    object? Content { get; set; }
-
-    /// <summary>
-    /// Returns an avalonia object that represents the window itself in the visual tree.
-    /// This will be a visual parent of <see cref="Content"/>, but not necessarily a direct parent.
-    /// <para>
-    /// This can be used to access the <see cref="IControlContextData"/> via the <see cref="DataManager"/>
-    /// </para>
-    /// <para>
-    /// When this window is a desktop window, this control will be an instance of <see cref="Window"/>
-    /// </para>
-    /// </summary>
-    Interactive Control { get; }
-
-    /// <summary>
     /// Gets the object that allows for changing the window size and constraints
     /// </summary>
     WindowSizingInfo SizingInfo { get; }
@@ -167,12 +143,12 @@ public interface IWindow : ITopLevel {
     /// <summary>
     /// An event fired when the window is in the process of opening but has not been shown on screen yet.
     /// </summary>
-    event WindowEventHandler? WindowOpening;
+    event WindowEventHandler? Opening;
 
     /// <summary>
     /// An event fired when the window is fully opening.
     /// </summary>
-    event WindowEventHandler? WindowOpened;
+    event WindowEventHandler? Opened;
 
     /// <summary>
     /// An event fired when the window is requested to close.
@@ -194,14 +170,14 @@ public interface IWindow : ITopLevel {
     /// <summary>
     /// An event fired when the window is actually about to close.
     /// </summary>
-    event WindowEventHandler<WindowCloseEventArgs>? WindowClosing;
+    event WindowEventHandler<WindowCloseEventArgs>? Closing;
 
     /// <summary>
     /// An event fired when the window is actually about to close.
     /// The handlers are invoked in their own tasks once all handlers
-    /// of <see cref="WindowClosing"/> are invoked.
+    /// of <see cref="Closing"/> are invoked.
     /// </summary>
-    event AsyncWindowEventHandler<WindowCloseEventArgs>? WindowClosingAsync;
+    event AsyncWindowEventHandler<WindowCloseEventArgs>? ClosingAsync;
 
     /// <summary>
     /// An event fired when the window is fully closed.
@@ -209,7 +185,7 @@ public interface IWindow : ITopLevel {
     /// This is fired before the task returned by <see cref="RequestCloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
     /// </para>
     /// </summary>
-    event WindowEventHandler<WindowCloseEventArgs>? WindowClosed;
+    event WindowEventHandler<WindowCloseEventArgs>? Closed;
 
     event WindowIconChangedEventHandler? IconChanged;
     event WindowTitleBarIconChangedEventHandler? TitleBarIconChanged;
@@ -220,76 +196,17 @@ public interface IWindow : ITopLevel {
     event WindowTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
 
     /// <summary>
-    /// Tries to get a top level object from this window. Note, the top level may not actually equal the <see cref="Control"/> instance.
-    /// </summary>
-    /// <param name="topLevel">The found top level</param>
-    /// <returns>True if a top level was found</returns>
-    bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel);
-
-    /// <summary>
-    /// Shows this window in a non-modal mode as an asynchronous operation.
-    /// </summary>
-    /// <returns>A task that completes once the window has opened</returns>
-    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
-    Task ShowAsync();
-
-    /// <summary>
-    /// Shows this window in a modal mode as an asynchronous operation.
-    /// </summary>
-    /// <returns>
-    /// A task that completes when the window closes, and whose result is the first value passed
-    /// to <see cref="RequestCloseAsync"/> when the window was not already trying to close.
-    /// </returns>
-    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
-    Task<object?> ShowDialogAsync();
-
-    /// <summary>
-    /// Requests the window to close. The returned task is completed when the window either closes
-    /// or the close operation was cancelled, where the bool result represents the closed state.
-    /// </summary>
-    /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
-    /// <returns>True if the window was actually closed, False if the close attempt was cancelled</returns>
-    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.Open"/></exception>
-    Task<bool> RequestCloseAsync(object? dialogResult = null);
-
-    /// <summary>
-    /// Waits for this window to become closed. Note this does not actually tell the window to close.
-    /// <para>
-    /// If the window is already closed then this method just immediately returns <see cref="Task.CompletedTask"/>
-    /// </para>
-    /// <para>
-    /// This method does not throw <see cref="OperationCanceledException"/>
-    /// </para>
-    /// </summary>
-    /// <param name="cancellationToken">Allows to stop waiting for the window to close</param>
-    /// <returns>A task that completes before the task returned by <see cref="RequestCloseAsync"/> becomes completed</returns>
-    Task WaitForClosedAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
     /// Force-activates this window, making <see cref="IsActivated"/> and it becomes the focused control
     /// </summary>
     void Activate();
-
-    /// <summary>
-    /// Gets a <see cref="IWindow"/> from a <see cref="ITopLevel"/> object
-    /// </summary>
-    /// <param name="topLevel">The top level</param>
-    /// <returns>The window</returns>
-    static IWindow FromTopLevel(ITopLevel topLevel) {
-        if (topLevel is IWindow window) {
-            return window;
-        }
-
-        throw new ArgumentException("Invalid top level object: not a window", nameof(topLevel));
-    }
 
     /// <summary>
     /// Gets the window from the context data, or null, if there is no window available
     /// </summary>
     /// <param name="context">The context</param>
     /// <returns>The window</returns>
-    static IWindow? WindowFromContext(IContextData context) {
-        return TopLevelDataKey.GetContext(context) as IWindow;
+    static IDesktopWindow? WindowFromContext(IContextData context) {
+        return TopLevelDataKey.GetContext(context) as IDesktopWindow;
     }
 
     /// <summary>
@@ -298,17 +215,17 @@ public interface IWindow : ITopLevel {
     /// <param name="context">The context</param>
     /// <param name="window">The window</param>
     /// <returns>True if a window was available</returns>
-    static bool TryGetWindowFromContext(IContextData context, [NotNullWhen(true)] out IWindow? window) {
+    static bool TryGetWindowFromContext(IContextData context, [NotNullWhen(true)] out IDesktopWindow? window) {
         return (window = WindowFromContext(context)) != null;
     }
 
     /// <summary>
-    /// Tries to get the window from the visual, or returns null, if the visual isn't in a <see cref="IWindow"/>
+    /// Tries to get the window from the visual, or returns null, if the visual isn't in a <see cref="IDesktopWindow"/>
     /// </summary>
     /// <param name="visual">The visual to get the window of</param>
     /// <returns>The window, or null</returns>
-    static IWindow? FromVisual(Visual visual) {
-        return IWindowManager.TryGetWindow(visual, out IWindow? window) ? window : null;
+    static IDesktopWindow? FromVisual(Visual visual) {
+        return IWindowManager.TryGetWindow(visual, out IDesktopWindow? window) ? window : null;
     }
 
     /// <summary>
@@ -320,29 +237,29 @@ public interface IWindow : ITopLevel {
     /// True if the visual existed in a window. False if either no <see cref="IWindowManager"/>
     /// existed or <see cref="TryGetWindowFromVisual"/> returned false
     /// </returns>
-    static bool TryGetFromVisual(Visual visual, [NotNullWhen(true)] out IWindow? window) {
+    static bool TryGetFromVisual(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window) {
         return IWindowManager.TryGetWindow(visual, out window);
     }
 }
 
 /// <summary>
-/// Event args for when a <see cref="IWindow"/> is shown
+/// Event args for when a <see cref="IDesktopWindow"/> is shown
 /// </summary>
-public class WindowEventArgs(IWindow window) : EventArgs {
-    public IWindow Window { get; } = window;
+public class WindowEventArgs(IDesktopWindow window) : EventArgs {
+    public IDesktopWindow Window { get; } = window;
 }
 
 /// <summary>
 /// Event args for when a window is closing and when closed
 /// </summary>
-public class WindowCloseEventArgs(IWindow window, WindowCloseReason reason, bool isFromCode) : WindowEventArgs(window) {
+public class WindowCloseEventArgs(IDesktopWindow window, WindowCloseReason reason, bool isFromCode) : WindowEventArgs(window) {
     /// <summary>
     /// Gets the reason for why the window is closing 
     /// </summary>
     public WindowCloseReason Reason { get; } = reason;
 
     /// <summary>
-    /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IWindow.RequestCloseAsync"/>)
+    /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IDesktopWindow.RequestCloseAsync"/>)
     /// </summary>
     public bool IsFromCode { get; } = isFromCode;
 }
@@ -350,7 +267,7 @@ public class WindowCloseEventArgs(IWindow window, WindowCloseReason reason, bool
 /// <summary>
 /// Event args for when trying to close a window
 /// </summary>
-public class WindowCancelCloseEventArgs(IWindow window, WindowCloseReason reason, bool isFromCode) : WindowCloseEventArgs(window, reason, isFromCode) {
+public class WindowCancelCloseEventArgs(IDesktopWindow window, WindowCloseReason reason, bool isFromCode) : WindowCloseEventArgs(window, reason, isFromCode) {
     // We don't allow de-cancelling the close because it could lead to unexpected behaviour and issues
     private volatile bool isCancelled;
 

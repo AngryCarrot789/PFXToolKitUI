@@ -22,22 +22,22 @@ using PFXToolKitUI.Icons;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Popups;
+namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 
-public delegate void PopupTitleBarInfoTitleChangedEventHandler(PopupTitleBarInfo sender, string? oldValue, string? newValue);
+public delegate void PopupTitleBarInfoTitleChangedEventHandler(OverlayWindowTitleBarInfo sender, string? oldValue, string? newValue);
 
-public delegate void PopupTitleBarInfoIconChangedEventHandler(PopupTitleBarInfo sender, Icon? oldValue, Icon? newValue);
+public delegate void PopupTitleBarInfoIconChangedEventHandler(OverlayWindowTitleBarInfo sender, Icon? oldValue, Icon? newValue);
 
-public delegate void PopupTitleBarInfoIconPlacementChangedEventHandler(PopupTitleBarInfo sender, TitleBarIconPlacement oldValue, TitleBarIconPlacement newValue);
+public delegate void PopupTitleBarInfoIconPlacementChangedEventHandler(OverlayWindowTitleBarInfo sender, TitleBarIconPlacement oldValue, TitleBarIconPlacement newValue);
 
-public delegate void PopupTitleBarInfoTitleBarBrushChangedEventHandler(PopupTitleBarInfo sender, IColourBrush? oldValue, IColourBrush? newValue);
+public delegate void PopupTitleBarInfoTitleBarBrushChangedEventHandler(OverlayWindowTitleBarInfo sender, IColourBrush? oldValue, IColourBrush? newValue);
 
-public delegate void PopupTitleBarInfoTitleBarTextAlignmentChangedEventHandler(PopupTitleBarInfo sender, TextAlignment? oldValue, TextAlignment? newValue);
+public delegate void PopupTitleBarInfoTitleBarTextAlignmentChangedEventHandler(OverlayWindowTitleBarInfo sender, TextAlignment? oldValue, TextAlignment? newValue);
 
 /// <summary>
-/// A builder object for creating a simple title bar for a <see cref="PopupDialogBuilder"/>
+/// A builder object for creating a simple title bar for a <see cref="OverlayWindowBuilder"/>
 /// </summary>
-public sealed class PopupTitleBarInfo {
+public sealed class OverlayWindowTitleBarInfo {
     private string? title;
     private Icon? icon;
     private TitleBarIconPlacement iconPlacement;
@@ -90,10 +90,10 @@ public sealed class PopupTitleBarInfo {
     public event PopupTitleBarInfoTitleBarBrushChangedEventHandler? TitleBarBrushChanged;
     public event PopupTitleBarInfoTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
 
-    public PopupTitleBarInfo() {
+    public OverlayWindowTitleBarInfo() {
     }
 
-    public PopupTitleBarInfo(string? title, Icon? icon = null, TitleBarIconPlacement iconPlacement = TitleBarIconPlacement.Left, IColourBrush? titleBarBrush = null) {
+    public OverlayWindowTitleBarInfo(string? title, Icon? icon = null, TitleBarIconPlacement iconPlacement = TitleBarIconPlacement.Left, IColourBrush? titleBarBrush = null) {
         this.title = title;
         this.icon = icon;
         this.iconPlacement = iconPlacement;

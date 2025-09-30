@@ -40,4 +40,8 @@
       <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-VariableFont_wght.ttf" />
     </ItemGroup>
 
+    <ItemGroup>
+      <AdditionalFiles Include="Interactivity\Windowing\Overlays\Impl\OverlayWindowStyles.axaml" />
+    </ItemGroup>
+
 </Project>
