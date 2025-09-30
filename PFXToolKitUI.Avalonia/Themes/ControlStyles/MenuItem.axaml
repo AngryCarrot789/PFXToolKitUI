@@ -43,7 +43,7 @@
                             <ColumnDefinition Width="20"/>
                         </Grid.ColumnDefinitions>
                         <Border x:Name="PART_ToggleBorder" 
-                                BorderBrush="{DynamicResource ABrush.Tone4.Border.Static}" 
+                                BorderBrush="{DynamicResource PanelBorderBrush}" 
                                 BorderThickness="1" 
                                 Width="16" Height="16" 
                                 Margin="4,2,2,2"

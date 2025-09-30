@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.Icons;
+using PFXToolKitUI.Interactivity;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils;
 
@@ -37,12 +38,12 @@ public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseCont
 /// the header and icon, and also raise <see cref="CanExecuteChanged"/> when the executability may have changed
 /// </para>
 /// </summary>
-public abstract class BaseContextEntry : IContextObject {
+public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
     /// <summary>
     /// Ges the data key used to access the context entry of a menu item or context menu item
     /// </summary>
     public static readonly DataKey<BaseContextEntry> DataKey = DataKeys.Create<BaseContextEntry>(nameof(BaseContextEntry));
-    
+
     private string? displayName, description;
     private Icon? icon;
     private bool isInUse;
@@ -92,7 +93,10 @@ public abstract class BaseContextEntry : IContextObject {
     }
 
     /// <summary>
-    /// Gets or sets a function that specifies if this context entry is checked or not. Can be refreshed via 
+    /// Gets or sets a function that specifies if this context entry is checked or not.
+    /// <para>
+    /// Note, changing the value of this property will invoke <see cref="RaiseIsCheckedChanged"/>
+    /// </para>
     /// </summary>
     public Predicate<BaseContextEntry>? IsCheckedFunction {
         get => this.isCheckedFunction;
@@ -104,6 +108,12 @@ public abstract class BaseContextEntry : IContextObject {
             }
         }
     }
+
+    /// <summary>
+    /// Gets the custom user context for this context entry. This is only used for advanced customizations
+    /// of the entry instance, and has no relation to <see cref="CapturedContext"/>
+    /// </summary>
+    public IMutableContextData UserContext { get; } = new ContextData();
 
     public event BaseContextEntryEventHandler? DisplayNameChanged;
     public event BaseContextEntryEventHandler? DescriptionChanged;
