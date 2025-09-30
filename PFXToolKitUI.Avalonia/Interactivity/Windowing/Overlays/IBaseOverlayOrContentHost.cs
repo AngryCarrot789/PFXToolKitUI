@@ -22,8 +22,11 @@ using PFXToolKitUI.Interactivity.Windowing;
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 
 /// <summary>
-/// The root control of a <see cref="IOverlayWindowManager"/>
+/// An interface implemented by both <see cref="IOverlayWindow"/> and <see cref="IOverlayWindowHost"/> for shared functionality
 /// </summary>
-public interface IOverlayWindowHost : ITopLevel, IBaseOverlayOrContentHost {
-
+public interface IBaseOverlayOrContentHost : ITopLevel {
+    /// <summary>
+    /// Gets the overlay window manager for this overlay window or the root host
+    /// </summary>
+    IOverlayWindowManager OverlayManager { get; }
 }

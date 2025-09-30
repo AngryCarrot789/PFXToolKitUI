@@ -21,10 +21,10 @@ using Avalonia.Controls;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 
-public class PopupOverlayControlImpl : ContentControl {
-    internal readonly OverlayWindowImpl overlayWindow;
+public class OverlayControl : ContentControl {
+    public OverlayWindowImpl OverlayWindow { get; }
 
-    public PopupOverlayControlImpl(OverlayWindowImpl overlayWindow) {
-        this.overlayWindow = overlayWindow;
+    public OverlayControl(OverlayWindowImpl overlayWindow) {
+        this.OverlayWindow = overlayWindow;
     }
 }

@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl">
-    <ControlTheme x:Key="{x:Type local:PopupOverlayControlImpl}" TargetType="{x:Type local:PopupOverlayControlImpl}">
+    <ControlTheme x:Key="{x:Type local:OverlayControl}" TargetType="{x:Type local:OverlayControl}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource Button.Static.Foreground}"/>
         <Setter Property="HorizontalContentAlignment" Value="Center"/>
@@ -28,7 +28,7 @@
         </Setter>
     </ControlTheme>
     
-    <ControlTheme x:Key="{x:Type local:PopupOverlayContentHost}" TargetType="{x:Type local:PopupOverlayContentHost}">
+    <ControlTheme x:Key="{x:Type local:OverlayContentHostRoot}" TargetType="{x:Type local:OverlayContentHostRoot}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="Foreground" Value="{DynamicResource Button.Static.Foreground}"/>
         <Setter Property="HorizontalContentAlignment" Value="Stretch"/>

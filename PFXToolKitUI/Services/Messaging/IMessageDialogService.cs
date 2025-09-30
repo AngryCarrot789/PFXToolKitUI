@@ -31,7 +31,7 @@ public interface IMessageDialogService {
             if (!ApplicationPFX.TryGetComponent(out IMessageDialogService? service)) {
                 return EmptyMessageDialogService.Instance;
             }
-            
+
             return service;
         }
     }
@@ -48,7 +48,16 @@ public interface IMessageDialogService {
     /// their selection and use the same result next time without showing the dialog
     /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null);
+    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+        MessageBoxInfo info = new MessageBoxInfo(caption, message) {
+            Buttons = buttons,
+            DefaultButton = defaultButton,
+            PersistentDialogName = persistentDialogName
+        };
+        
+        info.SetDefaultButtonText();
+        return this.ShowMessage(info);
+    }
 
     /// <summary>
     /// Shows a dialog message
@@ -63,7 +72,16 @@ public interface IMessageDialogService {
     /// their selection and use the same result next time without showing the dialog
     /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null);
+    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+        MessageBoxInfo info = new MessageBoxInfo(caption, header, message) {
+            Buttons = buttons,
+            DefaultButton = defaultButton,
+            PersistentDialogName = persistentDialogName
+        };
+        
+        info.SetDefaultButtonText();
+        return this.ShowMessage(info);
+    }
 
     /// <summary>
     /// Shows a message box dialog that is dynamically customisable; 3 buttons, caption, header and message
@@ -93,7 +111,7 @@ public sealed class EmptyMessageDialogService : IMessageDialogService {
         PrintToLogs(info.Caption ?? "(no caption)", info.Message ?? "(no message)", info.Buttons);
         return Task.FromResult(MessageBoxResult.None);
     }
-    
+
     private static void PrintToLogs(string caption, string message, MessageBoxButton buttons) {
         AppLogger.Instance.WriteLine("No message dialog service available");
         AppLogger.Instance.WriteLine("# " + caption);

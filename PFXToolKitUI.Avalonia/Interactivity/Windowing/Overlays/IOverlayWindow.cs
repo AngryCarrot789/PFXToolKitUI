@@ -33,12 +33,7 @@ public delegate void OverlayWindowBorderBrushChangedEventHandler(IOverlayWindow 
 /// <summary>
 /// An overlay window within a single-view application. Typically only used on mobile platforms
 /// </summary>
-public interface IOverlayWindow : IWindowBase {
-    /// <summary>
-    /// Gets the overlay window manager associated with this window
-    /// </summary>
-    IOverlayWindowManager OverlayManager { get; }
-
+public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     /// <summary>
     /// Gets the overlay window that owns this window.
     /// </summary>
@@ -58,11 +53,6 @@ public interface IOverlayWindow : IWindowBase {
     /// Gets or sets the brush that colours the border of the overlay window. Setting this to null will disable the border
     /// </summary>
     IColourBrush? BorderBrush { get; set; }
-
-    /// <summary>
-    /// Gets or sets the content of this overlay window. This is equivalent to <see cref="ContentControl.Content"/>
-    /// </summary>
-    object? Content { get; set; }
 
     /// <summary>
     /// An event fired when the overlay window is in the process of opening but has not been shown on screen yet.

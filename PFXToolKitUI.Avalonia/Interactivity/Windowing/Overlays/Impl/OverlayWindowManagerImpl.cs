@@ -37,26 +37,26 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
     /// <summary>
     /// Gets the control that this popup dialog manager presents popups over
     /// </summary>
-    public PopupOverlayContentHost OwnerControl { get; }
+    public OverlayContentHostRoot OverlayContentHost { get; }
 
     public IEnumerable<IOverlayWindow> TopLevelWindows { get; }
 
     public IEnumerable<IOverlayWindow> AllWindows { get; }
 
-    public IOverlayWindowHost OverlayWindowHost => this.overlayWindowHost;
+    public IOverlayWindowHost ContentHost => this.overlayWindowHost;
 
-    public event EventHandler<OverlayWindowEventArgs>? PopupOpened;
+    public event EventHandler<OverlayWindowEventArgs>? OverlayOpened;
 
-    public OverlayWindowManagerImpl(PopupOverlayContentHost ownerControl) {
+    public OverlayWindowManagerImpl(OverlayContentHostRoot overlayContentHost) {
         this.topLevelWindows = new List<OverlayWindowImpl>();
         this.allWindows = new List<OverlayWindowImpl>();
         this.TopLevelWindows = this.topLevelWindows.AsReadOnly();
         this.AllWindows = this.allWindows.AsReadOnly();
-        this.focusStack = new Stack<WeakReference<InputElement>>();
+        this.focusStack = new Stack<WeakReference<InputElement>?>();
 
-        this.OwnerControl = ownerControl;
-        this.OwnerControl.SetupForPopupDialogManager(this);
-        this.overlayWindowHost = new OverlayWindowHostImpl(ownerControl);
+        this.OverlayContentHost = overlayContentHost;
+        this.OverlayContentHost.SetupForPopupDialogManager(this);
+        this.overlayWindowHost = new OverlayWindowHostImpl(overlayContentHost);
     }
 
     public IOverlayWindow CreateWindow(OverlayWindowBuilder builder) {
@@ -70,17 +70,8 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
         return new OverlayWindowImpl(this, builder.Parent as OverlayWindowImpl, builder);
     }
 
-    public bool TryGetActivePopup([NotNullWhen(true)] out IOverlayWindow? popup) {
-        return (popup = this.allWindows.LastOrDefault(x => x.OpenState == OpenState.Open)) != null;
-    }
-
-    public bool TryGetPopupFromVisual(Visual visual, [NotNullWhen(true)] out IOverlayWindow? popup) {
-        PopupOverlayControlImpl? d = VisualTreeUtils.FindLogicalParent<PopupOverlayControlImpl>(visual, includeSelf: true);
-        return (popup = d?.overlayWindow) != null;
-    }
-
     public bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel) {
-        return (topLevel = TopLevel.GetTopLevel(this.overlayWindowHost.control)) != null;
+        return (topLevel = TopLevel.GetTopLevel(this.OverlayContentHost)) != null;
     }
 
     internal void OnPopupOpening(OverlayWindowImpl overlayWindow) {
@@ -96,16 +87,16 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
         InputElement? element = this.TryGetTopLevel(out TopLevel? topLevel)
             ? UIInputManager.GetCurrentFocusedElement(topLevel)
             : null;
-            
+
         this.focusStack.Push(element != null ? new WeakReference<InputElement>(element) : null);
 
-        InputElement content = (InputElement) this.OwnerControl.Content!;
+        InputElement content = (InputElement) this.OverlayContentHost.Content!;
         content.IsEnabled = false;
     }
 
     internal void OnPopupOpened(OverlayWindowImpl overlayWindow) {
         Debug.Assert(overlayWindow.myManager == this);
-        this.PopupOpened?.Invoke(this, new OverlayWindowEventArgs(overlayWindow));
+        this.OverlayOpened?.Invoke(this, new OverlayWindowEventArgs(overlayWindow));
     }
 
     internal void OnPopupClosed(OverlayWindowImpl overlayWindow) {
@@ -122,7 +113,7 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
 
         debugRemoved = this.allWindows.Remove(overlayWindow);
         Debug.Assert(debugRemoved, "Failed to remove self from window manager's window list");
-        ((InputElement) this.OwnerControl.Content!).IsEnabled = this.allWindows.Count < 1;
+        ((InputElement) this.OverlayContentHost.Content!).IsEnabled = this.allWindows.Count < 1;
         if (this.focusStack.TryPop(out WeakReference<InputElement>? reference)) {
             if (reference != null && reference.TryGetTarget(out InputElement? lastTarget)) {
                 lastTarget.Focus();

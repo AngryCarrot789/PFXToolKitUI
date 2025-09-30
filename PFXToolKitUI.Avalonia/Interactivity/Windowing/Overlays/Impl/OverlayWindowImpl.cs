@@ -74,7 +74,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
     public event OverlayWindowBorderBrushChangedEventHandler? BorderBrushChanged;
 
     internal readonly OverlayWindowManagerImpl myManager;
-    internal readonly PopupOverlayControlImpl myControl;
+    internal readonly OverlayControl myControl;
     internal readonly OverlayWindowImpl? myParent;
     internal readonly List<OverlayWindowImpl> myOwnedPopups;
     internal readonly SizeToContent AutoSizeToContent;
@@ -96,7 +96,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         this.ComponentStorage = new ComponentStorage(this);
         this.myOwnedPopups = new List<OverlayWindowImpl>();
         this.listTcsWaitForClosed = new List<CancellableTaskCompletionSource>();
-        this.myControl = new PopupOverlayControlImpl(this);
+        this.myControl = new OverlayControl(this);
         this.borderBrushHandler = new ColourBrushHandler(TemplatedControl.BorderBrushProperty);
         this.TitleBarInfo = builder.TitleBar;
         this.Content = builder.Content;
@@ -128,11 +128,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
     }
 
     public bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel) {
-        if ((topLevel = TopLevel.GetTopLevel(this.myManager.OwnerControl)) != null)
-            return true;
-        if ((topLevel = TopLevel.GetTopLevel(this.myControl)) != null)
-            return true;
-        return false;
+        return this.myManager.TryGetTopLevel(out topLevel);
     }
 
     public Task ShowAsync() {

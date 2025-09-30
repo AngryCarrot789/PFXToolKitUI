@@ -20,6 +20,8 @@
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Windowing;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
@@ -56,9 +58,10 @@ public interface IOverlayWindowManager : ITopLevelManager {
     }
     
     /// <summary>
-    /// Gets the root of the popup manager, i.e., the owner control
+    /// Gets the root host of the overlay windows. This is usually the control which has its
+    /// own <see cref="IOverlayWindowManager"/>, i.e. the content of a single view application
     /// </summary>
-    public IOverlayWindowHost OverlayWindowHost { get; }
+    public IOverlayWindowHost ContentHost { get; }
 
     /// <summary>
     /// An event fired when a <see cref="IOverlayWindow"/> is shown via <see cref="IOverlayWindow.ShowAsync"/> or <see cref="IOverlayWindow.ShowDialogAsync"/>.
@@ -67,12 +70,7 @@ public interface IOverlayWindowManager : ITopLevelManager {
     /// Handlers of this event can use this to for example attach a <see cref="IOverlayWindow.Closed"/> event handler
     /// </para>
     /// </summary>
-    event EventHandler<OverlayWindowEventArgs>? PopupOpened;
-
-    // /// <summary>
-    // /// An event fired when a <see cref="IWindow"/> becomes activated
-    // /// </summary>
-    // event EventHandler<WindowEventArgs>? WindowActivated;
+    event EventHandler<OverlayWindowEventArgs>? OverlayOpened;
 
     /// <summary>
     /// Creates a window from the builder object. Note, this does not actually show the window
@@ -82,17 +80,23 @@ public interface IOverlayWindowManager : ITopLevelManager {
     IOverlayWindow CreateWindow(OverlayWindowBuilder builder);
 
     /// <summary>
-    /// Tries to get the window that is currently activated (as in, has control focus).
-    /// </summary>
-    /// <param name="popup">The active window</param>
-    /// <returns>True if an active window was found</returns>
-    bool TryGetActivePopup([NotNullWhen(true)] out IOverlayWindow? popup);
-
-    /// <summary>
-    /// Returns the window produced by <see cref="TryGetActivePopup"/> or returns null
+    /// Returns the window produced by <see cref="TryGetActiveOverlay"/> or returns null
     /// </summary>
     /// <returns>The active window or null</returns>
-    IOverlayWindow? GetActiveWindow() => this.TryGetActivePopup(out IOverlayWindow? window) ? window : null;
+    IOverlayWindow? GetActiveOverlay() {
+        return this.TopLevelWindows.LastOrDefault(x => x.OpenState == OpenState.Open);
+    }
+
+    bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {
+        if ((topLevel = this.GetActiveOverlay()) == null)
+            topLevel = this.ContentHost;
+        return true;
+    }
+
+    /// <summary>
+    /// Tries to get the top level of this overlay window manager
+    /// </summary>
+    bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel);
 
     /// <summary>
     /// Tries to get the <see cref="IOverlayWindow"/> instance that a specific visual control exists in.
@@ -103,47 +107,26 @@ public interface IOverlayWindowManager : ITopLevelManager {
     /// </para>
     /// </summary>
     /// <param name="visual">The visual</param>
-    /// <param name="popup">The window that the visual exists in</param>
+    /// <param name="overlay">The window that the visual exists in</param>
     /// <returns>True if the window was found</returns>
-    bool TryGetPopupFromVisual(Visual visual, [NotNullWhen(true)] out IOverlayWindow? popup);
-
-    bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {
-        if ((topLevel = this.GetActiveWindow()) == null)
-            topLevel = this.OverlayWindowHost;
-        return true;
+    static bool TryGetOverlayFromVisual(Visual visual, [NotNullWhen(true)] out IOverlayWindow? overlay) {
+        OverlayControl? d = VisualTreeUtils.FindLogicalParent<OverlayControl>(visual, includeSelf: true);
+        return (overlay = d?.OverlayWindow) != null;
     }
 
     /// <summary>
-    /// Tries to get the top level of this overlay window manager
+    /// Tries to get the <see cref="IBaseOverlayOrContentHost"/> instance that a specific visual control exists in.
     /// </summary>
-    bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel);
-    
-    /// <summary>
-    /// Tries to get the window manager service
-    /// </summary>
-    /// <param name="windowManager">The manager, or null</param>
-    /// <returns>True if a window manager exists</returns>
-    public static bool TryGetInstance([NotNullWhen(true)] out IOverlayWindowManager? windowManager) {
-        return ApplicationPFX.TryGetComponent(out windowManager);
-    }
-
-    /// <summary>
-    /// Tries to get the <see cref="IOverlayWindow"/> instance that a visual exists in. This is effectively
-    /// equivalent to <see cref="TopLevel.GetTopLevel"/>, except this method may work in cases where
-    /// that method will not
-    /// </summary>
-    /// <param name="visual">The visual to get the window of</param>
-    /// <param name="popup">The window the visual exists in</param>
-    /// <returns>
-    /// True if the visual existed in a window. False if either no <see cref="IOverlayWindowManager"/>
-    /// existed or <see cref="TryGetPopupFromVisual"/> returned false
-    /// </returns>
-    static bool TryGetWindow(Visual visual, [NotNullWhen(true)] out IOverlayWindow? popup) {
-        if (TryGetInstance(out IOverlayWindowManager? manager)) {
-            return manager.TryGetPopupFromVisual(visual, out popup);
+    /// <param name="visual">The visual</param>
+    /// <param name="overlayOrHost">The overlay or content host that the visual exists in</param>
+    /// <returns>True if the overlay or host was found</returns>
+    static bool TryGetOverlayOrContentHostFromVisual(Visual visual, [NotNullWhen(true)] out IBaseOverlayOrContentHost? overlayOrHost) {
+        if (TryGetOverlayFromVisual(visual, out IOverlayWindow? overlay)) {
+            overlayOrHost = overlay;
+            return true;
         }
-
-        popup = null;
-        return false;
+        
+        OverlayContentHostRoot? d = VisualTreeUtils.FindLogicalParent<OverlayContentHostRoot>(visual, includeSelf: true);
+        return (overlayOrHost = d?.Manager.ContentHost) != null;
     }
 }

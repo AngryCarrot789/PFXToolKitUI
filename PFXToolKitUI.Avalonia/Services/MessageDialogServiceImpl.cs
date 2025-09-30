@@ -35,25 +35,11 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class MessageDialogServiceImpl : IMessageDialogService {
-    public async Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, message) { Buttons = buttons, DefaultButton = defaultButton, PersistentDialogName = persistentDialogName };
-        info.SetDefaultButtonText();
-        return await this.ShowMessage(info);
-    }
-
-    public async Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, header, message) { Buttons = buttons, DefaultButton = defaultButton, PersistentDialogName = persistentDialogName };
-        info.SetDefaultButtonText();
-        return await this.ShowMessage(info);
-    }
-
-    public async Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
+    public Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
         ArgumentNullException.ThrowIfNull(info);
-        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
-            return await ShowMessageMainThread(info);
-        }
-
-        return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
+        return ApplicationPFX.Instance.Dispatcher.CheckAccess()
+            ? ShowMessageMainThread(info)
+            : ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
     }
 
     private static bool IsPersistentButtonValidFor(MessageBoxResult button, MessageBoxButton buttons) {
@@ -86,12 +72,18 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
         ITopLevel? parentTopLevel = TopLevelContextUtils.GetTopLevelFromContext();
         if (parentTopLevel != null) {
-            MessageBoxView view = new MessageBoxView() {
-                MessageBoxData = info
-            };
-            
-            Optional<MessageBoxResult> result = await WindowContextUtils.UseWindowAsync(parentTopLevel, (w) => ShowMessageBoxInWindow(info, view, w), (m, w) => ShowMessageBoxInOverlay(info, view, m , w));
-            return result.GetValueOrDefault();
+            IWindowBase? window = WindowContextUtils.CreateWindow(parentTopLevel, (w) => ShowMessageBoxInWindow(info, w), (m, w) => ShowMessageBoxInOverlay(info, m, w));
+            if (window != null) {
+                MessageBoxView view = (MessageBoxView) window.Content!;
+                MessageBoxResult result = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
+                view.MessageBoxData = null; // unhook models' event handlers
+
+                if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && result != MessageBoxResult.None) {
+                    PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(result, info.AlwaysUseThisResultUntilAppCloses);
+                }
+
+                return result;
+            }
         }
 
         AppLogger.Instance.WriteLine(parentTopLevel == null
@@ -102,7 +94,11 @@ public class MessageDialogServiceImpl : IMessageDialogService {
         return MessageBoxResult.None;
     }
 
-    private static async Task<MessageBoxResult> ShowMessageBoxInWindow(MessageBoxInfo info, MessageBoxView view, IDesktopWindow parentWindow) {
+    private static IDesktopWindow ShowMessageBoxInWindow(MessageBoxInfo info, IDesktopWindow parentWindow) {
+        MessageBoxView view = new MessageBoxView() {
+            MessageBoxData = info
+        };
+
         IDesktopWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
             Title = info.Caption,
             Parent = parentWindow,
@@ -114,34 +110,25 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
         });
 
-        window.Control.AddHandler(InputElement.KeyDownEvent, WindowOnKeyDown);
-        window.Opening += WindowOnWindowOpening;
-        window.Opened += WindowOnWindowOpened;
-        window.Closed += WindowOnWindowClosed;
-
-        MessageBoxResult mbResult = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
-        view.MessageBoxData = null; // unhook models' event handlers
-
-        if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && mbResult != MessageBoxResult.None) {
-            PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(mbResult, info.AlwaysUseThisResultUntilAppCloses);
-        }
-
-        return mbResult;
-
-        void WindowOnWindowOpening(IDesktopWindow s, EventArgs e) => view.OnWindowOpening(s);
-        void WindowOnWindowOpened(IDesktopWindow s, EventArgs e) => view.OnWindowOpened(s);
-        void WindowOnWindowClosed(IDesktopWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
-
-        void WindowOnKeyDown(object? s, KeyEventArgs e) {
+        window.Control.AddHandler(InputElement.KeyDownEvent, (s, e) => {
             if (!e.Handled && e.Key == Key.Escape) {
                 if (view.OwnerWindow != null && view.OwnerWindow.OpenState == OpenState.Open) {
                     view.Close(MessageBoxResult.None);
                 }
             }
-        }
+        });
+
+        window.Opening += (s, e) => view.OnWindowOpening(s);
+        window.Opened += (s, e) => view.OnWindowOpened(s);
+        window.Closed += (s, e) => view.OnWindowClosed(s);
+        return window;
     }
 
-    private static async Task<MessageBoxResult> ShowMessageBoxInOverlay(MessageBoxInfo info, MessageBoxView view, IOverlayWindowManager manager, IOverlayWindow? parentWindow) {
+    private static IOverlayWindow ShowMessageBoxInOverlay(MessageBoxInfo info, IOverlayWindowManager manager, IOverlayWindow? parentWindow) {
+        MessageBoxView view = new MessageBoxView() {
+            MessageBoxData = info
+        };
+
         IOverlayWindow window = manager.CreateWindow(new OverlayWindowBuilder() {
             TitleBar = new OverlayWindowTitleBarInfo() {
                 Title = info.Caption,
@@ -155,30 +142,17 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
         });
 
-        window.Control.AddHandler(InputElement.KeyDownEvent, WindowOnKeyDown);
-        window.Opening += WindowOnWindowOpening;
-        window.Opened += WindowOnWindowOpened;
-        window.Closed += WindowOnWindowClosed;
-
-        MessageBoxResult mbResult = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
-        view.MessageBoxData = null; // unhook models' event handlers
-
-        if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && mbResult != MessageBoxResult.None) {
-            PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(mbResult, info.AlwaysUseThisResultUntilAppCloses);
-        }
-
-        return mbResult;
-
-        void WindowOnWindowOpening(IOverlayWindow s, EventArgs e) => view.OnWindowOpening(s);
-        void WindowOnWindowOpened(IOverlayWindow s, EventArgs e) => view.OnWindowOpened(s);
-        void WindowOnWindowClosed(IOverlayWindow s, OverlayWindowCloseEventArgs e) => view.OnWindowClosed(s);
-
-        void WindowOnKeyDown(object? s, KeyEventArgs e) {
+        window.Control.AddHandler(InputElement.KeyDownEvent, (s, e) => {
             if (!e.Handled && e.Key == Key.Escape) {
                 if (view.OwnerWindow != null && view.OwnerWindow.OpenState == OpenState.Open) {
                     view.Close(MessageBoxResult.None);
                 }
             }
-        }
+        });
+
+        window.Opening += (s, e) => view.OnWindowOpening(s);
+        window.Opened += (s, e) => view.OnWindowOpened(s);
+        window.Closed += (s, e) => view.OnWindowClosed(s);
+        return window;
     }
 }

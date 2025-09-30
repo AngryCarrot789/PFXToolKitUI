@@ -24,22 +24,22 @@ using PFXToolKitUI.Avalonia.Utils;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 
-public class PopupOverlayContentHost : ContentControl {
+public class OverlayContentHostRoot : ContentControl {
     public OverlayWindowManagerImpl Manager { get; private set; } = null!;
 
     private Panel? PART_Panel;
-    private readonly List<PopupOverlayControlImpl> preTemplateItems = new List<PopupOverlayControlImpl>();
+    private readonly List<OverlayControl> preTemplateItems = new List<OverlayControl>();
 
-    public PopupOverlayContentHost() {
+    public OverlayContentHostRoot() {
     }
 
-    static PopupOverlayContentHost() {
+    static OverlayContentHostRoot() {
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
         this.PART_Panel = e.NameScope.GetTemplateChild<Panel>(nameof(this.PART_Panel));
-        foreach (PopupOverlayControlImpl popup in this.preTemplateItems) {
+        foreach (OverlayControl popup in this.preTemplateItems) {
             this.PART_Panel.Children.Add(popup);
         }
     }

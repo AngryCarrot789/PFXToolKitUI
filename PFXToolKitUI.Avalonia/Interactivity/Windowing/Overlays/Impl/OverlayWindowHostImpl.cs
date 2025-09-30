@@ -23,14 +23,14 @@ using PFXToolKitUI.Interactivity.Contexts;
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 
 public sealed class OverlayWindowHostImpl : IOverlayWindowHost {
-    internal readonly PopupOverlayContentHost control;
+    internal readonly OverlayContentHostRoot control;
 
     public ComponentStorage ComponentStorage { get; }
     public IMutableContextData LocalContextData => DataManager.GetContextData(this.control);
     
     public IOverlayWindowManager OverlayManager => this.control.Manager;
 
-    public OverlayWindowHostImpl(PopupOverlayContentHost control) {
+    public OverlayWindowHostImpl(OverlayContentHostRoot control) {
         this.control = control;
         this.ComponentStorage = new ComponentStorage(this);
     }

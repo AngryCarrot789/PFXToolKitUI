@@ -64,10 +64,8 @@ public static class WindowContextUtils {
     public static bool TryGetTopLevel(ITopLevel srcTopLevel, [NotNullWhen(true)] out TopLevel? topLevel) {
         if (srcTopLevel is IDesktopWindow desktop)
             return desktop.TryGetTopLevel(out topLevel);
-        if (srcTopLevel is IOverlayWindow overlay)
-            return overlay.TryGetTopLevel(out topLevel);
-        if (srcTopLevel is IOverlayWindowHost host)
-            return host.OverlayManager.TryGetTopLevel(out topLevel);
+        if (srcTopLevel is IBaseOverlayOrContentHost overlayOrHost)
+            return overlayOrHost.OverlayManager.TryGetTopLevel(out topLevel);
 
         topLevel = null;
         return false;
@@ -76,24 +74,16 @@ public static class WindowContextUtils {
     public static IWindowBase? CreateWindow(ITopLevel parentTopLevel, Func<IDesktopWindow, IDesktopWindow> windowFactory, Func<IOverlayWindowManager, IOverlayWindow?, IOverlayWindow> overlayFactory) {
         if (parentTopLevel is IDesktopWindow window1)
             return windowFactory(window1);
-        if (parentTopLevel is IOverlayWindow overlay)
-            return overlayFactory(overlay.OverlayManager, overlay);
-        if (parentTopLevel is IOverlayWindowHost overlayHost)
-            return overlayFactory(overlayHost.OverlayManager, null);
-        if (IOverlayWindowManager.TryGetInstance(out IOverlayWindowManager? manager))
-            return overlayFactory(manager, manager.GetActiveWindow());
+        if (parentTopLevel is IBaseOverlayOrContentHost overlayOrHost)
+            return overlayFactory(overlayOrHost.OverlayManager, overlayOrHost as IOverlayWindow);
         return null;
     }
 
     public static async Task<Optional<T>> UseWindowAsync<T>(ITopLevel parentTopLevel, Func<IDesktopWindow, Task<T>> windowFactory, Func<IOverlayWindowManager, IOverlayWindow?, Task<T>> overlayFactory) {
-        if (parentTopLevel is IDesktopWindow window1)
-            return await windowFactory(window1);
-        if (parentTopLevel is IOverlayWindow overlay)
-            return await overlayFactory(overlay.OverlayManager, overlay);
-        if (parentTopLevel is IOverlayWindowHost overlayHost)
-            return await overlayFactory(overlayHost.OverlayManager, null);
-        if (IOverlayWindowManager.TryGetInstance(out IOverlayWindowManager? manager))
-            return await overlayFactory(manager, manager.GetActiveWindow());
+        if (parentTopLevel is IDesktopWindow window)
+            return await windowFactory(window);
+        if (parentTopLevel is IBaseOverlayOrContentHost overlayOrHost)
+            return await overlayFactory(overlayOrHost.OverlayManager, overlayOrHost as IOverlayWindow);
         return default;
     }
 }
