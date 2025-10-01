@@ -103,12 +103,4 @@ public class ContextRegistry {
     private void SetDictionary(int weight, string name, IContextGroup group) {
         this.GetDictionary(weight)[name] = group;
     }
-
-    public static void AddStaticOnlineStateHandlers(ContextRegistry registry, ContextRegistryContextEventHandler? onOpened, ContextRegistryEventHandler? onClosed) {
-        if (onOpened != null)
-            registry.Opened += onOpened;
-
-        if (onClosed != null)
-            registry.Closed += onClosed;
-    }
 }

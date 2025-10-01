@@ -139,7 +139,10 @@ public abstract class ApplicationPFX : IComponentManager {
     /// Initializes the application by calling <see cref="InitializeApplicationAsync"/> and blocks until completion using a dispatcher frame
     /// </summary>
     public static void InitializeApplication(IApplicationStartupProgress progress, string[] envArgs) {
-        Instance.Dispatcher.AwaitForCompletion(InitializeApplicationAsync(progress, envArgs));
+        Task task = InitializeApplicationAsync(progress, envArgs);
+        if (!task.IsCompleted && Instance.Dispatcher.TryGetFrameManager(out IDispatcherFrameManager? frameManager)) {
+            frameManager.AwaitForCompletion(task);
+        }
     }
 
     /// <summary>
@@ -345,7 +348,7 @@ public abstract class ApplicationPFX : IComponentManager {
         }
     }
 
-    protected virtual async Task OnExiting(int exitCode) {
+    protected virtual void OnExiting(int exitCode) {
         this.StartupPhase = ApplicationStartupPhase.Stopping;
         this.PluginLoader.OnApplicationExiting();
 
@@ -362,9 +365,9 @@ public abstract class ApplicationPFX : IComponentManager {
         manager.SaveAll();
 
         AppLogger.Instance.WriteLine("Waiting for configs to flush to disk...");
-        // Task task = manager.FlushToDisk(true);
-        await manager.FlushToDisk(true);
-        // Debug.Assert(task.IsCompleted);
+        Task task = manager.FlushToDisk(false);
+        Debug.Assert(task.IsCompleted);
+        
         AppLogger.Instance.WriteLine("Flushed!");
     }
 

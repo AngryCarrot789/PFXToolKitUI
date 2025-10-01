@@ -53,8 +53,9 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
     private void OnTextFieldKeyDown(object? sender, KeyEventArgs e) {
         if ((e.Key == Key.Escape || e.Key == Key.Enter) && this.myDialog != null) {
             // do not auto-close when multi-line since that's just annoying and unusable
-            if (e.Key == Key.Escape || this.myData!.LineCountHint <= 1) {
+            if (e.Key == Key.Escape || this.myData!.LineCountHint == 1) {
                 this.myDialog.RequestClose(e.Key != Key.Escape);
+                e.Handled = true;
             }
         }
     }

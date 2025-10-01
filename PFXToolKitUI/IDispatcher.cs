@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.ExceptionServices;
 
 namespace PFXToolKitUI;
@@ -114,32 +115,11 @@ public interface IDispatcher {
     IDispatcherTimer CreateTimer(DispatchPriority priority);
 
     /// <summary>
-    /// Pushes a new dispatcher frame that exits when the cancellation token is marked
-    /// as cancelled. If already cancelled, then nothing happens.
+    /// Tries to get the dispatcher frame manager, which supports run/message loops.
+    /// This allows, for example, waiting for an asynchronous operation to complete without necessarily blocking the UI thread
     /// </summary>
-    /// <param name="cancellationToken">The token that causes the frame to exit once cancelled</param>
-    /// <exception cref="InvalidOperationException">The cancellation token is not cancellable</exception>
-    void PushFrame(CancellationToken cancellationToken);
-
-    /// <summary>
-    /// Synchronously waits for the task to complete without stalling the dispatcher,
-    /// by instead pushing a new dispatcher frame that exits once the task completes.
-    /// <para>
-    /// Note that this may cause ordering issues
-    /// </para>
-    /// </summary>
-    /// <param name="task">The task to wait for completion</param>
-    /// <exception cref="AggregateException">The task was faulted and <see cref="Task.Exception"/> was non-null</exception>
-    void AwaitForCompletion(Task task) {
-        if (!task.IsCompleted) {
-            using CancellationTokenSource cts = new CancellationTokenSource();
-            task.ContinueWith((t, theCts) => ((CancellationTokenSource) theCts!).Cancel(), cts, TaskContinuationOptions.ExecuteSynchronously);
-            this.PushFrame(cts.Token);
-        }
-
-        AggregateException? exception = task.Exception;
-        if (exception != null) {
-            ExceptionDispatchInfo.Throw(exception);
-        }
-    }
+    /// <param name="frameManager">The frame manager, or null, if not supported by this dispatcher</param>
+    /// <returns>True if this dispatcher supports run loops</returns>
+    /// <remarks>This feature is generally only supported on desktop, whereas mobile will not</remarks>
+    bool TryGetFrameManager([NotNullWhen(true)] out IDispatcherFrameManager? frameManager);
 }

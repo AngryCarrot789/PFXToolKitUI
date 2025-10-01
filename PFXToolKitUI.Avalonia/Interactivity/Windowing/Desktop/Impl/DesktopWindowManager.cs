@@ -43,6 +43,7 @@ public sealed class DesktopWindowManager : IWindowManager {
     private readonly Uri? defaultWindowIconUri;
     private WindowIcon? defaultWindowIcon;
     private bool failedToLoadDefaultIcon;
+    internal readonly IDispatcherFrameManager myFrameManager;
 
     private DesktopNativeWindow? DesktopMainWindow {
         get => (DesktopNativeWindow?) this.desktop.ApplicationLifetime.MainWindow;
@@ -56,6 +57,9 @@ public sealed class DesktopWindowManager : IWindowManager {
     public event EventHandler<WindowEventArgs>? WindowOpened;
 
     public DesktopWindowManager(Uri? defaultWindowIconUri) {
+        ApplicationPFX.Instance.Dispatcher.TryGetFrameManager(out IDispatcherFrameManager? frameManager);
+        this.myFrameManager = frameManager ?? throw new Exception("Attempt to use desktop window manager on platform without dispatcher run loop support");
+
         this.desktop = ApplicationPFX.GetComponent<IDesktopService>();
         this.topLevelWindows = new List<DesktopWindowImpl>();
         this.mainWindows = new List<DesktopWindowImpl>();
@@ -76,19 +80,19 @@ public sealed class DesktopWindowManager : IWindowManager {
 
     public bool TryGetActiveOrMainWindow([NotNullWhen(true)] out IDesktopWindow? window) {
         // Get last activated, or find the first that is activated
-        if ((window = this.lastActivated) != null && window.OpenState == OpenState.Open)
+        if ((window = this.lastActivated) != null && window.OpenState.IsOpenOrTryingToClose())
             return true;
 
         // lastActivated not set somehow, so find an activated window
-        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState == OpenState.Open && x.IsActivated)) != null)
+        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState.IsOpenOrTryingToClose() && x.IsActivated)) != null)
             return true;
-        if ((window = this.allWindows.LastOrDefault(x => x.OpenState == OpenState.Open && x.IsActivated)) != null)
+        if ((window = this.allWindows.LastOrDefault(x => x.OpenState.IsOpenOrTryingToClose() && x.IsActivated)) != null)
             return true;
 
         // bad case of the software bugs. Find an open window
-        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState == OpenState.Open)) != null)
+        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState.IsOpenOrTryingToClose())) != null)
             return true;
-        return (window = this.allWindows.LastOrDefault(x => x.OpenState == OpenState.Open)) != null;
+        return (window = this.allWindows.LastOrDefault(x => x.OpenState.IsOpenOrTryingToClose())) != null;
     }
 
     public bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window) {
@@ -132,7 +136,9 @@ public sealed class DesktopWindowManager : IWindowManager {
 
     private void OnWindowActivated(object? sender, EventArgs e) {
         DesktopWindowImpl window = ((DesktopNativeWindow) sender!).Window;
-        this.lastActivated = window.OpenState == OpenState.Open || window.OpenState == OpenState.TryingToClose ? window : null;
+        Debug.WriteLine("!!!!!!!Window Focused: " + window.Title);
+
+        this.lastActivated = window.OpenState.IsOpenOrTryingToClose() ? window : null;
     }
 
     #region Internal Show/Close Handling
@@ -152,6 +158,30 @@ public sealed class DesktopWindowManager : IWindowManager {
         }
 
         window.myNativeWindow.Activated += this.OnWindowActivated;
+
+        ShowOrFocusParentWindow(window);
+    }
+
+    private static void ShowOrFocusParentWindow(DesktopWindowImpl window) {
+        // List<DesktopWindowImpl>? parentChain = null;
+        // for (DesktopWindowImpl? parent = window.parentWindow; parent != null; parent = parent.parentWindow) {
+        //     parentChain ??= new List<DesktopWindowImpl>();
+        //     parentChain.Add(parent);
+        // }
+        //
+        // if (parentChain != null) {
+        //     for (int i = parentChain.Count - 1; i >= 0; i--) {
+        //         DesktopWindowImpl parentWindow = parentChain[i];
+        //         if (parentWindow.myNativeWindow.WindowState == WindowState.Minimized) {
+        //             parentWindow.myNativeWindow.WindowState = WindowState.Normal;
+        //         }
+        //     }
+        // }
+
+        DesktopWindowImpl? parent = window.parentWindow;
+        if (parent != null && parent.myNativeWindow.WindowState == WindowState.Minimized) {
+            parent.myNativeWindow.WindowState = WindowState.Normal;
+        }
     }
 
     // Invoked after WindowOpened

@@ -39,7 +39,8 @@ public static class AttachedTextBoxBinding {
     /// </para>
     /// </summary>
     public static readonly AttachedProperty<bool> IsValueDifferentProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, bool>("IsValueDifferent",  typeof(AttachedTextBoxBinding));
-    public static readonly AttachedProperty<IBrush?> OverlayBrushProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, IBrush?>("OverlayBrush",  typeof(AttachedTextBoxBinding));
+    public static readonly AttachedProperty<IBrush?> OverlayBorderBrushProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, IBrush?>("OverlayBrush",  typeof(AttachedTextBoxBinding));
+    public static readonly AttachedProperty<Thickness> OverlayBorderThicknessProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, Thickness>("OverlayBorderThickness",  typeof(AttachedTextBoxBinding), new Thickness(1));
     private static readonly AttachedProperty<BrushFlipFlopTimer?> FlipFlopProperty = AvaloniaProperty.RegisterAttached<TextBox, BrushFlipFlopTimer?>("FlipFlop", typeof(AttachedTextBoxBinding));
 
     static AttachedTextBoxBinding() {
@@ -56,7 +57,7 @@ public static class AttachedTextBoxBinding {
                 e.Sender.SetValue(FlipFlopProperty, flipFlop = new BrushFlipFlopTimer(TimeSpan.FromSeconds(0.4), brushLow, brushHigh) {StartHigh = true});
             }
             
-            flipFlop.SetTarget(e.Sender, OverlayBrushProperty);
+            flipFlop.SetTarget(e.Sender, OverlayBorderBrushProperty);
             flipFlop.IsEnabled = true;
             
             // ((TextBox) e.Sender).DetachedFromVisualTree += OnDetachedFromVisualTree;
@@ -72,7 +73,7 @@ public static class AttachedTextBoxBinding {
                 Debug.Assert(e.Sender.GetValue(FlipFlopProperty) == null);
             }
             
-            e.Sender.ClearValue(OverlayBrushProperty);
+            e.Sender.ClearValue(OverlayBorderBrushProperty);
         }
     }
 
@@ -83,6 +84,8 @@ public static class AttachedTextBoxBinding {
     
     public static void SetIsValueDifferent(AvaloniaObject obj, bool value) => obj.SetValue(IsValueDifferentProperty, value);
     public static bool GetIsValueDifferent(AvaloniaObject obj) => obj.GetValue(IsValueDifferentProperty);
-    public static void SetOverlayBrush(AvaloniaObject obj, IBrush? value) => obj.SetValue(OverlayBrushProperty, value);
-    public static IBrush? GetOverlayBrush(AvaloniaObject obj) => obj.GetValue(OverlayBrushProperty);
+    public static void SetOverlayBorderBrush(AvaloniaObject obj, IBrush? value) => obj.SetValue(OverlayBorderBrushProperty, value);
+    public static IBrush? GetOverlayBorderBrush(AvaloniaObject obj) => obj.GetValue(OverlayBorderBrushProperty);
+    public static void SetOverlayBorderThickness(AvaloniaObject obj, Thickness value) => obj.SetValue(OverlayBorderThicknessProperty, value);
+    public static Thickness GetOverlayBorderThickness(AvaloniaObject obj) => obj.GetValue(OverlayBorderThicknessProperty);
 }

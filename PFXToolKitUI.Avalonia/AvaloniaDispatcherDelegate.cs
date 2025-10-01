@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia.Threading;
@@ -31,9 +32,11 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
     };
 
     private readonly Dispatcher dispatcher;
+    private readonly DispatcherFrameManagerImpl? myFrameManager;
 
     public AvaloniaDispatcherDelegate(Dispatcher dispatcher) {
         this.dispatcher = dispatcher;
+        this.myFrameManager = this.dispatcher.SupportsRunLoops ? new DispatcherFrameManagerImpl(this) : null;
     }
 
     public bool CheckAccess() => this.dispatcher.CheckAccess();
@@ -82,16 +85,8 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
         return new DispatcherTimerDelegate(timer, this);
     }
 
-    public void PushFrame(CancellationToken cancellationToken) {
-        if (!cancellationToken.CanBeCanceled)
-            throw new InvalidOperationException("The token is not cancellable, meaning this method would never return");
-        if (cancellationToken.IsCancellationRequested)
-            return;
-
-        DispatcherFrame frame = new DispatcherFrame();
-        using (cancellationToken.Register(static f => ((DispatcherFrame) f!).Continue = false, frame)) {
-            this.dispatcher.PushFrame(frame);
-        }
+    public bool TryGetFrameManager([NotNullWhen(true)] out IDispatcherFrameManager? frameManager) {
+        return (frameManager = this.myFrameManager) != null;
     }
 
     private static DispatcherPriority ToAvaloniaPriority(DispatchPriority priority) {
@@ -127,5 +122,27 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
         public void Start() => this.timer.Start();
 
         public void Stop() => this.timer.Stop();
+    }
+
+    private sealed class DispatcherFrameManagerImpl(AvaloniaDispatcherDelegate dispatcher) : IDispatcherFrameManager {
+        private static readonly PropertyInfo DisabledProcessingCountInfo = typeof(Dispatcher).GetProperty("DisabledProcessingCount", BindingFlags.Instance | BindingFlags.NonPublic) ?? throw new Exception("Missing field \"DisabledProcessingCount\"");
+        
+        public bool IsFramePushingSuspended => (int) DisabledProcessingCountInfo.GetValue(dispatcher.dispatcher)! > 0;
+        
+        public void PushFrame(CancellationToken cancellationToken) {
+            if (!cancellationToken.CanBeCanceled)
+                throw new ArgumentException("The token is not cancellable, meaning this method would never return");
+            if (cancellationToken.IsCancellationRequested)
+                return;
+
+            DispatcherFrame frame = new DispatcherFrame();
+            using (cancellationToken.Register(static f => ((DispatcherFrame) f!).Continue = false, frame)) {
+                dispatcher.dispatcher.PushFrame(frame);
+            }
+        }
+        
+        static DispatcherFrameManagerImpl() {
+            // defined to force DisabledProcessingCountInfo to be evaluated
+        }
     }
 }

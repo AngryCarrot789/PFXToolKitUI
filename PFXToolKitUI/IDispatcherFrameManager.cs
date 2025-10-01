@@ -31,11 +31,19 @@ namespace PFXToolKitUI;
 /// </summary>
 public interface IDispatcherFrameManager {
     /// <summary>
+    /// Gets whether pushing frames in currently suspended
+    /// </summary>
+    bool IsFramePushingSuspended { get; }
+
+    /// <summary>
     /// Pushes a new dispatcher frame that exits when the cancellation token is marked
     /// as cancelled. If already cancelled, then nothing happens.
     /// </summary>
     /// <param name="cancellationToken">The token that causes the frame to exit once cancelled</param>
-    /// <exception cref="InvalidOperationException">The cancellation token is not cancellable</exception>
+    /// <exception cref="ArgumentException">The cancellation token is not cancellable</exception>
+    /// <exception cref="InvalidOperationException">
+    /// Either the dispatcher has shut down or <see cref="IsFramePushingSuspended"/> is true
+    /// </exception>
     void PushFrame(CancellationToken cancellationToken);
 
     /// <summary>

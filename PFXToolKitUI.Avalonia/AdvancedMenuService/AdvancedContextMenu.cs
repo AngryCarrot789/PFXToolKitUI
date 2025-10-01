@@ -40,6 +40,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     private readonly IBinder<ContextRegistry> captionBinder;
     private readonly Dictionary<Type, Stack<Control>> itemCache;
     private InputElement? currentTarget;
+    private readonly EventHandler<ContextRequestedEventArgs> requestContextHandler;
 
     IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
 
@@ -62,6 +63,9 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         this.itemCache = new Dictionary<Type, Stack<Control>>();
         this.Opening += this.OnMenuOpening;
         this.Closed += this.OnMenuClosed;
+        this.requestContextHandler = (sender, e) => {
+            this.currentTarget = sender as InputElement;
+        };
     }
 
     static AdvancedContextMenu() {
@@ -72,10 +76,6 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     #region Opening and Closing
 
     // These methods are defined in the order they're called
-
-    private void OnRequestOpenContextMenu(object? sender, ContextRequestedEventArgs e) {
-        this.currentTarget = sender as InputElement;
-    }
 
     private void OnMenuOpening(object? sender, CancelEventArgs e) {
         if (this.currentTarget == null) {
@@ -90,9 +90,6 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
     protected override void OnLoaded(RoutedEventArgs e) {
         base.OnLoaded(e);
-        if (this.MyContextRegistry.IsOpened)
-            this.MyContextRegistry.OnClosed();
-
         this.MyContextRegistry.OnOpened(this.CapturedContext ?? EmptyContext.Instance);
         this.captionBinder.Attach(this, this.MyContextRegistry);
     }
@@ -100,9 +97,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     protected override void OnUnloaded(RoutedEventArgs e) {
         base.OnUnloaded(e);
         this.captionBinder.Detach();
-        if (this.MyContextRegistry.IsOpened) {
-            this.MyContextRegistry.OnClosed();
-        }
+        this.MyContextRegistry.OnClosed();
     }
 
     private void OnMenuClosed(object? sender, RoutedEventArgs e) {
@@ -122,14 +117,14 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         DataManager.SetDelegateContextData(this, this.CapturedContext = DataManager.GetFullContextData(inputElement));
     }
 
-    private void AddOwner(Control target) {
+    private void OnOwnerAdded(Control target) {
         // ContextRequested is fired when the user wants to open the context menu.
         // Usually originates from handling a right click mouse event
-        target.ContextRequested += this.OnRequestOpenContextMenu;
+        target.ContextRequested += this.requestContextHandler;
     }
 
-    private void RemoveOwner(Control target) {
-        target.ContextRequested -= this.OnRequestOpenContextMenu;
+    private void OnOwnerRemoved(Control target) {
+        target.ContextRequested -= this.requestContextHandler;
     }
 
     public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuHelper.PushCachedItem(this.itemCache, entryType, item);
@@ -158,8 +153,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         }
 
         if (oldValue != null && contextMenus.TryGetValue(oldValue, out AdvancedContextMenu? oldMenu)) {
-            oldMenu.RemoveOwner(target);
-            // contextMenus.Remove(oldValue); // remove the menu to prevent a memory leak I guess?
+            oldMenu.OnOwnerRemoved(target);
         }
 
         if (newValue != null) {
@@ -184,7 +178,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
             // Slide in and add ContextRequested handler before the base ContextMenu
             // class does, so that we can update the target trying to open the menu
-            menu.AddOwner(target);
+            menu.OnOwnerAdded(target);
             target.ContextMenu = menu;
         }
         else {

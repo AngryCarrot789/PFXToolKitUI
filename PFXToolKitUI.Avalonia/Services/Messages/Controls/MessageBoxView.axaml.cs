@@ -24,6 +24,7 @@ using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
+using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
@@ -94,14 +95,14 @@ public partial class MessageBoxView : UserControl {
         switch (data.Buttons) {
             case MessageBoxButton.OK:
             case MessageBoxButton.OKCancel:
-                this.Close(MessageBoxResult.OK);
+                this.RequestClose(MessageBoxResult.OK);
                 return;
             case MessageBoxButton.YesNoCancel:
             case MessageBoxButton.YesNo:
-                this.Close(MessageBoxResult.Yes);
+                this.RequestClose(MessageBoxResult.Yes);
                 return;
             default:
-                this.Close(MessageBoxResult.None);
+                this.RequestClose(MessageBoxResult.None);
                 return;
         }
     }
@@ -113,10 +114,10 @@ public partial class MessageBoxView : UserControl {
         }
 
         if ((data.Buttons == MessageBoxButton.YesNo || data.Buttons == MessageBoxButton.YesNoCancel)) {
-            this.Close(MessageBoxResult.No);
+            this.RequestClose(MessageBoxResult.No);
         }
         else {
-            this.Close(MessageBoxResult.None);
+            this.RequestClose(MessageBoxResult.None);
         }
     }
 
@@ -127,10 +128,10 @@ public partial class MessageBoxView : UserControl {
         }
 
         if ((data.Buttons == MessageBoxButton.OKCancel || data.Buttons == MessageBoxButton.YesNoCancel)) {
-            this.Close(MessageBoxResult.Cancel);
+            this.RequestClose(MessageBoxResult.Cancel);
         }
         else {
-            this.Close(MessageBoxResult.None);
+            this.RequestClose(MessageBoxResult.None);
         }
     }
 
@@ -232,10 +233,17 @@ public partial class MessageBoxView : UserControl {
     /// </summary>
     /// <param name="result">The dialog result wanted</param>
     /// <returns>True if the dialog was closed, false if it could not be closed due to a validation error or other error</returns>
-    public void Close(MessageBoxResult result) {
-        if (this.OwnerWindow != null && this.OwnerWindow.OpenState == OpenState.Open) {
-            _ = this.OwnerWindow.RequestCloseAsync(result);
+    public void RequestClose(MessageBoxResult result) {
+        if (this.OwnerWindow == null) {
+            return;
         }
+
+        if (this.OwnerWindow.OpenState != OpenState.Open) {
+            AppLogger.Instance.WriteLine($"Warning: attempt to request message box to close again. State = {this.OwnerWindow.OpenState}");
+            return;
+        }
+
+        this.OwnerWindow.RequestClose(result);
     }
 
     internal void OnWindowOpening(IWindowBase window) {

@@ -84,7 +84,7 @@ public interface IOverlayWindowManager : ITopLevelManager {
     /// </summary>
     /// <returns>The active window or null</returns>
     IOverlayWindow? GetActiveOverlay() {
-        return this.TopLevelWindows.LastOrDefault(x => x.OpenState == OpenState.Open);
+        return this.TopLevelWindows.LastOrDefault(x => x.OpenState.IsOpenOrTryingToClose());
     }
 
     bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {

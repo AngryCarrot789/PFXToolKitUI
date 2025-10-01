@@ -68,7 +68,7 @@ public interface IWindowBase : ITopLevel {
     /// <summary>
     /// Shows this window in a non-modal mode.
     /// </summary>
-    /// <returns>A task that completes once the window has opened</returns>
+    /// <returns>A task that completes when the window opens</returns>
     /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
     Task ShowAsync();
 
@@ -76,32 +76,38 @@ public interface IWindowBase : ITopLevel {
     /// Shows this window in a modal mode.
     /// </summary>
     /// <returns>
-    /// A task that completes when the window closes, and whose result is the first value passed
-    /// to <see cref="RequestCloseAsync"/> when the window was not already trying to close.
+    /// A task completed when the window closes, and whose result is the first value passed
+    /// to <see cref="RequestClose"/> or <see cref="RequestCloseAsync"/>
     /// </returns>
     /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
     Task<object?> ShowDialogAsync();
 
     /// <summary>
-    /// Requests this window to close. The returned task is completed when this window either closes
-    /// or the close operation was cancelled, where the bool result represents the closed state.
+    /// Requests this window to close, making <see cref="OpenState"/> become <see cref="Windowing.OpenState.TryingToClose"/>.
+    /// Note, the window will never actually close before this method returns.
     /// </summary>
     /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
-    /// <returns>True if the window was actually closed, False if the close attempt was cancelled</returns>
+    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="OpenState.Open"/></exception>
+    void RequestClose(object? dialogResult = null);
+    
+    /// <summary>
+    /// Requests this window to close, making <see cref="OpenState"/> become <see cref="Windowing.OpenState.TryingToClose"/>.
+    /// </summary>
+    /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
+    /// <returns>
+    /// A task that completes when either the window closes or the close operation was cancelled,
+    /// where the result value represents the closed state.
+    /// </returns>
     /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="OpenState.Open"/></exception>
     Task<bool> RequestCloseAsync(object? dialogResult = null);
 
     /// <summary>
-    /// Returns a task that completes when this window's <see cref="OpenState"/> becomes <see cref="Windowing.OpenState.Closed"/>.
-    /// Note, this does not actually tell the window to close.
-    /// <para>
-    /// If this window is already closed then this method returns <see cref="Task.CompletedTask"/>
-    /// </para>
-    /// <para>
-    /// This method does not throw <see cref="OperationCanceledException"/>
-    /// </para>
+    /// Returns a task that completes when this window's <see cref="OpenState"/> becomes
+    /// <see cref="Windowing.OpenState.Closed"/>, or when the cancellation token becomes cancelled.
+    /// Note, this does not actually tell the window to close. If the window is already closed then
+    /// this method returns <see cref="Task.CompletedTask"/>
     /// </summary>
     /// <param name="cancellationToken">Allows to stop waiting for the window to close</param>
-    /// <returns>A task that completes before the task returned by <see cref="RequestCloseAsync"/> becomes completed</returns>
+    /// <remarks>This method does not throw <see cref="OperationCanceledException"/></remarks>
     Task WaitForClosedAsync(CancellationToken cancellationToken = default);
 }

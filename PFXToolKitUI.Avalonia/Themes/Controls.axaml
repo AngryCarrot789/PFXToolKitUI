@@ -4,6 +4,7 @@
     <Styles.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
+                <MergeResourceInclude Source="ControlStyles/AdornerLayer.axaml"/>
                 <MergeResourceInclude Source="ControlStyles/DataValidationErrors.axaml"/>
                 <MergeResourceInclude Source="ControlStyles/ToolTip.axaml"/>
                 <MergeResourceInclude Source="ControlStyles/PopupRoot.axaml"/>

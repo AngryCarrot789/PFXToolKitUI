@@ -51,6 +51,13 @@
                             BorderThickness="{TemplateBinding BorderThickness}"
                             IsHitTestVisible="False"/>
                     <VisualLayerManager x:Name="PART_VisualLayerManager" Margin="1">
+                        <!-- <VisualLayerManager.AdornerLayer> -->
+                        <!--     <AdornerLayer.DefaultFocusAdorner> -->
+                        <!--         <FocusAdornerTemplate> -->
+                        <!--              -->
+                        <!--         </FocusAdornerTemplate> -->
+                        <!--     </AdornerLayer.DefaultFocusAdorner> -->
+                        <!-- </VisualLayerManager.AdornerLayer> -->
                         <VisualLayerManager.ChromeOverlayLayer>
                         </VisualLayerManager.ChromeOverlayLayer>
                         <DockPanel>

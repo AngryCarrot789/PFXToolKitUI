@@ -30,6 +30,7 @@ using PFXToolKitUI.Avalonia.Services.Messages.Controls;
 using PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Windowing;
+using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.UserInputs;
@@ -200,16 +201,23 @@ public partial class UserInputDialogView : UserControl {
     /// false if it could not be closed due to a validation error or other error
     /// </returns>
     public void RequestClose(bool result) {
-        if (this.OwnerWindow != null && this.OwnerWindow.OpenState == OpenState.Open) {
-            if (!result) {
-                _ = this.OwnerWindow.RequestCloseAsync(BoolBox.False);
-                return;
-            }
+        if (this.OwnerWindow == null) {
+            return;
+        }
 
-            UserInputInfo? data = this.UserInputInfo;
-            if (data != null && !data.HasErrors()) {
-                _ = this.OwnerWindow.RequestCloseAsync(BoolBox.True);
-            }
+        if (this.OwnerWindow.OpenState != OpenState.Open) {
+            AppLogger.Instance.WriteLine($"Warning: attempt to request user input dialog to close again. State = {this.OwnerWindow.OpenState}");
+            return;
+        }
+
+        if (!result) {
+            this.OwnerWindow.RequestClose(BoolBox.False);
+            return;
+        }
+
+        UserInputInfo? data = this.UserInputInfo;
+        if (data != null && !data.HasErrors()) {
+            this.OwnerWindow.RequestClose(BoolBox.True);
         }
     }
 

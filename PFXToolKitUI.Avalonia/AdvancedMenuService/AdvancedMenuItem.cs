@@ -246,22 +246,20 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
 
     private void ItemsOnItemsAdded(IObservableList<IContextObject> list, int index, IList<IContextObject> items) {
         this.OnItemAddedOrRemoved();
-        AdvancedMenuHelper.OnLogicalItemsAdded(this, index, new List<IContextObject>(items));
+        AdvancedMenuHelper.OnLogicalItemsAdded(this, index, items);
     }
 
     private void ItemsOnItemsRemoved(IObservableList<IContextObject> list, int index, IList<IContextObject> items) {
         this.OnItemAddedOrRemoved();
-        AdvancedMenuHelper.OnLogicalItemsRemoved(this, index, new List<IContextObject>(items));
+        AdvancedMenuHelper.OnLogicalItemsRemoved(this, index, items);
     }
 
     private void ItemsOnItemMoved(IObservableList<IContextObject> list, int oldIndex, int newIndex, IContextObject item) {
-        AdvancedMenuHelper.OnLogicalItemsRemoved(this, oldIndex, [item]);
-        AdvancedMenuHelper.OnLogicalItemsAdded(this, newIndex, [item]);
+        AdvancedMenuHelper.OnLogicalItemMoved(this, oldIndex, newIndex, item);
     }
 
     private void ItemsOnItemReplaced(IObservableList<IContextObject> list, int index, IContextObject oldItem, IContextObject newItem) {
-        AdvancedMenuHelper.OnLogicalItemsRemoved(this, index, [oldItem]);
-        AdvancedMenuHelper.OnLogicalItemsAdded(this, index, [newItem]);
+        AdvancedMenuHelper.OnLogicalItemReplaced(this, index, oldItem, newItem);
     }
 
     private void OnEntryIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {

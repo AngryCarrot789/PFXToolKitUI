@@ -30,17 +30,17 @@ public enum OpenState {
     /// The window or popup has not been shown yet. This is the default state for a newly created windows or popups.
     /// </summary>
     NotOpened,
-    
+
     /// <summary>
     /// The window or popup is in the process of opening
     /// </summary>
     Opening,
-    
+
     /// <summary>
     /// The window or popup is open and visible on screen
     /// </summary>
     Open,
-    
+
     /// <summary>
     /// The window or popup has been requested to close. Its "try" close event handlers will be invoked which may wish to cancel the close operation.
     /// <para>
@@ -48,15 +48,24 @@ public enum OpenState {
     /// </para>
     /// </summary>
     TryingToClose,
-    
+
     /// <summary>
     /// The window or popup is actually starting to close because the close operation was not cancelled.
     /// The closing and closed event handlers will be invoked, and once they completed, the window or popup will finally close
     /// </summary>
     Closing,
-    
+
     /// <summary>
     /// The window or popup has fully closed and is no longer visible (although the closing animation might still be playing; platform dependent).
     /// </summary>
     Closed
+}
+
+public static class OpenStateExtensions {
+    /// <summary>
+    /// Returns true when this window is still technically "open" and is not in the actual process of closing (although it may shortly after).
+    /// </summary>
+    public static bool IsOpenOrTryingToClose(this OpenState openState) {
+        return openState == OpenState.Open || openState == OpenState.TryingToClose;
+    }
 }

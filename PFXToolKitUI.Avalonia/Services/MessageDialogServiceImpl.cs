@@ -112,8 +112,8 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
         window.Control.AddHandler(InputElement.KeyDownEvent, (s, e) => {
             if (!e.Handled && e.Key == Key.Escape) {
-                if (view.OwnerWindow != null && view.OwnerWindow.OpenState == OpenState.Open) {
-                    view.Close(MessageBoxResult.None);
+                if (view.OwnerWindow != null) {
+                    view.RequestClose(MessageBoxResult.None);
                 }
             }
         });
@@ -144,8 +144,8 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
         window.Control.AddHandler(InputElement.KeyDownEvent, (s, e) => {
             if (!e.Handled && e.Key == Key.Escape) {
-                if (view.OwnerWindow != null && view.OwnerWindow.OpenState == OpenState.Open) {
-                    view.Close(MessageBoxResult.None);
+                if (view.OwnerWindow != null) {
+                    view.RequestClose(MessageBoxResult.None);
                 }
             }
         });

@@ -64,7 +64,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         get => this.myNativeWindow.WindowIcon;
         set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.WindowIcon, (x, y) => x.WindowIcon = y, value, this, (t, o, n) => t.IconChanged?.Invoke(t, o, n));
     }
-    
+
     public Icon? TitleBarIcon {
         get => this.myNativeWindow.TitleBarIcon;
         set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.TitleBarIcon, (x, y) => x.TitleBarIcon = y, value, this, (t, o, n) => t.TitleBarIconChanged?.Invoke(t, o, n));
@@ -125,7 +125,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     public event WindowTitleBarBrushChangedEventHandler? TitleBarBrushChanged;
     public event WindowBorderBrushChangedEventHandler? BorderBrushChanged;
     public event WindowTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
-    
+
     // owner+owned tracking
     internal readonly DesktopNativeWindow myNativeWindow;
     internal readonly DesktopWindowManager myManager;
@@ -137,7 +137,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     private TaskCompletionSource? tcsWaitForClosed;
     private readonly List<CancellableTaskCompletionSource> listTcsWaitForClosed;
     private bool isProcessingClosingInternal;
-    
+
     // utils for "binding" brushes from the BrushManager api
     private readonly ColourBrushHandler titleBarBrushHandler;
     private readonly ColourBrushHandler borderBrushHandler;
@@ -247,7 +247,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         // this.requestToCloseTask != null || this.isProcessingClosingInternal
         if (this.isProcessingClosingInternal)
             throw new InvalidOperationException("Reentrancy of " + nameof(this.OnNativeWindowClosing));
-        
+
         // set to TryingToClose by RequestCloseAsync
         if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             throw new InvalidOperationException("Window is not in its normal open state");
@@ -265,7 +265,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             }
 
             try {
-                ApplicationPFX.Instance.Dispatcher.AwaitForCompletion(Task.WhenAll(tasks));
+                this.myManager.myFrameManager.AwaitForCompletion(Task.WhenAll(tasks));
             }
             catch (AggregateException ex) {
                 List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
@@ -293,7 +293,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             }
 
             try {
-                ApplicationPFX.Instance.Dispatcher.AwaitForCompletion(Task.WhenAll(tasks));
+                this.myManager.myFrameManager.AwaitForCompletion(Task.WhenAll(tasks));
             }
             catch (AggregateException ex) {
                 List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
@@ -354,12 +354,12 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
         if (this.tcsShowAsync != null) {
             Debug.Assert(this.OpenState == OpenState.Opening);
-            
+
             Debugger.Break();
             AppLogger.Instance.WriteLine("Warning: call to " + nameof(this.ShowAsync) + " when already in the process of showing");
             return this.tcsShowAsync.Task;
         }
-        
+
         if (this.OpenState == OpenState.Closed) // clarity exception message
             throw new InvalidOperationException("Window has been closed; it cannot be opened again.");
         if (this.OpenState != OpenState.NotOpened)
@@ -391,7 +391,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             throw new InvalidOperationException("Window has been closed; it cannot be opened again.");
         if (this.OpenState != OpenState.NotOpened)
             throw new InvalidOperationException("Window has already been opened");
-        
+
         if (this.tcsShowAsync != null)
             throw new InvalidOperationException("Cannot show as dialog because we are currently in the process of showing as a non-dialog window");
 
@@ -401,20 +401,31 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
         return this.myNativeWindow.ShowDialog<object?>(parent);
     }
-
-    public async Task<bool> RequestCloseAsync(object? dialogResult = null) {
-        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-
+    
+    private void CheckStateForRequestClose() {
         switch (this.OpenState) {
             case < OpenState.Open:        throw new InvalidOperationException("Window has not fully opened yet, it cannot be requested to close yet.");
             case OpenState.TryingToClose: throw new InvalidOperationException("Window has already been requested to close");
             case OpenState.Closing:       throw new InvalidOperationException("Window is already in the process of closing");
             case OpenState.Closed:        throw new InvalidOperationException("Window has already been closed");
         }
-
-        Debug.Assert(this.OpenState == OpenState.Open);
-        this.OpenState = OpenState.TryingToClose;
         
+        Debug.Assert(this.OpenState == OpenState.Open);
+    }
+
+    public void RequestClose(object? dialogResult = null) {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        this.CheckStateForRequestClose();
+        this.OpenState = OpenState.TryingToClose;
+
+        ApplicationPFX.Instance.Dispatcher.Post(() => this.myNativeWindow.Close(dialogResult));
+    }
+
+    public async Task<bool> RequestCloseAsync(object? dialogResult = null) {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        this.CheckStateForRequestClose();
+        this.OpenState = OpenState.TryingToClose;
+
         using CancellationTokenSource cts = new CancellationTokenSource();
         ApplicationPFX.Instance.Dispatcher.Post(() => {
             try {

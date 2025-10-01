@@ -85,7 +85,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
                 desktop.Shutdown();
             }
             else {
-                this.Dispatcher.AwaitForCompletion(this.OnExiting(Environment.ExitCode));
+                this.OnExiting(Environment.ExitCode);
             }
         }
     }
@@ -107,7 +107,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         }
 
         AppLogger.Instance.WriteLine("Application exit requested");
-        this.Dispatcher.AwaitForCompletion(this.OnExiting(e.ApplicationExitCode));
+        this.OnExiting(e.ApplicationExitCode);
     }
 
     public override void Shutdown() {

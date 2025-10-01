@@ -19,11 +19,9 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
-using PFXToolKitUI.Avalonia.Utils;
 using InvalidOperationException = System.InvalidOperationException;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;

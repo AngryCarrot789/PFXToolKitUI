@@ -45,7 +45,7 @@ public sealed class SingletonWindow {
 
     public void ShowOrActivate() {
         if (this.Current != null) {
-            if (this.Current.OpenState == OpenState.Open) {
+            if (this.Current.OpenState.IsOpenOrTryingToClose()) {
                 this.Current.Activate();
             }
         }
