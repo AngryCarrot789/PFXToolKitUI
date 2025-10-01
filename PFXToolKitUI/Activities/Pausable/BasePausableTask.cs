@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2025 REghZy
+// Copyright (c) 2024-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -15,15 +15,13 @@
 // 
 // You should have received a copy of the GNU Lesser General Public
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
-// using System.Threading.Tasks;
+// 
 
-using System.Threading.Tasks;
+namespace PFXToolKitUI.Activities.Pausable;
 
-namespace PFXToolKitUI.Tests;
+/// <summary>
+/// The base class for pausable tasks. These work directly with the <see cref="ActivityManager"/>
+/// </summary>
+public abstract class BasePausableTask {
 
-public class TestAppStartupManager : IStartupManager {
-    public Task OnApplicationStartupWithArgs(IApplicationStartupProgress progress, string[] args) {
-        new MainWindow().Show();
-        return Task.CompletedTask;
-    }
 }

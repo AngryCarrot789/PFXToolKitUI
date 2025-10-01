@@ -18,7 +18,7 @@
 // 
 
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.ExceptionServices;
+using System.Runtime.CompilerServices;
 
 namespace PFXToolKitUI;
 
@@ -26,6 +26,9 @@ namespace PFXToolKitUI;
 /// Provides a mechanism for invoking actions on a specific thread
 /// </summary>
 public interface IDispatcher {
+    private static readonly Action EmptyAction = () => {
+    };
+
     /// <summary>
     /// Determines whether the calling thread is the thread associated with this dispatcher
     /// </summary>
@@ -34,7 +37,15 @@ public interface IDispatcher {
     /// <summary>
     /// Throws an exception if the calling thread is not the thread associated with this dispatcher
     /// </summary>
-    void VerifyAccess();
+    void VerifyAccess() {
+        if (!this.CheckAccess()) {
+            [DoesNotReturn]
+            [MethodImpl(MethodImplOptions.NoInlining)]
+            static void ThrowInvalidThread() => throw new InvalidOperationException("Call from invalid thread");
+
+            ThrowInvalidThread();
+        }
+    }
 
     /// <summary>
     /// Synchronously executes the given function on the dispatcher thread, or dispatches its execution on the dispatcher thread if we are not
@@ -80,8 +91,10 @@ public interface IDispatcher {
     /// </summary>
     /// <param name="action">The callback to invoke</param>
     /// <param name="priority">The priority to invoke the callback at</param>
-    void Post(Action action, DispatchPriority priority = DispatchPriority.Default);
-    
+    void Post(Action action, DispatchPriority priority = DispatchPriority.Default) {
+        this.Post(static a => ((Action) a!)(), action, priority);
+    }
+
     /// <summary>
     /// Invokes the action asynchronously on this dispatcher thread. This differs from <see cref="InvokeAsync"/> where
     /// this method will cause any exception the actions throws and will throw it on the main thread, causing the app to crash,
@@ -102,12 +115,17 @@ public interface IDispatcher {
     /// </summary>
     /// <param name="priority">The priority to process at and above</param>
     /// <returns>A task</returns>
-    Task Process(DispatchPriority priority);
+    Task Process(DispatchPriority priority) => this.InvokeAsync(EmptyAction, priority);
 
     /// <summary>
-    /// Notifies the application to shutdown
+    /// Posts a shutdown request to the dispatcher
     /// </summary>
-    void InvokeShutdown();
+    void PostShutdown(DispatchPriority priority) => this.Post(static s => ((IDispatcher) s!).Shutdown(), this, priority);
+
+    /// <summary>
+    /// Shuts down the dispatcher, preventing any actions from being enqueued
+    /// </summary>
+    void Shutdown();
 
     /// <summary>
     /// Creates a dispatcher timer

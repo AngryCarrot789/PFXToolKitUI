@@ -18,18 +18,17 @@
 // 
 
 using System.Collections;
-using System.Diagnostics;
 
 namespace PFXToolKitUI.Utils;
 
 /// <summary>
 /// Stores a list of integers as ranges
 /// </summary>
-public sealed class IntRangeUnion : IEnumerable<IntRange> {
+public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
     /// <summary>
     /// Returns a range of the smallest and largest integer value
     /// </summary>
-    public IntRange EnclosingRange => this.myRanges.Count == 0 ? default : new IntRange(this.myRanges[0].Start, this.myRanges[^1].End);
+    public ULongRange EnclosingRange => this.myRanges.Count == 0 ? default : new ULongRange(this.myRanges[0].Start, this.myRanges[^1].End);
 
     public bool IsFragmented => this.myRanges.Count > 1;
 
@@ -39,83 +38,51 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
     public int RangeCount => this.myRanges.Count;
 
     /// <summary>
-    /// Calculates the number of actual integers present in this union by iterating each range and summing its <see cref="IntRange.Length"/>
+    /// Calculates the number of actual integers present in this union by iterating each range and summing its <see cref="ULongRange.Length"/>
     /// </summary>
-    public int GrandTotal {
+    public ulong GrandTotal {
         get {
             if (this.cachedGrandTotal.HasValue)
                 return this.cachedGrandTotal.Value;
 
-            int total = 0;
-            foreach (IntRange range in this.myRanges)
+            ulong total = 0;
+            foreach (ULongRange range in this.myRanges)
                 total += range.Length;
             this.cachedGrandTotal = total;
             return total;
         }
     }
 
-    private readonly List<IntRange> myRanges = new();
-    private int? cachedGrandTotal;
+    private readonly List<ULongRange> myRanges = new();
+    private ulong? cachedGrandTotal;
 
     /// <summary>
     /// Creates a new empty union.
     /// </summary>
-    public IntRangeUnion() {
+    public ULongRangeUnion() {
     }
 
     /// <summary>
     /// Initializes a new union of int ranges.
     /// </summary>
     /// <param name="ranges">The ranges to unify.</param>
-    public IntRangeUnion(IEnumerable<IntRange> ranges) {
+    public ULongRangeUnion(IEnumerable<ULongRange> ranges) {
         ArgumentNullException.ThrowIfNull(ranges);
-        foreach (IntRange range in ranges) {
+        foreach (ULongRange range in ranges) {
             this.Add(range);
         }
     }
 
-    private IntRangeUnion(List<IntRange> ranges) {
+    private ULongRangeUnion(List<ULongRange> ranges) {
         this.myRanges = ranges;
     }
 
-    public static void Test() {
-        IntRangeUnion list = new IntRangeUnion();
-        list.Add(1);
-        list.Add(4);
-        list.Add(IntRange.FromLength(2, 2));
-        list.Add(40);
-        list.Add(5);
-        list.Add(9);
-        list.Add(7);
-        list.Add(6);
-        list.Add(8);
-        list.Add(42);
-        list.Add(41);
-        Debug.Assert(list.myRanges.Count == 2);
-        Debug.Assert(list.myRanges[0].Equals(new IntRange(1, 10)));
-        Debug.Assert(list.myRanges[1].Equals(new IntRange(40, 43)));
-
-        list.Remove(2);
-        Debug.Assert(list.myRanges.Count == 3);
-        Debug.Assert(list.myRanges[0].Equals(new IntRange(1, 2)));
-        Debug.Assert(list.myRanges[1].Equals(new IntRange(3, 10)));
-        Debug.Assert(list.myRanges[2].Equals(new IntRange(40, 43)));
-
-        list.Remove(new IntRange(3, 5));
-        Debug.Assert(list.myRanges.Count == 3);
-        Debug.Assert(list.myRanges[0].Equals(new IntRange(1, 2)));
-        Debug.Assert(list.myRanges[1].Equals(new IntRange(5, 10)));
-        Debug.Assert(list.myRanges[2].Equals(new IntRange(40, 43)));
+    public void Add(ulong value) {
+        if (value < ulong.MaxValue)
+            this.Add(new ULongRange(value, value + 1));
     }
 
-    public void Add(int value) {
-        if (value < int.MaxValue)
-            this.Add(new IntRange(value, value + 1));
-    }
-
-    public void Add(IntRange item) {
-        if (item.Start < 0)
-            throw new ArgumentOutOfRangeException(nameof(item), "item.Start cannot be negative");
+    public void Add(ULongRange item) {
         if (item.End < item.Start)
             throw new ArgumentOutOfRangeException(nameof(item), "item.End cannot be less than item.Start");
         if (item.Start == item.End)
@@ -141,33 +108,42 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         this.cachedGrandTotal = null;
     }
 
-    public bool Contains(IntRange item) => this.myRanges.Contains(item);
+    /// <summary>
+    /// Returns true when this union contains the single location
+    /// </summary>
+    /// <param name="location"></param>
+    /// <returns></returns>
+    public bool IsSuperSet(ulong location) => this.IsSuperSet(new ULongRange(location, location == ulong.MaxValue ? ulong.MaxValue : (location + 1)));
+    
+    /// <summary>
+    /// Returns true when this union contains the entirety of the given range
+    /// </summary>
+    public bool IsSuperSet(ULongRange range) => IsSuperSet(range, this.myRanges);
 
-    public bool Contains(int location) => this.IsSuperSetOf(new IntRange(location, location == int.MaxValue ? int.MaxValue : (location + 1)));
-
-    public bool IsSuperSetOf(IntRange range) => IsSuperSetOf(range, this.myRanges);
-
-    public bool IntersectsWith(IntRange range) => IntersectsWith(range, this.myRanges);
-
-    public int GetOverlappingRanges(IntRange range, Span<IntRange> output) {
+    /// <summary>
+    /// Returns true when the range, in any way, overlaps this union 
+    /// </summary>
+    public bool Overlaps(ULongRange range) => Overlaps(range, this.myRanges);
+    
+    public int GetOverlappingRanges(ULongRange range, Span<ULongRange> output) {
         SearchResultPair result = this.FindFirstOverlappingRange(range);
         if (result.Result == SearchResult.NotPresent)
             return 0;
 
         int count = 0;
         for (int i = result.Index; i < this.myRanges.Count && count < output.Length; i++) {
-            IntRange current = this.myRanges[i];
+            ULongRange current = this.myRanges[i];
             if (current.Start >= range.End)
                 break;
 
-            if (current.OverlapsWith(range))
+            if (current.Overlaps(range))
                 output[count++] = current;
         }
 
         return count;
     }
 
-    public int GetIntersectingRanges(IntRange range, Span<IntRange> output) {
+    public int GetIntersectingRanges(ULongRange range, Span<ULongRange> output) {
         // Get overlapping ranges.
         int count = this.GetOverlappingRanges(range, output);
 
@@ -181,47 +157,76 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         return count;
     }
 
-    public IntRangeUnion GetPresenceUnion(IntRange range, bool complement) {
-        IntRangeUnion union = new IntRangeUnion();
+    public ULongRangeUnion GetPresenceUnion(ULongRange range, bool complement) {
+        ULongRangeUnion union = new ULongRangeUnion();
         GetPresenceUnion(union, range, complement, this.myRanges);
         return union;
     }
 
-    public void GetPresenceUnion(IntRangeUnion dstUnion, IntRange range, bool complement) {
+    public void GetPresenceUnion(ULongRangeUnion dstUnion, ULongRange range, bool complement) {
         GetPresenceUnion(dstUnion, range, complement, this.myRanges);
     }
 
-    private static void GetPresenceUnion(IntRangeUnion dstUnion, IntRange range, bool complement, List<IntRange> list) {
-        for (int i = range.Start; i < range.End; i++) {
-            if (IsSuperSetOf(new IntRange(i, i + 1), list) == complement) {
-                dstUnion.Add(i);
+    // private static void GetPresenceUnion(ULongRangeUnion dstUnion, ULongRange range, bool complement, List<ULongRange> list) {
+    //     for (ulong i = range.Start; i < range.End; i++) {
+    //         if (IsSuperSetOf(new ULongRange(i, i + 1), list) == complement) {
+    //             dstUnion.Add(i);
+    //         }
+    //     }
+    // }
+
+    private static void GetPresenceUnion(ULongRangeUnion dstUnion, ULongRange range, bool complement, List<ULongRange> list) {
+        ulong pos = range.Start;
+        foreach (ULongRange r in list) {
+            if (r.End <= range.Start)
+                continue;
+            if (r.Start >= range.End)
+                break;
+
+            if (complement) {
+                ulong start = Math.Max(pos, r.Start);
+                ulong end = Math.Min(range.End, r.End);
+                if (start < end)
+                    dstUnion.Add(new ULongRange(start, end));
             }
+            else if (pos < r.Start) {
+                dstUnion.Add(new ULongRange(pos, Math.Min(r.Start, range.End)));
+            }
+
+            if ((pos = Math.Max(pos, r.End)) >= range.End) {
+                break;
+            }
+        }
+
+        if (!complement && pos < range.End) {
+            dstUnion.Add(new ULongRange(pos, range.End));
         }
     }
 
-    public void CopyTo(IntRange[] array, int arrayIndex) => this.myRanges.CopyTo(array, arrayIndex);
 
-    public bool Remove(int value) {
-        if (value != int.MaxValue)
-            return this.Remove(new IntRange(value, value + 1));
+    public void CopyTo(ULongRange[] array, int arrayIndex) => this.myRanges.CopyTo(array, arrayIndex);
+
+    public bool Remove(ulong value) {
+        if (value != ulong.MaxValue)
+            return this.Remove(new ULongRange(value, value + 1));
         return false;
     }
 
-    public bool Remove(IntRange item) {
+    public bool Remove(ULongRange item) {
         SearchResultPair result = this.FindFirstOverlappingRange(item);
         if (result.Result == SearchResult.NotPresent)
             return false;
 
-        int itemMaxEnd = item.End == int.MaxValue ? int.MaxValue : (item.End + 1);
+        ulong itemMaxEnd = item.End == ulong.MaxValue ? ulong.MaxValue : (item.End + 1);
         for (int i = result.Index; i < this.myRanges.Count; i++) {
             // Is this an overlapping range?
-            if (!this.myRanges[i].OverlapsWith(item))
+            if (!this.myRanges[i].Overlaps(item))
                 break;
 
-            if (this.myRanges[i].Contains(new IntRange(item.Start, itemMaxEnd))) {
+            if (this.myRanges[i].IsSuperSet(new ULongRange(item.Start, itemMaxEnd))) {
                 // The range contains the entire range-to-remove, split up the range.
-                (IntRange a, IntRange rest) = this.myRanges[i].Split(item.Start);
-                (IntRange b, IntRange c) = rest.Split(item.End);
+                (ULongRange a, ULongRange rest) = this.myRanges[i].Split(item.Start);
+                (ULongRange b, ULongRange c) = rest.Split(item.End);
 
                 if (a.IsEmpty)
                     this.myRanges.RemoveAt(i--);
@@ -233,14 +238,14 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
                 break;
             }
 
-            if (item.Contains(this.myRanges[i])) {
+            if (item.IsSuperSet(this.myRanges[i])) {
                 this.myRanges.RemoveAt(i--);
             }
             else if (item.Start < this.myRanges[i].Start) {
-                this.myRanges[i] = this.myRanges[i].Clamp(new IntRange(item.End, int.MaxValue));
+                this.myRanges[i] = this.myRanges[i].Clamp(new ULongRange(item.End, ulong.MaxValue));
             }
             else if (item.End >= this.myRanges[i].End) {
-                this.myRanges[i] = this.myRanges[i].Clamp(new IntRange(int.MinValue, item.Start));
+                this.myRanges[i] = this.myRanges[i].Clamp(new ULongRange(ulong.MinValue, item.Start));
             }
         }
 
@@ -251,23 +256,23 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
     private void MergeRanges(int startIndex) {
         int i = Math.Max(0, startIndex - 1);
         while (i < this.myRanges.Count - 1) {
-            IntRange current = this.myRanges[i];
-            IntRange next = this.myRanges[i + 1];
+            ULongRange current = this.myRanges[i];
+            ULongRange next = this.myRanges[i + 1];
             if (current.End < next.Start) {
                 i++;
             }
             else {
-                this.myRanges[i] = new IntRange(Math.Min(current.Start, next.Start), Math.Max(current.End, next.End));
+                this.myRanges[i] = new ULongRange(Math.Min(current.Start, next.Start), Math.Max(current.End, next.End));
                 this.myRanges.RemoveAt(i + 1);
             }
         }
     }
 
-    private SearchResultPair FindFirstOverlappingRange(IntRange range) {
+    private SearchResultPair FindFirstOverlappingRange(ULongRange range) {
         int start = 0, end = this.myRanges.Count - 1;
         while (start <= end) {
             int mid = start + (end - start) / 2;
-            IntRange check = this.myRanges[mid];
+            ULongRange check = this.myRanges[mid];
             if (check.End < range.Start) {
                 start = mid + 1;
             }
@@ -282,29 +287,28 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         return new SearchResultPair(SearchResult.NotPresent, start);
     }
 
-    public List<IntRange> ToList() => new List<IntRange>(this.myRanges);
+    public List<ULongRange> ToList() => new List<ULongRange>(this.myRanges);
 
-    public static bool IsSuperSetOf(IntRange range, List<IntRange> list) {
+    public static bool IsSuperSet(ULongRange range, List<ULongRange> list) {
         SearchResultPair result = FindFirstOverlappingRange(range, list);
         if (result.Result == SearchResult.NotPresent)
             return false;
 
-        return list[result.Index].Contains(range);
+        return list[result.Index].IsSuperSet(range);
     }
 
-    public static bool IntersectsWith(IntRange range, List<IntRange> list) {
+    public static bool Overlaps(ULongRange range, List<ULongRange> list) {
         SearchResultPair result = FindFirstOverlappingRange(range, list);
         if (result.Result == SearchResult.NotPresent)
             return false;
-
-        return list[result.Index].OverlapsWith(range);
+        return list[result.Index].Overlaps(range);
     }
 
-    internal static SearchResultPair FindFirstOverlappingRange(IntRange range, List<IntRange> list) {
+    internal static SearchResultPair FindFirstOverlappingRange(ULongRange range, List<ULongRange> list) {
         int start = 0, end = list.Count - 1;
         while (start <= end) {
             int mid = start + (end - start) / 2;
-            IntRange check = list[mid];
+            ULongRange check = list[mid];
             if (check.End < range.Start) {
                 start = mid + 1;
             }
@@ -325,26 +329,26 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
 
     public Enumerator GetEnumerator() => new(this);
 
-    IEnumerator<IntRange> IEnumerable<IntRange>.GetEnumerator() => this.GetEnumerator();
+    IEnumerator<ULongRange> IEnumerable<ULongRange>.GetEnumerator() => this.GetEnumerator();
 
     IEnumerator IEnumerable.GetEnumerator() => this.GetEnumerator();
 
     /// <summary>
     /// An implementation of an enumerator that enumerates all disjoint ranges within a bit range union.
     /// </summary>
-    public struct Enumerator : IEnumerator<IntRange> {
-        public IntRange Current => this.index < this.ranges.myRanges.Count ? this.ranges.myRanges[this.index] : default;
+    public struct Enumerator : IEnumerator<ULongRange> {
+        public ULongRange Current => this.index < this.ranges.myRanges.Count ? this.ranges.myRanges[this.index] : default;
 
         object IEnumerator.Current => this.Current;
 
-        private readonly IntRangeUnion ranges;
+        private readonly ULongRangeUnion ranges;
         private int index;
 
         /// <summary>
         /// Creates a new disjoint bit range union enumerator.
         /// </summary>
         /// <param name="ranges">The disjoint union to enumerate.</param>
-        public Enumerator(IntRangeUnion ranges) {
+        public Enumerator(ULongRangeUnion ranges) {
             this.ranges = ranges;
             this.index = -1;
         }
@@ -360,7 +364,7 @@ public sealed class IntRangeUnion : IEnumerable<IntRange> {
         }
     }
 
-    public IntRangeUnion Clone() {
-        return new IntRangeUnion(this.myRanges.ToList());
+    public ULongRangeUnion Clone() {
+        return new ULongRangeUnion(this.myRanges.ToList());
     }
 }

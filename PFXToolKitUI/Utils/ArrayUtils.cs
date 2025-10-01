@@ -146,18 +146,4 @@ public static class ArrayUtils {
 
         return -1;
     }
-
-    public static void Main() {
-        // test array functions
-        int[] array = [0, 1, 2, 3, 4, 5, 6, 7, 8];
-        
-        int[] newArray = RemoveAt(array, 0);
-        Debug.Assert(newArray.SequenceEqual([1, 2, 3, 4, 5, 6, 7, 8]));
-        
-        newArray = RemoveAt(newArray, newArray.Length - 1);
-        Debug.Assert(newArray.SequenceEqual([1, 2, 3, 4, 5, 6, 7]));
-        
-        newArray = RemoveAt(newArray, 3);
-        Debug.Assert(newArray.SequenceEqual([1, 2, 3, 5, 6, 7]));
-    }
 }

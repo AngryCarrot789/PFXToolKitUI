@@ -19,7 +19,7 @@
 
 using PFXToolKitUI.Utils.RDA;
 
-namespace PFXToolKitUI.Tasks;
+namespace PFXToolKitUI.Activities;
 
 /// <summary>
 /// A concurrent implementation of <see cref="IActivityProgress"/> that

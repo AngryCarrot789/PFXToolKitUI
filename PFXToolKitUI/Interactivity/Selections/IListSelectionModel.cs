@@ -34,7 +34,7 @@ public interface IListSelectionModel {
     /// <summary>
     /// Enumerates the selected indices
     /// </summary>
-    IEnumerable<IntRange> SelectedIndices { get; }
+    IEnumerable<LongRange> SelectedIndices { get; }
 
     /// <summary>
     /// An event fired when the selection state changes
@@ -58,7 +58,7 @@ public interface IListSelectionModel {
     /// Select a list of ranges of items
     /// </summary>
     /// <param name="union"></param>
-    void SelectRanges(IntRangeUnion union);
+    void SelectRanges(LongRangeUnion union);
 
     /// <summary>
     /// Deselect a single item
@@ -77,7 +77,7 @@ public interface IListSelectionModel {
     /// Deselect a list of ranges of items
     /// </summary>
     /// <param name="union"></param>
-    void DeselectRanges(IntRangeUnion union);
+    void DeselectRanges(LongRangeUnion union);
 
     /// <summary>
     /// Check if the item at the index is selected
@@ -97,10 +97,10 @@ public interface IListSelectionModel {
     void Clear();
 
     /// <summary>
-    /// Returns a new <see cref="IntRangeUnion"/> containing the selected indices
+    /// Returns a new <see cref="LongRangeUnion"/> containing the selected indices
     /// </summary>
     /// <returns>The selected indices</returns>
-    IntRangeUnion ToIntRangeUnion();
+    LongRangeUnion ToLongRangeUnion();
 }
 
 /// <summary>
@@ -166,14 +166,14 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     bool? IsItemSelected(T item);
 }
 
-public readonly struct ListSelectionModelChangedEventArgs(IList<IntRange> addedIndices, IList<IntRange> removedIndices) {
+public readonly struct ListSelectionModelChangedEventArgs(IList<LongRange> addedIndices, IList<LongRange> removedIndices) {
     /// <summary>
     /// The ranges containing indices that are now selected
     /// </summary>
-    public IList<IntRange> AddedIndices { get; } = addedIndices;
+    public IList<LongRange> AddedIndices { get; } = addedIndices;
 
     /// <summary>
     /// The ranges containing indices that are no longer selected
     /// </summary>
-    public IList<IntRange> RemovedIndices { get; } = removedIndices;
+    public IList<LongRange> RemovedIndices { get; } = removedIndices;
 }

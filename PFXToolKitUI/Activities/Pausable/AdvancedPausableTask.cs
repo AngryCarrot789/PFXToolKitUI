@@ -20,7 +20,7 @@
 using System.Diagnostics;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Tasks.Pausable;
+namespace PFXToolKitUI.Activities.Pausable;
 
 public delegate void AdvancedPausableTaskEventHandler(AdvancedPausableTask task);
 

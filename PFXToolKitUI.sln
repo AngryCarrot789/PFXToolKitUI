@@ -1,10 +1,10 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PFXToolKitUI.Tests", "PFXToolKitUI.Tests\PFXToolKitUI.Tests.csproj", "{373FA631-B2D4-4213-B3CC-D759C3C0370A}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PFXToolKitUI", "PFXToolKitUI\PFXToolKitUI.csproj", "{2EA5185B-450D-4ECD-BC94-0FA95B6FFF0C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PFXToolKitUI.Avalonia", "PFXToolKitUI.Avalonia\PFXToolKitUI.Avalonia.csproj", "{C64DF327-A460-4F7C-9A23-8F164A867CF3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PFXToolKitUI.UtilTests", "PFXToolKitUI.UtilTests\PFXToolKitUI.UtilTests.csproj", "{FAA8F1AA-AAA3-4C5F-8195-B87DE3EDB8CD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,10 +12,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{373FA631-B2D4-4213-B3CC-D759C3C0370A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{373FA631-B2D4-4213-B3CC-D759C3C0370A}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{373FA631-B2D4-4213-B3CC-D759C3C0370A}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{373FA631-B2D4-4213-B3CC-D759C3C0370A}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2EA5185B-450D-4ECD-BC94-0FA95B6FFF0C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2EA5185B-450D-4ECD-BC94-0FA95B6FFF0C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2EA5185B-450D-4ECD-BC94-0FA95B6FFF0C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -24,5 +20,9 @@ Global
 		{C64DF327-A460-4F7C-9A23-8F164A867CF3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C64DF327-A460-4F7C-9A23-8F164A867CF3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C64DF327-A460-4F7C-9A23-8F164A867CF3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FAA8F1AA-AAA3-4C5F-8195-B87DE3EDB8CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FAA8F1AA-AAA3-4C5F-8195-B87DE3EDB8CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FAA8F1AA-AAA3-4C5F-8195-B87DE3EDB8CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FAA8F1AA-AAA3-4C5F-8195-B87DE3EDB8CD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

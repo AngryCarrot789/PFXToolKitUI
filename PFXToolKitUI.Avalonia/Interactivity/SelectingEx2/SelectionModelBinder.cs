@@ -36,7 +36,7 @@ public sealed class SelectionModelBinder<T> {
         this.SelectionModel = selectionModel;
         this.Selection = selection;
 
-        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToIntRangeUnion().ToList(), ReadOnlyCollection<IntRange>.Empty));
+        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToLongRangeUnion().ToList(), ReadOnlyCollection<LongRange>.Empty));
         selectionModel.SelectionChanged += this.OnSelectionModelSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
@@ -50,14 +50,14 @@ public sealed class SelectionModelBinder<T> {
 
         this.SelectionModel.BeginBatchUpdate();
         
-        foreach (IntRange range in e.RemovedIndices) {
+        foreach (LongRange range in e.RemovedIndices) {
             Debug.Assert(range.Length > 0);
-            this.SelectionModel.DeselectRange(range.Start, range.End - 1);
+            this.SelectionModel.DeselectRange((int) range.Start, (int) (range.End - 1));
         }
 
-        foreach (IntRange range in e.AddedIndices) {
+        foreach (LongRange range in e.AddedIndices) {
             Debug.Assert(range.Length > 0);
-            this.SelectionModel.SelectRange(range.Start, range.End - 1);
+            this.SelectionModel.SelectRange((int) range.Start, (int) (range.End - 1));
         }
         
         this.SelectionModel.EndBatchUpdate();
@@ -73,7 +73,7 @@ public sealed class SelectionModelBinder<T> {
         this.isUpdatingModel = true;
 
         if (e.DeselectedIndexes.Count > 0) {
-            IntRangeUnion union = new IntRangeUnion();
+            LongRangeUnion union = new LongRangeUnion();
             foreach (int i in e.DeselectedIndexes) {
                 union.Add(i);
             }
@@ -82,7 +82,7 @@ public sealed class SelectionModelBinder<T> {
         }
         
         if (e.SelectedIndexes.Count > 0) {
-            IntRangeUnion union = new IntRangeUnion();
+            LongRangeUnion union = new LongRangeUnion();
             foreach (int i in e.SelectedIndexes) {
                 union.Add(i);
             }

@@ -48,55 +48,29 @@ public readonly struct SenderEventRelay {
         return CreateInternal(eventName, senderType, callback, null /* no extra parameter */);
     }
 
-    public static SenderEventRelay Create(string eventName, Type senderType, Action<object, object> callback, object extraParameter) {
-        return CreateInternal(eventName, senderType, callback, extraParameter);
+    public static SenderEventRelay Create(string eventName, Type senderType, Action<object, object> callback, object state) {
+        return CreateInternal(eventName, senderType, callback, state);
     }
 
     public static SenderEventRelay Create<T>(string eventName, Action<T> callback) where T : class {
         return CreateInternal(eventName, typeof(T), callback, null /* no extra parameter */);
     }
     
-    public static SenderEventRelay Create<T>(string eventName, Action<T, object> callback, object extraParameter) where T : class {
-        return CreateInternal(eventName, typeof(T), callback, extraParameter);
+    public static SenderEventRelay Create<T>(string eventName, Action<T, object> callback, object state) where T : class {
+        return CreateInternal(eventName, typeof(T), callback, state);
     }
     
-    private static SenderEventRelay CreateInternal(string eventName, Type senderType, Delegate callback, object? extraParameter) {
+    private static SenderEventRelay CreateInternal(string eventName, Type senderType, Delegate callback, object? state) {
         ArgumentNullException.ThrowIfNull(eventName);
         EventInfo? info = senderType.GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);
         if (info == null)
             throw new Exception("Could not find event by name: " + senderType.Name + "." + eventName);
 
         Type handlerType = info.EventHandlerType ?? throw new Exception("Missing event handler type");
-        return new SenderEventRelay(info, EventUtils.CreateDelegateToInvokeActionFromEvent(handlerType, callback, senderType, extraParameter));
+        return new SenderEventRelay(info, EventUtils.CreateDelegateToInvokeActionFromEvent(handlerType, callback, senderType, state));
     }
 
     public void AddEventHandler(object model) => this.AddMethod.Invoke(model, this.HandlerDelegateInArray);
 
     public void RemoveEventHandler(object model) => this.RemoveMethod.Invoke(model, this.HandlerDelegateInArray);
-}
-
-public static class TestShit {
-    public static void Main() {
-        SenderEventRelay relay1 = SenderEventRelay.Create<CommandContextEntry>(nameof(CommandContextEntry.DescriptionChanged), OnDescriptionChangedForInstance1);
-        SenderEventRelay relay2 = SenderEventRelay.Create(nameof(CommandContextEntry.DescriptionChanged), typeof(CommandContextEntry), OnDescriptionChangedForInstance2);
-        SenderEventRelay relay3 = SenderEventRelay.Create(nameof(CommandContextEntry.DescriptionChanged), typeof(CommandContextEntry), OnDescriptionChangedForInstance3, "test hello");
-
-        CommandContextEntry entry = new CommandContextEntry("oka");
-        relay1.AddEventHandler(entry);
-        relay2.AddEventHandler(entry);
-        relay3.AddEventHandler(entry);
-
-        entry.Description = "mr sexy!";
-    }
-
-
-    private static void OnDescriptionChangedForInstance1(CommandContextEntry obj) {
-    }
-
-    private static void OnDescriptionChangedForInstance2(object obj) {
-    }
-
-    private static void OnDescriptionChangedForInstance3(object arg1, object arg2) {
-        Debug.Assert(arg2 is string s && s == "test hello");
-    }
 }

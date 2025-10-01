@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using PFXToolKitUI.Activities;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Composition;
 using PFXToolKitUI.Configurations.Commands;
@@ -31,7 +32,6 @@ using PFXToolKitUI.Plugins.Exceptions;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.Messaging.Configurations;
 using PFXToolKitUI.Shortcuts;
-using PFXToolKitUI.Tasks;
 using PFXToolKitUI.Themes.Commands;
 using PFXToolKitUI.Themes.Contexts;
 using PFXToolKitUI.Utils;
@@ -309,7 +309,7 @@ public abstract class ApplicationPFX : IComponentManager {
             await service.ShowMessage("App startup failed", "Failed to initialise application", exception.ToString());
         }
 
-        this.Dispatcher.InvokeShutdown();
+        this.Dispatcher.Shutdown();
     }
 
     /// <summary>
@@ -407,7 +407,7 @@ public abstract class ApplicationPFX : IComponentManager {
     /// <summary>
     /// Shuts down the application. May not happen immediately.
     /// </summary>
-    public virtual void Shutdown() => this.Dispatcher.InvokeShutdown();
+    public virtual void Shutdown() => this.Dispatcher.Shutdown();
 
     protected abstract string? GetSolutionFileName();
 

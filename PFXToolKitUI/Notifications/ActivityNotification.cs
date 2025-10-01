@@ -17,7 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Tasks;
+using PFXToolKitUI.Activities;
 
 namespace PFXToolKitUI.Notifications;
 

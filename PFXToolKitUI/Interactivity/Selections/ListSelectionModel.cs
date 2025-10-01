@@ -29,7 +29,7 @@ namespace PFXToolKitUI.Interactivity.Selections;
 /// </summary>
 /// <typeparam name="T">The type of item that is selectable</typeparam>
 public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
-    private readonly IntRangeUnion selectedIndices;
+    private readonly LongRangeUnion selectedIndices;
 
     public ObservableList<T> SourceList { get; }
 
@@ -41,7 +41,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     /// <summary>
     /// Returns the number of selected items
     /// </summary>
-    public int Count => this.selectedIndices.GrandTotal;
+    public int Count => (int) this.selectedIndices.GrandTotal;
 
     /// <summary>
     /// Enumerates the selected items
@@ -50,8 +50,8 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public IEnumerable<KeyValuePair<int, T>> SelectedEntries {
         get {
-            foreach (IntRange range in this.selectedIndices) {
-                for (int i = range.Start; i < range.End; i++) {
+            foreach (LongRange range in this.selectedIndices) {
+                for (int i = (int) range.Start; i < range.End; i++) {
                     yield return new KeyValuePair<int, T>(i, this.SourceList[i]);
                 }
             }
@@ -61,7 +61,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
     /// <summary>
     /// Enumerates the selected indices
     /// </summary>
-    public IEnumerable<IntRange> SelectedIndices => this.selectedIndices;
+    public IEnumerable<LongRange> SelectedIndices => this.selectedIndices;
 
     public T this[int index] {
         get {
@@ -71,9 +71,9 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
                 throw new ArgumentOutOfRangeException(nameof(index), index, "Index out of range: beyond indexable selected item");
 
             int skip = 0, length;
-            foreach (IntRange range in this.selectedIndices) {
-                if (index < skip + (length = range.Length))
-                    return this.SourceList[range.Start + (index - skip)];
+            foreach (LongRange range in this.selectedIndices) {
+                if (index < skip + (length = (int) range.Length))
+                    return this.SourceList[(int) range.Start + (index - skip)];
                 skip += length;
             }
 
@@ -83,7 +83,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public ListSelectionModel(ObservableList<T> sourceList) {
         this.SourceList = sourceList ?? throw new ArgumentNullException(nameof(sourceList));
-        this.selectedIndices = new IntRangeUnion();
+        this.selectedIndices = new LongRangeUnion();
         this.SelectedItems = new ReadOnlyListDelegate(this);
         this.SourceList.BeforeItemsRemoved += this.SourceListBeforeItemsRemoved;
         this.SourceList.BeforeItemReplace += this.SourceListBeforeItemReplaced;
@@ -114,7 +114,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public void SelectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, true);
     public void SelectRange(int index, int count) => this.SetSelection(index, count, true);
-    public void SelectRanges(IntRangeUnion union) => this.SetSelectionForRanges(union, true);
+    public void SelectRanges(LongRangeUnion union) => this.SetSelectionForRanges(union, true);
     public void Deselect(int index) => this.DeselectRange(index, 1);
 
     public void DeselectItem(T item) {
@@ -126,11 +126,11 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public void DeselectRange(int index, int count) => this.SetSelection(index, count, false);
 
-    public void DeselectRanges(IntRangeUnion union) => this.SetSelectionForRanges(union, false);
+    public void DeselectRanges(LongRangeUnion union) => this.SetSelectionForRanges(union, false);
 
     public void DeselectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, false);
 
-    public bool IsSelected(int index) => this.selectedIndices.Contains(index);
+    public bool IsSelected(int index) => this.selectedIndices.IsSuperSet(index);
 
     public bool? IsItemSelected(T item) {
         int index = this.SourceList.IndexOf(item);
@@ -141,16 +141,16 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public void Clear() {
         if (this.SelectionChanged != null) {
-            IList<IntRange> changedList = this.selectedIndices.ToList();
+            IList<LongRange> changedList = this.selectedIndices.ToList();
             this.selectedIndices.Clear();
-            this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(ReadOnlyCollection<IntRange>.Empty, changedList));
+            this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(ReadOnlyCollection<LongRange>.Empty, changedList));
         }
         else {
             this.selectedIndices.Clear();
         }
     }
 
-    public IntRangeUnion ToIntRangeUnion() {
+    public LongRangeUnion ToLongRangeUnion() {
         return this.selectedIndices.Clone();
     }
 
@@ -164,7 +164,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         if ((index + count) > this.SourceList.Count)
             throw new ArgumentException("Index+Count exceeds maximum index within the source list");
 
-        IntRange range = IntRange.FromLength(index, count);
+        LongRange range = LongRange.FromLength(index, count);
         if (this.SelectionChanged == null) {
             if (select) {
                 this.selectedIndices.Add(range);
@@ -175,7 +175,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         }
         else {
             // variable name based on state: true = whatIsNotThere, false = whatIsThere 
-            IntRangeUnion changedIndices = this.selectedIndices.GetPresenceUnion(range, !select);
+            LongRangeUnion changedIndices = this.selectedIndices.GetPresenceUnion(range, !select);
             if (select) {
                 this.selectedIndices.Add(range);
             }
@@ -184,14 +184,14 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
             }
 
             if (changedIndices.RangeCount > 0) {
-                IList<IntRange> empty = ReadOnlyCollection<IntRange>.Empty;
+                IList<LongRange> empty = ReadOnlyCollection<LongRange>.Empty;
                 this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
             }
         }
     }
 
     private void SelectSelectionForItems(IEnumerable<T> items, bool select) {
-        IntRangeUnion indices = new IntRangeUnion();
+        LongRangeUnion indices = new LongRangeUnion();
         foreach (T item in items) {
             int index = this.SourceList.IndexOf(item);
             if (index != -1) {
@@ -202,10 +202,10 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         this.SetSelectionForRanges(indices, select);
     }
 
-    private void SetSelectionForRanges(IntRangeUnion ranges, bool select) {
-        IntRangeUnion changedIndices = new IntRangeUnion();
+    private void SetSelectionForRanges(LongRangeUnion ranges, bool select) {
+        LongRangeUnion changedIndices = new LongRangeUnion();
         if (this.SelectionChanged != null) {
-            foreach (IntRange range in ranges) {
+            foreach (LongRange range in ranges) {
                 this.selectedIndices.GetPresenceUnion(changedIndices, range, !select);
                 if (select) {
                     this.selectedIndices.Add(range);
@@ -216,12 +216,12 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
             }
 
             if (changedIndices.RangeCount > 0) {
-                IList<IntRange> empty = ReadOnlyCollection<IntRange>.Empty;
+                IList<LongRange> empty = ReadOnlyCollection<LongRange>.Empty;
                 this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
             }
         }
         else {
-            foreach (IntRange range in ranges) {
+            foreach (LongRange range in ranges) {
                 if (select) {
                     this.selectedIndices.Add(range);
                 }
@@ -238,8 +238,8 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         public T this[int index] => selection[index];
         
         public IEnumerator<T> GetEnumerator() {
-            foreach (IntRange range in selection.selectedIndices) {
-                for (int i = range.Start; i < range.End; i++) {
+            foreach (LongRange range in selection.selectedIndices) {
+                for (int i = (int) range.Start; i < range.End; i++) {
                     yield return selection.SourceList[i];
                 }
             }

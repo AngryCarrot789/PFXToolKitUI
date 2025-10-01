@@ -22,7 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Utils.Collections.Observable;
 
-namespace PFXToolKitUI.Tasks;
+namespace PFXToolKitUI.Activities;
 
 public delegate void ActivityManagerTaskIndexEventHandler(ActivityManager activityManager, ActivityTask task, int index);
 

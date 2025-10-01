@@ -191,14 +191,14 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         }
     }
 
-    public IntRangeUnion RemoveRange(IEnumerable<T> items) {
+    public LongRangeUnion RemoveRange(IEnumerable<T> items) {
         this.CheckReentrancy();
         if (!(items is IList<T> list)) {
             list = items.ToList();
         }
 
         // Calculate a union of ranges to remove
-        IntRangeUnion union = new IntRangeUnion();
+        LongRangeUnion union = new LongRangeUnion();
         foreach (T item in list) {
             int index = this.myItems.IndexOf(item);
             if (index != -1) {
@@ -209,14 +209,14 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         if (union.RangeCount > 0) {
             // We could iterate front to back and increase start offset by length each time,
             // however it's more efficient to remove back to front
-            List<IntRange> indices = union.ToList();
+            List<LongRange> indices = union.ToList();
             for (int i = indices.Count - 1; i >= 0; i--) {
-                IntRange range = indices[i];
+                LongRange range = indices[i];
                 if (range.Length == 1) {
-                    this.RemoveItem(range.Start);
+                    this.RemoveItem((int) range.Start);
                 }
                 else {
-                    this.RemoveRange(range.Start, range.Length);
+                    this.RemoveRange((int) range.Start, (int) range.Length);
                 }
             }
         }

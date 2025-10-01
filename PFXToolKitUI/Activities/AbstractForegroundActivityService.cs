@@ -17,11 +17,16 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Tasks.Pausable;
+using PFXToolKitUI.Interactivity.Windowing;
 
-/// <summary>
-/// The base class for pausable tasks. These work directly with the <see cref="ActivityManager"/>
-/// </summary>
-public abstract class BasePausableTask {
+namespace PFXToolKitUI.Activities;
 
+public abstract class AbstractForegroundActivityService : IForegroundActivityService {
+    public abstract Task<WaitForActivityResult> WaitForActivity(WaitForActivityOptions options);
+
+    public abstract Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default);
+
+    protected static void SetIsActivityPresentInDialog(ActivityTask task, bool isPresent) {
+        ActivityTask.InternalOnPresentInDialogChanged(task, isPresent);
+    }
 }

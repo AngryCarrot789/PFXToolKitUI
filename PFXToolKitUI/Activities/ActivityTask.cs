@@ -19,10 +19,10 @@
 
 using System.Diagnostics;
 using System.Runtime.CompilerServices;
-using PFXToolKitUI.Tasks.Pausable;
+using PFXToolKitUI.Activities.Pausable;
 using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Tasks;
+namespace PFXToolKitUI.Activities;
 
 public delegate void ActivityTaskEventHandler(ActivityTask sender);
 

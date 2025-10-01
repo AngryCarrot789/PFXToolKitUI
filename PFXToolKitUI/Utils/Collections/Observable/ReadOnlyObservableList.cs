@@ -57,5 +57,5 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
     void IObservableList<T>.AddRange(IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
     void IObservableList<T>.InsertRange(int index, IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
     void IObservableList<T>.RemoveRange(int index, int count) => throw new NotSupportedException("Read-only collection");
-    IntRangeUnion IObservableList<T>.RemoveRange(IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
+    LongRangeUnion IObservableList<T>.RemoveRange(IEnumerable<T> items) => throw new NotSupportedException("Read-only collection");
 }

@@ -20,23 +20,33 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Layout;
+using PFXToolKitUI.Activities;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
+using PFXToolKitUI.Avalonia.ToolTips;
+using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Interactivity.Windowing;
-using PFXToolKitUI.Tasks;
+using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Services;
 
 public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundActivityService {
-    public override async Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation = default) {
+    private static readonly DataKey<bool> IsClosingToHideToBackground = DataKeys.Create<bool>(nameof(DesktopForegroundActivityServiceImpl) + "_internal_" + nameof(IsClosingToHideToBackground));
+
+    public override async Task<WaitForActivityResult> WaitForActivity(WaitForActivityOptions options) {
+        WaitForActivityOptions.Validate(ref options);
         if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
-            await ShowForActivityImpl(parentTopLevel, activity, dialogCancellation);
+            return await ShowForActivityImpl(options);
         }
-        else if (!dialogCancellation.IsCancellationRequested) {
-            await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForActivityImpl(parentTopLevel, activity, dialogCancellation), token: CancellationToken.None);
+        else if (!options.DialogCancellation.IsCancellationRequested) {
+            return await await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowForActivityImpl(options), token: CancellationToken.None);
+        }
+        else {
+            return WaitForActivityResult.DialogCancellationRequested;
         }
     }
 
@@ -49,26 +59,51 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         }
     }
 
-    private static async Task ShowForActivityImpl(ITopLevel topLevel, ActivityTask activity, CancellationToken dialogCancellation) {
-        if (!(topLevel is IDesktopWindow theWindow))
-            throw new InvalidOperationException("Invalid top level object");
+    private static async Task<WaitForActivityResult> ShowForActivityImpl(WaitForActivityOptions options) {
+        if (ActivityManager.Instance.TryGetCurrentTask(out ActivityTask? currentActivity)) {
+            if (ReferenceEquals(currentActivity, options.Activity) && (!options.DialogCancellation.CanBeCanceled || options.WaitForActivityOnCloseRequest)) {
+                AppLogger.Instance.WriteLine($"Fatal Deadlock Risk: {nameof(WaitForActivity)} called from within an activity, " +
+                                             $"and the cancellation token is not cancellable " +
+                                             $"or the options specify we must wait for the activity to complete on close request");
+                Debugger.Break();
+            }
+        }
 
-        if (dialogCancellation.IsCancellationRequested || activity.IsCompleted)
-            return;
+        if (!(options.ParentTopLevel is IDesktopWindow theWindow))
+            throw new InvalidOperationException("Invalid top level object");
+        if (options.DialogCancellation.IsCancellationRequested)
+            return WaitForActivityResult.DialogCancellationRequested;
+        if (options.Activity.IsCompleted)
+            return WaitForActivityResult.ActivityCompletedEarly;
 
         IWindowManager manager = theWindow.WindowManager;
         ActivityProgressRowControl row = new ActivityProgressRowControl() {
-            ActivityTask = activity,
+            ActivityTask = options.Activity,
             ShowCaption = false,
-            Margin = new Thickness(8)
+            Margin = new Thickness(8, 8, 8, options.CanMinimizeIntoBackgroundActivity ? 0 : 8)
         };
 
-        IActivityProgress progress = activity.Progress;
+        StackPanel stack = new StackPanel() {
+            Children = { row }
+        };
+
+        if (options.CanMinimizeIntoBackgroundActivity) {
+            stack.Children.Add(new StackPanel() {
+                HorizontalAlignment = HorizontalAlignment.Right,
+                Orientation = Orientation.Horizontal,
+                Margin = new Thickness(5, 0, 5, 5),
+                Children = {
+                    CreateRunInBackgroundButton()
+                }
+            });
+        }
+
+        IActivityProgress progress = options.Activity.Progress;
         IDesktopWindow window = manager.CreateWindow(new WindowBuilder() {
             Title = progress.Caption,
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone6.Background.Static"),
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
-            Content = row,
+            Content = stack,
             Parent = theWindow,
             Width = 400,
             SizeToContent = SizeToContent.Height,
@@ -80,23 +115,29 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         progress.CaptionChanged += captionChangedHandler;
 
         window.TryClose += (sender, args) => {
-            if (activity.IsCompleted || dialogCancellation.IsCancellationRequested) {
-                return; // closed due to task completing or dialog cancellation
+            bool forceClose = options.DialogCancellation.IsCancellationRequested;
+            bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
+            if (options.Activity.IsCompleted || forceClose || isMinimizingToBackground) {
+                return;
             }
 
-            // try cancel the task when the user clicks the X button
-            activity.TryCancel();
-            args.SetCancelled();
+            if (options.CancelActivityOnCloseRequest) {
+                options.Activity.TryCancel();
+            }
+
+            if (options.WaitForActivityOnCloseRequest) {
+                args.SetCancelled();
+            }
         };
 
         window.Opened += static (sender, args) => {
-            ActivityTask theTask = ((ActivityProgressRowControl) sender.Content!).ActivityTask!;
+            ActivityTask theTask = ((ActivityProgressRowControl) ((StackPanel) sender.Content!).Children[0]).ActivityTask!;
             Debug.Assert(theTask != null);
             SetIsActivityPresentInDialog(theTask, true);
         };
 
         window.Closed += static (sender, args) => {
-            ActivityProgressRowControl myContent = (ActivityProgressRowControl) sender.Content!;
+            ActivityProgressRowControl myContent = (ActivityProgressRowControl) ((StackPanel) sender.Content!).Children[0];
             ActivityTask theTask = myContent.ActivityTask!;
             Debug.Assert(theTask != null);
 
@@ -109,14 +150,38 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         WeakReference dialogRef = new WeakReference(window);
 
         // Register cancellation to force-close dialog even if myTask is not completed
-        await using CancellationTokenRegistration register = dialogCancellation.Register(PostCloseToMainThread, dialogRef);
+        await using CancellationTokenRegistration register = options.DialogCancellation.Register(PostCloseToMainThread, dialogRef);
 
         // Add activity continuation that closes the window.
-        _ = activity.Task.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, dialogCancellation);
+        _ = options.Activity.Task.ContinueWith(static (t, winRef) => PostCloseToMainThread(winRef), dialogRef, options.DialogCancellation);
 
         window.Title = progress.Caption ?? "Activity Progress";
         await window.ShowDialogAsync();
         progress.CaptionChanged -= captionChangedHandler;
+
+        bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
+        return new WaitForActivityResult(isMinimizingToBackground);
+    }
+
+    private static Button CreateRunInBackgroundButton() {
+        Button button = new Button() {
+            HorizontalAlignment = HorizontalAlignment.Right,
+            Padding = new Thickness(8, 3),
+            Content = "Run in background",
+            [ToolTipEx.TipProperty] = "Close the dialog and run this task in the background"
+        };
+
+        button.Click += static (sender, args) => {
+            IDesktopWindow? window = IDesktopWindow.FromVisual((Button) sender!);
+            if (window != null && window.OpenState == OpenState.Open) {
+                window.LocalContextData.Set(IsClosingToHideToBackground, true);
+                window.RequestClose();
+            }
+                
+            args.Handled = true;
+        };
+        
+        return button;
     }
 
     private static async Task ShowForMultipleSubActivitiesImpl(ITopLevel topLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation) {

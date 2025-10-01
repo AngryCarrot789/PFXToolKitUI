@@ -23,12 +23,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using PFXToolKitUI.Activities;
+using PFXToolKitUI.Activities.Pausable;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
-using PFXToolKitUI.Tasks;
-using PFXToolKitUI.Tasks.Pausable;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
@@ -117,7 +117,7 @@ public partial class ActivityStatusBarControl : UserControl {
 
     private void OnBackgroundTasksCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
         ReadOnlyObservableList<ActivityTask> bgTasks = (ReadOnlyObservableList<ActivityTask>) sender!;
-        this.ActivityTask = bgTasks.Count > 0 ? bgTasks[0] : null;
+        this.ActivityTask = bgTasks.Count > 0 ? bgTasks[bgTasks.Count - 1] : null;
     }
 
     private void OnActivityChanged(ActivityTask? oldActivity, ActivityTask? newActivity) {

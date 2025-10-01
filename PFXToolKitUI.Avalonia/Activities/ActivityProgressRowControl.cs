@@ -21,12 +21,12 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using PFXToolKitUI.Activities;
+using PFXToolKitUI.Activities.Pausable;
 using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
-using PFXToolKitUI.Tasks;
-using PFXToolKitUI.Tasks.Pausable;
 using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Activities;

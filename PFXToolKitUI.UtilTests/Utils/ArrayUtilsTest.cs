@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2024-2025 REghZy
+// Copyright (c) 2025-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -17,16 +17,27 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Interactivity.Windowing;
+using JetBrains.Annotations;
+using PFXToolKitUI.Utils;
+using Xunit;
 
-namespace PFXToolKitUI.Tasks;
+namespace PFXToolKitUI.UtilTests.Utils;
 
-public abstract class AbstractForegroundActivityService : IForegroundActivityService {
-    public abstract Task WaitForActivity(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation = default);
+[TestSubject(typeof(ArrayUtils))]
+public class ArrayUtilsTest {
 
-    public abstract Task WaitForSubActivities(ITopLevel parentTopLevel, IEnumerable<SubActivity> activities, CancellationToken dialogCancellation = default);
-
-    protected static void SetIsActivityPresentInDialog(ActivityTask task, bool isPresent) {
-        ActivityTask.InternalOnPresentInDialogChanged(task, isPresent);
+    [Fact]
+    public void TestGeneralUsage() {
+        // test array functions
+        int[] array = [0, 1, 2, 3, 4, 5, 6, 7, 8];
+        
+        int[] newArray = ArrayUtils.RemoveAt(array, 0);
+        Assert.Equal([1, 2, 3, 4, 5, 6, 7, 8], newArray);
+        
+        newArray = ArrayUtils.RemoveAt(newArray, newArray.Length - 1);
+        Assert.Equal([1, 2, 3, 4, 5, 6, 7], newArray);
+        
+        newArray = ArrayUtils.RemoveAt(newArray, 3);
+        Assert.Equal([1, 2, 3, 5, 6, 7], newArray);
     }
 }

@@ -19,8 +19,8 @@
 
 using Avalonia;
 using Avalonia.Controls.Primitives;
+using PFXToolKitUI.Activities;
 using PFXToolKitUI.Avalonia.Utils;
-using PFXToolKitUI.Tasks;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 

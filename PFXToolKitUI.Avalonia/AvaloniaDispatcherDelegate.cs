@@ -28,9 +28,6 @@ namespace PFXToolKitUI.Avalonia;
 /// A delegate around the avalonia dispatcher so that core projects can access it, since features RateLimitedDispatchAction require it
 /// </summary>
 public class AvaloniaDispatcherDelegate : IDispatcher {
-    private static readonly Action EmptyAction = () => {
-    };
-
     private readonly Dispatcher dispatcher;
     private readonly DispatcherFrameManagerImpl? myFrameManager;
 
@@ -73,10 +70,8 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
     public void Post(Action<object?> action, object? state, DispatchPriority priority = DispatchPriority.Default) {
         this.dispatcher.Post(new SendOrPostCallback(action), state, ToAvaloniaPriority(priority));
     }
-
-    public Task Process(DispatchPriority priority) => this.InvokeAsync(EmptyAction, priority);
-
-    public void InvokeShutdown() => this.dispatcher.InvokeShutdown();
+    
+    public void Shutdown() => this.dispatcher.InvokeShutdown();
 
     public IDispatcherTimer CreateTimer(DispatchPriority priority) {
         ConstructorInfo ctor = typeof(DispatcherTimer).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, [typeof(DispatcherPriority), typeof(Dispatcher)], null)

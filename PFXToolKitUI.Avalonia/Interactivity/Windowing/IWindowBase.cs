@@ -69,7 +69,7 @@ public interface IWindowBase : ITopLevel {
     /// Shows this window in a non-modal mode.
     /// </summary>
     /// <returns>A task that completes when the window opens</returns>
-    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
+    /// <exception cref="InvalidOperationException">Not on the main thread, or <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
     Task ShowAsync();
 
     /// <summary>
@@ -79,7 +79,7 @@ public interface IWindowBase : ITopLevel {
     /// A task completed when the window closes, and whose result is the first value passed
     /// to <see cref="RequestClose"/> or <see cref="RequestCloseAsync"/>
     /// </returns>
-    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
+    /// <exception cref="InvalidOperationException">Not on the main thread, or <see cref="OpenState"/> is not <see cref="Windowing.OpenState.NotOpened"/></exception>
     Task<object?> ShowDialogAsync();
 
     /// <summary>
@@ -87,7 +87,7 @@ public interface IWindowBase : ITopLevel {
     /// Note, the window will never actually close before this method returns.
     /// </summary>
     /// <param name="dialogResult">The dialog result. Ignored when not showing as a dialog</param>
-    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="OpenState.Open"/></exception>
+    /// <exception cref="InvalidOperationException">Not on the main thread, or <see cref="OpenState"/> is not <see cref="OpenState.Open"/></exception>
     void RequestClose(object? dialogResult = null);
     
     /// <summary>
@@ -98,7 +98,7 @@ public interface IWindowBase : ITopLevel {
     /// A task that completes when either the window closes or the close operation was cancelled,
     /// where the result value represents the closed state.
     /// </returns>
-    /// <exception cref="InvalidOperationException">The <see cref="OpenState"/> is not <see cref="OpenState.Open"/></exception>
+    /// <exception cref="InvalidOperationException">Not on the main thread, or <see cref="OpenState"/> is not <see cref="OpenState.Open"/></exception>
     Task<bool> RequestCloseAsync(object? dialogResult = null);
 
     /// <summary>
@@ -108,6 +108,7 @@ public interface IWindowBase : ITopLevel {
     /// this method returns <see cref="Task.CompletedTask"/>
     /// </summary>
     /// <param name="cancellationToken">Allows to stop waiting for the window to close</param>
+    /// <exception cref="InvalidOperationException">Not on the main thread</exception>
     /// <remarks>This method does not throw <see cref="OperationCanceledException"/></remarks>
     Task WaitForClosedAsync(CancellationToken cancellationToken = default);
 }

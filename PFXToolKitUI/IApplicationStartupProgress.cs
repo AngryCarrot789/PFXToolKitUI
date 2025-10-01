@@ -17,7 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Tasks;
+using PFXToolKitUI.Activities;
 
 namespace PFXToolKitUI;
 
@@ -37,7 +37,7 @@ public interface IApplicationStartupProgress {
     /// and then awaits <see cref="WaitForRender"/>
     /// </summary>
     /// <param name="action">New <see cref="ActionText"/> if non-null</param>
-    /// <param name="newProgress">Value passed to <see cref="Tasks.CompletionState.SetProgress"/> if non-null</param>
+    /// <param name="newProgress">Value passed to <see cref="Activities.CompletionState.SetProgress"/> if non-null</param>
     /// <returns>A task completed once rendered</returns>
     Task ProgressAndWaitForRender(string? action, double? newProgress = null);
 

@@ -115,5 +115,5 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// </summary>
     /// <param name="items">The items to remove</param>
     /// <returns>The indices removed</returns>
-    IntRangeUnion RemoveRange(IEnumerable<T> items);
+    LongRangeUnion RemoveRange(IEnumerable<T> items);
 }

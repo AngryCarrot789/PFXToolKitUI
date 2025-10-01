@@ -21,7 +21,7 @@ using System.Diagnostics;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.RDA;
 
-namespace PFXToolKitUI.Tasks;
+namespace PFXToolKitUI.Activities;
 
 public delegate void TotalCompletionChangedEventHandler(CompletionState state);
 

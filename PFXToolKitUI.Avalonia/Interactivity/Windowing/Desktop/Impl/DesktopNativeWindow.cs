@@ -252,12 +252,14 @@ public sealed class DesktopNativeWindow : Window {
         }
 
         this.ShowInTaskbar = !this.IsToolWindow;
+        this.CanMinimize = !this.IsToolWindow;
         if (!this.IsTitleBarVisible) {
             this.PART_TitleBarPanel.IsVisible = false;
         }
         else if (!this.IsToolWindow) {
             this.PART_TitleBarPanel.Height = TitleBarHeight_NormalWindow;
             this.PART_ButtonMinimize!.Width = ButtonWidth_NormalWindow;
+            this.PART_ButtonMinimize!.IsVisible = true;
             this.PART_ButtonRestore!.Width = ButtonWidth_NormalWindow;
             this.PART_ButtonMaximize!.Width = ButtonWidth_NormalWindow;
             this.PART_ButtonClose!.Width = ButtonWidth_NormalWindow;
@@ -265,6 +267,7 @@ public sealed class DesktopNativeWindow : Window {
         else {
             this.PART_TitleBarPanel.Height = TitleBarHeight_ToolWindow;
             this.PART_ButtonMinimize!.Width = ButtonWidth_ToolWindow;
+            this.PART_ButtonMinimize!.IsVisible = false;
             this.PART_ButtonRestore!.Width = ButtonWidth_ToolWindow;
             this.PART_ButtonMaximize!.Width = ButtonWidth_ToolWindow;
             this.PART_ButtonClose!.Width = ButtonWidth_ToolWindow;
