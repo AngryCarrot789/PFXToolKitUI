@@ -42,8 +42,6 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
 
     public IContextData CapturedContext => DataManager.GetFullContextData(this);
 
-    IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
-
     public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion {
         get => throw new InvalidOperationException();
         set => throw new InvalidOperationException();

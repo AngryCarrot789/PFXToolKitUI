@@ -215,7 +215,7 @@ public partial class ConfigurationPanelControl : UserControl {
         }
         catch (Exception ex) {
             await IMessageDialogService.Instance.ShowMessage("Error", "Error unloading settings properties", ex.ToString());
-            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(ex), DispatchPriority.Send);
+            throw;
         }
 
         // Manager being set to null, so set selected page's tree node
@@ -237,7 +237,7 @@ public partial class ConfigurationPanelControl : UserControl {
             }
             catch (Exception ex) {
                 await IMessageDialogService.Instance.ShowMessage("Error", "Error loading settings properties", ex.ToString());
-                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(ex), DispatchPriority.Send);
+                throw;
             }
 
             this.ActiveContext!.OnCreated();

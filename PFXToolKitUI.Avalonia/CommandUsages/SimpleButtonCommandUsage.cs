@@ -17,9 +17,11 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.CommandUsages;
 
@@ -49,13 +51,21 @@ public class SimpleButtonCommandUsage : CommandUsage {
             return;
         }
 
-        Task task = CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
-        if (task.IsCompleted) {
-            this.UpdateCanExecute();
-        }
-        else {
-            this.UpdateCanExecute();
-            task.ContinueWith(_ => this.UpdateCanExecute(), TaskContinuationOptions.ExecuteSynchronously);
+        NewFunction();
+        return;
+
+        async void NewFunction() {
+            try {
+                Task task = CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
+                this.UpdateCanExecute();
+                await task;
+            }
+            catch (Exception exception) when (!Debugger.IsAttached) {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+            }
+            finally {
+                this.UpdateCanExecute();
+            }
         }
     }
 

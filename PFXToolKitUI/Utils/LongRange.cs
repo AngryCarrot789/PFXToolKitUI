@@ -23,11 +23,11 @@ public readonly struct LongRange : IEquatable<LongRange> {
     /// <summary>Gets the start location of the range.</summary>
     public readonly long Start;
 
-    /// <summary>Gets the exclusive end location of the range.</summary>
-    public readonly long End;
-
     /// <summary>Gets the total number of bytes that the range spans.</summary>
-    public long Length => this.End - this.Start;
+    public readonly long Length;
+
+    /// <summary>Gets the exclusive end location of the range.</summary>
+    public long End => this.Start + this.Length;
 
     /// <summary>Gets a value indicating whether the range is empty or not.</summary>
     public bool IsEmpty => this.Length < 1;
@@ -41,10 +41,12 @@ public readonly struct LongRange : IEquatable<LongRange> {
         if (end < start)
             throw new ArgumentException("End location is smaller than start location.");
         this.Start = start;
-        this.End = end;
+        this.Length = end - start;
     }
 
     public static LongRange FromLength(long start, long length) => new LongRange(start, checked(start + length));
+    
+    public static LongRange FromPoint(int value) => new(value, checked(value + 1));
 
     public bool Contains(long location) => location >= this.Start && location < this.End;
 

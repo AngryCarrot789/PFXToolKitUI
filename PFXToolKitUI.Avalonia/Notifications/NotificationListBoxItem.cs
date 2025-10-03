@@ -38,6 +38,7 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Notifications;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
 using PFXToolKitUI.Utils.Events;
@@ -338,7 +339,12 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
             protected override async Task ExecuteCoreAsync(object? parameter) {
                 if (button.myCurrentCommand != null) {
-                    await CommandManager.Instance.RunActionAsync(_ => button.myCurrentCommand.Execute(), DataManager.GetFullContextData(button));
+                    try {
+                        await CommandManager.Instance.RunActionAsync(_ => button.myCurrentCommand.Execute(), DataManager.GetFullContextData(button));
+                    }
+                    catch (Exception exception) when (!Debugger.IsAttached) {
+                        await LogExceptionHelper.ShowMessageAndPrintToLogs("Notification Action Error", exception);
+                    }
                 }
             }
 

@@ -47,11 +47,6 @@ public abstract class Command {
     // Used to track issues of commands staying permanently executing
     private volatile Task? theLastRunTask;
 
-    /// <summary>
-    /// An event fired when this command's executing state changes. This is fired on the main thread
-    /// </summary>
-    public event CommandEventHandler? ExecutingChanged;
-
     public bool AllowMultipleExecutions { get; }
 
     /// <summary>
@@ -115,8 +110,6 @@ public abstract class Command {
 
     internal async Task InternalExecuteImpl(CommandEventArgs args) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-
-        using IDisposable globalContextUsage = CommandManager.LocalContextManager.PushGlobalContext(args.ContextData);
         int executing;
         if (this.AllowMultipleExecutions) {
             executing = Interlocked.Increment(ref this.executingCount);
@@ -129,35 +122,17 @@ public abstract class Command {
         if (executing < 0) {
             Debugger.Break();
         }
-        else if (executing == 0) {
-            try {
-                this.ExecutingChanged?.Invoke(this, args);
-            }
-            catch {
-                Debugger.Break();
-            }
-        }
 
         try {
             await (this.theLastRunTask = this.ExecuteCommandAsync(args));
         }
-        catch (Exception e) {
-            if (!await this.OnExecutionException(args, e)) {
-                throw;
-            }
+        catch (OperationCanceledException) {
+            // ignroed
         }
         finally {
             executing = Interlocked.Decrement(ref this.executingCount);
             if (executing < 0) {
                 Debugger.Break();
-            }
-            else if (executing == 0) {
-                try {
-                    this.ExecutingChanged?.Invoke(this, args);
-                }
-                catch {
-                    Debugger.Break();
-                }
             }
 
             this.theLastRunTask = null;
@@ -174,19 +149,5 @@ public abstract class Command {
             return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete", defaultButton: MessageBoxResult.OK);
 
         return Task.CompletedTask;
-    }
-
-    protected virtual async Task<bool> OnExecutionException(CommandEventArgs args, Exception e) {
-        if (e is OperationCanceledException) {
-            AppLogger.Instance.WriteLine("Caught " + nameof(OperationCanceledException) + $" during execution of command '{this.GetType().Name}'");
-            return true; // ignored
-        }
-
-        if (Debugger.IsAttached) {
-            return false;
-        }
-        
-        await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", e);
-        return true;
     }
 }

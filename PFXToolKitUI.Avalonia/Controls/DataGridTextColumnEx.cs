@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -25,6 +26,7 @@ using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Controls;
 
@@ -37,7 +39,7 @@ public class DataGridTextColumnEx : DataGridTextColumn {
         get => this.GetValue(DoubleTapCommandIdProperty);
         set => this.SetValue(DoubleTapCommandIdProperty, value);
     }
-    
+
     /// <summary>
     /// Gets or sets the data key that keys the cell's data context in the <see cref="IContextData"/> when executing the command.
     /// </summary>
@@ -60,7 +62,7 @@ public class DataGridTextColumnEx : DataGridTextColumn {
         TextBlock textBlock = new TextBlock {
             Name = "CellTextBlock"
         };
-        
+
         ControlTheme? controlTheme = this.cellTextBlockTheme.Value;
         if (controlTheme != null)
             textBlock.Theme = controlTheme;
@@ -74,16 +76,27 @@ public class DataGridTextColumnEx : DataGridTextColumn {
     private void CellOnDoubleTapped(object? sender, TappedEventArgs e) {
         if (this.DoubleTapCommandId is string cmdId && !string.IsNullOrWhiteSpace(cmdId)) {
             DataGridCell cell = (DataGridCell) sender!;
-            ActiveCommandInfo info = cell.GetValue(ActiveCommandInfoProperty); 
+            ActiveCommandInfo info = cell.GetValue(ActiveCommandInfoProperty);
             if (info.task != null && !info.task.IsCompleted) {
                 return;
             }
 
             if (CommandManager.Instance.TryFindCommandById(cmdId, out Command? command)) {
-                Task task = CommandManager.Instance.Execute(command, DataManager.GetFullContextData(cell), null, null);
+                Task task = ExecuteCommandForCell(command, cell);
                 if (!task.IsCompleted) {
                     cell.SetValue(ActiveCommandInfoProperty, new ActiveCommandInfo(command, task));
                 }
+            }
+        }
+
+        return;
+
+        async Task ExecuteCommandForCell(Command command, DataGridCell cell) {
+            try {
+                await CommandManager.Instance.Execute(command, DataManager.GetFullContextData(cell), null, null);
+            }
+            catch (Exception exception) when (!Debugger.IsAttached) {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
             }
         }
     }

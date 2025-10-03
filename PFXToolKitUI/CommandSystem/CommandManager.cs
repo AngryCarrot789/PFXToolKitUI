@@ -22,6 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -96,13 +97,14 @@ public sealed class CommandManager {
     /// Supply false if this was invoked by, for example, a task or scheduler. A non-user initiated
     /// execution usually won't create error dialogs and may instead log to the console or just throw an exception
     /// </param>
-    /// <exception cref="Exception">The context is null, or the assembly was compiled in debug mode and the command threw ane exception</exception>
+    /// <exception cref="Exception">The command threw an exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
     public async Task Execute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         ArgumentNullException.ThrowIfNull(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
+            using IDisposable globalContextUsage = LocalContextManager.PushGlobalContext(context);
             await command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
         }
     }
@@ -127,13 +129,10 @@ public sealed class CommandManager {
     /// A task that represents the command operation. When completed, <see cref="Command.IsExecuting"/>
     /// will return false if <see cref="Command.AllowMultipleExecutions"/> is also false
     /// </returns>
-    public Task Execute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
+    public async Task Execute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentNullException.ThrowIfNull(context);
-        return command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
-    }
-
-    public CommandExecutionContext BeginExecution(string commandId, Command command, IContextData context, bool isUserInitiated = true) {
-        return new CommandExecutionContext(commandId, command, this, context, isUserInitiated);
+        using IDisposable globalContextUsage = LocalContextManager.PushGlobalContext(context);
+        await command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
     }
 
     /// <summary>
@@ -146,21 +145,15 @@ public sealed class CommandManager {
     /// <param name="isUserInitiated">Whether a user effectively caused the command to execute</param>
     public async Task RunActionAsync(Func<CommandEventArgs, Task> function, IContextData context, ShortcutEntry? shortcut = null, ContextRegistry? contextMenu = null, bool isUserInitiated = true) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-        
-        CommandEventArgs args = new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated);
+
         using IDisposable globalContextUsage = this.asyncContextManager.PushGlobalContext(context);
 
         try {
-            await function(args);
+            await function(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
         }
         catch (OperationCanceledException) {
             // ignored
         }
-#if !DEBUG
-        catch (Exception e) {
-            await PFXToolKitUI.Utils.LogExceptionHelper.ShowMessageAndPrintToLogs("Command Action Error", "Error executing application-specific command", e);
-        }
-#endif
     }
 
     /// <summary>

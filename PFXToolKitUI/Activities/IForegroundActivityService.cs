@@ -176,7 +176,7 @@ public readonly struct SubActivity(IActivityProgress progress, Task task, Cancel
     }
 }
 
-public struct WaitForActivityOptions(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation = default) {
+public readonly struct WaitForActivityOptions(ITopLevel parentTopLevel, ActivityTask activity, CancellationToken dialogCancellation = default) {
     /// <summary>
     /// Gets the top level to show the dialog relative to
     /// </summary>
@@ -199,7 +199,7 @@ public struct WaitForActivityOptions(ITopLevel parentTopLevel, ActivityTask acti
     /// Default value is true
     /// </para>
     /// </summary>
-    public bool CancelActivityOnCloseRequest { get; set; } = true;
+    public bool CancelActivityOnCloseRequest { get; init; } = true;
 
     /// <summary>
     /// Gets or sets if we should wait for the activity to become completed when the dialog
@@ -208,13 +208,13 @@ public struct WaitForActivityOptions(ITopLevel parentTopLevel, ActivityTask acti
     /// Default value is true
     /// </para> 
     /// </summary>
-    public bool WaitForActivityOnCloseRequest { get; set; } = true;
+    public bool WaitForActivityOnCloseRequest { get; init; } = true;
 
     /// <summary>
     /// Gets or sets if the window should show the option to close the dialog and let the activity becomes a
     /// background operation. Clicking the button would never actually cancel the activity
     /// </summary>
-    public bool CanMinimizeIntoBackgroundActivity { get; set; } = true;
+    public bool CanMinimizeIntoBackgroundActivity { get; init; } = true;
 
     public static void Validate(ref WaitForActivityOptions options) {
         if (options.Activity == null)

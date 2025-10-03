@@ -17,10 +17,13 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts.Events;
 using PFXToolKitUI.Shortcuts.Inputs;
 using PFXToolKitUI.Shortcuts.Usage;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Shortcuts;
 
@@ -54,7 +57,7 @@ public abstract class ShortcutManager {
     /// Gets the current UI focus path
     /// </summary>
     public abstract string? CurrentFocusPath { get; }
-    
+
     /// <summary>
     /// An event fired when a <see cref="ShortcutEntry"/>'s shortcut is modified
     /// </summary>
@@ -224,7 +227,13 @@ public abstract class ShortcutManager {
         return true;
 
         static async void Execute(Command command, ShortcutInputProcessor processor, ShortcutEntry shortcut) {
-            await CommandManager.Instance.Execute(command, processor.ProvideCurrentContextInternal()!, shortcut, null);
+            IContextData context = processor.ProvideCurrentContextInternal() ?? EmptyContext.Instance;
+            try {
+                await CommandManager.Instance.Execute(command, context, shortcut, null);
+            }
+            catch (Exception exception) when (!Debugger.IsAttached) {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+            }
         }
     }
 

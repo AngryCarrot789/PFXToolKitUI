@@ -168,6 +168,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             HorizontalAlignment = HorizontalAlignment.Right,
             Padding = new Thickness(8, 3),
             Content = "Run in background",
+            CornerRadius = new CornerRadius(3),
             [ToolTipEx.TipProperty] = "Close the dialog and run this task in the background"
         };
 

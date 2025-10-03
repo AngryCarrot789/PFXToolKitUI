@@ -17,9 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics;
 using System.Reflection;
-using PFXToolKitUI.AdvancedMenuService;
 
 namespace PFXToolKitUI.Utils.Events;
 

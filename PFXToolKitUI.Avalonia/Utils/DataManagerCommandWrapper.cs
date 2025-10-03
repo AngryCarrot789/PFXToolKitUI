@@ -17,10 +17,12 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Avalonia.Utils;
@@ -58,14 +60,17 @@ public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
         return state == Executability.Valid;
     }
 
-    protected override Task ExecuteCoreAsync(object? parameter) {
+    protected override async Task ExecuteCoreAsync(object? parameter) {
         CommandManager manager = CommandManager.Instance;
         Command? cmd = manager.GetCommandById(this.CommandId);
-        if (cmd == null) {
-            return Task.CompletedTask;
+        if (cmd != null) {
+            IContextData data = DataManager.GetFullContextData(this.Control);
+            try {
+                await CommandManager.Instance.Execute(cmd, data, null, null);
+            }
+            catch (Exception exception) when (!Debugger.IsAttached) {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+            }
         }
-
-        IContextData data = DataManager.GetFullContextData(this.Control);
-        return CommandManager.Instance.Execute(cmd, data, null, null);
     }
 }

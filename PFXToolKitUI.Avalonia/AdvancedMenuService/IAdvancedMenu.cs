@@ -32,6 +32,11 @@ public interface IAdvancedMenu : IAdvancedMenuOrItem {
     /// </summary>
     IContextData? CapturedContext { get; }
 
+    /// <summary>
+    /// Returns the current instance
+    /// </summary>
+    IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
+
     bool PushCachedItem(Type entryType, Control element);
 
     Control? PopCachedItem(Type entryType);

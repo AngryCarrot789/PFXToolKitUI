@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using System.Runtime.ExceptionServices;
+using System.Transactions;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -197,36 +198,32 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     /// Updates our model based on what's present in the text block
     /// </summary>
     private async void HandleUpdateModelFromText() {
-        TextBox? tb = null;
         try {
             if (this.isChangingModel || !base.IsFullyAttached) {
                 return;
             }
 
-            tb = (TextBox) this.myControl!;
+            TextBox textBox = (TextBox) this.myControl!;
             this.isChangingModel = true;
 
             // Read text before setting IsEnabled to false, because LostFocus will reset text to underlying value
-            string text = tb.Text ?? "";
-
-            bool oldIsEnabled = tb.IsEnabled;
-            tb.IsEnabled = false;
-            AttachedTextBoxBinding.SetIsValueDifferent(tb, false);
+            string text = textBox.Text ?? "";
+            
+            bool oldIsEnabled = textBox.IsEnabled;
+            textBox.IsEnabled = false;
+            
+            AttachedTextBoxBinding.SetIsValueDifferent(textBox, false);
             bool success = await this.parseAndUpdate(this, text);
-            tb.IsEnabled = oldIsEnabled;
+            
+            textBox.IsEnabled = oldIsEnabled;
             this.UpdateControl();
             if (!success && this.FocusTextBoxOnError)
-                await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => BugFix.TextBox_FocusSelectAll(tb));
+                await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => BugFix.TextBox_FocusSelectAll(textBox));
 
             this.ValueConfirmed?.Invoke(this, text);
         }
-        catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
-        }
         finally {
             this.isChangingModel = false;
-            if (tb != null)
-                AttachedTextBoxBinding.SetIsValueDifferent(tb, false);
         }
     }
 }

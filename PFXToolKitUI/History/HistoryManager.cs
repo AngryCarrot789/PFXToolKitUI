@@ -179,9 +179,8 @@ public sealed class HistoryManager {
                 this.AfterRedo?.Invoke(this, operation);
             }
         }
-        catch (InvalidHistoryException e) {
+        catch (InvalidHistoryException) {
             this.ClearBuffers();
-            ExceptionDispatchInfo.Throw(e);
             throw;
         }
         catch (Exception e) {

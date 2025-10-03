@@ -131,7 +131,7 @@ internal static class AdvancedMenuHelper {
 
     public static void ClearVisualNodes(IAdvancedMenuOrItem control) {
         ItemCollection list = control.Items;
-        IAdvancedMenu container = control as IAdvancedMenu ?? control.OwnerMenu ?? throw new InvalidOperationException("No owner menu");
+        IAdvancedMenu? container = control as IAdvancedMenu ?? control.OwnerMenu;
         for (int i = list.Count - 1; i >= 0; i--) {
             RemoveVisualNode(container, control, i);
         }
@@ -174,10 +174,8 @@ internal static class AdvancedMenuHelper {
     /// Default implementation for <see cref="IAdvancedMenu.PushCachedItem"/>
     /// </summary>
     public static bool PushCachedItem(Dictionary<Type, Stack<Control>> itemCache, Type entryType, Control item, int maxCache = 16) {
-        if (item == null)
-            throw new ArgumentNullException(nameof(item));
-        if (entryType == null)
-            throw new ArgumentNullException(nameof(entryType));
+        ArgumentNullException.ThrowIfNull(item);
+        ArgumentNullException.ThrowIfNull(entryType);
 
         if (!itemCache.TryGetValue(entryType, out Stack<Control>? stack))
             itemCache[entryType] = stack = new Stack<Control>();
@@ -192,9 +190,7 @@ internal static class AdvancedMenuHelper {
     /// Default implementation for <see cref="IAdvancedMenu.PopCachedItem"/>
     /// </summary>
     public static Control? PopCachedItem(Dictionary<Type, Stack<Control>> itemCache, Type entryType) {
-        if (entryType == null)
-            throw new ArgumentNullException(nameof(entryType));
-
+        ArgumentNullException.ThrowIfNull(entryType);
         if (itemCache.TryGetValue(entryType, out Stack<Control>? stack) && stack.Count > 0)
             return stack.Pop();
 

@@ -54,7 +54,7 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 /// </para>
 /// </summary>
 public class DataManager {
-    private static int totalSuspensionCount; // used for performance reasons
+    private static uint totalSuspensionCount; // used for performance reasons
 
     /// <summary>
     /// The context data property, used to store contextual information relative to a specific avalonia object.
@@ -70,8 +70,8 @@ public class DataManager {
     private static readonly AttachedProperty<IContextData?> InheritedContextDataProperty =
         AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, IContextData?>("InheritedContextData");
 
-    public static readonly AttachedProperty<int> SuspendedInvalidationCountProperty =
-        AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, int>("SuspendedInvalidationCount");
+    public static readonly AttachedProperty<uint> SuspendedInvalidationCountProperty =
+        AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, uint>("SuspendedInvalidationCount");
 
     public static readonly AttachedProperty<DataKey?> DataContextDataKeyProperty =
         AvaloniaProperty.RegisterAttached<DataManager, AvaloniaObject, DataKey?>("DataContextDataKey");
@@ -126,8 +126,8 @@ public class DataManager {
         }
     }
 
-    private static readonly EventHandler DataContextChangedHandler = OnDataContextChanged; 
-    
+    private static readonly EventHandler DataContextChangedHandler = OnDataContextChanged;
+
     private static void OnDataContextChanged(object? sender, EventArgs e) {
         Debug.Assert(((AvaloniaObject) sender!).GetValue(DataContextDataKeyProperty) != null);
         if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
@@ -177,16 +177,17 @@ public class DataManager {
     /// <param name="element">The element to invalidate the inherited context data of, along with its visual tree</param>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void InvalidateInheritedContext(AvaloniaObject element) {
-        if (totalSuspensionCount > 0 && GetSuspendedInvalidationCount(element) > 0) {
+        if (totalSuspensionCount != 0 && GetSuspendedInvalidationCount(element) > 0) {
             return;
         }
 
-        // For MemoryEngine360, this takes about 0.8ms for EngineWindow, which uses a fairly
-        // dense control tree and quite a few handlers of the invalidation events
-        // long a = Time.GetSystemTicks();
-
         InvalidateInheritedContextAndChildren(element);
         RaiseInheritedContextChanged(element);
+
+        // For MemoryEngine360, this takes about 0.8ms for EngineWindow, which uses a fairly
+        // dense control tree and quite a few handlers of the invalidation events.
+        // Ofc this will be less in release mode
+        // long a = Time.GetSystemTicks();
 
         // long b = Time.GetSystemTicks() - a;
         // Debug.WriteLine($"{nameof(InvalidateInheritedContext)} on {element.GetType().Name} = {(b / Time.TICK_PER_MILLIS_D).ToString()}");
@@ -296,11 +297,21 @@ public class DataManager {
     // private static readonly PropertyInfo TreeLevelPropertyInfo = typeof(Visual).GetProperty("TreeLevel", BindingFlagsInstPrivDeclared) ?? throw new Exception("Could not find TreeLevel property");
 
     /// <summary>
-    /// Does bottom-to-top scan of the element's visual tree, and then merged all of the data keys associated
-    /// with each object from top to bottom, ensuring the bottom of the visual tree has the most power over
-    /// the final data context key values. <see cref="GetFullContextData"/> should be preferred over this
-    /// method, however, that method calls this one anyway (and invalidates the results for every visual child
-    /// when the <see cref="InheritedContextChangedEvent"/> is about to be fired)
+    /// Performs a scan of the visual tree, starting at the source, and bubbling up to the root parent,
+    /// recording all visited elements into a list.
+    /// <para>
+    /// Then, we iterate through that list, starting at the root at tunnelling down to the source.
+    /// For each visited control, we add all of its entries in its local context data (see <see cref="ContextDataProperty"/>),
+    /// its data context if <see cref="DataContextDataKeyProperty"/> is present, and <see cref="SelfDataKeyProperty"/> if present,
+    /// to a new <see cref="IContextData"/> instance.
+    /// </para>
+    /// <para>
+    /// The result contains all the available context from the source. The descendents have priority over
+    /// parents, and will replace any values that parent context may have had. 
+    /// </para>
+    /// <para>
+    /// <see cref="GetFullContextData"/> should be preferred over this method unless absolutely necessary
+    /// </para>
     /// </summary>
     /// <param name="source">The element to get the full context of</param>
     /// <returns>The context</returns>
@@ -402,12 +413,16 @@ public class DataManager {
     /// <returns></returns>
     public static IDisposable SuspendMergedContextInvalidation(AvaloniaObject obj, bool autoInvalidateOnUnsuspended = true) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        uint value = obj.GetValue(SuspendedInvalidationCountProperty);
+        if (value == uint.MaxValue)
+            throw new InvalidOperationException("Suspended invalidation too many times");
+        obj.SetValue(SuspendedInvalidationCountProperty, value + 1);
 
         totalSuspensionCount++;
         return new SuspendInvalidation(obj, autoInvalidateOnUnsuspended);
     }
 
-    public static int GetSuspendedInvalidationCount(AvaloniaObject element) {
+    public static uint GetSuspendedInvalidationCount(AvaloniaObject element) {
         return element.GetValue(SuspendedInvalidationCountProperty);
     }
 
@@ -432,40 +447,25 @@ public class DataManager {
     /// </summary>
     public static DataKey? GetSelfDataKey(AvaloniaObject obj) => obj.GetValue(SelfDataKeyProperty);
 
-    private class SuspendInvalidation : IDisposable {
-        private AvaloniaObject? target;
-        private readonly bool autoInvalidateOnUnsuspended;
-
-        public SuspendInvalidation(AvaloniaObject target, bool autoInvalidateOnUnsuspended) {
-            this.target = target;
-            this.autoInvalidateOnUnsuspended = autoInvalidateOnUnsuspended;
-            target.SetValue(SuspendedInvalidationCountProperty, target.GetValue(SuspendedInvalidationCountProperty) + 1);
-        }
+    private class SuspendInvalidation(AvaloniaObject target, bool autoInvalidateOnUnsuspended) : IDisposable {
+        private AvaloniaObject? target = target;
 
         public void Dispose() {
             ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-            if (this.target == null) {
+            AvaloniaObject? t = this.target;
+            if (t == null) {
                 return;
-            }
-
-            totalSuspensionCount--;
-            int count = GetSuspendedInvalidationCount(this.target);
-            if (count < 0) {
-                Debugger.Break();
-                return;
-            }
-
-            if (count == 1) {
-                this.target.SetValue(SuspendedInvalidationCountProperty, SuspendedInvalidationCountProperty.GetDefaultValue(this.target.GetType()));
-                if (this.autoInvalidateOnUnsuspended) {
-                    InvalidateInheritedContext(this.target);
-                }
-            }
-            else {
-                this.target.SetValue(SuspendedInvalidationCountProperty, count - 1);
             }
 
             this.target = null;
+            totalSuspensionCount--;
+            uint count = GetSuspendedInvalidationCount(t);
+            Debug.Assert(count != 0);
+            t.SetValue(SuspendedInvalidationCountProperty, --count);
+
+            if (count == 0 && autoInvalidateOnUnsuspended) {
+                InvalidateInheritedContext(t);
+            }
         }
     }
 }

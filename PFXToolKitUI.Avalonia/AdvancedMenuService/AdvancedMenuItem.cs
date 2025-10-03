@@ -73,7 +73,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.OnLoadedOverride(e);
         this.IsVisibilityChanging = false;
 
-        this.UpdateIsCheckedProperties(this.Entry!);
+        this.OnIsCheckedFunctionChanged(this.Entry!);
         this.UpdateIsEnabled();
     }
 
@@ -130,14 +130,13 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         }
 
         entry.CanExecuteChanged += this.OnCanExecuteChanged;
-        entry.IsCheckedFunctionChanged += this.UpdateIsCheckedProperties;
-        entry.IsCheckedChanged += this.UpdateIsChecked;
+        entry.IsCheckedFunctionChanged += this.OnIsCheckedFunctionChanged;
+        entry.IsCheckedChanged += this.OnIsCheckedChanged;
         this.UpdateIsEnabled();
     }
 
     public virtual void OnRemoving() {
         BaseContextEntry entry = this.Entry!;
-        
         if (entry is ContextEntryGroup list) {
             list.Items.ItemsAdded -= this.ItemsOnItemsAdded;
             list.Items.ItemsRemoved -= this.ItemsOnItemsRemoved;
@@ -149,8 +148,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         entry.DescriptionChanged -= this.OnEntryDescriptionChanged;
         entry.IconChanged -= this.OnEntryIconChanged;
         entry.CanExecuteChanged -= this.OnCanExecuteChanged;
-        entry.IsCheckedFunctionChanged -= this.UpdateIsCheckedProperties;
-        entry.IsCheckedChanged -= this.UpdateIsChecked;
+        entry.IsCheckedFunctionChanged -= this.OnIsCheckedFunctionChanged;
+        entry.IsCheckedChanged -= this.OnIsCheckedChanged;
 
         if (this.myIconControl != null) {
             this.myIconControl.Icon = null;
@@ -173,13 +172,13 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Entry = null;
     }
 
-    private void UpdateIsCheckedProperties(BaseContextEntry sender) {
+    private void OnIsCheckedFunctionChanged(BaseContextEntry sender) {
         this.ToggleType = sender.IsCheckedFunction != null ? MenuItemToggleType.CheckBox : MenuItemToggleType.None;
         // IsCheckedChanged is fired after IsCheckedFunctionChanged so no need to double call UpdateIsChecked
         // this.UpdateIsChecked(sender);
     }
 
-    private void UpdateIsChecked(BaseContextEntry sender) {
+    private void OnIsCheckedChanged(BaseContextEntry sender) {
         this.IsChecked = sender.IsCheckedFunction != null && sender.IsCheckedFunction(sender);
     }
 
@@ -215,7 +214,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         }
 
         if (this.Entry != null)
-            this.UpdateIsChecked(this.Entry);
+            this.OnIsCheckedChanged(this.Entry);
 
         this.UpdateIsEnabled();
 

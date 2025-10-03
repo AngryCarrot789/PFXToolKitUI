@@ -18,7 +18,6 @@
 // 
 
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -121,28 +120,20 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
             return false;
         }
 
-        ApplicationPFX.Instance.Dispatcher.Post(() => this.ExecuteCommand(entry, context), DispatchPriority.Render);
+        ApplicationPFX.Instance.Dispatcher.Post(ExecuteContextEntry, DispatchPriority.Render);
         return true;
-    }
 
-    private async void ExecuteCommand(CustomContextEntry entry, IContextData context) {
-        try {
-            await entry.OnExecute(context);
-        }
-        catch (OperationCanceledException) {
-            // return;
-        }
-        catch (Exception e) {
-            if (Debugger.IsAttached) {
-                ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
+        async void ExecuteContextEntry() {
+            try {
+                await entry.OnExecute(context);
             }
-            else {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", e);
+            catch (Exception exception) when (!Debugger.IsAttached) {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Internal Action Error", exception);
             }
-        }
-        finally {
-            this.IsExecuting = false;
-            this.UpdateCanExecute();
+            finally {
+                this.IsExecuting = false;
+                this.UpdateCanExecute();
+            }
         }
     }
 }

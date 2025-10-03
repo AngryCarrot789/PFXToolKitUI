@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -25,6 +26,7 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
@@ -72,11 +74,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         }
 
         CommandContextEntry? entry = this.Entry;
-        if (entry == null) {
-            return;
-        }
-
-        if (CommandManager.Instance.GetCommandById(entry.CommandId) != null) {
+        if (entry != null && CommandManager.Instance.GetCommandById(entry.CommandId) != null) {
             if (CommandIdToGestureConverter.CommandIdToGesture(entry.CommandId, out string? value)) {
                 this.InputGestureTextBlock.Text = value;
             }
@@ -110,8 +108,9 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         }
 
         this.IsExecuting = true;
-        string? cmdId = this.Entry?.CommandId;
-        if (string.IsNullOrWhiteSpace(cmdId)) {
+        Command? command = CommandManager.Instance.GetCommandById(this.Entry?.CommandId);
+        IContextData? context;
+        if (command == null || (context = this.OwnerMenu?.CapturedContext) == null) {
             base.OnClick(e);
             this.IsExecuting = false;
             this.UpdateCanExecute();
@@ -121,28 +120,22 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         // disable execution while executing command
         this.CanExecute = false;
         base.OnClick(e);
-        if (!this.DispatchCommand(cmdId)) {
-            this.IsExecuting = false;
-            this.CanExecute = true;
-        }
-    }
-
-    private bool DispatchCommand(string cmdId) {
-        IContextData? context = this.OwnerMenu?.CapturedContext;
-        if (context == null) {
-            return false;
-        }
 
         ContextRegistry? sourceMenu = this.SourceContextMenu;
-        ApplicationPFX.Instance.Dispatcher.Post(async void () => {
+        ApplicationPFX.Instance.Dispatcher.Post(ExecuteContextCommand, DispatchPriority.Render);
+        return;
+
+        async void ExecuteContextCommand() {
             try {
-                await CommandManager.Instance.Execute(cmdId, context, null, sourceMenu);
+                await CommandManager.Instance.Execute(command, context, null, sourceMenu);
+            }
+            catch (Exception exception) when (!Debugger.IsAttached) {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
             }
             finally {
                 this.IsExecuting = false;
                 this.UpdateCanExecute();
             }
-        }, DispatchPriority.Render);
-        return true;
+        }
     }
 }

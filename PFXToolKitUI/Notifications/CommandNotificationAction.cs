@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils;
@@ -49,11 +50,16 @@ public class CommandNotificationAction : NotificationAction {
         return CommandManager.Instance.CanExecute(this.CommandId, this.ContextData ?? EmptyContext.Instance, null, null) == Executability.Valid;
     }
 
-    public override Task Execute() {
+    public override async Task Execute() {
         if (this.CommandId == null || this.ContextData == null) {
-            return Task.CompletedTask;
+            return;
         }
         
-        return CommandManager.Instance.Execute(this.CommandId, this.ContextData, null, null);
+        try {
+            await CommandManager.Instance.Execute(this.CommandId, this.ContextData, null, null);
+        }
+        catch (Exception exception) when (!Debugger.IsAttached) {
+            await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+        }
     }
 }

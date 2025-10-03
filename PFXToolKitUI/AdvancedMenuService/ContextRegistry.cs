@@ -56,10 +56,23 @@ public class ContextRegistry {
     public event ContextRegistryEventHandler? CaptionChanged;
     public event ContextRegistryContextEventHandler? Opened;
     public event ContextRegistryEventHandler? Closed;
+    
+    /// <summary>
+    /// Notifies the handler to try to close the context menu
+    /// </summary>
+    public event ContextRegistryEventHandler? RequestClose;
 
     public ContextRegistry(string caption) {
         this.groups = new SortedList<int, Dictionary<string, IContextGroup>>();
         this.Caption = caption;
+    }
+    
+    /// <summary>
+    /// Raises the <see cref="RequestClose"/> event
+    /// </summary>
+    public void RaiseRequestClose() {
+        if (this.IsOpened)
+            this.RequestClose?.Invoke(this);
     }
 
     public void OnOpened(IContextData context) {

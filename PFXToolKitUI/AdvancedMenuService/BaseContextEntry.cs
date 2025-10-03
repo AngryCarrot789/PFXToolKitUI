@@ -40,7 +40,8 @@ public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseCont
 /// </summary>
 public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
     /// <summary>
-    /// Ges the data key used to access the context entry of a menu item or context menu item
+    /// Gets the general data key for accessing a context entry. UI controls for menu items will use
+    /// this to update their local context with the entry they are currently attached to
     /// </summary>
     public static readonly DataKey<BaseContextEntry> DataKey = DataKeys.Create<BaseContextEntry>(nameof(BaseContextEntry));
 
@@ -48,7 +49,7 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
     private Icon? icon;
     private bool isInUse;
     private IContextData? capturedContext;
-    private Predicate<BaseContextEntry>? isCheckedFunction;
+    private Func<BaseContextEntry, bool>? isCheckedFunction;
 
     /// <summary>
     /// Gets or sets the header of the menu item
@@ -98,7 +99,7 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
     /// Note, changing the value of this property will invoke <see cref="RaiseIsCheckedChanged"/>
     /// </para>
     /// </summary>
-    public Predicate<BaseContextEntry>? IsCheckedFunction {
+    public Func<BaseContextEntry, bool>? IsCheckedFunction {
         get => this.isCheckedFunction;
         set {
             if (this.isCheckedFunction != value) {

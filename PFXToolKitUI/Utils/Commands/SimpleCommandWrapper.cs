@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Windows.Input;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
@@ -57,7 +58,7 @@ public class SimpleCommandWrapper : BaseAsyncRelayCommand {
                 data.SetSafely(this.ParameterDataKey, parameter);
             }
             else if (parameter is IContextData) {
-                data.AddAll((IContextData)parameter);
+                data.AddAll((IContextData) parameter);
             }
 
             finalData = data;
@@ -86,13 +87,19 @@ public class SimpleCommandWrapper : BaseAsyncRelayCommand {
         return result == Executability.Valid;
     }
 
-    protected override Task ExecuteCoreAsync(object? parameter) {
+    protected override async Task ExecuteCoreAsync(object? parameter) {
         Command? command = this.manager.GetCommandById(this.commandId);
         if (command == null) {
-            return Task.CompletedTask;
+            return;
         }
 
         IContextData ctx = this.GetContextData(parameter);
-        return this.manager.Execute(command, ctx, null, null);
+        
+        try {
+            await this.manager.Execute(command, ctx, null, null);
+        }
+        catch (Exception exception) when (!Debugger.IsAttached) {
+            await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+        }
     }
 }

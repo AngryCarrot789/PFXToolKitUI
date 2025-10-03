@@ -27,7 +27,7 @@ public class DynamicGroupPlaceholderContextObject : IContextObject {
     /// Gets the dynamic context group we used to generate entries on demand
     /// </summary>
     public DynamicContextGroup DynamicGroup { get; }
-
+    
     public DynamicGroupPlaceholderContextObject(DynamicContextGroup dynamicGroup) {
         this.DynamicGroup = dynamicGroup;
     }

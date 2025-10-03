@@ -17,8 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Runtime.ExceptionServices;
-
 namespace PFXToolKitUI.Utils.RDA;
 
 public abstract class RapidDispatchActionExBase {
@@ -31,10 +29,8 @@ public abstract class RapidDispatchActionExBase {
     // there are no possible side effects (hopefully??? Am I thinking too hard?)
     public readonly string? DebugId;
 
-    private volatile int myState; // The current state
+    private int myState; // The current state
     private readonly Lock stateLock; // A guard when reading/writing the state
-
-    private readonly Action doExecuteCallback;
     private readonly IDispatcher dispatcher; // the dispatcher that owns this RDA
 
     /// <summary>
@@ -53,24 +49,18 @@ public abstract class RapidDispatchActionExBase {
         this.DebugId = debugId;
         this.Priority = priority;
         this.stateLock = new Lock();
-        this.doExecuteCallback = this.DoExecuteAsync;
     }
 
-    private async void DoExecuteAsync() {
-        Exception? exception = null;
-
-        int state;
-        lock (this.stateLock)
+    private async void DoExecuteOnDispatcherThread() {
+        lock (this.stateLock) {
             this.myState = S_RUNNING;
+        }
 
         try {
-            Task task = this.ExecuteCore();
-            await task;
-        }
-        catch (Exception e) {
-            exception = e;
+            await this.ExecuteCore();
         }
         finally {
+            int state;
             lock (this.stateLock) {
                 switch (state = this.myState) {
                     // standard case; we were running, now we are not
@@ -84,21 +74,20 @@ public abstract class RapidDispatchActionExBase {
                     default: this.myState = S_NOT_SCHEDULED; break;
                 }
             }
-        }
 
-        if (exception != null) {
-            this.dispatcher.Post(() => ExceptionDispatchInfo.Throw(exception));
-            return;
+            // Don't schedule within the lock, because ScheduleExecute is slightly expensive,
+            // and we don't want to keep the lock acquired for a long time
+            if (state == S_RESCHEDULED) {
+                this.ScheduleExecute();
+            }
         }
-
-        // Schedule outside of the lock, because ScheduleExecute is slightly expensive,
-        // and we don't want to keep the lock acquired for a long time (and clogg up
-        // any thread that calls InvokeAsync)
-        if (state == S_RESCHEDULED)
-            this.ScheduleExecute();
     }
 
-    private void ScheduleExecute() => this.dispatcher.Post(this.doExecuteCallback, this.Priority);
+    private void ScheduleExecute() {
+        // Post with state object to avoid delegate creation, though it probably doesn't 
+        // matter since posting requires creating extra objects too
+        this.dispatcher.Post(static t => ((RapidDispatchActionExBase) t!).DoExecuteOnDispatcherThread(), this, this.Priority);
+    }
 
     protected bool BeginInvoke() {
         lock (this.stateLock) {

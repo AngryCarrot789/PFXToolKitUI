@@ -18,7 +18,7 @@
 // 
 
 using System.Collections.Specialized;
-using System.Runtime.ExceptionServices;
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -30,6 +30,7 @@ using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
 
@@ -194,28 +195,24 @@ public partial class ActivityStatusBarControl : UserControl {
 
     private void InputElement_OnPointerReleased(object? sender, PointerReleasedEventArgs e) {
         if (!e.Handled && this.IsPointerOver && !this.isExecutingShowActivityListCmd) {
-            this.ShowActivityListAsync();
-            // if (WindowingSystem.TryGetInstance(out WindowingSystem? system)) {
-            //     IWindow window = system.CreateWindow(new ActivityListWindowingContent());
-            //     window.IsResizable = false;
-            //     window.CanAutoSizeToContent = false;
-            //     window.Show(system.GetActiveWindowOrNull());
-            // }
+            ShowActivityListAsync();
+            return;
+
+            async void ShowActivityListAsync() {
+                try {
+                    this.isExecutingShowActivityListCmd = true;
+                    await CommandManager.Instance.Execute("commands.pfx.ShowActivityListCommand", DataManager.GetFullContextData(this), null, null);
+                }
+                catch (Exception exception) when (!Debugger.IsAttached) {
+                    await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                }
+                finally {
+                    this.isExecutingShowActivityListCmd = false;
+                }
+            }
         }
     }
 
-    private async void ShowActivityListAsync() {
-        try {
-            this.isExecutingShowActivityListCmd = true;
-            await CommandManager.Instance.Execute("commands.pfx.ShowActivityListCommand", DataManager.GetFullContextData(this), null, null);
-        }
-        catch (Exception e) {
-            ApplicationPFX.Instance.Dispatcher.Post(() => ExceptionDispatchInfo.Throw(e), DispatchPriority.Send);
-        }
-        finally {
-            this.isExecutingShowActivityListCmd = false;
-        }
-    }
 
     private Task OnPausedStateChanged(AdvancedPausableTask task) {
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {

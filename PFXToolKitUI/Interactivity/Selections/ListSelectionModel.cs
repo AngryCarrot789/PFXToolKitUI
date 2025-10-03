@@ -139,6 +139,21 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public void SelectAll() => this.SelectRange(0, this.SourceList.Count);
 
+    public void SetSelection(int index) {
+        this.Clear();
+        this.Select(index);
+    }
+
+    public void SetSelection(LongRange range) {
+        this.Clear();
+        this.SelectRange((int) range.Start, (int) range.Length);
+    }
+
+    public void SetSelection(LongRangeUnion ranges) {
+        this.Clear();
+        this.SetSelectionForRanges(ranges, true);
+    }
+
     public void Clear() {
         if (this.SelectionChanged != null) {
             IList<LongRange> changedList = this.selectedIndices.ToList();
@@ -174,7 +189,6 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
             }
         }
         else {
-            // variable name based on state: true = whatIsNotThere, false = whatIsThere 
             LongRangeUnion changedIndices = this.selectedIndices.GetPresenceUnion(range, !select);
             if (select) {
                 this.selectedIndices.Add(range);

@@ -11,7 +11,7 @@ public readonly struct Optional<T> : IEquatable<Optional<T>> {
     /// Returns an <see cref="Optional{T}"/> without a value.
     /// </summary>
     public static Optional<T> Empty => default;
-    
+
     /// <summary>
     /// Whether we have a valid value
     /// </summary>
@@ -31,6 +31,27 @@ public readonly struct Optional<T> : IEquatable<Optional<T>> {
         this.value = value;
         this.HasValue = true;
     }
+
+    public Optional<V> Map<V>(Func<T, V> mapper) {
+        return this.HasValue 
+            ? new Optional<V>(mapper(this.value)) 
+            : Optional<V>.Empty;
+    }
+
+    public Task<Optional<V>> MapAsync<V>(Func<T, Task<V>> mapper) {
+        if (!this.HasValue)
+            return Task.FromResult(Optional<V>.Empty);
+        
+        return InternalMapAsync(this.value, mapper);
+
+        static async Task<Optional<V>> InternalMapAsync(T value, Func<T, Task<V>> mapper) {
+            return new Optional<V>(await mapper(value));
+        }
+    }
+
+    public T? GetValueOrDefault() => this.HasValue ? this.value : default;
+
+    public T? GetValueOrDefault(T defaultValue) => this.HasValue ? this.value : defaultValue;
 
     public override bool Equals(object? obj) {
         return obj is Optional<T> o && this.Equals(o);
@@ -53,10 +74,6 @@ public readonly struct Optional<T> : IEquatable<Optional<T>> {
         return this.HasValue ? (this.value?.ToString() ?? "") : "Empty";
     }
 
-    public T? GetValueOrDefault() => this.HasValue ? this.value : default;
-
-    public T? GetValueOrDefault(T defaultValue) => this.HasValue ? this.value : defaultValue;
-
     public static implicit operator Optional<T>(T value) => new(value);
 
     public static bool operator ==(Optional<T> left, Optional<T> right) => left.Equals(right);
@@ -68,10 +85,18 @@ public static class Optionals {
     /// <summary>
     /// Creates a new optional value
     /// </summary>
-    /// <param name="value">The optional's value</param>
+    /// <param name="value">The value</param>
     /// <typeparam name="T">The value type</typeparam>
     /// <returns>The new optional</returns>
     public static Optional<T> Of<T>(T value) => new Optional<T>(value);
+
+    /// <summary>
+    /// Creates a new optional value, or empty, if the value is null
+    /// </summary>
+    /// <param name="value">The value</param>
+    /// <typeparam name="T">The value type</typeparam>
+    /// <returns>The new optional, or empty, the value is null</returns>
+    public static Optional<T> OfNullable<T>(T? value) where T : class => value != null ? new Optional<T>(value) : Optional<T>.Empty;
 }
 
 public static class OptionalExtensions {

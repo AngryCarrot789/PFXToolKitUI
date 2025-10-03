@@ -18,7 +18,6 @@
 // 
 
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 
 namespace PFXToolKitUI.Utils.Commands;
 
@@ -48,7 +47,8 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     /// </summary>
     public bool IsRunning => this.isRunningState != 0;
 
-    protected BaseAsyncRelayCommand() { }
+    protected BaseAsyncRelayCommand() {
+    }
 
     /// <summary>
     /// Whether this async command can actually run or not. If it is already running, this will (typically) return false
@@ -83,18 +83,11 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
             return;
         }
 
-        // Since we cannot notify caller of exceptions throw (we're async void), the only
-        // thing we can do is post them back to the main thread.
         try {
-            await this.InvokeAsyncImpl(parameter);
-        }
-        catch (Exception e) {
-            ExceptionDispatchInfo exceptInfo = ExceptionDispatchInfo.Capture(e);
-            ApplicationPFX.Instance.Dispatcher.Post(() => exceptInfo.Throw(), DispatchPriority.Send);
+            await this.InternalInvokeAsync(parameter);
         }
         finally {
-            Debug.Assert(this.isRunningState == 0);
-            this.isRunningState = 0;
+            this.EnsureNotRunning();
         }
     }
 
@@ -113,11 +106,10 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     public async Task ExecuteAsync(object? parameter) {
         if (Interlocked.CompareExchange(ref this.isRunningState, 1, 0) == 0) {
             try {
-                await this.InvokeAsyncImpl(parameter);
+                await this.InternalInvokeAsync(parameter);
             }
             finally {
-                Debug.Assert(this.isRunningState == 0);
-                this.isRunningState = 0;
+                this.EnsureNotRunning();
             }
         }
     }
@@ -133,38 +125,31 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     public async Task<bool> TryExecuteAsync(object? parameter) {
         if (this.CanExecute(parameter) && Interlocked.CompareExchange(ref this.isRunningState, 1, 0) == 0) {
             try {
-                await this.InvokeAsyncImpl(parameter);
+                await this.InternalInvokeAsync(parameter);
                 return true;
             }
             finally {
-                Debug.Assert(this.isRunningState == 0);
-                this.isRunningState = 0;
+                this.EnsureNotRunning();
             }
         }
 
         return false;
     }
-    
-    private async Task InvokeAsyncImpl(object? parameter) {
-        bool completedBeforeAwait = false;
+
+    private async Task InternalInvokeAsync(object? parameter) {
         try {
-            Task task = this.ExecuteCoreAsync(parameter);
-            if (!(completedBeforeAwait = task.IsCompleted)) {
-                this.RaiseCanExecuteChanged();
-            }
-            
-            await task;
+            this.RaiseCanExecuteChanged();
+            await this.ExecuteCoreAsync(parameter);
         }
         catch (OperationCanceledException) {
             // ignored
         }
+        catch (Exception exception) when (!Debugger.IsAttached) {
+            await LogExceptionHelper.ShowMessageAndPrintToLogs("Application Action Error", exception);
+        }
         finally {
             this.isRunningState = 0;
-            // completedBeforeAwait is false even on exception or cancellation, so unless
-            // the task immediately completes, we always raise the event.
-            if (!completedBeforeAwait) {
-                this.RaiseCanExecuteChanged();
-            }
+            this.RaiseCanExecuteChanged();
         }
     }
 
@@ -174,4 +159,9 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
     /// <param name="parameter">The parameter passed to this command</param>
     /// <returns>A task...</returns>
     protected abstract Task ExecuteCoreAsync(object? parameter);
+
+    private void EnsureNotRunning() {
+        Debug.Assert(this.isRunningState == 0, "Task continuation failure, possibly caused by debugger issue");
+        this.isRunningState = 0;
+    }
 }

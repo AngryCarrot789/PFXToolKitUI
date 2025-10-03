@@ -42,8 +42,6 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     private InputElement? currentTarget;
     private readonly EventHandler<ContextRequestedEventArgs> requestContextHandler;
 
-    IAdvancedMenu IAdvancedMenuOrItem.OwnerMenu => this;
-
     public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
 
     public Dictionary<int, int>? DynamicInserted { get; set; }
@@ -59,6 +57,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
     public AdvancedContextMenu(ContextRegistry registry) {
         this.MyContextRegistry = registry ?? throw new ArgumentNullException(nameof(registry));
+        this.MyContextRegistry.RequestClose += this.ContextRegistryOnRequestClose;
         this.captionBinder = new EventUpdateBinder<ContextRegistry>(nameof(this.MyContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
         this.itemCache = new Dictionary<Type, Stack<Control>>();
         this.Opening += this.OnMenuOpening;
@@ -66,6 +65,10 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         this.requestContextHandler = (sender, e) => {
             this.currentTarget = sender as InputElement;
         };
+    }
+
+    private void ContextRegistryOnRequestClose(ContextRegistry registry) {
+        this.Close();
     }
 
     static AdvancedContextMenu() {
