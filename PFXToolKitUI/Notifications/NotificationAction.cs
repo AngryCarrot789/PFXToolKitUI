@@ -72,7 +72,7 @@ public abstract class NotificationAction {
 
     /// <summary>
     /// Gets the current context data for this command. This changes when <see cref="Notification"/> 
-    /// changes or the notification's <see cref="Notification.ContextData"/> changes
+    /// changes or the notification's <see cref="Notifications.Notification.ContextData"/> changes
     /// </summary>
     public IContextData? ContextData { get; private set; }
 
@@ -102,12 +102,12 @@ public abstract class NotificationAction {
     }
 
     /// <summary>
-    /// Executes this notification action
+    /// Executes this notification action.
     /// </summary>
     public abstract Task Execute();
 
     /// <summary>
-    /// Invoked when our <see cref="Notification"/>'s <see cref="Notification.ContextData"/> changes
+    /// Invoked when our <see cref="Notification"/>'s <see cref="Notifications.Notification.ContextData"/> changes
     /// </summary>
     /// <param name="oldData">The previous context data</param>
     /// <param name="newData">The new context data</param>

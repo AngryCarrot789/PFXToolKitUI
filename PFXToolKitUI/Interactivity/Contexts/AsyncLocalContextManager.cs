@@ -37,16 +37,16 @@ public sealed class AsyncLocalContextManager {
      * }
      * 
      * private static async Task RunFunThings(IContextData context) {
-     *     using IDisposable usage = CommandManager.LocalContextManager.PushGlobalContext(context);
+     *     using IDisposable usage = CommandManager.LocalContextManager.PushContext(context);
      *     await Task.Delay(1000);
      *
-     *     bool found = CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? localContext);
+     *     bool found = CommandManager.LocalContextManager.TryGetCurrentContext(out IContextData? localContext);
      *     Debug.Assert(found && localContext == context);
      * }
      *
      * This code cannot fail because:
-     *   The first Task.Run posts a call to RunFunThings, which effectively pushes "1" onto the global stack.
-     *   Then, after 100ms it pushes "2" onto the global stack
+     *   The first Task.Run posts a call to RunFunThings, which effectively pushes "1" onto the async stack.
+     *   Then, after 100ms it pushes "2" onto the async stack
      *   But, because of how AsyncLocal works, the two are separate, so they do
      *   not collide, which is further proven by the 1000ms delay in RunFunThings
      *
@@ -75,14 +75,19 @@ public sealed class AsyncLocalContextManager {
 
     private LocalContext GetContextStack() => this.myAsyncLocals.Value ??= new LocalContext(this);
 
-    public IDisposable PushGlobalContext(IContextData context) {
+    /// <summary>
+    /// Pushes context onto the current async stack
+    /// </summary>
+    /// <param name="context">The context to push</param>
+    /// <returns>A token to pop the context. This can be disposed in any order</returns>
+    public IDisposable PushContext(IContextData context) {
         LocalContext ctx = this.GetContextStack();
         ctx.stack.Add(context);
         ctx.fullContext = null; // invalidate
-        return new PopGlobalContextFlow(this, context);
+        return new PopContextToken(this, context);
     }
 
-    private void PopGlobalContext(IContextData context) {
+    private void PopContext(IContextData context) {
         LocalContext ctx = this.GetContextStack();
         bool popped = ctx.stack.Remove(context);
         Debug.Assert(popped);
@@ -95,7 +100,7 @@ public sealed class AsyncLocalContextManager {
     /// </summary>
     /// <param name="contextData"></param>
     /// <returns></returns>
-    public bool TryGetGlobalContext([NotNullWhen(true)] out IContextData? contextData) {
+    public bool TryGetCurrentContext([NotNullWhen(true)] out IContextData? contextData) {
         LocalContext? ctx = this.myAsyncLocals.Value;
         if (ctx == null || ctx.stack.Count < 1) {
             contextData = null;
@@ -109,9 +114,9 @@ public sealed class AsyncLocalContextManager {
     /// <summary>
     /// Gets the global context, which may be empty
     /// </summary>
-    public IContextData GetGlobalContext() => this.TryGetGlobalContext(out IContextData? context) ? context : EmptyContext.Instance;
+    public IContextData GetCurrentContext() => this.TryGetCurrentContext(out IContextData? context) ? context : EmptyContext.Instance;
 
-    private sealed class PopGlobalContextFlow(AsyncLocalContextManager manager, IContextData context) : IDisposable {
+    private sealed class PopContextToken(AsyncLocalContextManager manager, IContextData context) : IDisposable {
         private AsyncLocalContextManager? myManager = manager;
         private IContextData? myContext = context;
 
@@ -122,7 +127,7 @@ public sealed class AsyncLocalContextManager {
                 Debug.Assert(context != null);
                 this.myContext = null;
 
-                manager.PopGlobalContext(context!);
+                manager.PopContext(context!);
             }
         }
     }

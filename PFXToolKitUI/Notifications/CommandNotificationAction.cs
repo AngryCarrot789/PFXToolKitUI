@@ -45,21 +45,21 @@ public class CommandNotificationAction : NotificationAction {
     }
 
     public override bool CanExecute() {
-        if (this.CommandId == null)
-            return false;
-        return CommandManager.Instance.CanExecute(this.CommandId, this.ContextData ?? EmptyContext.Instance, null, null) == Executability.Valid;
+        if (!string.IsNullOrWhiteSpace(this.CommandId)) {
+            return CommandManager.Instance.CanExecute(this.CommandId, this.ContextData ?? EmptyContext.Instance, null, null) == Executability.Valid;
+        }
+
+        return false;
     }
 
     public override async Task Execute() {
-        if (this.CommandId == null || this.ContextData == null) {
-            return;
-        }
-        
-        try {
-            await CommandManager.Instance.Execute(this.CommandId, this.ContextData, null, null);
-        }
-        catch (Exception exception) when (!Debugger.IsAttached) {
-            await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+        if (!string.IsNullOrWhiteSpace(this.CommandId)) {
+            try {
+                await CommandManager.Instance.Execute(this.CommandId, this.ContextData ?? EmptyContext.Instance, null, null);
+            }
+            catch (Exception exception) when (!Debugger.IsAttached) {
+                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+            }
         }
     }
 }

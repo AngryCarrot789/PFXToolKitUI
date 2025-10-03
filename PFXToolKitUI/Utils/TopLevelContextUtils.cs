@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Utils;
 public static class TopLevelContextUtils {
     public static ITopLevel? GetTopLevelFromContext(IContextData? alternateContext = null, bool canUseActiveOrMainTopLevel = true) {
         ITopLevel? topLevel = null;
-        if (CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? context)) {
+        if (CommandManager.LocalContextManager.TryGetCurrentContext(out IContextData? context)) {
             topLevel = ITopLevel.FromContext(context);
         }
 

@@ -214,7 +214,7 @@ public readonly struct WaitForActivityOptions(ITopLevel parentTopLevel, Activity
     /// Gets or sets if the window should show the option to close the dialog and let the activity becomes a
     /// background operation. Clicking the button would never actually cancel the activity
     /// </summary>
-    public bool CanMinimizeIntoBackgroundActivity { get; init; } = true;
+    public bool CanMinimizeIntoBackgroundActivity { get; init; } = false;
 
     public static void Validate(ref WaitForActivityOptions options) {
         if (options.Activity == null)

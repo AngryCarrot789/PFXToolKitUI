@@ -59,7 +59,7 @@ public sealed class ContextData : IMutableContextData {
     /// Adds all entries from the given context to this instance
     /// </summary>
     /// <param name="context">The context to copy the entires from</param>
-    public void AddAll(IContextData context) {
+    public ContextData AddAll(IContextData context) {
         if (context is ContextData cd && cd.map != null) {
             using Dictionary<string, object>.Enumerator enumerator = cd.map.GetEnumerator();
             if (enumerator.MoveNext()) {
@@ -80,6 +80,8 @@ public sealed class ContextData : IMutableContextData {
                 } while (enumerator.MoveNext());
             }
         }
+
+        return this;
     }
     
     #region New Overrides, for builder-styled syntax

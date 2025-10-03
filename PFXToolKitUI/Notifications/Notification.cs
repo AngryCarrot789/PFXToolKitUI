@@ -42,7 +42,7 @@ public abstract class Notification : IComponentManager {
     private bool isAutoHideActive;
     private bool flagRestartAutoHide;
     private CancellationTokenSource? ctsAutoHide;
-    private IContextData? ctxData;
+    private IContextData? myContextData;
     private TimeSpan autoHideDelay = TimeSpan.FromSeconds(5);
     private NotificationAlertMode alertMode;
 
@@ -118,14 +118,14 @@ public abstract class Notification : IComponentManager {
     public DateTime AutoHideStartTime { get; private set; }
 
     /// <summary>
-    /// Gets or sets the context data for this notification. This is used by our <see cref="Actions"/>
+    /// Gets or sets the context for this notification. This may be used by our <see cref="Actions"/>
     /// </summary>
     public IContextData? ContextData {
-        get => this.ctxData;
+        get => this.myContextData;
         set {
-            IContextData? oldContextData = this.ctxData;
+            IContextData? oldContextData = this.myContextData;
             if (!Equals(oldContextData, value)) {
-                this.ctxData = value;
+                this.myContextData = value;
                 this.ContextDataChanged?.Invoke(this, oldContextData, value);
                 foreach (NotificationAction action in this.Actions) {
                     NotificationAction.InternalOnNotificationContextChanged(action, oldContextData, value);

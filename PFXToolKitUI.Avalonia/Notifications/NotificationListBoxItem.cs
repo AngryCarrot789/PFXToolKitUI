@@ -36,6 +36,7 @@ using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Notifications;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
@@ -47,7 +48,7 @@ namespace PFXToolKitUI.Avalonia.Notifications;
 
 public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
     public static readonly IDynamicColourBrush DynamicForegroundBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Foreground.Static");
-    
+
     public static readonly ModelControlRegistry<Notification, Control> ModelControlRegistry;
 
     public static readonly StyledProperty<string?> CaptionProperty = AvaloniaProperty.Register<NotificationListBoxItem, string?>(nameof(Caption));
@@ -80,7 +81,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             if (this.Model.AlertMode == NotificationAlertMode.UntilUserInteraction) {
                 this.Model.AlertMode = NotificationAlertMode.None;
             }
-            
+
             this.Model.CancelAutoHide();
         }
     }
@@ -114,12 +115,12 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
         this.PART_ActionPanel = e.NameScope.GetTemplateChild<Panel>("PART_ActionPanel");
         this.PART_HeaderBorder = e.NameScope.GetTemplateChild<Border>("PART_HeaderBorder");
-        
+
         this.alertFlipFlop.Value1 = new MultiBrushFlipFlopTimer(TimeSpan.FromMilliseconds(500), [
             new BrushExchange(this.PART_HeaderBorder, BackgroundProperty, ConstantAvaloniaColourBrush.Transparent, new ConstantAvaloniaColourBrush(Brushes.Yellow)),
             new BrushExchange(this.PART_HeaderBorder, ForegroundProperty, DynamicForegroundBrush, new ConstantAvaloniaColourBrush(Brushes.Black)),
         ]) { StartHigh = true };
-        
+
         this.processor?.AddExistingItems();
     }
 
@@ -144,7 +145,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             this.Content = control;
             (control as INotificationContent)?.OnShown();
         }
-        
+
         this.alertFlipFlop.Value2 = this.Model.AlertMode != NotificationAlertMode.None;
     }
 
@@ -158,7 +159,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         this.Model!.CaptionChanged -= this.ModelOnCaptionChanged;
         this.Model!.IsAutoHideActiveChanged -= this.OnIsAutoHideActiveChanged;
         this.Model!.AlertModeChanged -= this.OnAlertModeChanged;
-        
+
         this.alertFlipFlop.Value2 = default;
     }
 
@@ -190,7 +191,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             this.animation.RunAsync(this, sender.CancellationToken);
         }
     }
-    
+
     private void OnAlertModeChanged(Notification sender) {
         this.alertFlipFlop.Value2 = sender.AlertMode != NotificationAlertMode.None;
     }
@@ -214,7 +215,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         if (this.PART_ActionPanel != null)
             this.PART_ActionPanel!.Children.Move(oldindex, newindex);
     }
-    
+
     private class NotificationContent_TextBlock : TextBlock, INotificationContent {
         private readonly TextNotification notification;
         protected override Type StyleKeyOverride => typeof(TextBlock);
@@ -289,7 +290,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             }
         });
 
-        private NotificationAction? myCurrentCommand;
+        private NotificationAction? myAction;
 
         public NotificationHyperlinkButton() {
             this.Command = new NotificationCommandDelegate(this);
@@ -301,13 +302,13 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
                 button = new NotificationHyperlinkButton();
             }
 
-            button.myCurrentCommand = item;
+            button.myAction = item;
             return button;
         }
 
         public static bool PushCachedButton(NotificationHyperlinkButton button) {
-            Debug.Assert(button.myCurrentCommand != null);
-            button.myCurrentCommand = null;
+            Debug.Assert(button.myAction != null);
+            button.myAction = null;
             bool pushed = buttonCache.Count < 8;
             if (pushed)
                 buttonCache.Push(button);
@@ -316,11 +317,11 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
             base.OnAttachedToVisualTree(e);
-            if (this.myCurrentCommand == null) {
-                throw new Exception(nameof(this.myCurrentCommand) + " not set");
+            if (this.myAction == null) {
+                throw new Exception(nameof(this.myAction) + " not set");
             }
 
-            Binders.AttachModels(this.myCurrentCommand, this.toolTipBinder, this.textBinder);
+            Binders.AttachModels(this.myAction, this.toolTipBinder, this.textBinder);
             ((NotificationCommandDelegate) this.Command!).OnButtonAttachedToVT();
         }
 
@@ -335,12 +336,20 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         private class NotificationCommandDelegate(NotificationHyperlinkButton button) : BaseAsyncRelayCommand {
             private NotificationAction? cmd;
 
-            protected override bool CanExecuteCore(object? parameter) => button.myCurrentCommand?.CanExecute() ?? false;
+            protected override bool CanExecuteCore(object? parameter) => button.myAction?.CanExecute() ?? false;
 
             protected override async Task ExecuteCoreAsync(object? parameter) {
-                if (button.myCurrentCommand != null) {
+                NotificationAction? action = button.myAction;
+                if (action != null) {
+                    // We pass the context of the button, which will most likely contain the top level it exists in.
+                    // This way, even if the notification doesn't have a reference to the top level, it can
+                    // still use the top level that the notification exists in. Not a great workaround but it works.
+                    IContextData buttonContext = DataManager.GetFullContextData(button);
                     try {
-                        await CommandManager.Instance.RunActionAsync(_ => button.myCurrentCommand.Execute(), DataManager.GetFullContextData(button));
+                        await CommandManager.Instance.RunActionAsync(_ => action.Execute(), buttonContext);
+                    }
+                    catch (OperationCanceledException) {
+                        // ignored
                     }
                     catch (Exception exception) when (!Debugger.IsAttached) {
                         await LogExceptionHelper.ShowMessageAndPrintToLogs("Notification Action Error", exception);
@@ -352,15 +361,15 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             private void OnCanExecuteChanged(NotificationAction sender) => this.RaiseCanExecuteChanged();
 
             public void OnButtonAttachedToVT() {
-                this.cmd = button.myCurrentCommand!;
+                this.cmd = button.myAction!;
                 Debug.Assert(this.cmd != null);
 
                 this.cmd.CanExecuteChanged += this.OnCanExecuteChanged;
-                
+
                 // When another notification is shown in the same call frame as a notification action being executed,
                 // if the pressed notification's button is cached then re-used in the newly shown notification,
                 // it will be stuck disabled because it's still technically running when CanExecute is queried.
-                
+
                 // So, schedule update at some point in the future.
                 // Using BeforeRender so that the user won't see it flicker as disabled then enabled next frame
                 ApplicationPFX.Instance.Dispatcher.Post(this.RaiseCanExecuteChanged, DispatchPriority.BeforeRender);

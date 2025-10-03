@@ -35,7 +35,7 @@ public class LambdaNotificationAction : NotificationAction {
     }
 
     public override Task Execute() {
-        return (this.requireContext && this.ContextData == null) 
+        return this.requireContext && this.ContextData == null 
             ? Task.CompletedTask 
             : this.action(this);
     }

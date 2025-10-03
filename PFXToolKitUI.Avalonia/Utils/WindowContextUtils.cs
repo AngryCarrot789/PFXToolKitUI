@@ -38,7 +38,7 @@ public static class WindowContextUtils {
         parentWindow = null;
         manager = null;
 
-        if (CommandManager.LocalContextManager.TryGetGlobalContext(out IContextData? context)) {
+        if (CommandManager.LocalContextManager.TryGetCurrentContext(out IContextData? context)) {
             if ((parentWindow = IDesktopWindow.WindowFromContext(context)) != null) {
                 manager = parentWindow.WindowManager;
                 return true;

@@ -104,7 +104,7 @@ public sealed class CommandManager {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         ArgumentNullException.ThrowIfNull(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
-            using IDisposable globalContextUsage = LocalContextManager.PushGlobalContext(context);
+            using IDisposable globalContextUsage = LocalContextManager.PushContext(context);
             await command.Command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
         }
     }
@@ -131,7 +131,7 @@ public sealed class CommandManager {
     /// </returns>
     public async Task Execute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentNullException.ThrowIfNull(context);
-        using IDisposable globalContextUsage = LocalContextManager.PushGlobalContext(context);
+        using IDisposable globalContextUsage = LocalContextManager.PushContext(context);
         await command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
     }
 
@@ -146,7 +146,7 @@ public sealed class CommandManager {
     public async Task RunActionAsync(Func<CommandEventArgs, Task> function, IContextData context, ShortcutEntry? shortcut = null, ContextRegistry? contextMenu = null, bool isUserInitiated = true) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
-        using IDisposable globalContextUsage = this.asyncContextManager.PushGlobalContext(context);
+        using IDisposable globalContextUsage = this.asyncContextManager.PushContext(context);
 
         try {
             await function(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
