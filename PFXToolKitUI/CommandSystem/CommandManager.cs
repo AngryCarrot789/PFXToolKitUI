@@ -22,7 +22,6 @@ using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.CommandSystem;
 

@@ -46,6 +46,7 @@ public static class Filters {
     public static readonly FileFilter MediaFlv = FileFilter.Builder("FLV Video").Patterns("*.flv").AppleUniformTypeIds("com.adobe.flash-video").MimeTypes("video/x-flv").Build();
     public static readonly FileFilter MediaGifv = FileFilter.Builder("GIFV Video").Patterns("*.gifv").AppleUniformTypeIds("public.video").MimeTypes("video/mp4").Build();
     public static readonly FileFilter MediaQt = FileFilter.Builder("QT Video").Patterns("*.qt").AppleUniformTypeIds("com.apple.quicktime-movie").MimeTypes("video/quicktime").Build();
+    public static readonly FileFilter Lua = FileFilter.Builder("Lua Source").Patterns("*.lua").AppleUniformTypeIds("public.script").MimeTypes("text/lua").Build();
 
     public static readonly FileFilter ProjectType = FileFilter.Builder("Frame PFX Project").Patterns("*.fpx").AppleUniformTypeIds("public.frame-pfx").Build();
     public static readonly IReadOnlyList<FileFilter> ListProjectTypeAndAll = [ProjectType, All];

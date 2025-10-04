@@ -129,8 +129,18 @@ public static class CollectionUtils {
     }
 
     public static void ForEach<T>(this IEnumerable<T> enumerable, Action<T> consumer) {
-        foreach (T value in enumerable) {
-            consumer(value);
+        if (enumerable is List<T> list1) {
+            list1.ForEach(consumer);
+        }
+        else if (enumerable is IList<T> list2) {
+            for (int i = 0; i < list2.Count; i++) {
+                consumer(list2[i]);
+            }
+        }
+        else {
+            foreach (T value in enumerable) {
+                consumer(value);
+            }
         }
     }
 

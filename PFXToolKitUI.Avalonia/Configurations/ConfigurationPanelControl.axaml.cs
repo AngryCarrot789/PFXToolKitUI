@@ -18,7 +18,6 @@
 // 
 
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Documents;

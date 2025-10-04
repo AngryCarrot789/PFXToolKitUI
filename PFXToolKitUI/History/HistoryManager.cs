@@ -18,7 +18,6 @@
 // 
 
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils;
 

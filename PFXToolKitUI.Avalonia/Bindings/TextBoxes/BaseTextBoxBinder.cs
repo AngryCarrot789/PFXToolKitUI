@@ -18,8 +18,6 @@
 // 
 
 using System.Diagnostics;
-using System.Runtime.ExceptionServices;
-using System.Transactions;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
