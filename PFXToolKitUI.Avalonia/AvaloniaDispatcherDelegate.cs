@@ -67,8 +67,8 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
         this.dispatcher.Post(action, ToAvaloniaPriority(priority));
     }
     
-    public void Post(Action<object?> action, object? state, DispatchPriority priority = DispatchPriority.Default) {
-        this.dispatcher.Post(new SendOrPostCallback(action), state, ToAvaloniaPriority(priority));
+    public void Post(SendOrPostCallback action, object? state, DispatchPriority priority = DispatchPriority.Default) {
+        this.dispatcher.Post(action, state, ToAvaloniaPriority(priority));
     }
     
     public void Shutdown() => this.dispatcher.InvokeShutdown();

@@ -103,7 +103,7 @@ public interface IDispatcher {
     /// <param name="action">The callback to invoke</param>
     /// <param name="state">The state object to pass to the callback</param>
     /// <param name="priority">The priority to invoke the callback at</param>
-    void Post(Action<object?> action, object? state, DispatchPriority priority = DispatchPriority.Default);
+    void Post(SendOrPostCallback action, object? state, DispatchPriority priority = DispatchPriority.Default);
 
     /// <summary>
     /// Process all queued events at and above the given priority. Once the task is complete,
