@@ -141,6 +141,8 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     private readonly ColourBrushHandler titleBarBrushHandler;
     private readonly ColourBrushHandler borderBrushHandler;
 
+    internal bool internalIsProcessingClose;
+
     public DesktopWindowImpl(DesktopWindowManager myManager, DesktopWindowImpl? parentWindow, WindowBuilder builder) {
         Debug.Assert(ReferenceEquals(parentWindow, builder.Parent));
         this.myManager = myManager;
@@ -243,9 +245,13 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     }
 
     internal WindowCancelCloseEventArgs OnNativeWindowClosing(WindowCloseReason reason, bool isFromCode) {
-        if (this.OpenState != OpenState.Open)
+        if (this.internalIsProcessingClose)
+            throw new InvalidOperationException("Reentry of " + nameof(this.OnNativeWindowClosing));
+        
+        if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             throw new InvalidOperationException("Window is not in its normal open state");
 
+        this.internalIsProcessingClose = true;
         this.OpenState = OpenState.TryingToClose;
         WindowCancelCloseEventArgs beforeClosingArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode);
         this.TryClose?.Invoke(this, beforeClosingArgs);
@@ -270,6 +276,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         }
 
         if (beforeClosingArgs.IsCancelled) {
+            this.internalIsProcessingClose = false;
             this.OpenState = OpenState.Open;
             return beforeClosingArgs;
         }
@@ -296,6 +303,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             }
         }
 
+        this.internalIsProcessingClose = false;
         return beforeClosingArgs;
     }
 

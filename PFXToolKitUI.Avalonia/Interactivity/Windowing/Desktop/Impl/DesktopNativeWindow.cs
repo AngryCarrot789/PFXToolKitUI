@@ -227,7 +227,7 @@ public sealed class DesktopNativeWindow : Window {
 
     protected override void OnClosing(WindowClosingEventArgs e) {
         base.OnClosing(e);
-        if (this.Window.OpenState != OpenState.Open) {
+        if (this.Window.internalIsProcessingClose || this.Window.OpenState == OpenState.Closed) {
             if (e.CloseReason != WindowCloseReason.ApplicationShutdown && e.CloseReason != WindowCloseReason.OSShutdown) {
                 throw new InvalidOperationException("Reentrancy of " + nameof(this.OnClosing));
             }
