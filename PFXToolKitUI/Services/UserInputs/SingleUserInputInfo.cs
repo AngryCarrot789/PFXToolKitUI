@@ -38,6 +38,13 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     public string Text {
         get => this.text;
         set {
+            if (this.lineCountHint == 1) {
+                int index = value.AsSpan().IndexOfAny("\r\n");
+                if (index >= 0) {
+                    value = value.Substring(0, index);
+                }
+            }
+
             PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => {
                 t.UpdateTextError();
                 t.TextChanged?.Invoke(t);
@@ -55,7 +62,10 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
 
     /// <summary>
     /// Gets or sets a hint for the amount of visual lines the text input should display. Default is 1,
-    /// meaning only 1 line is shown. A value greater than 1 disables auto-close when pressing return
+    /// meaning only 1 line is shown. A value greater than 1 disables auto-close when pressing return.
+    /// <para>
+    /// Note, when this value is 1, <see cref="Text"/> will be canonicalized to remove <c>\n</c> and <c>\r</c> characters 
+    /// </para>
     /// </summary>
     public int LineCountHint {
         get => this.lineCountHint;

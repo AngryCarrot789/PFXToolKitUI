@@ -29,7 +29,13 @@ namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
 public partial class SingleUserInputControl : UserControl, IUserInputContent {
     private readonly IBinder<SingleUserInputInfo> labelBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LabelChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Label));
-    private readonly IBinder<SingleUserInputInfo> textBinder = new AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo>(TextBox.TextProperty, nameof(SingleUserInputInfo.TextChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.Text), b => b.Model.Text = b.Control.GetValue(TextBox.TextProperty) ?? "");
+
+    private readonly IBinder<SingleUserInputInfo> textBinder =
+        new AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo>(
+            TextBox.TextProperty,
+            nameof(SingleUserInputInfo.TextChanged),
+            b => b.Control.SetValue(TextBox.TextProperty, b.Model.Text),
+            b => b.Model.Text = b.Control.GetValue(TextBox.TextProperty) ?? "");
 
     private readonly IBinder<SingleUserInputInfo> linesBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LineCountHintChanged), b => {
         b.Control.SetValue(TextBox.MinLinesProperty, b.Model.LineCountHint);
@@ -107,7 +113,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         if (minWidth >= 0) {
             return new PixelSize(minWidth, 0);
         }
-        
+
         return PixelSize.Empty;
     }
 
