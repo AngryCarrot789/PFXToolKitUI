@@ -227,9 +227,17 @@ public sealed class DesktopNativeWindow : Window {
 
     protected override void OnClosing(WindowClosingEventArgs e) {
         base.OnClosing(e);
+        if (this.Window.OpenState != OpenState.Open) {
+            if (e.CloseReason != WindowCloseReason.ApplicationShutdown && e.CloseReason != WindowCloseReason.OSShutdown) {
+                throw new InvalidOperationException("Reentrancy of " + nameof(this.OnClosing));
+            }
+            
+            return;
+        }
+        
         WindowCancelCloseEventArgs args = this.Window.OnNativeWindowClosing(this.closingReason = e.CloseReason, this.isClosingFromCode = e.IsProgrammatic);
         if (e.Cancel && !args.IsCancelled) {
-            Debug.Fail("!!!");
+            Debug.Fail("!!! someone used the raw window's Closing event");
         }
 
         e.Cancel = args.IsCancelled;

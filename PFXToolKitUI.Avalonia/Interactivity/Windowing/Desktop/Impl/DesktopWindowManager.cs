@@ -228,6 +228,10 @@ public sealed class DesktopWindowManager : IWindowManager {
         switch (lifetime.ShutdownMode) {
             case ShutdownMode.OnLastWindowClose when this.allWindows.Count < 1:
             case ShutdownMode.OnMainWindowClose when this.mainWindows.Count < 1: {
+                // Set shutdown mode as explicit, to stop avalonia processing the
+                // shutdown mode itself and causing shutdown reentrancy
+                lifetime.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+                
                 // We need to post the shutdown request, because due to how the avalonia
                 // application handles stuff, the window we just processed isn't removed from
                 // the app's internal window list, so it will try to close it, which results

@@ -136,7 +136,6 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     private TaskCompletionSource? tcsShowAsync;
     private TaskCompletionSource? tcsWaitForClosed;
     private readonly List<CancellableTaskCompletionSource> listTcsWaitForClosed;
-    private bool isProcessingClosingInternal;
 
     // utils for "binding" brushes from the BrushManager api
     private readonly ColourBrushHandler titleBarBrushHandler;
@@ -244,16 +243,10 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     }
 
     internal WindowCancelCloseEventArgs OnNativeWindowClosing(WindowCloseReason reason, bool isFromCode) {
-        // this.requestToCloseTask != null || this.isProcessingClosingInternal
-        if (this.isProcessingClosingInternal)
-            throw new InvalidOperationException("Reentrancy of " + nameof(this.OnNativeWindowClosing));
-
-        // set to TryingToClose by RequestCloseAsync
-        if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
+        if (this.OpenState != OpenState.Open)
             throw new InvalidOperationException("Window is not in its normal open state");
 
         this.OpenState = OpenState.TryingToClose;
-        this.isProcessingClosingInternal = true;
         WindowCancelCloseEventArgs beforeClosingArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode);
         this.TryClose?.Invoke(this, beforeClosingArgs);
 
@@ -276,7 +269,6 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             }
         }
 
-        this.isProcessingClosingInternal = false;
         if (beforeClosingArgs.IsCancelled) {
             this.OpenState = OpenState.Open;
             return beforeClosingArgs;
