@@ -95,7 +95,7 @@ public interface IListSelectionModel {
     /// Replaces the current selection with the new selected index, deselecting everything else
     /// </summary>
     /// <param name="index">The index to make selected. Anything else will become deselected</param>
-    void SetSelection(int index) => this.SetSelection([LongRange.FromPoint(index)]);
+    void SetSelection(int index) => this.SetSelection([LongRange.FromStartAndLength(index, 1)]);
     
     /// <summary>
     /// Replaces the current selection with the new selection, deselecting everything else
@@ -107,7 +107,7 @@ public interface IListSelectionModel {
     /// Replaces the current selection with the provided selection, deselecting everything else
     /// </summary>
     /// <param name="indices">The indices to make selected. Anything else will become deselected</param>
-    void SetSelection(IEnumerable<int> indices) => this.SetSelection(new LongRangeUnion(indices.Select(LongRange.FromPoint)));
+    void SetSelection(IEnumerable<int> indices) => this.SetSelection(new LongRangeUnion(indices.Select(t => LongRange.FromStartAndLength(t, 1))));
 
     /// <summary>
     /// Replaces the current selection with the provided selection, deselecting everything else

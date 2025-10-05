@@ -179,7 +179,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         if ((index + count) > this.SourceList.Count)
             throw new ArgumentException("Index+Count exceeds maximum index within the source list");
 
-        LongRange range = LongRange.FromLength(index, count);
+        LongRange range = LongRange.FromStartAndLength(index, count);
         if (this.SelectionChanged == null) {
             if (select) {
                 this.selectedIndices.Add(range);

@@ -18,6 +18,7 @@
 // 
 
 using Avalonia.Input;
+using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Utils;
 
@@ -106,5 +107,79 @@ public static class KeyUtils {
         }
 
         return key.ToString();
+    }
+
+    public static char? GetCharForKey(Key key, bool isShiftPressed) {
+        if (key >= Key.A && key <= Key.Z) {
+            char ch = (char) ('a' + (key - Key.A));
+            return isShiftPressed ? char.ToUpper(ch) : ch;
+        }
+
+        // Handle digits
+        if (!isShiftPressed && key >= Key.D0 && key <= Key.D9) {
+            return (char) ('0' + (key - Key.D0));
+        }
+
+        if (isShiftPressed) {
+            switch (key) {
+                case Key.D0: return ')';
+                case Key.D1: return '!';
+                case Key.D2: return '"';
+                case Key.D3: return '£';
+                case Key.D4: return '$';
+                case Key.D5: return '%';
+                case Key.D6: return '^';
+                case Key.D7: return '&';
+                case Key.D8: return '*';
+                case Key.D9: return '(';
+            }
+        }
+
+        // Handle common symbols
+        switch (key) {
+            case Key.OemBackslash:     return isShiftPressed ? '|' : '\\';
+            case Key.OemQuestion:      return isShiftPressed ? '?' : '/';
+            case Key.OemComma:         return isShiftPressed ? '<' : ',';
+            case Key.OemPeriod:        return isShiftPressed ? '>' : '.';
+            case Key.Space:            return ' ';
+            case Key.OemMinus:         return isShiftPressed ? '_' : '-';
+            case Key.OemPlus:          return isShiftPressed ? '+' : '=';
+            case Key.OemOpenBrackets:  return isShiftPressed ? '{' : '[';
+            case Key.OemCloseBrackets: return isShiftPressed ? '}' : ']';
+            case Key.OemSemicolon:     return isShiftPressed ? ':' : ';';
+            case Key.OemTilde:         return isShiftPressed ? '~' : '#';
+        }
+
+        return null;
+    }
+
+    public static bool ShouldBlockKeyStrokeForTextInput(KeyStroke stroke, bool acceptsReturn, bool acceptsTab) {
+        KeyModifiers modifiers = (KeyModifiers) stroke.Modifiers;
+        if (modifiers != KeyModifiers.None && modifiers != KeyModifiers.Shift) {
+            // If the modifier keys contain CTRL or ALT or 'Meta' (Windows on windows os),
+            // then no text will be inserted into the text box, so we do not block input.
+            return false;
+        }
+
+        bool shift = modifiers == KeyModifiers.Shift;
+        Key key = (Key) stroke.KeyCode;
+        switch (key) {
+            case Key.Tab when acceptsTab:      // insert tab char or spaces
+            case Key.Enter when acceptsReturn: // new line
+            case Key.Back:   // delete a char
+            case Key.Delete: // delete a char
+                return true;
+        }
+
+        if (key >= Key.NumPad0 && key <= Key.NumPad9) {
+            // this might be wrong
+            return true;
+        }
+
+        if (GetCharForKey(key, shift) != null) {
+            return true;
+        }
+
+        return false;
     }
 }

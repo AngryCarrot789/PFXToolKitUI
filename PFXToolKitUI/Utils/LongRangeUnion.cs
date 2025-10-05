@@ -28,7 +28,7 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
     /// <summary>
     /// Returns a range of the smallest and largest integer value
     /// </summary>
-    public LongRange EnclosingRange => this.myRanges.Count == 0 ? default : new LongRange(this.myRanges[0].Start, this.myRanges[^1].End);
+    public LongRange EnclosingRange => this.myRanges.Count == 0 ? default : LongRange.FromStartAndEnd(this.myRanges[0].Start, this.myRanges[^1].End);
 
     public bool IsFragmented => this.myRanges.Count > 1;
 
@@ -79,28 +79,26 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
 
     public void Add(long value) {
         if (value < long.MaxValue)
-            this.Add(new LongRange(value, value + 1));
+            this.Add(LongRange.FromStartAndLength(value, 1));
     }
 
     public void Add(LongRange item) {
-        if (item.End < item.Start)
-            throw new ArgumentOutOfRangeException(nameof(item), "item.End cannot be less than item.Start");
-        if (item.Start == item.End)
-            return; // we are adding literally nothing
+        item.Validate();
+        if (!item.IsEmpty /* no point in adding nothing */) {
+            SearchResultPair result = this.FindFirstOverlappingRange(in item);
+            switch (result.Result) {
+                case SearchResult.BeforeIndex: this.myRanges.Insert(result.Index + 1, item); break;
+                case SearchResult.AfterIndex:
+                case SearchResult.NotPresent:
+                    this.myRanges.Insert(result.Index, item);
+                    break;
 
-        SearchResultPair result = this.FindFirstOverlappingRange(item);
-        switch (result.Result) {
-            case SearchResult.BeforeIndex: this.myRanges.Insert(result.Index + 1, item); break;
-            case SearchResult.AfterIndex:
-            case SearchResult.NotPresent:
-                this.myRanges.Insert(result.Index, item);
-                break;
+                default: throw new ArgumentOutOfRangeException();
+            }
 
-            default: throw new ArgumentOutOfRangeException();
+            this.MergeRanges(result.Index);
+            this.cachedGrandTotal = null;
         }
-
-        this.MergeRanges(result.Index);
-        this.cachedGrandTotal = null;
     }
 
     public void Clear() {
@@ -113,7 +111,7 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
     /// </summary>
     /// <param name="location"></param>
     /// <returns></returns>
-    public bool IsSuperSet(long location) => this.IsSuperSet(new LongRange(location, location == long.MaxValue ? long.MaxValue : (location + 1)));
+    public bool IsSuperSet(long location) => this.IsSuperSet(LongRange.FromStartAndEnd(location, location == long.MaxValue ? long.MaxValue : (location + 1)));
     
     /// <summary>
     /// Returns true when this union contains the entirety of the given range
@@ -126,7 +124,7 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
     public bool Overlaps(LongRange range) => Overlaps(range, this.myRanges);
     
     public int GetOverlappingRanges(LongRange range, Span<LongRange> output) {
-        SearchResultPair result = this.FindFirstOverlappingRange(range);
+        SearchResultPair result = this.FindFirstOverlappingRange(in range);
         if (result.Result == SearchResult.NotPresent)
             return 0;
 
@@ -179,10 +177,10 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
                 long start = Math.Max(pos, r.Start);
                 long end = Math.Min(range.End, r.End);
                 if (start < end)
-                    dstUnion.Add(new LongRange(start, end));
+                    dstUnion.Add(LongRange.FromStartAndEnd(start, end));
             }
             else if (pos < r.Start) {
-                dstUnion.Add(new LongRange(pos, Math.Min(r.Start, range.End)));
+                dstUnion.Add(LongRange.FromStartAndEnd(pos, Math.Min(r.Start, range.End)));
             }
 
             if ((pos = Math.Max(pos, r.End)) >= range.End) {
@@ -191,7 +189,7 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
         }
 
         if (!complement && pos < range.End) {
-            dstUnion.Add(new LongRange(pos, range.End));
+            dstUnion.Add(LongRange.FromStartAndEnd(pos, range.End));
         }
     }
 
@@ -200,12 +198,12 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
 
     public bool Remove(long value) {
         if (value != long.MaxValue)
-            return this.Remove(new LongRange(value, value + 1));
+            return this.Remove(LongRange.FromStartAndEnd(value, value + 1));
         return false;
     }
 
     public bool Remove(LongRange item) {
-        SearchResultPair result = this.FindFirstOverlappingRange(item);
+        SearchResultPair result = this.FindFirstOverlappingRange(in item);
         if (result.Result == SearchResult.NotPresent)
             return false;
 
@@ -215,7 +213,7 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
             if (!this.myRanges[i].Overlaps(item))
                 break;
 
-            if (this.myRanges[i].IsSuperSet(new LongRange(item.Start, itemMaxEnd))) {
+            if (this.myRanges[i].IsSuperSet(LongRange.FromStartAndEnd(item.Start, itemMaxEnd))) {
                 // The range contains the entire range-to-remove, split up the range.
                 (LongRange a, LongRange rest) = this.myRanges[i].Split(item.Start);
                 (LongRange b, LongRange c) = rest.Split(item.End);
@@ -234,10 +232,10 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
                 this.myRanges.RemoveAt(i--);
             }
             else if (item.Start < this.myRanges[i].Start) {
-                this.myRanges[i] = this.myRanges[i].Clamp(new LongRange(item.End, long.MaxValue));
+                this.myRanges[i] = this.myRanges[i].Clamp(LongRange.FromStartAndEnd(item.End, long.MaxValue));
             }
             else if (item.End >= this.myRanges[i].End) {
-                this.myRanges[i] = this.myRanges[i].Clamp(new LongRange(long.MinValue, item.Start));
+                this.myRanges[i] = this.myRanges[i].Clamp(LongRange.FromStartAndEnd(long.MinValue, item.Start));
             }
         }
 
@@ -254,13 +252,13 @@ public sealed class LongRangeUnion : IEnumerable<LongRange> {
                 i++;
             }
             else {
-                this.myRanges[i] = new LongRange(Math.Min(current.Start, next.Start), Math.Max(current.End, next.End));
+                this.myRanges[i] = LongRange.FromStartAndEnd(Math.Min(current.Start, next.Start), Math.Max(current.End, next.End));
                 this.myRanges.RemoveAt(i + 1);
             }
         }
     }
 
-    private SearchResultPair FindFirstOverlappingRange(LongRange range) {
+    private SearchResultPair FindFirstOverlappingRange(in LongRange range) {
         int start = 0, end = this.myRanges.Count - 1;
         while (start <= end) {
             int mid = start + (end - start) / 2;

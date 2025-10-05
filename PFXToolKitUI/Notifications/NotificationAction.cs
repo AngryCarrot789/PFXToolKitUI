@@ -28,7 +28,8 @@ public delegate void NotificationActionEventHandler(NotificationAction sender);
 public delegate void NotificationActionContextDataChangedEventHandler(NotificationAction sender, IContextData? oldData, IContextData? newData);
 
 /// <summary>
-/// An action that can be executed from within a notification
+/// An action that can be executed from within a notification. These actions are invoked within
+/// a command context, so they have additional local async context.
 /// </summary>
 public abstract class NotificationAction {
     private Notification? notification;

@@ -26,7 +26,11 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.VisualTree;
+using AvaloniaEdit;
+using AvaloniaEdit.Editing;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Utils.Collections;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
@@ -60,15 +64,6 @@ public class UIInputManager {
     /// </summary>
     public static readonly AttachedProperty<string?> FocusPathProperty = AvaloniaProperty.RegisterAttached<UIInputManager, AvaloniaObject, string?>("FocusPath", inherits: true);
 
-    /// <summary>
-    /// A property used to determine if shortcut processing is disabled on an object. Default value is false,
-    /// but you can override the metadata for specific controls and set the default value to true.
-    /// <para>
-    /// This is overridden to true for things like text boxes and text presenters
-    /// </para>
-    /// </summary>
-    public static readonly AttachedProperty<bool> IsKeyShortcutProcessingBlockedProperty = AvaloniaProperty.RegisterAttached<UIInputManager, AvaloniaObject, bool>("IsKeyShortcutProcessingBlocked");
-
     public static readonly AttachedProperty<InputElement?> CurrentFocusedElementProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, InputElement?>("CurrentFocusedElement");
     public static readonly AttachedProperty<InputElement?> LastFocusedElementProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, InputElement?>("LastFocusedElement");
 
@@ -77,8 +72,9 @@ public class UIInputManager {
     /// </summary>
     public static readonly AttachedProperty<bool> IsFocusedProperty = AvaloniaProperty.RegisterAttached<UIInputManager, AvaloniaObject, bool>("IsFocused");
 
+    private static readonly InheritanceDictionary<Func<AvaloniaObject, KeyStroke, bool>> blockInputHandlers;
     private static readonly SortedList<Key, int> keyRepeatCounter;
-    
+
     public static UIInputManager Instance { get; } = new UIInputManager();
 
     /// <summary>
@@ -95,7 +91,7 @@ public class UIInputManager {
     /// An event fired when <see cref="FocusedPath"/> changed
     /// </summary>
     public static event FocusedPathChangedEventHandler? FocusedPathChanged;
-    
+
     private UIInputManager() {
         if (Instance != null)
             throw new InvalidOperationException();
@@ -103,6 +99,9 @@ public class UIInputManager {
 
     static UIInputManager() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        keyRepeatCounter = new SortedList<Key, int>();
+        blockInputHandlers = new InheritanceDictionary<Func<AvaloniaObject, KeyStroke, bool>>(4);
+
         WindowBase.IsActiveProperty.Changed.AddClassHandler<WindowBase, bool>((o, args) => OnWindowActivated(o, args.NewValue.GetValueOrDefault()));
         InputElement.GotFocusEvent.AddClassHandler<TopLevel>((s, e) => OnGotOrLostFocus(s, e, false), handledEventsToo: true);
         InputElement.LostFocusEvent.AddClassHandler<TopLevel>((s, e) => OnGotOrLostFocus(s, e, true), handledEventsToo: true);
@@ -119,12 +118,30 @@ public class UIInputManager {
 
         FocusPathProperty.Changed.AddClassHandler<AvaloniaObject, string?>(OnFocusPathChanged);
 
-        IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextBox), new StyledPropertyMetadata<bool>(true));
-        IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextPresenter), new StyledPropertyMetadata<bool>(true));
-        keyRepeatCounter = new SortedList<Key, int>();
-        // AvalonEdit
-        // IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextEditor), new StyledPropertyMetadata<bool>(true));
-        // IsKeyShortcutProcessingBlockedProperty.OverrideMetadata(typeof(TextArea), new StyledPropertyMetadata<bool>(true));
+
+        Func<AvaloniaObject, KeyStroke, bool> handler_av = (c, ks) => {
+            TextBox? tb = c as TextBox ?? VisualTreeUtils.FindLogicalParent<TextBox>(c);
+            return KeyUtils.ShouldBlockKeyStrokeForTextInput(ks, tb != null && tb.AcceptsReturn, tb != null && tb.AcceptsTab);
+        };
+
+        RegisterBlockInputHandler(typeof(TextBox), handler_av);
+        RegisterBlockInputHandler(typeof(TextPresenter), handler_av);
+        RegisterBlockInputHandler(typeof(TextEditor), (c, ks) => KeyUtils.ShouldBlockKeyStrokeForTextInput(ks, true, false));
+        RegisterBlockInputHandler(typeof(TextArea), (c, ks) => KeyUtils.ShouldBlockKeyStrokeForTextInput(ks, true, false));
+    }
+
+    public static bool GetIsKeyShortcutProcessingBlocked(AvaloniaObject obj, KeyStroke stroke) {
+        foreach (ITypeEntry<Func<AvaloniaObject, KeyStroke, bool>> entry in blockInputHandlers.GetLocalValueEnumerable(obj.GetType())) {
+            if (entry.LocalValue(obj, stroke)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static void RegisterBlockInputHandler(Type typeOfObject, Func<AvaloniaObject, KeyStroke, bool> handler) {
+        blockInputHandlers[typeOfObject] = handler;
     }
 
     public static InputElement? GetCurrentFocusedElement(TopLevel obj) => obj.GetValue(CurrentFocusedElementProperty);
@@ -222,9 +239,6 @@ public class UIInputManager {
             topLevel.SetValue(ShortcutProcessorProperty, processor = new AvaloniaShortcutInputProcessor(AvaloniaShortcutManager.AvaloniaInstance));
         return processor;
     }
-
-    public static void SetIsKeyShortcutProcessingBlocked(AvaloniaObject obj, bool value) => obj.SetValue(IsKeyShortcutProcessingBlockedProperty, value);
-    public static bool GetIsKeyShortcutProcessingBlocked(AvaloniaObject obj) => obj.GetValue(IsKeyShortcutProcessingBlockedProperty);
 
     #region Focus managing
 

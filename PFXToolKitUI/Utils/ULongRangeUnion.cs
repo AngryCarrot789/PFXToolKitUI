@@ -28,7 +28,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
     /// <summary>
     /// Returns a range of the smallest and largest integer value
     /// </summary>
-    public ULongRange EnclosingRange => this.myRanges.Count == 0 ? default : new ULongRange(this.myRanges[0].Start, this.myRanges[^1].End);
+    public ULongRange EnclosingRange => this.myRanges.Count == 0 ? default : ULongRange.FromStartAndEnd(this.myRanges[0].Start, this.myRanges[^1].End);
 
     public bool IsFragmented => this.myRanges.Count > 1;
 
@@ -79,7 +79,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
 
     public void Add(ulong value) {
         if (value < ulong.MaxValue)
-            this.Add(new ULongRange(value, value + 1));
+            this.Add(ULongRange.FromStartAndEnd(value, value + 1));
     }
 
     public void Add(ULongRange item) {
@@ -113,7 +113,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
     /// </summary>
     /// <param name="location"></param>
     /// <returns></returns>
-    public bool IsSuperSet(ulong location) => this.IsSuperSet(new ULongRange(location, location == ulong.MaxValue ? ulong.MaxValue : (location + 1)));
+    public bool IsSuperSet(ulong location) => this.IsSuperSet(ULongRange.FromStartAndEnd(location, location == ulong.MaxValue ? ulong.MaxValue : (location + 1)));
     
     /// <summary>
     /// Returns true when this union contains the entirety of the given range
@@ -169,7 +169,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
 
     // private static void GetPresenceUnion(ULongRangeUnion dstUnion, ULongRange range, bool complement, List<ULongRange> list) {
     //     for (ulong i = range.Start; i < range.End; i++) {
-    //         if (IsSuperSetOf(new ULongRange(i, i + 1), list) == complement) {
+    //         if (IsSuperSetOf(ULongRange.FromStartAndEnd(i, i + 1), list) == complement) {
     //             dstUnion.Add(i);
     //         }
     //     }
@@ -187,10 +187,10 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
                 ulong start = Math.Max(pos, r.Start);
                 ulong end = Math.Min(range.End, r.End);
                 if (start < end)
-                    dstUnion.Add(new ULongRange(start, end));
+                    dstUnion.Add(ULongRange.FromStartAndEnd(start, end));
             }
             else if (pos < r.Start) {
-                dstUnion.Add(new ULongRange(pos, Math.Min(r.Start, range.End)));
+                dstUnion.Add(ULongRange.FromStartAndEnd(pos, Math.Min(r.Start, range.End)));
             }
 
             if ((pos = Math.Max(pos, r.End)) >= range.End) {
@@ -199,7 +199,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
         }
 
         if (!complement && pos < range.End) {
-            dstUnion.Add(new ULongRange(pos, range.End));
+            dstUnion.Add(ULongRange.FromStartAndEnd(pos, range.End));
         }
     }
 
@@ -208,7 +208,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
 
     public bool Remove(ulong value) {
         if (value != ulong.MaxValue)
-            return this.Remove(new ULongRange(value, value + 1));
+            return this.Remove(ULongRange.FromStartAndEnd(value, value + 1));
         return false;
     }
 
@@ -223,7 +223,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
             if (!this.myRanges[i].Overlaps(item))
                 break;
 
-            if (this.myRanges[i].IsSuperSet(new ULongRange(item.Start, itemMaxEnd))) {
+            if (this.myRanges[i].IsSuperSet(ULongRange.FromStartAndEnd(item.Start, itemMaxEnd))) {
                 // The range contains the entire range-to-remove, split up the range.
                 (ULongRange a, ULongRange rest) = this.myRanges[i].Split(item.Start);
                 (ULongRange b, ULongRange c) = rest.Split(item.End);
@@ -242,10 +242,10 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
                 this.myRanges.RemoveAt(i--);
             }
             else if (item.Start < this.myRanges[i].Start) {
-                this.myRanges[i] = this.myRanges[i].Clamp(new ULongRange(item.End, ulong.MaxValue));
+                this.myRanges[i] = this.myRanges[i].Clamp(ULongRange.FromStartAndEnd(item.End, ulong.MaxValue));
             }
             else if (item.End >= this.myRanges[i].End) {
-                this.myRanges[i] = this.myRanges[i].Clamp(new ULongRange(ulong.MinValue, item.Start));
+                this.myRanges[i] = this.myRanges[i].Clamp(ULongRange.FromStartAndEnd(ulong.MinValue, item.Start));
             }
         }
 
@@ -262,7 +262,7 @@ public sealed class ULongRangeUnion : IEnumerable<ULongRange> {
                 i++;
             }
             else {
-                this.myRanges[i] = new ULongRange(Math.Min(current.Start, next.Start), Math.Max(current.End, next.End));
+                this.myRanges[i] = ULongRange.FromStartAndEnd(Math.Min(current.Start, next.Start), Math.Max(current.End, next.End));
                 this.myRanges.RemoveAt(i + 1);
             }
         }

@@ -18,7 +18,10 @@
 // 
 
 using System.Diagnostics;
+using System.Windows.Input;
 using Avalonia;
+using Avalonia.Input;
+using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
@@ -32,16 +35,43 @@ namespace PFXToolKitUI.Avalonia.Utils;
 /// <see cref="Command.AllowMultipleExecutions"/>, so even if the command can run multiple times concurrently, this relay command cannot
 /// </summary>
 public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
+    /// <summary>
+    /// Gets the control used as to access the context data
+    /// </summary>
     public AvaloniaObject Control { get; }
 
+    /// <summary>
+    /// Gets the ID of the command we invoke
+    /// </summary>
     public string CommandId { get; }
 
+    /// <summary>
+    /// Gets whether <see cref="Command.CanExecute"/> will be queried in our <see cref="ICommand.CanExecute"/> method.
+    /// When true, we also listen to <see cref="DataManager.InheritedContextChangedEvent"/> on the control to automatically
+    /// raise <see cref="BaseRelayCommand.RaiseCanExecuteChanged"/>
+    /// </summary>
     public bool CanQueryExecutability { get; }
+
+    private bool isInvalidatePosted;
 
     public DataManagerCommandWrapper(AvaloniaObject control, string commandId, bool canQueryExecutability = false) {
         this.Control = control;
         this.CommandId = commandId;
         this.CanQueryExecutability = canQueryExecutability;
+        if (this.CanQueryExecutability && control is IInputElement) {
+            DataManager.AddInheritedContextChangedHandler(control, this.OnControlContextInvalidated);
+        }
+    }
+
+    private void OnControlContextInvalidated(object? sender, RoutedEventArgs e) {
+        if (!this.isInvalidatePosted) {
+            this.isInvalidatePosted = true;
+            ApplicationPFX.Instance.Dispatcher.Post(static t => {
+                DataManagerCommandWrapper w = (DataManagerCommandWrapper) t!;
+                w.RaiseCanExecuteChanged();
+                w.isInvalidatePosted = false;
+            }, this);
+        }
     }
 
     protected override bool CanExecuteCore(object? parameter) {

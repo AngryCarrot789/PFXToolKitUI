@@ -34,19 +34,17 @@ public static class WindowContextUtils {
     /// Tries to find a window manager at least, and optionally tries to find a useful contextual window
     /// </summary>
     /// <returns>True when a manager is found</returns>
-    public static bool TryGetWindowManagerWithUsefulWindow([NotNullWhen(true)] out IWindowManager? manager, out IDesktopWindow? parentWindow, IContextData? alternateContext = null, bool canUseActiveOrMainWindow = true) {
+    public static bool TryGetWindowManagerWithUsefulWindow([NotNullWhen(true)] out IWindowManager? manager, out IDesktopWindow? parentWindow, IContextData? context = null, bool canUseActiveOrMainWindow = true) {
         parentWindow = null;
         manager = null;
 
-        if (CommandManager.LocalContextManager.TryGetCurrentContext(out IContextData? context)) {
-            if ((parentWindow = IDesktopWindow.WindowFromContext(context)) != null) {
-                manager = parentWindow.WindowManager;
-                return true;
-            }
+        if (context != null && (parentWindow = IDesktopWindow.WindowFromContext(context)) != null) {
+            manager = parentWindow.WindowManager;
+            return true;
         }
 
-        if (parentWindow == null && alternateContext != null) {
-            if ((parentWindow = IDesktopWindow.WindowFromContext(alternateContext)) != null) {
+        if (parentWindow == null && CommandManager.LocalContextManager.TryGetCurrentContext(out IContextData? localContext)) {
+            if ((parentWindow = IDesktopWindow.WindowFromContext(localContext)) != null) {
                 manager = parentWindow.WindowManager;
                 return true;
             }

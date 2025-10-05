@@ -59,7 +59,7 @@ public sealed class ULongRangeUnionEx : IObservableULongRangeUnion {
 
     public void Add(ulong value) {
         if (value < ulong.MaxValue)
-            this.Add(new ULongRange(value, value + 1));
+            this.Add(ULongRange.FromStartAndEnd(value, value + 1));
     }
 
     public void Add(ULongRange item) {
@@ -92,7 +92,7 @@ public sealed class ULongRangeUnionEx : IObservableULongRangeUnion {
 
     public bool Remove(ulong value) {
         if (value != ulong.MaxValue)
-            return this.Remove(new ULongRange(value, value + 1));
+            return this.Remove(ULongRange.FromStartAndEnd(value, value + 1));
         return false;
     }
 

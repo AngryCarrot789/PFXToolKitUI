@@ -44,7 +44,7 @@ public class AvaloniaShortcutInputProcessor : ShortcutInputProcessor {
         // Some controls don't want to allow processing shortcuts that have no modifier keys,
         // e.g. a text box, if a shortcut is activated by pressing G, you can never type G into it.
         // If there's a shortcut CTRL+C, we try to run a shortcut first, then fallback to letting the TB handle it
-        if (stroke.Modifiers == 0 && UIInputManager.GetIsKeyShortcutProcessingBlocked(focused)) {
+        if (UIInputManager.GetIsKeyShortcutProcessingBlocked(focused, stroke)) {
             return;
         }
 

@@ -24,14 +24,14 @@ using PFXToolKitUI.Interactivity.Windowing;
 namespace PFXToolKitUI.Utils;
 
 public static class TopLevelContextUtils {
-    public static ITopLevel? GetTopLevelFromContext(IContextData? alternateContext = null, bool canUseActiveOrMainTopLevel = true) {
+    public static ITopLevel? GetTopLevelFromContext(IContextData? context = null, bool canUseActiveOrMainTopLevel = true) {
         ITopLevel? topLevel = null;
-        if (CommandManager.LocalContextManager.TryGetCurrentContext(out IContextData? context)) {
+        if (context != null) {
             topLevel = ITopLevel.FromContext(context);
         }
-
-        if (topLevel == null && alternateContext != null) {
-            topLevel = ITopLevel.FromContext(alternateContext);
+        
+        if (topLevel == null && CommandManager.LocalContextManager.TryGetCurrentContext(out IContextData? localContext)) {
+            topLevel = ITopLevel.FromContext(localContext);
         }
         
         if (topLevel == null && canUseActiveOrMainTopLevel) {

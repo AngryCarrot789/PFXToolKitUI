@@ -59,7 +59,7 @@ public sealed class LongRangeUnionEx : IObservableLongRangeUnion {
 
     public void Add(long value) {
         if (value < long.MaxValue)
-            this.Add(new LongRange(value, value + 1));
+            this.Add(LongRange.FromStartAndEnd(value, value + 1));
     }
 
     public void Add(LongRange item) {
@@ -92,7 +92,7 @@ public sealed class LongRangeUnionEx : IObservableLongRangeUnion {
 
     public bool Remove(long value) {
         if (value != long.MaxValue)
-            return this.Remove(new LongRange(value, value + 1));
+            return this.Remove(LongRange.FromStartAndEnd(value, value + 1));
         return false;
     }
 

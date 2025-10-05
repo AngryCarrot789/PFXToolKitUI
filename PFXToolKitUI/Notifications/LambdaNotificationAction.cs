@@ -20,7 +20,7 @@
 namespace PFXToolKitUI.Notifications;
 
 /// <summary>
-/// A notification command that invokes a callback lambda, optionally only when context data is available
+/// A notification action that invokes a callback lambda, optionally only when context data is available
 /// </summary>
 public class LambdaNotificationAction : NotificationAction {
     private readonly Func<LambdaNotificationAction, Task> action;
