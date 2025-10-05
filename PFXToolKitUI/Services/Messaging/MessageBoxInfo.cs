@@ -91,7 +91,6 @@ public class MessageBoxInfo {
         set => PropertyHelper.SetAndRaiseINE(ref this.buttons, value, this, static t => t.ButtonsChanged?.Invoke(t));
     }
 
-
     /// <summary>
     /// Gets or sets the name of this dialog. This is used to maintain the message box result when the user checked
     /// the "Always use this option" box (and if they didn't check "Only until app closes", will also be saved to the config)
@@ -102,6 +101,13 @@ public class MessageBoxInfo {
     /// Gets or sets the type of button to automatically focus in the UI. Default is none
     /// </summary>
     public MessageBoxResult DefaultButton { get; init; }
+    
+    /// <summary>
+    /// Gets or sets the cancellation token used to notify the window to close.
+    /// This will cause the result of <see cref="IMessageDialogService.ShowMessage(MessageBoxInfo)"/>
+    /// to return <see cref="MessageBoxResult.None"/>
+    /// </summary>
+    public CancellationToken DialogCancellation { get; init; }
 
     public event MessageBoxDataButtonsChangedEventHandler? ButtonsChanged;
     public event MessageBoxDataButtonsChangedEventHandler? CaptionChanged;

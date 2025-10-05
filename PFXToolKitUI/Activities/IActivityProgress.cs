@@ -89,14 +89,18 @@ public interface IActivityProgress {
         return state;
     }
 
-    void SetCaptionAndText(string value) {
+    void SetCaptionAndText(string value, Optional<bool> newIsIndeterminate = default) {
         this.Caption = value;
         this.Text = value;
+        if (newIsIndeterminate.HasValue)
+            this.IsIndeterminate = newIsIndeterminate.Value;
     }
 
-    void SetCaptionAndText(string caption, string text) {
+    void SetCaptionAndText(string caption, string text, Optional<bool> newIsIndeterminate = default) {
         this.Caption = caption;
         this.Text = text;
+        if (newIsIndeterminate.HasValue)
+            this.IsIndeterminate = newIsIndeterminate.Value;
     }
 
     public readonly struct State(IActivityProgress progress) : IDisposable {

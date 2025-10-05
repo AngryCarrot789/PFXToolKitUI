@@ -47,12 +47,17 @@ public interface IMessageDialogService {
     /// A unique ID for this type of message dialog that allows the user to specify to remember 
     /// their selection and use the same result next time without showing the dialog
     /// </param>
+    /// <param name="dialogCancellation">
+    /// A cancellation token that notifies the dialog to close, causing this method
+    /// to produce <see cref="MessageBoxResult.None"/>
+    /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
         MessageBoxInfo info = new MessageBoxInfo(caption, message) {
             Buttons = buttons,
             DefaultButton = defaultButton,
-            PersistentDialogName = persistentDialogName
+            PersistentDialogName = persistentDialogName,
+            DialogCancellation = dialogCancellation
         };
         
         info.SetDefaultButtonText();
@@ -71,12 +76,17 @@ public interface IMessageDialogService {
     /// A unique ID for this type of message dialog that allows the user to specify to remember 
     /// their selection and use the same result next time without showing the dialog
     /// </param>
+    /// <param name="dialogCancellation">
+    /// A cancellation token that notifies the dialog to close, causing this method
+    /// to produce <see cref="MessageBoxResult.None"/>
+    /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
         MessageBoxInfo info = new MessageBoxInfo(caption, header, message) {
             Buttons = buttons,
             DefaultButton = defaultButton,
-            PersistentDialogName = persistentDialogName
+            PersistentDialogName = persistentDialogName,
+            DialogCancellation = dialogCancellation
         };
         
         info.SetDefaultButtonText();

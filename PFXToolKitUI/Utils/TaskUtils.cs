@@ -21,6 +21,33 @@ namespace PFXToolKitUI.Utils;
 
 public static class TaskUtils {
     /// <summary>
+    /// Creates a <see cref="CancellationTokenSource"/> that becomes cancelled when the task completes.
+    /// If the task is already completed, it returns an already cancelled token
+    /// </summary>
+    /// <param name="task">The task</param>
+    /// <returns>The cancellation token source</returns>
+    public static CancellationTokenSource CreateCompletionSource(Task task) {
+        CancellationTokenSource cts = new CancellationTokenSource();
+        if (task.IsCompleted) {
+            cts.Cancel();
+            return cts;
+        }
+
+        // Add continuation that cancels the CTS. The continuation will also get removed if the caller
+        // cancels it directly, which will hopefully prevent ObjectDisposedException being thrown
+        _ = task.ContinueWith(static (_, c) => {
+            try {
+                ((CancellationTokenSource) c!).Cancel();
+            }
+            catch (ObjectDisposedException) {
+                // ignored
+            }
+        }, cts, cts.Token);
+        
+        return cts;
+    }
+
+    /// <summary>
     /// Awaits the task. Returns null when it executes successfully. Returns the exception that the filter
     /// accepted, or throws when the filter does not accept the exception. 
     /// </summary>
