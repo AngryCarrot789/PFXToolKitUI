@@ -20,21 +20,20 @@
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Controls.Shapes;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
 using PFXToolKitUI.Avalonia.Icons;
 using PFXToolKitUI.Icons;
-using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.AvControls;
 
 /// <summary>
 /// A control which presents an <see cref="PFXToolKitUI.Icons.Icon"/>
 /// </summary>
-public class IconControl : Control {
+public class IconControl : Control, IIconButton {
+    private static readonly RenderOptions s_AliasRenderOptions = new RenderOptions() { EdgeMode = EdgeMode.Aliased, BitmapInterpolationMode = BitmapInterpolationMode.HighQuality };
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconControl, Icon?>(nameof(Icon));
-    public static readonly StyledProperty<Stretch> StretchProperty = Shape.StretchProperty.AddOwner<IconControl>();
+    public static readonly StyledProperty<StretchMode> StretchProperty = AvaloniaProperty.Register<IconControl, StretchMode>(nameof(Stretch), StretchMode.UniformNoUpscale);
 
     /// <summary>
     /// Gets or sets the icon we use for drawing this control
@@ -43,15 +42,18 @@ public class IconControl : Control {
         get => this.GetValue(IconProperty);
         set => this.SetValue(IconProperty, value);
     }
-
-    public Stretch Stretch {
+    
+    public StretchMode Stretch {
         get => this.GetValue(StretchProperty);
         set => this.SetValue(StretchProperty, value);
     }
 
+    public double? IconMaxWidth { get; set; }
+    
+    public double? IconMaxHeight { get; set; }
+
     private bool isAttachedToVt;
     private AbstractAvaloniaIcon? attachedIcon;
-    private SKMatrix myTransform;
 
     public IconControl() {
     }
@@ -94,7 +96,7 @@ public class IconControl : Control {
             this.attachedIcon = null;
         }
     }
-    
+
     private void OnIconInvalidated(object? sender, EventArgs e) {
         this.InvalidateVisual();
     }
@@ -103,33 +105,33 @@ public class IconControl : Control {
         base.Render(context);
 
         if (this.Icon is AbstractAvaloniaIcon icon) {
-            DrawingContext.PushedState? renderOptions = null;
             if (IIconPreferences.TryGetInstance(out IIconPreferences? prefs) && !prefs.UseAntiAliasing) {
-                renderOptions = context.PushRenderOptions(new RenderOptions() { EdgeMode = EdgeMode.Aliased, BitmapInterpolationMode = BitmapInterpolationMode.HighQuality });
+                using (context.PushRenderOptions(s_AliasRenderOptions)) {
+                    icon.Render(context, this.Bounds, this.Stretch);
+                }
             }
-
-            using (renderOptions) {
-                icon.Render(context, this.Bounds, this.myTransform);
+            else {
+                icon.Render(context, this.Bounds, this.Stretch);
             }
         }
     }
 
     protected override Size MeasureOverride(Size availableSize) {
+        Size size = default;
         if (this.Icon is AbstractAvaloniaIcon icon) {
-            (Size Size, SKMatrix Transform) m = icon.Measure(availableSize, (StretchMode) (int) this.Stretch);
-            this.myTransform = m.Transform;
-            return m.Size;
+            size = icon.Measure(availableSize, (StretchMode) (int) this.Stretch);
         }
 
-        return default;
+        return size;
     }
 
     protected override Size ArrangeOverride(Size finalSize) {
-        // if (this.Icon is AbstractAvaloniaIcon icon) {
-        //     (Size Size, SKMatrix Transform) measure = icon.Measure(finalSize, (StretchMode) this.Stretch);
-        //     return measure.Size;
-        // }
+        Size size = default;
         
-        return finalSize;
+        if (this.Icon is AbstractAvaloniaIcon icon) {
+            size = icon.Measure(finalSize, (StretchMode) (int) this.Stretch);
+        }
+        
+        return size;
     }
 }

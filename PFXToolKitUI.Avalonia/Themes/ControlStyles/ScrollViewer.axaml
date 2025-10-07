@@ -95,7 +95,7 @@
             </ControlTemplate>
         </Setter>
         <Style Selector="^ /template/ RepeatButton > Path">
-            <Setter Property="Fill" Value="{DynamicResource ABrush.Foreground.Disabled}"/>
+            <Setter Property="Fill" Value="{DynamicResource ABrush.Glyph.Disabled}"/>
         </Style>
 
         <Style Selector="^ /template/ RepeatButton:pointerover > Path">

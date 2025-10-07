@@ -6,10 +6,10 @@
     <!-- #################################################################################### -->
 
     <Color x:Key="ABrush.Foreground.Static.Color">#F0F0F0</Color>
-    <Color x:Key="ABrush.Foreground.Deeper.Color">#D2D2D2</Color>
-    <Color x:Key="ABrush.Foreground.Disabled.Color">#BABABA</Color>
+    <Color x:Key="ABrush.Foreground.Deeper.Color">#B9B9B9</Color>
+    <Color x:Key="ABrush.Foreground.Disabled.Color">#868686</Color>
     <Color x:Key="ABrush.Glyph.Static.Color">#DCDCDC</Color>
-    <Color x:Key="ABrush.Glyph.Disabled.Color">#B4B4B4</Color>
+    <Color x:Key="ABrush.Glyph.Disabled.Color">#868686</Color>
     <Color x:Key="ABrush.Glyph.MouseOver.Color">#FAFAFA</Color>
     <Color x:Key="ABrush.Glyph.MouseDown.Color">#EBEBEB</Color>
     <Color x:Key="ABrush.Glyph.Selected.Color">#E4E4E4</Color>

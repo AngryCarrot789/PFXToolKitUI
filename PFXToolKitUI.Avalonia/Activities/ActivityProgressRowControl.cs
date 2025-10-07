@@ -153,7 +153,7 @@ public class ActivityProgressRowControl : TemplatedControl {
         }
         else {
             this.PART_PlayPauseButton!.IsVisible = true;
-            this.PART_PlayPauseButton.Icon = task.IsPaused ? ActivityStatusBarControl.ContinueActivityIcon : ActivityStatusBarControl.PauseActivityIcon;
+            this.PART_PlayPauseButton.Icon = task.IsPaused ? StandardIcons.SmallContinueActivityIconColourful : StandardIcons.PauseActivityIcon;
             ToolTipEx.SetTip(this.PART_PlayPauseButton, task.IsPaused ? "Continue the task" : "Pause the task");
         }
     }

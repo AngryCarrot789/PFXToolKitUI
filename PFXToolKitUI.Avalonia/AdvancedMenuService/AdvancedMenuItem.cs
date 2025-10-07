@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Collections.Specialized;
 using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
@@ -57,14 +58,39 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     public BaseContextEntry? Entry { get; private set; }
 
     bool IAdvancedMenuOrItem.IsOpen => this.IsSubMenuOpen;
-    
+
     public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
-    
+
     public Dictionary<int, int>? DynamicInserted { get; set; }
-    
-    private IconControl? myIconControl;
+
+    private readonly IconControl myIconControl;
+    private bool previousEffectivelyEnabled;
 
     public AdvancedMenuItem() {
+        this.Icon = this.myIconControl = new IconControl();
+        this.Classes.CollectionChanged += this.ClassesOnCollectionChanged;
+        this.previousEffectivelyEnabled = this.IsEffectivelyEnabled;
+    }
+
+    private void ClassesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
+        bool newIsEffectivelyEnabled = this.IsEffectivelyEnabled;
+        if (newIsEffectivelyEnabled != this.previousEffectivelyEnabled) {
+            this.previousEffectivelyEnabled = newIsEffectivelyEnabled;
+            this.OnIsEffectivelyEnabledChanged();
+        }
+    }
+
+    protected virtual void OnIsEffectivelyEnabledChanged() {
+        this.UpdateIcon();
+    }
+
+    private void UpdateIcon() {
+        BaseContextEntry? entry = this.Entry;
+        this.myIconControl.Icon = entry == null
+            ? null
+            : this.IsEffectivelyEnabled
+                ? entry.Icon
+                : entry.DisabledIcon ?? entry.Icon;
     }
 
     protected sealed override void OnLoaded(RoutedEventArgs e) {
@@ -109,17 +135,10 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         if (entry.Description != null)
             ToolTipEx.SetTip(this, entry.Description ?? "");
 
-        if (entry.Icon != null) {
-            this.myIconControl = new IconControl() {
-                Icon = entry.Icon
-            };
-
-            this.Icon = this.myIconControl;
-        }
-
         entry.DisplayNameChanged += this.OnEntryDisplayNameChanged;
         entry.DescriptionChanged += this.OnEntryDescriptionChanged;
         entry.IconChanged += this.OnEntryIconChanged;
+        entry.DisabledIconChanged += this.OnEntryIconChanged;
 
         if (entry is ContextEntryGroup list) {
             AdvancedMenuHelper.OnLogicalItemsAdded(this, 0, list.Items);
@@ -133,6 +152,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         entry.IsCheckedFunctionChanged += this.OnIsCheckedFunctionChanged;
         entry.IsCheckedChanged += this.OnIsCheckedChanged;
         this.UpdateIsEnabled();
+        this.UpdateIcon(); // force update icon, since entry changed
     }
 
     public virtual void OnRemoving() {
@@ -147,22 +167,19 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         entry.DisplayNameChanged -= this.OnEntryDisplayNameChanged;
         entry.DescriptionChanged -= this.OnEntryDescriptionChanged;
         entry.IconChanged -= this.OnEntryIconChanged;
+        entry.DisabledIconChanged -= this.OnEntryIconChanged;
         entry.CanExecuteChanged -= this.OnCanExecuteChanged;
         entry.IsCheckedFunctionChanged -= this.OnIsCheckedFunctionChanged;
         entry.IsCheckedChanged -= this.OnIsCheckedChanged;
 
-        if (this.myIconControl != null) {
-            this.myIconControl.Icon = null;
-            this.myIconControl = null;
-            this.Icon = null;
-        }
-
+        this.myIconControl.Icon = null;
+        
         this.ClearValue(ToolTipEx.TipProperty);
         AdvancedMenuHelper.ClearDynamicVisualItems(this);
         AdvancedMenuHelper.ClearVisualNodes(this);
         this.DynamicInsertion = null;
         this.DynamicInserted = null;
-        
+
         DataManager.GetContextData(this).Remove(BaseContextEntry.DataKey);
     }
 
@@ -262,18 +279,11 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     private void OnEntryIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {
-        if (newIcon != null) {
-            if (this.myIconControl == null) {
-                this.myIconControl ??= new IconControl { Icon = newIcon };
-                this.Icon = this.myIconControl;
-            }
-            else {
-                this.myIconControl.Icon = newIcon;
-            }
-        }
-        else if (this.myIconControl != null) {
-            this.myIconControl.Icon = null;
-        }
+        this.UpdateIcon();
+    }
+    
+    private void OnEntryDisabledIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {
+        this.UpdateIcon();
     }
 
     private void OnEntryDescriptionChanged(BaseContextEntry sender) {

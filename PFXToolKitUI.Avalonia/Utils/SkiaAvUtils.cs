@@ -68,13 +68,18 @@ public static class SkiaAvUtils { // SkAv seems like a weird name so SkiaAv it i
                     w = 1.0;
                 if (double.IsInfinity(availableSize.Height))
                     h = 1.0;
-            break;
+                break;
             case Stretch.Uniform:       w = h = Math.Min(w, h); break;
             case Stretch.UniformToFill: w = h = Math.Max(w, h); break;
             default:                    w = h = 1.0; break;
         }
 
+        Size finalSize = new Size(size.Width * w, size.Height * h);
         Matrix transform = translate * Matrix.CreateScale(w, h);
-        return (new Size(size.Width * w, size.Height * h), transform);
+            double offsetX = (availableSize.Width - finalSize.Width) / 2.0;
+            double offsetY = (availableSize.Height - finalSize.Height) / 2.0;
+            transform *= Matrix.CreateTranslation(offsetX, offsetY);
+
+        return (finalSize, transform);
     }
 }

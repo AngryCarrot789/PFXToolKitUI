@@ -47,7 +47,6 @@ public sealed class CancellableTaskCompletionSource : TaskCompletionSource, IDis
     /// </summary>
     public void Dispose() {
         Debug.Assert(this.Task.IsCompleted, "Expected task to be completed at this point");
-
         this.registration.Dispose();
     }
 }

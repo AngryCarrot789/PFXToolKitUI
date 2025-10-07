@@ -112,7 +112,7 @@ public sealed class AsyncLocalContextManager {
     }
 
     /// <summary>
-    /// Gets the global context, which may be empty
+    /// Gets the current context for the current async control flow. The returned value is immutable.
     /// </summary>
     public IContextData GetCurrentContext() => this.TryGetCurrentContext(out IContextData? context) ? context : EmptyContext.Instance;
 

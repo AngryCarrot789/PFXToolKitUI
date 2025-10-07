@@ -21,7 +21,6 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Presenters;
 using Avalonia.Controls.Primitives;
-using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 
@@ -32,9 +31,10 @@ namespace PFXToolKitUI.Avalonia.AvControls;
 /// </summary>
 public class IconButton : Button, IIconButton {
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconButton, Icon?>(nameof(Icon));
-    public static readonly StyledProperty<Stretch> StretchProperty = AvaloniaProperty.Register<IconButton, Stretch>(nameof(Stretch), Stretch.Uniform);
-    public static readonly StyledProperty<Dock> IconPlacementProperty = AvaloniaProperty.Register<IconButton, Dock>(nameof(IconPlacement), Dock.Left);
+    public static readonly StyledProperty<StretchMode> StretchProperty = AvaloniaProperty.Register<IconButton, StretchMode>(nameof(Stretch), StretchMode.UniformNoUpscale);
+    public static readonly StyledProperty<Dock> IconPlacementProperty = AvaloniaProperty.Register<IconButton, Dock>(nameof(IconPlacement));
     public static readonly StyledProperty<double> SpacingProperty = AvaloniaProperty.Register<IconButton, double>(nameof(Spacing), 5.0);
+    public static readonly StyledProperty<Thickness> IconPaddingProperty = AvaloniaProperty.Register<IconButton, Thickness>(nameof(IconPadding), new Thickness(3.0));
 
     private double? iconW = 64, iconH = 64; // prevent crashing in designer due to infinitely or giant sized icons
 
@@ -43,7 +43,7 @@ public class IconButton : Button, IIconButton {
         set => this.SetValue(IconProperty, value);
     }
 
-    public Stretch Stretch {
+    public StretchMode Stretch {
         get => this.GetValue(StretchProperty);
         set => this.SetValue(StretchProperty, value);
     }
@@ -73,10 +73,17 @@ public class IconButton : Button, IIconButton {
         get => this.GetValue(SpacingProperty);
         set => this.SetValue(SpacingProperty, value);
     }
+    
+    public Thickness IconPadding {
+        get => this.GetValue(IconPaddingProperty);
+        set => this.SetValue(IconPaddingProperty, value);
+    }
 
     private IconControl? PART_IconControl;
     private ContentPresenter? PART_ContentPresenter;
-    private DockPanel? PART_DockPanel;
+    private Grid? PART_Grid;
+    private RowDefinition? SpacingRowDefinition;
+    private ColumnDefinition? SpacingColumnDefinition;
 
     public IconButton() {
     }
@@ -84,8 +91,9 @@ public class IconButton : Button, IIconButton {
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ContentProperty || change.Property == IconProperty || change.Property == SpacingProperty) {
-            this.UpdateControlsVisibility();
+        if (change.Property == ContentProperty || change.Property == IconProperty ||
+            change.Property == SpacingProperty || change.Property == IconPlacementProperty) {
+            this.UpdateGridArrangement();
         }
     }
 
@@ -93,22 +101,79 @@ public class IconButton : Button, IIconButton {
         base.OnApplyTemplate(e);
         IconButtonHelper.ApplyTemplate(this, e, ref this.PART_IconControl);
         this.PART_ContentPresenter = e.NameScope.GetTemplateChild<ContentPresenter>("PART_ContentPresenter");
-        this.PART_DockPanel = e.NameScope.GetTemplateChild<DockPanel>("PART_DockPanel");
-        this.UpdateControlsVisibility();
+        this.PART_Grid = e.NameScope.GetTemplateChild<Grid>("PART_Grid");
+        this.SpacingRowDefinition = this.PART_Grid.RowDefinitions[1];
+        this.SpacingColumnDefinition = this.PART_Grid.ColumnDefinitions[1];
+        this.UpdateGridArrangement();
     }
 
-    private void UpdateControlsVisibility() {
-        if (this.PART_IconControl != null) {
-            this.PART_IconControl.IsVisible = this.Icon != null;
+    private void UpdateGridArrangement() {
+        if (this.PART_Grid == null) {
+            return;
         }
 
-        if (this.PART_ContentPresenter != null) {
-            this.PART_ContentPresenter.IsVisible = this.Content != null && (!(this.Content is string str) || !string.IsNullOrEmpty(str));
-        }
+        Dock placement = this.IconPlacement;
+        bool hasIcon = this.PART_IconControl!.IsVisible = this.Icon != null;
+        bool hasText = this.PART_ContentPresenter!.IsVisible = this.Content != null && (!(this.Content is string str) || !string.IsNullOrEmpty(str));
+        bool hasBoth = hasIcon && hasText;
+        bool isHorizontal = placement == Dock.Left || placement == Dock.Right;
+        GridLength spacing = new GridLength(this.Spacing);
+        if (hasBoth) {
+            Grid.SetColumnSpan( this.PART_IconControl,      isHorizontal ? 1 : 3);
+            Grid.SetColumnSpan( this.PART_ContentPresenter, isHorizontal ? 1 : 3);
+            Grid.SetRowSpan(    this.PART_IconControl,      isHorizontal ? 3 : 1);
+            Grid.SetRowSpan(    this.PART_ContentPresenter, isHorizontal ? 3 : 1);
+            this.PART_IconControl.SetValue(     isHorizontal ? Grid.RowProperty : Grid.ColumnProperty, 0);
+            this.PART_ContentPresenter.SetValue(isHorizontal ? Grid.RowProperty : Grid.ColumnProperty, 0);
 
-        if (this.PART_DockPanel != null) {
-            double newSpacing = this.PART_IconControl?.IsVisible == true && this.PART_ContentPresenter?.IsVisible == true ? this.Spacing : 0.0;
-            this.PART_DockPanel.VerticalSpacing = this.PART_DockPanel.HorizontalSpacing = newSpacing;
+            switch (this.IconPlacement) {
+                case Dock.Left:
+                    Grid.SetColumn(this.PART_IconControl, 0);
+                    Grid.SetColumn(this.PART_ContentPresenter, 2);
+                    break;
+                case Dock.Bottom:
+                    Grid.SetRow(this.PART_IconControl, 2);
+                    Grid.SetRow(this.PART_ContentPresenter, 0);
+                    break;
+                case Dock.Right:
+                    Grid.SetColumn(this.PART_IconControl, 2);
+                    Grid.SetColumn(this.PART_ContentPresenter, 0);
+                    break;
+                case Dock.Top:
+                    Grid.SetRow(this.PART_IconControl, 0);
+                    Grid.SetRow(this.PART_ContentPresenter, 2);
+                    break;
+                default: throw new ArgumentOutOfRangeException();
+            }
+            
+            this.SpacingRowDefinition!.Height = spacing;
+            this.SpacingColumnDefinition!.Width = spacing;
+        }
+        else {
+            this.SpacingRowDefinition!.Height = default;
+            this.SpacingColumnDefinition!.Width = default;
+            if (hasIcon) {
+                Grid.SetColumn(this.PART_ContentPresenter, 1);
+                Grid.SetRow(this.PART_ContentPresenter, 1);
+                Grid.SetColumnSpan(this.PART_ContentPresenter, 1);
+                Grid.SetRowSpan(this.PART_ContentPresenter, 1);
+
+                Grid.SetColumn(this.PART_IconControl, 0);
+                Grid.SetRow(this.PART_IconControl, 0);
+                Grid.SetColumnSpan(this.PART_IconControl, 3);
+                Grid.SetRowSpan(this.PART_IconControl, 3);
+            }
+            else /* hasText */ {
+                Grid.SetColumn(this.PART_IconControl, 1);
+                Grid.SetRow(this.PART_IconControl, 1);
+                Grid.SetColumnSpan(this.PART_IconControl, 1);
+                Grid.SetRowSpan(this.PART_IconControl, 1);
+
+                Grid.SetColumn(this.PART_ContentPresenter, 0);
+                Grid.SetRow(this.PART_ContentPresenter, 0);
+                Grid.SetColumnSpan(this.PART_ContentPresenter, 3);
+                Grid.SetRowSpan(this.PART_ContentPresenter, 3);
+            }
         }
     }
 }

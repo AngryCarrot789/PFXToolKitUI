@@ -115,6 +115,10 @@ public sealed class DesktopNativeWindow : Window {
     public DesktopWindowImpl Window { get; }
 
     public DesktopNativeWindow(DesktopWindowImpl impl) {
+#if DEBUG
+        this.AttachDevTools();
+#endif
+        
         this.Window = impl;
         this.WindowStartupLocation = WindowStartupLocation.CenterOwner;
         this.VerticalContentAlignment = VerticalAlignment.Stretch;
@@ -232,6 +236,10 @@ public sealed class DesktopNativeWindow : Window {
                 throw new InvalidOperationException("Reentrancy of " + nameof(this.OnClosing));
             }
             
+            // When main window closes, it will close all other windows. But there's some
+            // ordering issues that might cause reentrancy or a window, still opened by Avalonia's
+            // tracking but closed for IWindowManager, to be closed. So, only ignore if app or os is
+            // shutting down. Otherwise, we throw above to try and track the issue
             return;
         }
         

@@ -6,7 +6,7 @@
     <ControlTheme x:Key="{x:Type trees:ShortcutEntryHeaderControl}" TargetType="{x:Type trees:ShortcutEntryHeaderControl}">
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
         <Setter Property="DisplayNameForeground" Value="{DynamicResource ABrush.Foreground.Static}"/>
-        <Setter Property="RawNameForeground" Value="{DynamicResource ABrush.Foreground.Disabled}"/>
+        <Setter Property="RawNameForeground" Value="{DynamicResource ABrush.Foreground.Deeper}"/>
     </ControlTheme>
 
     <ControlTheme x:Key="{x:Type trees:ShortcutTreeView}" TargetType="{x:Type trees:ShortcutTreeView}" BasedOn="{StaticResource {x:Type TreeView}}">

@@ -48,40 +48,30 @@ public interface IDispatcher {
     }
 
     /// <summary>
-    /// Synchronously executes the given function on the dispatcher thread, or dispatches its execution on the dispatcher thread if we are not
-    /// currently on it. This effectively blocks the current thread until the <see cref="Action"/> returns
+    /// Asynchronously executes the function on the dispatcher thread
     /// </summary>
-    /// <param name="action">The function to execute on the dispatcher thread</param>
-    /// <param name="priority">The priority of the dispatch</param>
-    void Invoke(Action action, DispatchPriority priority = DispatchPriority.Send);
-
-    /// <summary>
-    /// The same as <see cref="Invoke"/> but allows a return value
-    /// </summary>
-    /// <param name="function">The function to execute on the dispatcher thread</param>
-    /// <param name="priority">The priority of the dispatch</param>
-    /// <typeparam name="TResult">The return value for the function</typeparam>
-    /// <returns>The return value of the parameter '<see cref="function"/>'</returns>
-    T Invoke<T>(Func<T> function, DispatchPriority priority = DispatchPriority.Send);
-
-    /// <summary>
-    /// Asynchronously executes the given function on the dispatcher thread, or dispatches its execution on the dispatcher thread
-    /// if we are not currently on it. This is the best way to execute a function on the dispatcher thread asynchronously
-    /// </summary>
-    /// <param name="action">The function to execute on the dispatcher thread</param>
-    /// <param name="priority">The priority of the dispatch</param>
-    /// <param name="token"></param>
-    /// <returns>A task that can be awaited, which is completed once the function returns on the dispatcher thread</returns>
+    /// <param name="action">The action to invoke</param>
+    /// <param name="priority">The dispatch priority</param>
+    /// <param name="token">A token to cancel the operation, before it runs</param>
+    /// <returns>A task that becomes completed once the action completes</returns>
+    /// <remarks>
+    /// If the action throws an exception (including OCE), it will be caught and the task becomes faulted.
+    /// The task only becomes cancelled when the operation has not started yet and the token becomes cancelled
+    /// </remarks>
     Task InvokeAsync(Action action, DispatchPriority priority = DispatchPriority.Normal, CancellationToken token = default);
 
     /// <summary>
-    /// The same as <see cref="InvokeAsync"/> but allows a return value
+    /// Asynchronously executes the function on the dispatcher thread and produces the function's return value as a result in the task
     /// </summary>
-    /// <param name="function">The function to execute on the dispatcher thread</param>
-    /// <param name="priority">The priority of the dispatch</param>
-    /// <param name="token"></param>
-    /// <typeparam name="TResult">The return value for the function</typeparam>
-    /// <returns>A task that can be awaited, which is completed once the function returns on the dispatcher thread</returns>
+    /// <param name="function">The function to invoke</param>
+    /// <param name="priority">The dispatch priority</param>
+    /// <param name="token">A token to cancel the operation, before it runs</param>
+    /// <typeparam name="T">The type of return value</typeparam>
+    /// <returns>A task that becomes completed with the return value of the function</returns>
+    /// <remarks>
+    /// If the action throws an exception (including OCE), it will be caught and the task becomes faulted.
+    /// The task only becomes cancelled when the operation has not started yet and the token becomes cancelled
+    /// </remarks>
     Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority = DispatchPriority.Normal, CancellationToken token = default);
 
     /// <summary>
@@ -91,9 +81,7 @@ public interface IDispatcher {
     /// </summary>
     /// <param name="action">The callback to invoke</param>
     /// <param name="priority">The priority to invoke the callback at</param>
-    void Post(Action action, DispatchPriority priority = DispatchPriority.Default) {
-        this.Post(static a => ((Action) a!)(), action, priority);
-    }
+    void Post(Action action, DispatchPriority priority = DispatchPriority.Default);
 
     /// <summary>
     /// Invokes the action asynchronously on this dispatcher thread. This differs from <see cref="InvokeAsync"/> where

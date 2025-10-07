@@ -19,76 +19,99 @@
 
 using Avalonia;
 using Avalonia.Media;
-using Avalonia.Skia;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
-using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Utils.Destroying;
-using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Icons;
 
 public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
     public IEnumerable<GeometryEntry> GeometryEntries => this.myGeometryEntries;
 
-    private GeometryEntryRef[] GeometryEntryRefs => this.myGeometryEntryRefs ??= this.myGeometryEntries.Select(e => new GeometryEntryRef(this, e)).ToArray();
-
-    public Geometry?[] Geometries {
+    private GeometryEntryRef[] GeometryEntryRefs {
         get {
-            if (this.geometries == null) {
-                this.geometries = new Geometry[this.myGeometryEntries.Length];
-                for (int i = 0; i < this.myGeometryEntries.Length; i++) {
-                    try {
-                        this.geometries[i] = Geometry.Parse(this.myGeometryEntries[i].Geometry);
-                    }
-                    catch (Exception e) {
-                        AppLogger.Instance.WriteLine("Error parsing SVG for svg icon: " + e);
-                    }
-                }
+            if (this.myGeometryEntryRefs == null) {
+                this.myGeometryEntryRefs = this.myGeometryEntries.Select(e => new GeometryEntryRef(this, e)).ToArray();
+                AppLogger.Instance.WriteLine($"[Icon] Generated SVG for '{this.Name}'. Bounds = {this.GetBounds()}");
             }
 
-            return this.geometries!;
+            return this.myGeometryEntryRefs;
         }
     }
-    
+
     private readonly GeometryEntry[] myGeometryEntries;
     private GeometryEntryRef[]? myGeometryEntryRefs;
-    public readonly StretchMode Stretch;
-    private Geometry?[]? geometries;
 
-    public GeometryIconImpl(string name, GeometryEntry[] geometry, StretchMode stretch) : base(name) {
+    public GeometryIconImpl(string name, GeometryEntry[] geometry) : base(name) {
         this.myGeometryEntries = geometry;
-        this.Stretch = stretch;
     }
 
-    public override void Render(DrawingContext context, Rect size, SKMatrix transform) {
-        using DrawingContext.PushedState? state = transform != SKMatrix.Identity ? context.PushTransform(transform.ToAvMatrix()) : null;
+    public override void Render(DrawingContext context, Rect bounds, StretchMode stretch) {
+        // {
+        //     using DrawingContext.PushedState? state = transform != SKMatrix.Identity ? context.PushTransform(transform.ToAvMatrix()) : null;
+        //
+        //     foreach (GeometryEntryRef geo in this.GeometryEntryRefs) {
+        //         if (geo.geometry != null) {
+        //             if (geo.myPen == null && geo.myPenBrush != null) {
+        //                 geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
+        //             }
+        //
+        //             context.DrawGeometry(geo.myFillBrush, geo.myPen, geo.geometry);
+        //         }
+        //     }
+        // }
 
-        Geometry?[] geoArray = this.Geometries;
-        GeometryEntryRef[] elementArray = this.GeometryEntryRefs;
-        
-        for (int i = 0; i < geoArray.Length; i++) {
-            if (geoArray[i] != null) {
-                GeometryEntryRef geo = elementArray[i];
-                if (geo.myPen == null && geo.myPenBrush != null) {
-                    geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
+        {
+            GeometryEntryRef[] entries = this.GeometryEntryRefs;
+            if (entries.Length < 1) {
+                return;
+            }
+
+            Rect fakeBounds = new Rect(bounds.Size);
+            Rect combinedBounds = this.GetBounds();
+            if (combinedBounds.Width <= 0 || combinedBounds.Height <= 0) {
+                return;
+            }
+
+            double scaleX = fakeBounds.Width / combinedBounds.Width;
+            double scaleY = fakeBounds.Height / combinedBounds.Height;
+
+            double scale = stretch switch {
+                StretchMode.Fill => Math.Max(scaleX, scaleY),
+                StretchMode.Uniform => Math.Min(scaleX, scaleY),
+                StretchMode.UniformNoUpscale => Math.Min(Math.Min(scaleX, scaleY), 1.0),
+                StretchMode.UniformToFill => Math.Max(scaleX, scaleY),
+                StretchMode.None => 1.0,
+                _ => 1.0
+            };
+
+            Point offset = fakeBounds.Center - combinedBounds.Center * scale;
+            Matrix transform = Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(offset.X, offset.Y);
+
+            using (context.PushTransform(transform)) {
+                foreach (GeometryEntryRef geo in entries) {
+                    if (geo.geometry != null) {
+                        if (geo.myPen == null && geo.myPenBrush != null) {
+                            geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
+                        }
+
+                        context.DrawGeometry(geo.myFillBrush, geo.myPen, geo.geometry);
+                    }
                 }
-
-                context.DrawGeometry(geo.myFillBrush, geo.myPen, geoArray[i]!);
             }
         }
     }
 
-    public override Rect GetBounds() {
+    public Rect GetBounds() {
         int count = 0;
         double l = double.MaxValue, t = double.MaxValue, r = double.MinValue, b = double.MinValue;
-        foreach (Geometry? g in this.Geometries) {
-            if (g == null) {
+        foreach (GeometryEntryRef? geometry in this.GeometryEntryRefs) {
+            if (geometry.geometry == null) {
                 continue;
             }
 
-            Rect a = g.Bounds;
+            Rect a = geometry.geometry.Bounds;
             l = Math.Min(a.Left, l);
             t = Math.Min(a.Top, t);
             r = Math.Max(a.Right, r);
@@ -99,14 +122,16 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
         return count > 0 ? new Rect(l, t, r - l, b - t) : default;
     }
 
-    public override (Size Size, SKMatrix Transform) Measure(Size availableSize, StretchMode stretch) {
-        (Size size, Matrix t) = SkiaAvUtils.CalculateSizeAndTransform(availableSize, this.GetBounds(), (Stretch) this.Stretch);
-        return (size, t.ToSKMatrix());
+    public override Size Measure(Size availableSize, StretchMode stretch) {
+        return stretch.CalculateSize(availableSize, this.GetBounds().Size);
+        // (Size size, Matrix t) = SkiaAvUtils.CalculateSizeAndTransform(availableSize, this.GetBounds(), (Stretch) stretch);
+        // return (size, t.ToSKMatrix());
     }
 
     private class GeometryEntryRef {
         private readonly GeometryIconImpl iconImpl;
         public readonly GeometryEntry entry;
+        public readonly Geometry? geometry;
         private IDisposable? disposeFillBrush, disposeStrokeBrush;
         public IBrush? myFillBrush, myPenBrush;
         public IPen? myPen;
@@ -114,17 +139,26 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
         public GeometryEntryRef(GeometryIconImpl iconImpl, GeometryEntry entry) {
             this.iconImpl = iconImpl;
             this.entry = entry;
-            
+
             if (entry.Fill is DynamicAvaloniaColourBrush b)
                 this.disposeFillBrush = b.Subscribe(this.OnFillBrushInvalidated, false);
             if (entry.Stroke is DynamicAvaloniaColourBrush s)
                 this.disposeStrokeBrush = s.Subscribe(this.OnStrokeBrushInvalidated, false);
-            
+
             if (entry.Fill != null)
                 this.myFillBrush = ((AvaloniaColourBrush) entry.Fill).Brush;
             if (entry.Stroke != null)
                 this.myPenBrush = ((AvaloniaColourBrush) entry.Stroke).Brush;
+
+            try {
+                this.geometry = Geometry.Parse(this.entry.Geometry);
+            }
+            catch (Exception e) {
+                AppLogger.Instance.WriteLine("Error parsing SVG for svg icon: " + e);
+            }
         }
+
+        public Rect Bounds => this.geometry != null ? this.geometry.Bounds : default;
 
         private void OnFillBrushInvalidated(IBrush? brush) {
             this.myFillBrush = brush;

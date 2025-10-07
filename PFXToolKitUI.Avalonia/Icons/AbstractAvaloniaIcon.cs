@@ -20,7 +20,6 @@
 using Avalonia;
 using Avalonia.Media;
 using PFXToolKitUI.Icons;
-using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Icons;
 
@@ -42,10 +41,15 @@ public abstract class AbstractAvaloniaIcon : Icon {
     /// Renders this avalonia icon into the given drawing context
     /// </summary>
     /// <param name="context">The drawing context</param>
-    /// <param name="size">The drawing area size</param>
-    public abstract void Render(DrawingContext context, Rect size, SKMatrix transform);
+    /// <param name="bounds">The drawing area, i.e. the <see cref="Visual.Bounds"/> of the host control</param>
+    /// <param name="stretch">The icon stretching mode</param>
+    public abstract void Render(DrawingContext context, Rect bounds, StretchMode stretch);
 
-    public abstract (Size Size, SKMatrix Transform) Measure(Size availableSize, StretchMode stretch);
-
-    public abstract Rect GetBounds();
+    /// <summary>
+    /// Measures the amount of space this icon will take up
+    /// </summary>
+    /// <param name="availableSize">The available space</param>
+    /// <param name="stretch">The icon stretching mode</param>
+    /// <returns>The amount of space the icon takes up</returns>
+    public abstract Size Measure(Size availableSize, StretchMode stretch);
 }

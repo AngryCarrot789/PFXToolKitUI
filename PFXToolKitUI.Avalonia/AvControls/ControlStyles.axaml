@@ -1,15 +1,14 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
-                    xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Converters">
+                    xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Converters"
+                    xmlns:attached="clr-namespace:PFXToolKitUI.Avalonia.Themes.Attached">
     <ControlTheme x:Key="{x:Type local:IconButton}" TargetType="{x:Type local:IconButton}" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="{DynamicResource Button.Static.Background}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource Button.Static.Border}"/>
         <Setter Property="Foreground" Value="{DynamicResource Button.Static.Foreground}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Padding" Value="4"/>
+        <Setter Property="Padding" Value="0"/>
         <Setter Property="Template">
             <ControlTemplate TargetType="{x:Type local:IconButton}">
                 <Border x:Name="PART_Border"
@@ -19,22 +18,19 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}"
                         TextElement.Foreground="{TemplateBinding Foreground}">
-                    <DockPanel x:Name="PART_DockPanel"
-                               HorizontalAlignment="Center"
-                               VerticalAlignment="Center">
-                        <local:IconControl x:Name="PART_IconControl"
+                    <Grid x:Name="PART_Grid" RowDefinitions="*,0,*" ColumnDefinitions="*,0,*">
+                        <local:IconControl Grid.Row="0" Grid.Column="0" x:Name="PART_IconControl"
                                            Icon="{TemplateBinding Icon}"
                                            Stretch="{TemplateBinding Stretch}"
                                            IsVisible="{TemplateBinding Icon, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center"
-                                           DockPanel.Dock="{TemplateBinding IconPlacement}"/>
-                        <ContentPresenter x:Name="PART_ContentPresenter"
+                                           Margin="{TemplateBinding IconPadding}"/>
+                        <ContentPresenter Grid.Row="0" Grid.Column="0" x:Name="PART_ContentPresenter"
                                           Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           IsVisible="{TemplateBinding Content, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
                                           HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"/>
-                    </DockPanel>
+                    </Grid>
                 </Border>
             </ControlTemplate>
         </Setter>
@@ -46,7 +42,7 @@
             <Setter Property="Background" Value="{DynamicResource Button.Pressed.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Pressed.Border}"/>
         </Style>
-        <Style Selector="^:disabled /template/ Border#PART_Border">
+        <Style Selector="^:disabled[(attached|DisabledButtonExtras.IgnoreDisabledBackground)=False] /template/ Border#PART_Border">
             <Setter Property="Background" Value="{DynamicResource Button.Disabled.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Disabled.Border}"/>
         </Style>
@@ -57,9 +53,9 @@
         <Setter Property="BorderBrush" Value="{DynamicResource Button.Static.Border}"/>
         <Setter Property="Foreground" Value="{DynamicResource Button.Static.Foreground}"/>
         <Setter Property="BorderThickness" Value="1"/>
-        <Setter Property="HorizontalContentAlignment" Value="Center"/>
-        <Setter Property="VerticalContentAlignment" Value="Center"/>
-        <Setter Property="Padding" Value="4"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="VerticalContentAlignment" Value="Stretch"/>
+        <Setter Property="Padding" Value="0"/>
         <Setter Property="Template">
             <ControlTemplate>
                 <Border x:Name="PART_Border"
@@ -74,7 +70,7 @@
                                 VerticalAlignment="{TemplateBinding VerticalContentAlignment}">
                         <local:IconControl x:Name="PART_IconControl" Icon="{TemplateBinding Icon}" Stretch="{TemplateBinding Stretch}"
                                            IsVisible="{TemplateBinding Icon, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
-                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
+                                           VerticalAlignment="Stretch" HorizontalAlignment="Stretch"/>
                         <ContentPresenter x:Name="PART_ContentPresenter" Content="{TemplateBinding Content}" ContentTemplate="{TemplateBinding ContentTemplate}"
                                           IsVisible="{TemplateBinding Content, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
                                           VerticalAlignment="Center" HorizontalAlignment="Center"/>
@@ -93,7 +89,7 @@
             <Setter Property="Background" Value="{DynamicResource Button.Pressed.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Pressed.Border}"/>
         </Style>
-        <Style Selector="^:disabled /template/ Border#PART_Border">
+        <Style Selector="^:disabled[(attached|DisabledButtonExtras.IgnoreDisabledBackground)=False] /template/ Border#PART_Border">
             <Setter Property="Background" Value="{DynamicResource Button.Disabled.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Disabled.Border}"/>
         </Style>
@@ -110,7 +106,7 @@
             <Setter Property="BorderBrush" Value="{DynamicResource ToggleButton.Pressed.IsChecked.Border}"/>
         </Style>
     </ControlTheme>
-    
+
     <ControlTheme x:Key="{x:Type local:ShortcutLabel}" TargetType="{x:Type local:ShortcutLabel}">
         <Setter Property="Background" Value="{DynamicResource ABrush.Tone3.Background.Static}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone7.Border.Static}"/>

@@ -35,11 +35,19 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class MessageDialogServiceImpl : IMessageDialogService {
-    public Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
+    public static readonly ThreadLocal<string> Test = new ThreadLocal<string>();
+
+    public MessageDialogServiceImpl() {
+        Test.Value = "Main thread"; 
+    }
+
+    public async Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
         ArgumentNullException.ThrowIfNull(info);
-        return ApplicationPFX.Instance.Dispatcher.CheckAccess()
-            ? ShowMessageMainThread(info)
-            : ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageMainThread(info)).Unwrap();
+        if (ApplicationPFX.Instance.Dispatcher.CheckAccess()) {
+            return await ShowMessageBoxInMainThread(info);
+        }
+
+        return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageBoxInMainThread(info)).Unwrap();
     }
 
     private static bool IsPersistentButtonValidFor(MessageBoxResult button, MessageBoxButton buttons) {
@@ -54,7 +62,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
         }
     }
 
-    private static async Task<MessageBoxResult> ShowMessageMainThread(MessageBoxInfo info) {
+    private static async Task<MessageBoxResult> ShowMessageBoxInMainThread(MessageBoxInfo info) {
         ArgumentNullException.ThrowIfNull(info);
         if (!string.IsNullOrWhiteSpace(info.PersistentDialogName)) {
             PersistentDialogResult persistent = PersistentDialogResult.GetInstance(info.PersistentDialogName);
@@ -75,7 +83,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             IWindowBase? window = WindowContextUtils.CreateWindow(parentTopLevel, (w) => ShowMessageBoxInWindow(info, w), (m, w) => ShowMessageBoxInOverlay(info, m, w));
             if (window != null) {
                 MessageBoxView view = (MessageBoxView) window.Content!;
-                
+
                 // Register cancellation to force-close dialog even if myTask is not completed
                 await using CancellationTokenRegistration register = info.DialogCancellation.Register(static t => {
                     ApplicationPFX.Instance.Dispatcher.Post(static void (winRef) => {
@@ -85,7 +93,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
                         }
                     }, t);
                 }, new WeakReference(window));
-                
+
                 MessageBoxResult result = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
                 view.MessageBoxData = null; // unhook models' event handlers
 

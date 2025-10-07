@@ -273,16 +273,22 @@ public class UIInputManager {
         topLevel.SetValue(LastFocusedElementProperty, currFocused);
         if (lost) {
             if (!ReferenceEquals(currFocused, element)) {
-                Debug.Fail("Fatal error: Last focused element does not match element that just lost focus");
-                throw new Exception();
+                Debug.WriteLine("Fatal error: Last focused element does not match element that just lost focus");
+                // throw new Exception();
             }
 
             newFocusPath = null;
             topLevel.SetValue(CurrentFocusedElementProperty, null);
 
-            Debug.WriteLine($"Focus LOST: '{ReadableControlName(element, topLevel)}'");
-
-            element.DetachedFromVisualTree -= OnElementDetachedFromVisualTree;
+            if (currFocused != null) {
+                Debug.WriteLine($"Focus LOST: '{ReadableControlName(currFocused, topLevel)}'");
+                currFocused.DetachedFromVisualTree -= OnElementDetachedFromVisualTree;
+            }
+            
+            if (!ReferenceEquals(element, currFocused)) {
+                Debug.WriteLine($"Focus LOST (somehow): '{ReadableControlName(element, topLevel)}'");
+                element.DetachedFromVisualTree -= OnElementDetachedFromVisualTree;
+            }
         }
         else {
             topLevel.SetValue(CurrentFocusedElementProperty, element);

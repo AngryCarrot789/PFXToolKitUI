@@ -17,7 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia.Media;
 using PFXToolKitUI.Icons;
 
 namespace PFXToolKitUI.Avalonia.AvControls;
@@ -25,7 +24,7 @@ namespace PFXToolKitUI.Avalonia.AvControls;
 public interface IIconButton {
     Icon? Icon { get; set; }
 
-    Stretch Stretch { get; set; }
+    StretchMode Stretch { get; set; }
 
     double? IconMaxWidth { get; set; }
 

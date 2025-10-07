@@ -162,10 +162,17 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         this.CheckStateForRequestClose();
         this.OpenState = OpenState.TryingToClose;
 
-        ApplicationPFX.Instance.Dispatcher.Post(() => {
+        ApplicationPFX.Instance.Dispatcher.Post(CloseInternalAsync);
+        return;
+
+        void CloseInternalAsync() {
             Task task = this.CloseDialogImpl(dialogResult, WindowCloseReason.WindowClosing, true);
-            
-        });
+
+            // This may be a bad idea... but it makes tracking issues easier
+            if (ApplicationPFX.Instance.Dispatcher.TryGetFrameManager(out IDispatcherFrameManager? frameManager)) {
+                frameManager.AwaitForCompletion(task);
+            }
+        }
     }
 
     public async Task<bool> RequestCloseAsync(object? dialogResult = null) {
@@ -228,6 +235,16 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             throw new InvalidOperationException("Popup is not in its normal open state");
 
+        foreach (OverlayWindowImpl win in this.myOwnedPopups) {
+            if (win.OpenState == OpenState.Open && !win.isProcessingClosingInternal) {
+                await win.CloseDialogImpl(null, reason, isFromCode);
+            }
+        }
+
+        // A child window may have closed this window for some reason, or the app shut down?
+        if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
+            return;
+        
         this.OpenState = OpenState.TryingToClose;
         this.isProcessingClosingInternal = true;
         OverlayWindowCancelCloseEventArgs beforeClosingArgs = new OverlayWindowCancelCloseEventArgs(this, reason, isFromCode);

@@ -22,6 +22,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Data;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Configurations.Pages;
 using PFXToolKitUI.Avalonia.Controls;
@@ -290,7 +291,7 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
             this.isExpandingSubTree = true;
             try {
                 for (int i = list.Count - 1; i >= 0; i--)
-                    ApplicationPFX.Instance.Dispatcher.Invoke(() => list[i].IsExpanded = true, DispatchPriority.Loaded);
+                    Dispatcher.UIThread.Invoke(() => list[i].IsExpanded = true, DispatcherPriority.Loaded);
 
                 this.PART_ThemeConfigTree.SelectedItem = dstTreeItem;
                 this.PART_ThemeConfigTree.ScrollIntoView(dstTreeItem);

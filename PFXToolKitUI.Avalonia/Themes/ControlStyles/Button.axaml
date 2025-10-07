@@ -1,5 +1,6 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:attached="clr-namespace:PFXToolKitUI.Avalonia.Themes.Attached">
     <ControlTheme x:Key="{x:Type Button}" TargetType="{x:Type Button}">
         <Setter Property="Background" Value="{DynamicResource Button.Static.Background}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource Button.Static.Border}"/>
@@ -32,7 +33,7 @@
             <Setter Property="Background" Value="{DynamicResource Button.Pressed.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Pressed.Border}"/>
         </Style>
-        <Style Selector="^:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Style Selector="^:disabled[(attached|DisabledButtonExtras.IgnoreDisabledBackground)=False] /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="{DynamicResource Button.Disabled.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Disabled.Border}"/>
         </Style>
@@ -70,7 +71,7 @@
             <Setter Property="Background" Value="{DynamicResource Button.Pressed.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Pressed.Border}"/>
         </Style>
-        <Style Selector="^Button:disabled">
+        <Style Selector="^Button:disabled[(attached|DisabledButtonExtras.IgnoreDisabledBackground)=False]">
             <Setter Property="Background" Value="{DynamicResource Button.Disabled.Background}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource Button.Disabled.Border}"/>
         </Style>

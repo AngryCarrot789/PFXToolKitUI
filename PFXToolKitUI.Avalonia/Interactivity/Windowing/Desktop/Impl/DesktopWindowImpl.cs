@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Avalonia;
@@ -45,6 +46,8 @@ namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
 /// The implementation of <see cref="IDesktopWindow"/> for a <see cref="DesktopWindowManager"/>
 /// </summary>
 public sealed class DesktopWindowImpl : IDesktopWindow {
+    private static readonly IEnumerable<Exception> s_EmptyEL = ReadOnlyCollection<Exception>.Empty;
+
     public IMutableContextData LocalContextData => DataManager.GetContextData(this.myNativeWindow);
 
     public ComponentStorage ComponentStorage { get; }
@@ -247,64 +250,65 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     internal WindowCancelCloseEventArgs OnNativeWindowClosing(WindowCloseReason reason, bool isFromCode) {
         if (this.internalIsProcessingClose)
             throw new InvalidOperationException("Reentry of " + nameof(this.OnNativeWindowClosing));
-        
+
         if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             throw new InvalidOperationException("Window is not in its normal open state");
 
-        this.internalIsProcessingClose = true;
-        this.OpenState = OpenState.TryingToClose;
-        WindowCancelCloseEventArgs beforeClosingArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode);
-        this.TryClose?.Invoke(this, beforeClosingArgs);
+        try {
+            this.internalIsProcessingClose = true;
+            this.OpenState = OpenState.TryingToClose;
+            WindowCancelCloseEventArgs cancelCloseArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode);
+            this.TryClose?.Invoke(this, cancelCloseArgs);
 
-        Delegate[]? beforeClosingAsyncHandlers = this.TryCloseAsync?.GetInvocationList();
-        if (beforeClosingAsyncHandlers != null && beforeClosingAsyncHandlers.Length > 0) {
-            List<Task> tasks = new List<Task>();
-            foreach (Delegate handler in beforeClosingAsyncHandlers) {
-                tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCancelCloseEventArgs>) handler)(this, beforeClosingArgs)));
-            }
+            Delegate[]? tryCloseAsyncHandlers = this.TryCloseAsync?.GetInvocationList();
+            if (tryCloseAsyncHandlers != null && tryCloseAsyncHandlers.Length > 0) {
+                List<Task> tasks = new List<Task>();
+                foreach (Delegate handler in tryCloseAsyncHandlers) {
+                    tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCancelCloseEventArgs>) handler)(this, cancelCloseArgs)));
+                }
 
-            try {
+                // Shouldn't throw because Task.WhenAll always receives non-null tasks 
                 this.myManager.myFrameManager.AwaitForCompletion(Task.WhenAll(tasks));
+                Debug.Assert(tasks.All(x => x.IsCompleted));
+
+                List<Exception> errors = tasks.SelectMany(x => x.Exception?.InnerExceptions ?? s_EmptyEL).Where(x => !(x is OperationCanceledException)).ToList();
+                if (errors.Count == 1)
+                    throw new Exception("Exception invoking async TryClose handler", errors[0]);
+                if (errors.Count > 0)
+                    throw new AggregateException("Exception invoking multiple async TryClose handler", errors);
             }
-            catch (AggregateException ex) {
-                List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
+
+            if (cancelCloseArgs.IsCancelled) {
+                this.OpenState = OpenState.Open;
+                return cancelCloseArgs;
+            }
+
+            this.OpenState = OpenState.Closing;
+            WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode);
+            this.Closing?.Invoke(this, closingArgs);
+            Delegate[]? closingAsyncHandlers = this.ClosingAsync?.GetInvocationList();
+            if (closingAsyncHandlers != null && closingAsyncHandlers.Length > 0) {
+                List<Task> tasks = new List<Task>();
+                foreach (Delegate handler in closingAsyncHandlers) {
+                    tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCloseEventArgs>) handler)(this, closingArgs)));
+                }
+
+                // Shouldn't throw because Task.WhenAll always receives non-null tasks 
+                this.myManager.myFrameManager.AwaitForCompletion(Task.WhenAll(tasks));
+                Debug.Assert(tasks.All(x => x.IsCompleted));
+
+                List<Exception> errors = tasks.SelectMany(x => x.Exception?.InnerExceptions ?? s_EmptyEL).Where(x => !(x is OperationCanceledException)).ToList();
                 if (errors.Count == 1)
                     throw new Exception("Exception invoking async Closing handler", errors[0]);
                 if (errors.Count > 0)
                     throw new AggregateException("Exception invoking multiple async Closing handler", errors);
             }
-        }
 
-        if (beforeClosingArgs.IsCancelled) {
+            return cancelCloseArgs;
+        }
+        finally {
             this.internalIsProcessingClose = false;
-            this.OpenState = OpenState.Open;
-            return beforeClosingArgs;
         }
-
-        this.OpenState = OpenState.Closing;
-        WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode);
-        this.Closing?.Invoke(this, closingArgs);
-        Delegate[]? closingAsyncHandlers = this.ClosingAsync?.GetInvocationList();
-        if (closingAsyncHandlers != null && closingAsyncHandlers.Length > 0) {
-            List<Task> tasks = new List<Task>();
-            foreach (Delegate handler in closingAsyncHandlers) {
-                tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCloseEventArgs>) handler)(this, closingArgs)));
-            }
-
-            try {
-                this.myManager.myFrameManager.AwaitForCompletion(Task.WhenAll(tasks));
-            }
-            catch (AggregateException ex) {
-                List<Exception> errors = ex.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
-                if (errors.Count == 1)
-                    throw new Exception("Exception invoking async Closing handler", errors[0]);
-                if (errors.Count > 0)
-                    throw new AggregateException("Exception invoking multiple async Closing handler", errors);
-            }
-        }
-
-        this.internalIsProcessingClose = false;
-        return beforeClosingArgs;
     }
 
     internal void OnNativeWindowClosed(WindowCloseReason reason, bool isFromCode) {
@@ -315,17 +319,22 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         this.DisposeResourcesForClosed();
 
         this.myManager.OnWindowClosed(this);
-        this.Closed?.Invoke(this, new WindowCloseEventArgs(this, reason, isFromCode));
-        this.tcsWaitForClosed?.TrySetResult();
-        this.tcsWaitForClosed = null;
 
-        if (this.listTcsWaitForClosed.Count > 0) {
-            foreach (CancellableTaskCompletionSource tcs in this.listTcsWaitForClosed) {
-                tcs.TrySetResult();
-                tcs.Dispose();
+        try {
+            this.Closed?.Invoke(this, new WindowCloseEventArgs(this, reason, isFromCode));
+        }
+        finally {
+            this.tcsWaitForClosed?.TrySetResult();
+            this.tcsWaitForClosed = null;
+
+            if (this.listTcsWaitForClosed.Count > 0) {
+                foreach (CancellableTaskCompletionSource tcs in this.listTcsWaitForClosed) {
+                    tcs.TrySetResult();
+                    tcs.Dispose();
+                }
+
+                this.listTcsWaitForClosed.Clear();
             }
-
-            this.listTcsWaitForClosed.Clear();
         }
     }
 
@@ -401,7 +410,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
         return this.myNativeWindow.ShowDialog<object?>(parent);
     }
-    
+
     private void CheckStateForRequestClose() {
         switch (this.OpenState) {
             case < OpenState.Open:        throw new InvalidOperationException("Window has not fully opened yet, it cannot be requested to close yet.");
@@ -409,7 +418,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             case OpenState.Closing:       throw new InvalidOperationException("Window is already in the process of closing");
             case OpenState.Closed:        throw new InvalidOperationException("Window has already been closed");
         }
-        
+
         Debug.Assert(this.OpenState == OpenState.Open);
     }
 

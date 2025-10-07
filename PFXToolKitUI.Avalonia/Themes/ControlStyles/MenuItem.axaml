@@ -76,7 +76,7 @@
                                    Grid.Column="4"
                                    VerticalAlignment="Center"
                                    Text="{TemplateBinding InputGesture, Converter={StaticResource KeyGestureConverter}}"
-                                   Foreground="{DynamicResource ABrush.Foreground.Disabled}"/>
+                                   Foreground="{DynamicResource ABrush.Foreground.Deeper}"/>
                         <Path x:Name="rightArrow"
                               Grid.Column="5"
                               Margin="10,0,0,0"
@@ -133,8 +133,7 @@
         </Style>
 
         <Style Selector="^:disabled">
-            <Setter Property="Background" Value="{DynamicResource MenuItem.Disabled.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource MenuItem.Disabled.Background}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Disabled}"/>
         </Style>
 
         <Style Selector="^:toggle /template/ Border#PART_ToggleBorder, ^:radio /template/ Border#PART_ToggleBorder">

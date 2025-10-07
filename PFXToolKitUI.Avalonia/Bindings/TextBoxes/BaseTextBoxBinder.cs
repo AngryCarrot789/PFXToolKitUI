@@ -21,6 +21,7 @@ using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Threading;
 using PFXToolKitUI.Avalonia.Utils;
 
 namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
@@ -164,7 +165,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 // using Invoke here can potentially cause TextChanged event to be invoked since it
                 // has a higher priority so we wrap it with isResettingTextToModel to be sure,
                 // since we're still technically in the process of resetting text
-                ApplicationPFX.Instance.Dispatcher.Invoke(() => textBox.LostFocus += this.OnLostFocus, DispatchPriority.Loaded);
+                Dispatcher.UIThread.Invoke(() => textBox.LostFocus += this.OnLostFocus, DispatcherPriority.Loaded);
                 
                 this.isResettingTextToModel = false;
 

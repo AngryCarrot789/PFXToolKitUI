@@ -46,7 +46,7 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
     public static readonly DataKey<BaseContextEntry> DataKey = DataKeys.Create<BaseContextEntry>(nameof(BaseContextEntry));
 
     private string? displayName, description;
-    private Icon? icon;
+    private Icon? icon, disabledIcon;
     private bool isInUse;
     private IContextData? capturedContext;
     private Func<BaseContextEntry, bool>? isCheckedFunction;
@@ -68,7 +68,7 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
     }
 
     /// <summary>
-    /// Gets or sets the icon presented in the menu gutter (left side)
+    /// Gets or sets the icon presented in the menu gutter (left side), specifically when this entry is 
     /// </summary>
     public Icon? Icon {
         get => this.icon;
@@ -77,6 +77,20 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
             if (!ReferenceEquals(oldIcon, value)) {
                 this.icon = value;
                 this.IconChanged?.Invoke(this, oldIcon, value);
+            }
+        }
+    }
+    
+    /// <summary>
+    /// Gets or sets the icon presented in the menu gutter (left side)
+    /// </summary>
+    public Icon? DisabledIcon {
+        get => this.disabledIcon;
+        set {
+            Icon? oldIcon = this.disabledIcon;
+            if (!ReferenceEquals(oldIcon, value)) {
+                this.disabledIcon = value;
+                this.DisabledIconChanged?.Invoke(this, oldIcon, value);
             }
         }
     }
@@ -118,7 +132,7 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
 
     public event BaseContextEntryEventHandler? DisplayNameChanged;
     public event BaseContextEntryEventHandler? DescriptionChanged;
-    public event BaseContextEntryIconChangedEventHandler? IconChanged;
+    public event BaseContextEntryIconChangedEventHandler? IconChanged, DisabledIconChanged;
     public event BaseContextEntryCapturedContextChangedEventHandler? CapturedContextChanged;
     public event BaseContextEntryEventHandler? IsCheckedFunctionChanged;
     public event BaseContextEntryEventHandler? IsCheckedChanged;

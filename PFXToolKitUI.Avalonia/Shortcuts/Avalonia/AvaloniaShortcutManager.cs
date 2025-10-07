@@ -139,7 +139,7 @@ public sealed class AvaloniaShortcutManager : ShortcutManager {
         }
 
         BroadcastShortcutActivity($"Activating {str}...");
-        bool result = ApplicationPFX.Instance.Dispatcher.Invoke(() => base.OnShortcutActivatedOverride(inputProcessor, shortcutEntry), DispatchPriority.Render);
+        bool result = base.OnShortcutActivatedOverride(inputProcessor, shortcutEntry);
         BroadcastShortcutActivity($"Activated {str}!");
         return result;
     }

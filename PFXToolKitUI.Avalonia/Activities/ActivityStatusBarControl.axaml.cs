@@ -28,8 +28,6 @@ using PFXToolKitUI.Activities.Pausable;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.CommandSystem;
-using PFXToolKitUI.Icons;
-using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
@@ -42,38 +40,6 @@ namespace PFXToolKitUI.Avalonia.Activities;
 /// activities when clicked
 /// </summary>
 public partial class ActivityStatusBarControl : UserControl {
-    public static readonly Icon CancelIcon =
-        IconManager.Instance.RegisterGeometryIcon(
-            nameof(CancelIcon),
-            [
-                new GeometryEntry("m.0005 1.9789q-0-.3411.2388-.5798l1.1599-1.1598q.2388-.2388.5799-.2388.3411-0 .5799.2388l2.5077 2.507 2.5077-2.507q.2388-.2388.5799-.2388.3411-0 .5799.2388l1.1599 1.1598Q10.1336 1.6378 10.1336 1.9789t-.2388.5799l-2.5077 2.507L9.8949 7.5726Q10.1337 7.8114 10.1337 8.1524t-.2388.5799l-1.1599 1.1598q-.2388.2386-.58.2387-.3411 0-.58-.2387l-2.5077-2.507-2.5077 2.507q-.2388.2386-.58.2387-.3411 0-.58-.2387l-1.1599-1.1598q-.2388-.2388-.2388-.5799t.2388-.5798L2.7469 5.0658.2392 2.5588q-.2388-.2388-.2388-.5799z", BrushManager.Instance.GetDynamicThemeBrush("ABrush.Glyph.Static")),
-            ],
-            stretch: StretchMode.Uniform);
-
-    public static readonly Icon CancelIconInverted =
-        IconManager.Instance.RegisterGeometryIcon(
-            nameof(CancelIconInverted),
-            [
-                new GeometryEntry("m.0005 1.9789q-0-.3411.2388-.5798l1.1599-1.1598q.2388-.2388.5799-.2388.3411-0 .5799.2388l2.5077 2.507 2.5077-2.507q.2388-.2388.5799-.2388.3411-0 .5799.2388l1.1599 1.1598Q10.1336 1.6378 10.1336 1.9789t-.2388.5799l-2.5077 2.507L9.8949 7.5726Q10.1337 7.8114 10.1337 8.1524t-.2388.5799l-1.1599 1.1598q-.2388.2386-.58.2387-.3411 0-.58-.2387l-2.5077-2.507-2.5077 2.507q-.2388.2386-.58.2387-.3411 0-.58-.2387l-1.1599-1.1598q-.2388-.2388-.2388-.5799t.2388-.5798L2.7469 5.0658.2392 2.5588q-.2388-.2388-.2388-.5799z", BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone0.Background.Static")),
-            ],
-            stretch: StretchMode.Uniform);
-
-    public static readonly Icon ContinueActivityIcon =
-        IconManager.Instance.RegisterGeometryIcon(
-            nameof(ContinueActivityIcon),
-            [
-                new GeometryEntry("M5.4947 2.5732 1.5008.1422C.8321-.2646 0 .25 0 1.0689L0 5.9309C0 6.7509.8321 7.2644 1.5008 6.8577L5.4947 4.4277C6.1684 4.0177 6.1684 2.9832 5.4947 2.5732", BrushManager.Instance.GetDynamicThemeBrush("ABrush.Glyph.Static")),
-            ],
-            stretch: StretchMode.Uniform);
-
-    public static readonly Icon PauseActivityIcon =
-        IconManager.Instance.RegisterGeometryIcon(
-            nameof(PauseActivityIcon),
-            [
-                new GeometryEntry("M0 8 2 8 2 0 0 0 0 8ZM4 8 6 8 6 0 4 0 4 8Z", BrushManager.Instance.GetDynamicThemeBrush("ABrush.Glyph.Static")),
-            ],
-            stretch: StretchMode.Uniform);
-
     public static readonly StyledProperty<ActivityTask?> ActivityTaskProperty = AvaloniaProperty.Register<ActivityStatusBarControl, ActivityTask?>(nameof(ActivityTask));
 
     public ActivityTask? ActivityTask {
@@ -226,7 +192,7 @@ public partial class ActivityStatusBarControl : UserControl {
         }
         else {
             this.PART_PlayPauseButton.IsVisible = true;
-            this.PART_PlayPauseButton.Icon = task.IsPaused ? ContinueActivityIcon : PauseActivityIcon;
+            this.PART_PlayPauseButton.Icon = task.IsPaused ? StandardIcons.SmallContinueActivityIconColourful : StandardIcons.PauseActivityIcon;
             ToolTipEx.SetTip(this.PART_PlayPauseButton, task.IsPaused ? "Continue the task" : "Pause the task");
         }
     }

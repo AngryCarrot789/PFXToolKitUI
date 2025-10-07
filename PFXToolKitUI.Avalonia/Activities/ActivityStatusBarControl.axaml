@@ -5,6 +5,7 @@
              xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Activities"
              xmlns:ac="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
              xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
+             xmlns:pfxToolKitUi="clr-namespace:PFXToolKitUI;assembly=PFXToolKitUI"
              mc:Ignorable="d" d:DesignWidth="520" d:DesignHeight="24"
              x:Class="PFXToolKitUI.Avalonia.Activities.ActivityStatusBarControl"
              IsVisible="False">
@@ -20,25 +21,17 @@
 
         <DockPanel HorizontalSpacing="2" DockPanel.Dock="Right">
             <ac:IconButton DockPanel.Dock="Right" x:Name="PART_CancelActivityButton"
-                           Width="16" Height="16"
-                           Padding="4,1" Margin="0,0,2,0"
+                           Width="16" Height="16" Margin="0,0,2,0"
                            BorderThickness="0"
                            CornerRadius="2"
                            tt:ToolTipEx.Tip="Cancels the task"
                            Click="PART_CancelActivityButton_OnClick"
-                           Icon="{x:Static local:ActivityStatusBarControl.CancelIcon}"
-                           IconMaxHeight="12" IconMaxWidth="12"
-                           VerticalContentAlignment="Center"
-                           HorizontalContentAlignment="Center"/>
+                           Icon="{x:Static pfxToolKitUi:StandardIcons.CancelActivityIcon}"/>
 
             <ac:IconButton DockPanel.Dock="Right" x:Name="PART_PlayPauseButton"
                            Width="16" Height="16"
-                           Padding="4,1" Margin="0"
                            BorderThickness="0"
-                           CornerRadius="2"
-                           IconMaxHeight="12" IconMaxWidth="12"
-                           VerticalContentAlignment="Center"
-                           HorizontalContentAlignment="Center"/>
+                           CornerRadius="2"/>
         </DockPanel>
         
         <local:ActivityProgressBar DockPanel.Dock="Right" x:Name="PART_ActiveBgProgress"

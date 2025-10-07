@@ -43,4 +43,9 @@ public enum StretchMode {
     /// ratio of the content does not match the aspect ratio of the allocated space.
     /// </summary>
     UniformToFill,
+    
+    /// <summary>
+    /// The same as <see cref="Uniform"/>, but will not scale upwards beyond the normal size of an icon
+    /// </summary>
+    UniformNoUpscale
 }

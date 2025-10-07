@@ -17,7 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Themes;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Icons;
@@ -81,9 +80,7 @@ public abstract class IconManager {
 
     public abstract Icon RegisterIconUsingBitmap(string name, SKBitmap bitmap);
 
-    public abstract Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry, StretchMode stretch = StretchMode.None);
-
-    public abstract Icon RegisterEllipseIcon(string name, IColourBrush? fill, IColourBrush? stroke, double radiusX, double radiusY, double strokeThickness = 0.0);
+    public abstract Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry);
 
     /// <summary>
     /// Adds the icon key, with the given name. Throws if the name is

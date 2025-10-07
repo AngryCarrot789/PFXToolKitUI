@@ -242,7 +242,7 @@ public partial class UserInputDialogView : UserControl {
             SizeToContent = SizeToContent.WidthAndHeight,
             CanResize = false,
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
-            BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
+            BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
         });
 
         window.Control.AddHandler(KeyDownEvent, WindowOnKeyDown);
@@ -285,7 +285,7 @@ public partial class UserInputDialogView : UserControl {
             Parent = parent,
             Content = view,
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
-            CloseOnLostFocus = true,
+            CloseOnLostFocus = true
         });
         
         overlayWindow.Control.AddHandler(KeyDownEvent, WindowOnKeyDown); // just in case on desktop

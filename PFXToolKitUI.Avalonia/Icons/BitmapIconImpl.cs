@@ -20,9 +20,7 @@
 using Avalonia;
 using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
-using SkiaSharp;
 
 namespace PFXToolKitUI.Avalonia.Icons;
 
@@ -33,16 +31,21 @@ public class BitmapIconImpl : AbstractAvaloniaIcon {
         this.Bitmap = bitmap;
     }
 
-    public override void Render(DrawingContext context, Rect size, SKMatrix transform) {
-        using DrawingContext.PushedState? state = transform != SKMatrix.Identity ? context.PushTransform(transform.ToAvMatrix()) : null;
-        context.DrawImage(this.Bitmap, size);
+    public override void Render(DrawingContext context, Rect bounds, StretchMode stretch) {
+        if (bounds.Width > 0 && bounds.Height > 0) {
+            Rect viewPort = new Rect(bounds.Size);
+            Size sourceSize = this.Bitmap.Size;
+
+            Vector scale = stretch.CalculateScaling(bounds.Size, sourceSize);
+            Size scaledSize = sourceSize * scale;
+            Rect destRect = viewPort.CenterRect(new Rect(scaledSize)).Intersect(viewPort);
+            Rect sourceRect = new Rect(sourceSize).CenterRect(new Rect(destRect.Size / scale));
+
+            context.DrawImage(this.Bitmap, sourceRect, destRect);
+        }
     }
 
-    public override (Size Size, SKMatrix Transform) Measure(Size availableSize, StretchMode stretchMode) {
-        return (((Stretch) (int) stretchMode).CalculateSize(availableSize, this.Bitmap.Size), SKMatrix.Identity);
-    }
-
-    public override Rect GetBounds() {
-        return new Rect(default, this.Bitmap.Size);
+    public override Size Measure(Size availableSize, StretchMode stretch) {
+        return stretch.CalculateSize(availableSize, this.Bitmap.Size);
     }
 }

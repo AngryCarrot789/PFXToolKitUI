@@ -19,7 +19,6 @@
 
 using Avalonia;
 using Avalonia.Controls.Primitives;
-using Avalonia.Media;
 using PFXToolKitUI.Icons;
 
 namespace PFXToolKitUI.Avalonia.AvControls;
@@ -29,7 +28,7 @@ namespace PFXToolKitUI.Avalonia.AvControls;
 /// </summary>
 public class IconToggleButton : ToggleButton, IIconButton {
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconToggleButton, Icon?>(nameof(Icon));
-    public static readonly StyledProperty<Stretch> StretchProperty = AvaloniaProperty.Register<IconToggleButton, Stretch>(nameof(Stretch), Stretch.Uniform);
+    public static readonly StyledProperty<StretchMode> StretchProperty = AvaloniaProperty.Register<IconToggleButton, StretchMode>(nameof(Stretch), StretchMode.UniformNoUpscale);
 
     private double? iconW, iconH;
 
@@ -38,7 +37,7 @@ public class IconToggleButton : ToggleButton, IIconButton {
         set => this.SetValue(IconProperty, value);
     }
 
-    public Stretch Stretch {
+    public StretchMode Stretch {
         get => this.GetValue(StretchProperty);
         set => this.SetValue(StretchProperty, value);
     }

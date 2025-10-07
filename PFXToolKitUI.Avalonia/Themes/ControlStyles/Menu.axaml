@@ -82,8 +82,7 @@
         </Style>
 
         <Style Selector="^:disabled">
-            <Setter Property="Background" Value="{DynamicResource MenuItem.Disabled.Background}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource MenuItem.Disabled.Background}"/>
+            <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Disabled}"/>
         </Style>
     </ControlTheme>
 

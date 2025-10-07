@@ -16,6 +16,6 @@
                  Text="Text Here" Focusable="True" TabIndex="1"
                  ScrollViewer.VerticalScrollBarVisibility="Auto"/>
 
-        <TextBlock x:Name="PART_FooterTextBlock" FontSize="11" Padding="5,5" Foreground="{DynamicResource ABrush.Foreground.Disabled}"/>
+        <TextBlock x:Name="PART_FooterTextBlock" FontSize="11" Padding="5,5" Foreground="{DynamicResource ABrush.Foreground.Deeper}"/>
     </StackPanel>
 </UserControl>

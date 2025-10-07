@@ -33,7 +33,7 @@
         <Border Background="Transparent" x:Name="PART_LoadingBorder">
             <TextBlock Text="Loading settings..."
                        FontFamily="{StaticResource FontOxanium}"
-                       Foreground="{DynamicResource ABrush.Foreground.Disabled}"
+                       Foreground="{DynamicResource ABrush.Foreground.Deeper}"
                        FontSize="24"
                        VerticalAlignment="Center" HorizontalAlignment="Center" IsHitTestVisible="False"/>
         </Border>
