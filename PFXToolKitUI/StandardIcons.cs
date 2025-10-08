@@ -27,6 +27,7 @@ public static class StandardIcons {
     public static readonly IConstantColourBrush TransparentBrush = BrushManager.Instance.CreateConstant(SKColors.Transparent);
     public static readonly IDynamicColourBrush GlyphBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Glyph.Static");
     public static readonly IDynamicColourBrush ForegroundBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Foreground.Static");
+    public static readonly IDynamicColourBrush DisabledForegroundBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Foreground.Disabled");
     public static readonly IDynamicColourBrush DisabledGlyphBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Glyph.Disabled");
     
     // An X shape

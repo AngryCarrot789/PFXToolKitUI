@@ -51,7 +51,7 @@ public abstract class Command {
     /// Gets whether the command is currently executing. Only changes on the main thread
     /// </summary>
     public bool IsExecuting => this.executingCount != 0;
-
+    
     public string RegisteredCommandId => this.registeredCommandId ?? throw new Exception("Command is not registered");
 
     protected Command() : this(false) {

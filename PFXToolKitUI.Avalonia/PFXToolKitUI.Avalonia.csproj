@@ -45,4 +45,11 @@
       <AdditionalFiles Include="Interactivity\Windowing\Overlays\Impl\OverlayWindowStyles.axaml" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Compile Update="AdvancedMenuService\ToolTips\ContextMenuToolTip.axaml.cs">
+        <DependentUpon>ContextMenuToolTip.axaml</DependentUpon>
+        <SubType>Code</SubType>
+      </Compile>
+    </ItemGroup>
+
 </Project>

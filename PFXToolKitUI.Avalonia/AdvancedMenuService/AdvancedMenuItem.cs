@@ -70,6 +70,9 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Icon = this.myIconControl = new IconControl();
         this.Classes.CollectionChanged += this.ClassesOnCollectionChanged;
         this.previousEffectivelyEnabled = this.IsEffectivelyEnabled;
+        
+        ToolTipEx.SetTipType(this, typeof(ToolTips.ContextMenuToolTip));
+        ToolTip.SetShowOnDisabled(this, true);
     }
 
     private void ClassesOnCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e) {
@@ -132,13 +135,9 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         DataManager.GetContextData(this).Set(BaseContextEntry.DataKey, entry);
 
         this.UpdateHeader(entry);
-        if (entry.Description != null)
-            ToolTipEx.SetTip(this, entry.Description ?? "");
-
         entry.DisplayNameChanged += this.OnEntryDisplayNameChanged;
-        entry.DescriptionChanged += this.OnEntryDescriptionChanged;
-        entry.IconChanged += this.OnEntryIconChanged;
-        entry.DisabledIconChanged += this.OnEntryIconChanged;
+        entry.IconChanged += this.OnAnyEntryIconChanged;
+        entry.DisabledIconChanged += this.OnAnyEntryIconChanged;
 
         if (entry is ContextEntryGroup list) {
             AdvancedMenuHelper.OnLogicalItemsAdded(this, 0, list.Items);
@@ -165,16 +164,14 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         }
 
         entry.DisplayNameChanged -= this.OnEntryDisplayNameChanged;
-        entry.DescriptionChanged -= this.OnEntryDescriptionChanged;
-        entry.IconChanged -= this.OnEntryIconChanged;
-        entry.DisabledIconChanged -= this.OnEntryIconChanged;
+        entry.IconChanged -= this.OnAnyEntryIconChanged;
+        entry.DisabledIconChanged -= this.OnAnyEntryIconChanged;
         entry.CanExecuteChanged -= this.OnCanExecuteChanged;
         entry.IsCheckedFunctionChanged -= this.OnIsCheckedFunctionChanged;
         entry.IsCheckedChanged -= this.OnIsCheckedChanged;
 
         this.myIconControl.Icon = null;
         
-        this.ClearValue(ToolTipEx.TipProperty);
         AdvancedMenuHelper.ClearDynamicVisualItems(this);
         AdvancedMenuHelper.ClearVisualNodes(this);
         this.DynamicInsertion = null;
@@ -234,6 +231,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
             this.OnIsCheckedChanged(this.Entry);
 
         this.UpdateIsEnabled();
+        (ToolTipEx.GetTip(this) as ToolTips.ContextMenuToolTip)?.OnCanExecuteChanged();
 
         foreach (object? item in this.Items) {
             if (item is AdvancedMenuItem menuItem && menuItem.IsLoaded) {
@@ -278,21 +276,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         AdvancedMenuHelper.OnLogicalItemReplaced(this, index, oldItem, newItem);
     }
 
-    private void OnEntryIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {
+    private void OnAnyEntryIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {
         this.UpdateIcon();
-    }
-    
-    private void OnEntryDisabledIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {
-        this.UpdateIcon();
-    }
-
-    private void OnEntryDescriptionChanged(BaseContextEntry sender) {
-        if (sender.Description != null) {
-            ToolTipEx.SetTip(this, sender.Description ?? "");
-        }
-        else {
-            this.ClearValue(ToolTipEx.TipProperty);
-        }
     }
 
     private void OnEntryDisplayNameChanged(BaseContextEntry sender) {

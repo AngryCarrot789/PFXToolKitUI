@@ -18,6 +18,7 @@
 // 
 
 using Avalonia.Controls;
+using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Interactivity.Contexts;
 
@@ -35,6 +36,18 @@ namespace PFXToolKitUI.Avalonia.ToolTips;
 /// </para>
 /// </summary>
 public interface IToolTipControl {
+    // Practically zero point since the odds of context data changing while a tool tip is open is extremely rare
+    // void OnContextChanged(IContextData data);
+
+    /// <summary>
+    /// Invoked when the tool tip is trying to open
+    /// </summary>
+    /// <param name="owner">The owner of the tooltip</param>
+    /// <param name="e">The opening args. Can be cancelled to prevent the tooltip from being opened</param>
+    void OnOpening(Control owner, CancelRoutedEventArgs e) {
+        
+    }
+    
     /// <summary>
     /// Invoked when the tool tip opens on the owner control. The context data is provided via <see cref="DataManager.GetFullContextData"/>
     /// </summary>
@@ -47,7 +60,4 @@ public interface IToolTipControl {
     /// </summary>
     /// <param name="owner">The owner of the tooltip</param>
     void OnClosed(Control owner);
-
-    // Practically zero point since the odds of context data changing while a tool tip is open is extremely rare
-    // void OnContextChanged(IContextData data);
 }

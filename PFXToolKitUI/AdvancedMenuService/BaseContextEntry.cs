@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity;
 using PFXToolKitUI.Interactivity.Contexts;
@@ -30,6 +31,8 @@ public delegate void BaseContextEntryIconChangedEventHandler(BaseContextEntry se
 
 public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseContextEntry sender, IContextData? oldCapturedContext, IContextData? newCapturedContext);
 
+public delegate DisabledHintInfo? BaseContextEntryProvideDisabledHint(IContextData context, ContextRegistry? sourceContextMenu);
+
 /// <summary>
 /// The base class for a menu item model. Contains standard properties like display name, tooltip description and an icon.
 /// <para>
@@ -38,7 +41,7 @@ public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseCont
 /// the header and icon, and also raise <see cref="CanExecuteChanged"/> when the executability may have changed
 /// </para>
 /// </summary>
-public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
+public abstract class BaseContextEntry : IContextObject, IUserLocalContext, IDisabledHintProvider {
     /// <summary>
     /// Gets the general data key for accessing a context entry. UI controls for menu items will use
     /// this to update their local context with the entry they are currently attached to
@@ -123,6 +126,11 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
             }
         }
     }
+    
+    /// <summary>
+    /// Gets or sets the disabled hint info provider for this group
+    /// </summary>
+    public BaseContextEntryProvideDisabledHint? ProvideDisabledHint { get; set; }
 
     /// <summary>
     /// Gets the custom user context for this context entry. This is only used for advanced customizations
@@ -160,6 +168,10 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext {
 
     public void RaiseIsCheckedChanged() {
         this.IsCheckedChanged?.Invoke(this);
+    }
+    
+    DisabledHintInfo? IDisabledHintProvider.ProvideDisabledHint(IContextData context, ContextRegistry? sourceContextMenu) {
+        return this.ProvideDisabledHint?.Invoke(context, sourceContextMenu);
     }
 
     public static void InternalOnBecomeVisible(BaseContextEntry entry, IContextData capturedContext) {

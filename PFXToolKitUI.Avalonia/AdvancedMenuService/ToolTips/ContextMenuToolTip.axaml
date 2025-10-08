@@ -1,0 +1,12 @@
+﻿<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+             mc:Ignorable="d" d:DesignWidth="200" d:DesignHeight="64"
+             x:Class="PFXToolKitUI.Avalonia.AdvancedMenuService.ToolTips.ContextMenuToolTip">
+    <StackPanel>
+        <ContentControl x:Name="PART_DisabledTipInfoControl"/>
+        <Separator x:Name="PART_Separator"/>
+        <TextBlock x:Name="PART_ToolTipText" Text="My cool tooltip" Padding="2,1"/>
+    </StackPanel>
+</UserControl>

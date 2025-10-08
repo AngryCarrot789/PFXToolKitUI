@@ -75,7 +75,8 @@ public static class ToolTipEx {
                 tip = (Control) Activator.CreateInstance(newTipType)! ?? throw new InvalidOperationException("Wut");
                 toolTipControlCache[newTipType] = tip = new ToolTipControlEx(tip);
             }
-
+            
+            ToolTip.AddToolTipOpeningHandler(control, OnToolTipOpening);
             bool isOpen = ToolTip.GetIsOpen(control);
             if (isOpen)
                 ToolTip.SetIsOpen(control, false);
@@ -86,11 +87,18 @@ public static class ToolTipEx {
                 ToolTip.SetIsOpen(control, true);
         }
         else {
+            ToolTip.RemoveToolTipOpeningHandler(control, OnToolTipOpening);
             if (ToolTip.GetIsOpen(control)) {
                 ToolTip.SetIsOpen(control, false);
             }
 
             ToolTip.SetTip(control, null);
+        }
+    }
+
+    private static void OnToolTipOpening(object? sender, CancelRoutedEventArgs e) {
+        if (ToolTip.GetTip((Control) sender!) is ToolTipControlEx ex) {
+            ex.OnOpening((Control) sender!, e);
         }
     }
 
@@ -132,6 +140,12 @@ public static class ToolTipEx {
                 Setters = { new Setter(TextBlock.TextWrappingProperty, TextWrapping.Wrap) }
             };
             this.Styles.Add(style);
+        }
+
+        public void OnOpening(Control sender, CancelRoutedEventArgs e) {
+            if (this.Content is IToolTipControl tipControl) {
+                tipControl.OnOpening(sender, e);
+            }
         }
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
