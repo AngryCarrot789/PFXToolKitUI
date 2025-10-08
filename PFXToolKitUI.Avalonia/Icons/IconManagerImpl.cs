@@ -18,9 +18,7 @@
 // 
 
 using Avalonia;
-using Avalonia.Media;
 using Avalonia.Media.Imaging;
-using Avalonia.Media.Immutable;
 using Avalonia.Platform;
 using Avalonia.Skia;
 using PFXToolKitUI.Icons;
@@ -40,60 +38,82 @@ public class IconManagerImpl : IconManager {
     }
 
     public Icon RegisterIconUsingStream(string name, Stream stream) {
+        this.ValidateName(name);
+
         Bitmap? bmp = null;
         try {
-            return this.RegisterCore(new BitmapIconImpl(name, bmp = new Bitmap(stream)));
+            return this.RegisterHelper(new BitmapIconImpl(name, bmp = new Bitmap(stream)));
         }
         catch (Exception e) {
             AppLogger.Instance.WriteLine($"Exception while loading bitmap from stream:{Environment.NewLine}{e.GetToString()}");
             bmp?.Dispose();
-            return this.RegisterCore(new EmptyIcon(name));
+            return this.RegisterHelper(new EmptyIcon(name));
         }
     }
-    
-    public override Icon RegisterIconByFilePath(string name, string filePath, bool lazilyLoad = true) {
-        using BufferedStream stream = new BufferedStream(File.OpenRead(filePath), 4096);
-        return this.RegisterIconUsingStream(name, stream);
-    }
-    
-    public override Icon RegisterIconByUri(string name, Uri uri, bool lazilyLoad = true) {
-        Stream stream;
-        try {
-            stream = AssetLoader.Open(uri);
-        }
-        catch (Exception e) {
-            AppLogger.Instance.WriteLine($"Exception while opening Uri '{uri}' as stream:{Environment.NewLine}{e.GetToString()}");
-            return this.RegisterCore(new EmptyIcon(name));
-        }
 
-        try {
+    public override Icon RegisterIconByFilePath(string name, string filePath, bool lazilyLoad = true) {
+        this.ValidateName(name);
+
+        if (lazilyLoad) {
+            return this.RegisterHelper(new BitmapIconImpl(name, async () => {
+                await using BufferedStream stream = new BufferedStream(File.OpenRead(filePath), 4096);
+                return new Bitmap(stream);
+            }));
+        }
+        else {
+            using BufferedStream stream = new BufferedStream(File.OpenRead(filePath), 4096);
             return this.RegisterIconUsingStream(name, stream);
         }
-        finally {
-            stream.Dispose();
+    }
+
+    public override Icon RegisterIconByUri(string name, Uri uri, bool lazilyLoad = true) {
+        this.ValidateName(name);
+
+        if (lazilyLoad) {
+            return this.RegisterHelper(new BitmapIconImpl(name, async () => {
+                Stream stream = AssetLoader.Open(uri);
+                await using BufferedStream bufferedStream = new BufferedStream(stream, 4096);
+                return new Bitmap(bufferedStream);
+            }));
+        }
+        else {
+            Stream stream;
+            try {
+                stream = AssetLoader.Open(uri);
+            }
+            catch (Exception e) {
+                AppLogger.Instance.WriteLine($"Exception while opening Uri '{uri}' as stream:{Environment.NewLine}{e.GetToString()}");
+                return this.RegisterHelper(new EmptyIcon(name));
+            }
+
+            try {
+                return this.RegisterIconUsingStream(name, stream);
+            }
+            finally {
+                stream.Dispose();
+            }
         }
     }
 
     public override Icon RegisterIconUsingBitmap(string name, SKBitmap bitmap) {
+        this.ValidateName(name);
+
         Bitmap? bmp = null;
         try {
             SKImageInfo info = bitmap.Info;
             PixelFormat? fmt = info.ColorType.ToAvalonia();
             bmp = new Bitmap(fmt ?? PixelFormat.Bgra8888, info.AlphaType.ToAlphaFormat(), bitmap.GetPixels(), new PixelSize(info.Width, info.Height), new Vector(96, 96), info.RowBytes);
-            return this.RegisterCore(new BitmapIconImpl(name, bmp));
+            return this.RegisterHelper(new BitmapIconImpl(name, bmp));
         }
         catch (Exception e) {
             AppLogger.Instance.WriteLine($"Exception while creating avalonia bitmap from skia bitmap:\n{e}");
             bmp?.Dispose();
-            return this.RegisterCore(new EmptyIcon(name));
+            return this.RegisterHelper(new EmptyIcon(name));
         }
     }
 
     public override Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry) {
-        return this.RegisterCore(new GeometryIconImpl(name, geometry));
-    }
-
-    private static ImmutableSolidColorBrush? ColourToBrush(SKColor? colour) {
-        return colour is SKColor b ? new ImmutableSolidColorBrush(Color.FromArgb(b.Alpha, b.Red, b.Green, b.Blue)) : null;
+        this.ValidateName(name);
+        return this.RegisterHelper(new GeometryIconImpl(name, geometry));
     }
 }

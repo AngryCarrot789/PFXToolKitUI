@@ -107,7 +107,7 @@ public sealed class AsyncLocalContextManager {
             return false;
         }
         
-        ctx.fullContext ??= ctx.stack.Count == 1 ? ctx.stack[0] : new DelegatingContextData(ctx.stack.ToArray());
+        ctx.fullContext ??= ctx.stack.Count == 1 ? ctx.stack[0] : new CombinedContextData(ctx.stack.ToArray());
         return (contextData = ctx.fullContext) != null;
     }
 

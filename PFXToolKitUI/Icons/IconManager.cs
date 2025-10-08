@@ -39,8 +39,7 @@ public abstract class IconManager {
             throw new InvalidOperationException("Icon name already in use: '" + name + "'");
     }
 
-    protected Icon RegisterCore(Icon icon) {
-        this.ValidateName(icon.Name);
+    protected Icon RegisterHelper(Icon icon) {
         this.AddIcon(icon.Name, icon);
         return icon;
     }

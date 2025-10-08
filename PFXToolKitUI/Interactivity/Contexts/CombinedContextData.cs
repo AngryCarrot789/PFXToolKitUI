@@ -21,16 +21,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace PFXToolKitUI.Interactivity.Contexts;
 
-public class DelegatingContextData : IContextData {
+public class CombinedContextData : IContextData {
     private readonly IContextData[] context;
+    private List<KeyValuePair<string,object>>? myEntryList;
 
-    public IEnumerable<KeyValuePair<string, object>> Entries => this.context.SelectMany(x => x.Entries);
+    public IEnumerable<KeyValuePair<string, object>> Entries => this.myEntryList ??= this.context.SelectMany(x => x.Entries).ToList();
 
-    public DelegatingContextData(IContextData data1) : this([data1]) { }
-
-    public DelegatingContextData(IContextData data1, IContextData data2) : this([data1, data2]) { }
-
-    public DelegatingContextData(params IContextData[] context) {
+    public CombinedContextData(params IContextData[] context) {
         this.context = context;
     }
 

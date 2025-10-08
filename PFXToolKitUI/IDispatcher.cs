@@ -52,19 +52,25 @@ public interface IDispatcher {
     /// </summary>
     /// <param name="action">The action to invoke</param>
     /// <param name="priority">The dispatch priority</param>
+    /// <param name="captureContext">
+    /// Specifies whether to capture the current execution context and restore it while executing the callback
+    /// </param>
     /// <param name="token">A token to cancel the operation, before it runs</param>
     /// <returns>A task that becomes completed once the action completes</returns>
     /// <remarks>
     /// If the action throws an exception (including OCE), it will be caught and the task becomes faulted.
     /// The task only becomes cancelled when the operation has not started yet and the token becomes cancelled
     /// </remarks>
-    Task InvokeAsync(Action action, DispatchPriority priority = DispatchPriority.Normal, CancellationToken token = default);
+    Task InvokeAsync(Action action, DispatchPriority priority = DispatchPriority.Normal, bool captureContext = false, CancellationToken token = default);
 
     /// <summary>
     /// Asynchronously executes the function on the dispatcher thread and produces the function's return value as a result in the task
     /// </summary>
     /// <param name="function">The function to invoke</param>
     /// <param name="priority">The dispatch priority</param>
+    /// <param name="captureContext">
+    /// Specifies whether to capture the current execution context and restore it while executing the callback
+    /// </param>
     /// <param name="token">A token to cancel the operation, before it runs</param>
     /// <typeparam name="T">The type of return value</typeparam>
     /// <returns>A task that becomes completed with the return value of the function</returns>
@@ -72,7 +78,7 @@ public interface IDispatcher {
     /// If the action throws an exception (including OCE), it will be caught and the task becomes faulted.
     /// The task only becomes cancelled when the operation has not started yet and the token becomes cancelled
     /// </remarks>
-    Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority = DispatchPriority.Normal, CancellationToken token = default);
+    Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority = DispatchPriority.Normal, bool captureContext = false, CancellationToken token = default);
 
     /// <summary>
     /// Invokes the action asynchronously on this dispatcher thread. This differs from <see cref="InvokeAsync"/> where
@@ -81,7 +87,10 @@ public interface IDispatcher {
     /// </summary>
     /// <param name="action">The callback to invoke</param>
     /// <param name="priority">The priority to invoke the callback at</param>
-    void Post(Action action, DispatchPriority priority = DispatchPriority.Default);
+    /// <param name="captureContext">
+    /// Specifies whether to capture the current execution context and restore it while executing the callback
+    /// </param>
+    void Post(Action action, DispatchPriority priority = DispatchPriority.Default, bool captureContext = false);
 
     /// <summary>
     /// Invokes the action asynchronously on this dispatcher thread. This differs from <see cref="InvokeAsync"/> where
@@ -91,7 +100,10 @@ public interface IDispatcher {
     /// <param name="action">The callback to invoke</param>
     /// <param name="state">The state object to pass to the callback</param>
     /// <param name="priority">The priority to invoke the callback at</param>
-    void Post(SendOrPostCallback action, object? state, DispatchPriority priority = DispatchPriority.Default);
+    /// <param name="captureContext">
+    /// Specifies whether to capture the current execution context and restore it while executing the callback
+    /// </param>
+    void Post(SendOrPostCallback action, object? state, DispatchPriority priority = DispatchPriority.Default, bool captureContext = false);
 
     /// <summary>
     /// Process all queued events at and above the given priority. Once the task is complete,
@@ -103,7 +115,7 @@ public interface IDispatcher {
     /// </summary>
     /// <param name="priority">The priority to process at and above</param>
     /// <returns>A task</returns>
-    Task Process(DispatchPriority priority) => this.InvokeAsync(EmptyAction, priority);
+    Task Process(DispatchPriority priority) => this.InvokeAsync(EmptyAction, priority, false);
 
     /// <summary>
     /// Posts a shutdown request to the dispatcher

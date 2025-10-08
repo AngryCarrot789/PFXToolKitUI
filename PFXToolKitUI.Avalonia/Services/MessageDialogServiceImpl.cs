@@ -35,10 +35,7 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Services;
 
 public class MessageDialogServiceImpl : IMessageDialogService {
-    public static readonly ThreadLocal<string> Test = new ThreadLocal<string>();
-
     public MessageDialogServiceImpl() {
-        Test.Value = "Main thread"; 
     }
 
     public async Task<MessageBoxResult> ShowMessage(MessageBoxInfo info) {
@@ -47,7 +44,9 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             return await ShowMessageBoxInMainThread(info);
         }
 
-        return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageBoxInMainThread(info)).Unwrap();
+        // Capture the current context, since the caller is probably
+        // from an activity started by a command which has top-level info
+        return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageBoxInMainThread(info), captureContext: true).Unwrap();
     }
 
     private static bool IsPersistentButtonValidFor(MessageBoxResult button, MessageBoxButton buttons) {

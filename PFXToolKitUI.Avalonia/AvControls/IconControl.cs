@@ -98,6 +98,7 @@ public class IconControl : Control, IIconButton {
     }
 
     private void OnIconInvalidated(object? sender, EventArgs e) {
+        this.InvalidateMeasure();
         this.InvalidateVisual();
     }
 

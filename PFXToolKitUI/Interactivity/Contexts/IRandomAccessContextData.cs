@@ -28,4 +28,9 @@ public interface IRandomAccessContextData : IContextData {
     /// Gets the number of context elements
     /// </summary>
     int Count { get; }
+
+    /// <summary>
+    /// Returns true when <see cref="Count"/> is less than 1
+    /// </summary>
+    bool IsEmpty => this.Count < 1;
 }

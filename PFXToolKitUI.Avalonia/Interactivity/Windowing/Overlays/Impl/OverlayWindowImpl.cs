@@ -132,20 +132,26 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
     }
 
     public Task ShowAsync() {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        
         if (this.OpenState != OpenState.NotOpened)
             throw new InvalidOperationException("Popup has already started to open");
+        
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(this.ShowImpl);
     }
 
     public async Task<object?> ShowDialogAsync() {
+        ApplicationPFX.Instance.Dispatcher.VerifyAccess();
+        
         if (this.OpenState != OpenState.NotOpened)
             throw new InvalidOperationException("Popup has already started to open");
+        
         await ApplicationPFX.Instance.Dispatcher.InvokeAsync(this.ShowImpl);
 
         await this.WaitForClosedAsync(CancellationToken.None);
         return this.myDialogResult;
     }
-    
+
     private void CheckStateForRequestClose() {
         switch (this.OpenState) {
             case < OpenState.Open:        throw new InvalidOperationException("Window has not fully opened yet, it cannot be requested to close yet.");
@@ -244,7 +250,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         // A child window may have closed this window for some reason, or the app shut down?
         if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             return;
-        
+
         this.OpenState = OpenState.TryingToClose;
         this.isProcessingClosingInternal = true;
         OverlayWindowCancelCloseEventArgs beforeClosingArgs = new OverlayWindowCancelCloseEventArgs(this, reason, isFromCode);

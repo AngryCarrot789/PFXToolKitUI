@@ -23,23 +23,48 @@ namespace PFXToolKitUI.Utils;
 
 // A helper class deriving TCS that allows an external cancellation signal to mark it as completed
 public sealed class CancellableTaskCompletionSource : TaskCompletionSource, IDisposable {
-    private readonly CancellationToken token;
+    private static readonly Action<object?> s_HandleOnTokenCancelled = static t => ((CancellableTaskCompletionSource) t!).OnTokenCancelled();
+    
     private readonly CancellationTokenRegistration registration;
+    private readonly bool setSuccessfulInsteadOfCancelled;
 
-    public CancellableTaskCompletionSource(CancellationToken token) : base(TaskCreationOptions.RunContinuationsAsynchronously) {
-        this.token = token;
+    /// <summary>
+    /// Creates an instance of <see cref="CancellableTaskCompletionSource"/>
+    /// </summary>
+    /// <param name="token">The token that can make this TCS become cancelled, or completed depending on the next parameter</param>
+    /// <param name="setSuccessfulInsteadOfCancelled">
+    /// Specifies if the cancellation of the token will mark this TCS as successful instead of cancelled.
+    /// Will not change the behaviour of external calls to <see cref="TaskCompletionSource.SetCanceled()"/>
+    /// or <see cref="TaskCompletionSource.TrySetCanceled()"/>
+    /// </param>
+    public CancellableTaskCompletionSource(CancellationToken token, bool setSuccessfulInsteadOfCancelled = false) : base(TaskCreationOptions.RunContinuationsAsynchronously) {
+        this.setSuccessfulInsteadOfCancelled = setSuccessfulInsteadOfCancelled;
         if (token.CanBeCanceled) {
-            this.registration = token.Register(this.SetCanceledCore);
-            // this.Task.ContinueWith(
-            //     static (t, tcs) => {
-            //         ((CancellableTaskCompletionSource) tcs!).registration.Dispose();
-            //     }, this, TaskContinuationOptions.ExecuteSynchronously
-            // );
+            if (token.IsCancellationRequested) {
+                if (setSuccessfulInsteadOfCancelled) {
+                    this.TrySetResult();
+                }
+                else {
+                    this.TrySetCanceled(token);
+                }
+            }
+            else {
+                // If the token gets cancelled right as we're about to call Register, it
+                // will still call OnTokenCancelled so there's no risk of deadlocked... supposedly 
+                this.registration = token.Register(s_HandleOnTokenCancelled, this);
+            }
         }
     }
 
-    private void SetCanceledCore() {
-        this.TrySetCanceled(this.token);
+    private void OnTokenCancelled() {
+        if (this.setSuccessfulInsteadOfCancelled) {
+            this.TrySetResult();
+        }
+        else {
+            this.TrySetCanceled(this.registration.Token);
+        }
+        
+        this.registration.Dispose();
     }
 
     /// <summary>
