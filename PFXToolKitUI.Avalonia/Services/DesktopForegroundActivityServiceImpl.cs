@@ -71,10 +71,15 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
 
         if (!(options.ParentTopLevel is IDesktopWindow theWindow))
             throw new InvalidOperationException("Invalid top level object");
+        
         if (options.DialogCancellation.IsCancellationRequested)
             return WaitForActivityResult.DialogCancellationRequested;
+        
         if (options.Activity.IsCompleted)
             return WaitForActivityResult.ActivityCompletedEarly;
+        
+        if (theWindow.OpenState == OpenState.Closed)
+            return WaitForActivityResult.ParentWindowClosed;
 
         IWindowManager manager = theWindow.WindowManager;
         ActivityProgressRowControl row = new ActivityProgressRowControl() {
@@ -160,7 +165,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         progress.CaptionChanged -= captionChangedHandler;
 
         bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
-        return new WaitForActivityResult(isMinimizingToBackground);
+        return new WaitForActivityResult(isMinimizingToBackground, false);
     }
 
     private static Button CreateRunInBackgroundButton() {

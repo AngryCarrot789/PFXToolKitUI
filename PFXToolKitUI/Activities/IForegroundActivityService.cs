@@ -234,33 +234,23 @@ public readonly struct WaitForActivityResult {
     public static WaitForActivityResult ActivityCompletedEarly => default;
 
     /// <summary>
-    /// Gets whether the user wanted to close the dialog to make the task run as a background operation only
+    /// The result for when the top level the dialog was supposed to be shown relative to was closed early
+    /// </summary>
+    public static WaitForActivityResult ParentWindowClosed => new WaitForActivityResult(false, true);
+    
+    /// <summary>
+    /// Gets whether the user wanted to close the dialog to make the task run as a background operation.
+    /// This can only be true when <see cref="WaitForActivityOptions.CanMinimizeIntoBackgroundActivity"/> is true
     /// </summary>
     public bool TransitionToBackground { get; }
 
-    public WaitForActivityResult(bool transitionToBackground) {
+    /// <summary>
+    /// Gets whether the parent top-level window closed too early for the wait operation to be effective
+    /// </summary>
+    public bool ParentClosedEarly { get; }
+
+    public WaitForActivityResult(bool transitionToBackground, bool parentClosedEarly) {
         this.TransitionToBackground = transitionToBackground;
+        this.ParentClosedEarly = parentClosedEarly;
     }
-}
-
-/// <summary>
-/// Specifies how to deal with the user trying to close the dialog 
-/// </summary>
-[Flags]
-public enum WaitForActivityOptions2222 {
-    /// <summary>
-    /// No options, meaning when the user tries to close the dialog, the dialog will just close and the activity won't be cancelled.
-    /// </summary>
-    None,
-
-    /// <summary>
-    /// Signal the dialog to close when the user clicks the X button
-    /// </summary>
-    CancelOnAttemptToClose = 1,
-
-    /// <summary>
-    /// When the dialog has been requested to close, wait for the activity to actually finish.
-    /// </summary>
-    WaitForActivityToFinish = 2,
-    Default = CancelOnAttemptToClose | WaitForActivityToFinish
 }

@@ -254,6 +254,64 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         WaitForCompletion:
         await this.WaitForCompletion();
     }
+    
+    /// <summary>
+    /// Requests this pausable task to pause
+    /// </summary>
+    public void RequestPause(out bool isAlreadyCompleted, out bool isAlreadyPaused) {
+        lock (this.stateLock) {
+            TaskState s = this.state;
+            if (s >= TaskState.BeforeCompleted) {
+                isAlreadyCompleted = true;
+                isAlreadyPaused = false;
+                return;
+            }
+
+            if (s == TaskState.BeforePaused || s == TaskState.AfterPaused) {
+                isAlreadyCompleted = false;
+                isAlreadyPaused = true;
+                return;
+            }
+
+            Interlocked.Increment(ref this.reqToPauseCount);
+            this.pauseState = PauseState.Requested;
+            this.MarkPausedOrCancelled();
+            _ = this.PauseOrResumeWaitInternal(true);
+            
+            isAlreadyCompleted = false;
+            isAlreadyPaused = false;
+        }
+    }
+    
+    /// <summary>
+    /// Requests this pausable task to pause
+    /// </summary>
+    public void RequestResume(out bool isAlreadyCompleted, out bool isAlreadyRunning) {
+        lock (this.stateLock) {
+            TaskState s = this.state;
+            if (s >= TaskState.BeforeCompleted) {
+                isAlreadyCompleted = true;
+                isAlreadyRunning = false;
+                return;
+            }
+
+            if ((s != TaskState.BeforePaused && s != TaskState.AfterPaused)) {
+                isAlreadyCompleted = true;
+                isAlreadyRunning = false;
+                return;
+            }
+
+            if (this.reqToPauseCount == 0) {
+                Debugger.Break(); // Excessive calls to Resume()
+            }
+            
+            Interlocked.Decrement(ref this.reqToPauseCount);
+            Interlocked.Increment(ref this.reqToUnpauseCount);
+            isAlreadyCompleted = false;
+            isAlreadyRunning = false;
+            _ = this.PauseOrResumeWaitInternal(false);
+        }
+    }
 
     /// <summary>
     /// Resumes execution of the task, and waits for the task to enter its un-pausing state.

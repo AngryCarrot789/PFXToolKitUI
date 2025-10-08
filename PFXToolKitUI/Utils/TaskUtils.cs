@@ -25,9 +25,12 @@ public static class TaskUtils {
     /// If the task is already completed, it returns an already cancelled token
     /// </summary>
     /// <param name="task">The task</param>
+    /// <param name="cancellationToken">
+    /// A cancellation token that makes the returned <see cref="CancellationTokenSource"/> becomes cancelled
+    /// </param>
     /// <returns>The cancellation token source</returns>
-    public static CancellationTokenSource CreateCompletionSource(Task task) {
-        CancellationTokenSource cts = new CancellationTokenSource();
+    public static CancellationTokenSource CreateCompletionSource(Task task, CancellationToken cancellationToken = default) {
+        CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (task.IsCompleted) {
             cts.Cancel();
             return cts;
