@@ -112,6 +112,12 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     public CancellationToken CancellationToken => this.actualCts?.Token ?? CancellationToken.None;
 
     /// <summary>
+    /// Gets the true cancellation token that becomes cancelled when the user clicks the cancel button.
+    /// Returns <see cref="System.Threading.CancellationToken.None"/> when not cancellable
+    /// </summary>
+    public CancellationToken PauseOrCancelToken { get; private set; }
+
+    /// <summary>
     /// An event fired when the paused state of this task changes. This event is fired from
     /// a task thread, so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/>
     /// if they need to
@@ -254,7 +260,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
         WaitForCompletion:
         await this.WaitForCompletion();
     }
-    
+
     /// <summary>
     /// Requests this pausable task to pause
     /// </summary>
@@ -277,12 +283,12 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             this.pauseState = PauseState.Requested;
             this.MarkPausedOrCancelled();
             _ = this.PauseOrResumeWaitInternal(true);
-            
+
             isAlreadyCompleted = false;
             isAlreadyPaused = false;
         }
     }
-    
+
     /// <summary>
     /// Requests this pausable task to pause
     /// </summary>
@@ -300,15 +306,15 @@ public abstract class AdvancedPausableTask : BasePausableTask {
                 isAlreadyRunning = false;
                 return;
             }
-
-            if (this.reqToPauseCount == 0) {
-                Debugger.Break(); // Excessive calls to Resume()
-            }
             
-            Interlocked.Decrement(ref this.reqToPauseCount);
-            Interlocked.Increment(ref this.reqToUnpauseCount);
             isAlreadyCompleted = false;
             isAlreadyRunning = false;
+            if (this.reqToPauseCount == 0) {
+                return; // excessive calls
+            }
+
+            Interlocked.Decrement(ref this.reqToPauseCount); 
+            Interlocked.Increment(ref this.reqToUnpauseCount);
             _ = this.PauseOrResumeWaitInternal(false);
         }
     }
@@ -425,7 +431,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
                     goto WaitForPausedThenOperate;
                 case TaskState.BeforeCompleted: goto WaitForCompletionThenOperate;
                 case TaskState.AfterCompleted:  goto OperateAbs;
-                case TaskState.BeforeCancelled: 
+                case TaskState.BeforeCancelled:
                 case TaskState.AfterCancelled: {
                     if (canOperateOnCancelled)
                         goto OperateAbs;
@@ -567,6 +573,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     private async Task InternalCompleted(TaskState finalState) {
         try {
             // Dispose callback from true cancellation ts
+            this.PauseOrCancelToken = CancellationToken.None;
             this.myPauseOrCancelSource?.Dispose();
             if (this.isOwnerOfActivity) {
                 this.actualCts?.Dispose();
@@ -592,7 +599,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             this.myPauseOrCancelSource = CancellationTokenSource.CreateLinkedTokenSource(trueCancelToken);
         }
 
-        CancellationToken pauseOrCancelToken = this.myPauseOrCancelSource.Token;
+        CancellationToken pauseOrCancelToken = this.PauseOrCancelToken = this.myPauseOrCancelSource.Token;
         for (ulong iterations = 0;; ++iterations) {
             if (this.state == TaskState.AfterPaused) {
                 // This could probably be massively simplified using semaphores or something similar...
@@ -619,7 +626,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
                             // re-create pause token source, since it will definitely be cancelled at this point
                             this.myPauseOrCancelSource?.Dispose();
                             this.myPauseOrCancelSource = CancellationTokenSource.CreateLinkedTokenSource(trueCancelToken = this.actualCts?.Token ?? CancellationToken.None);
-                            pauseOrCancelToken = this.myPauseOrCancelSource.Token;
+                            pauseOrCancelToken = this.PauseOrCancelToken = this.myPauseOrCancelSource.Token;
                             break;
                         }
                     }
@@ -680,7 +687,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
             lock (this.stateLock) {
                 if (this.state == TaskState.BeforeCancelled || this.state == TaskState.AfterCancelled)
                     return; // already processed
-                
+
                 this.state = TaskState.BeforeCancelled;
                 this.pauseState = PauseState.NotRequested;
             }
