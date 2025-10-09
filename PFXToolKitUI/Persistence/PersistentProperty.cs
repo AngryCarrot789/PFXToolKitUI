@@ -148,6 +148,12 @@ public abstract class PersistentProperty {
     public static PersistentProperty<bool> RegisterBool<TOwner>(string name, bool defaultValue, Func<TOwner, bool> getValue, Action<TOwner, bool> setValue, bool canSaveDefault) where TOwner : PersistentConfiguration {
         return RegisterParsable(name, defaultValue, getValue, setValue, canSaveDefault);
     }
+    
+    public static PersistentProperty<string[]> RegisterStringArray<TOwner>(string name, string[]? defaultValue, Func<TOwner, string[]> getValue, Action<TOwner, string[]> setValue, bool canSaveDefault) where TOwner : PersistentConfiguration {
+        PersistentPropertyStringArray property = new PersistentPropertyStringArray(defaultValue ?? Array.Empty<string>(), (x) => getValue((TOwner) x), (x, y) => setValue((TOwner) x, y), canSaveDefault);
+        RegisterCore(property, name, typeof(TOwner));
+        return property;
+    }
 
     /// <summary>
     /// Registers a completely custom persistent property using the given XML serializer
@@ -253,6 +259,42 @@ public abstract class PersistentProperty {
             }
 
             this.SetValue(config, this.fromString(text));
+        }
+    }
+
+    private class PersistentPropertyStringArray : PersistentProperty<string[]> {
+        private static readonly string[] empty = Array.Empty<string>();
+        
+        private readonly string[] defaultValue;
+        private readonly bool canSaveDefault;
+
+        public PersistentPropertyStringArray(string[] defaultValue, Func<PersistentConfiguration, string[]> getValue, Action<PersistentConfiguration, string[]> setValue, bool canSaveDefault = false) : base(defaultValue, getValue, setValue) {
+            this.canSaveDefault = canSaveDefault;
+            this.defaultValue = defaultValue;
+        }
+
+        public override bool Serialize(PersistentConfiguration config, XmlDocument document, XmlElement propertyElement) {
+            string[] value = this.GetValue(config);
+            if (value.Length < 1 || (!this.canSaveDefault && value.SequenceEqual(this.defaultValue))) {
+                return false;
+            }
+            
+            foreach (string element in value) {
+                XmlElement elem = document.CreateElement("str");
+                elem.InnerText = element;
+                propertyElement.AppendChild(elem);
+            }
+            
+            return true;
+        }
+
+        public override void Deserialize(PersistentConfiguration config, XmlElement propertyElement) {
+            List<string> values = new List<string>();
+            foreach (XmlElement elem in propertyElement.GetElementsByTagName("str").OfType<XmlElement>()) {
+                values.Add(elem.InnerText);
+            }
+
+            this.SetValue(config, values.ToArray());
         }
     }
 

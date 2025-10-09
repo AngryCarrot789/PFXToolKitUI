@@ -224,7 +224,7 @@ public interface IDesktopWindow : IWindowBase {
     /// </summary>
     /// <param name="visual">The visual to get the window of</param>
     /// <returns>The window, or null</returns>
-    static IDesktopWindow? FromVisual(Visual visual) {
+    static IDesktopWindow? DesktopWindowFromVisual(Visual visual) {
         return IWindowManager.TryGetWindow(visual, out IDesktopWindow? window) ? window : null;
     }
 
@@ -237,7 +237,7 @@ public interface IDesktopWindow : IWindowBase {
     /// True if the visual existed in a window. False if either no <see cref="IWindowManager"/>
     /// existed or <see cref="TryGetWindowFromVisual"/> returned false
     /// </returns>
-    static bool TryGetFromVisual(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window) {
+    static bool TryGetDesktopWindowFromVisual(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window) {
         return IWindowManager.TryGetWindow(visual, out window);
     }
 }

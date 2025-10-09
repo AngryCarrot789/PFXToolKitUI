@@ -38,6 +38,7 @@ public class ActivityTask {
     private readonly ActivityManager activityManager;
     private readonly Func<Task> myAction;  // user-specified procedure
     internal readonly CancellationTokenSource? myCts;
+    private readonly bool ownsCts;
     private readonly TaskCompletionSource<ActivityTask> myTcsForRunning;
     private EnumRunState myState; // Current running state
     private Task? myMainTask;     // task we created
@@ -135,18 +136,19 @@ public class ActivityTask {
     /// </summary>
     public event ActivityTaskEventHandler? IsPresentInDialogChanged;
 
-    protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellation) {
+    protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellation, bool ownsCts) {
         this.activityManager = activityManager ?? throw new ArgumentNullException(nameof(activityManager));
         this.myAction = action ?? throw new ArgumentNullException(nameof(action));
         this.Progress = activityProgress ?? throw new ArgumentNullException(nameof(activityProgress));
         this.myCts = cancellation;
+        this.ownsCts = ownsCts;
         this.CancellationToken = cancellation?.Token ?? CancellationToken.None;
         this.myTcsForRunning = new TaskCompletionSource<ActivityTask>();
     }
     
     private async Task TaskMain() {
         Task? userTask = null;
-        
+
         try {
             await ActivityManager.InternalActivateTask(this.activityManager, this);
             this.ThrowIfCancellationRequested();
@@ -158,6 +160,16 @@ public class ActivityTask {
         }
         catch (Exception e) {
             await this.OnCompleted(e, userTask);
+        }
+        finally {
+            if (this.ownsCts) {
+                try {
+                    this.myCts?.Dispose();
+                }
+                catch (Exception e) {
+                    Debug.WriteLine("Exception while disposing cancellation token source: " + e.GetToString());
+                }
+            }
         }
     }
 
@@ -218,8 +230,8 @@ public class ActivityTask {
         await ActivityManager.InternalOnActivityCompleted(this.activityManager, this, EnumRunState.Completed);
     }
 
-    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cancellation, AdvancedPausableTask? pausableTask = null) {
-        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DispatcherActivityProgress(), cancellation) { myPausableTask = pausableTask };
+    internal static ActivityTask InternalStartActivity(ActivityManager activityManager, Func<Task> action, IActivityProgress? progress, CancellationTokenSource? cancellation, bool ownsCancellation, AdvancedPausableTask? pausableTask = null) {
+        ActivityTask task = new ActivityTask(activityManager, action, progress ?? new DispatcherActivityProgress(), cancellation, ownsCancellation) { myPausableTask = pausableTask };
         if (pausableTask != null)
             pausableTask.activity = task;
         return InternalStartActivityImpl(task);
@@ -275,11 +287,11 @@ public sealed class ActivityTask<T> : ActivityTask {
 
     public new Task<Result<T>> Task => (Task<Result<T>>) base.Task;
 
-    private ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts) : base(activityManager, action, activityProgress, cts) {
+    private ActivityTask(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress activityProgress, CancellationTokenSource? cts, bool ownsCts) : base(activityManager, action, activityProgress, cts, ownsCts) {
     }
 
-    internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts) {
-        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new DispatcherActivityProgress(), cts));
+    internal static ActivityTask<T> InternalStartActivity(ActivityManager activityManager, Func<Task<T>> action, IActivityProgress? progress, CancellationTokenSource? cts, bool ownsCts) {
+        return (ActivityTask<T>) InternalStartActivityImpl(new ActivityTask<T>(activityManager, action, progress ?? new DispatcherActivityProgress(), cts, ownsCts));
     }
 
     /// <summary>

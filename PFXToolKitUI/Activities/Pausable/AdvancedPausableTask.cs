@@ -152,7 +152,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     public ActivityTask Run(IActivityProgress? progress = null) {
         this.actualCts = this.isIndicatedAsCancellable ? new CancellationTokenSource() : null;
         this.isOwnerOfActivity = true;
-        return ActivityTask.InternalStartActivity(ActivityManager.Instance, this.PausableTaskMain, progress ?? new DispatcherActivityProgress(), this.actualCts, this);
+        return ActivityTask.InternalStartActivity(ActivityManager.Instance, this.PausableTaskMain, progress ?? new DispatcherActivityProgress(), this.actualCts, false, this);
     }
 
     /// <summary>

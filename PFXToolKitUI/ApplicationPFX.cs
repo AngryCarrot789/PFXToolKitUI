@@ -260,12 +260,14 @@ public abstract class ApplicationPFX : IComponentManager {
 
         app.StartupPhase = ApplicationStartupPhase.Running;
         await app.OnApplicationRunning(progress, envArgs);
+        Instance.ComponentStorage.GetComponent<PostStartupManager>().OnPostStartup();
     }
 
     // The methods from RegisterServices to OnExiting are ordered based
     // on the order they're invoked during application lifetime.
 
     protected virtual void RegisterComponents(ComponentStorage manager) {
+        manager.AddComponent(new PostStartupManager());
         manager.AddComponent(ApplicationConfigurationManager.Instance);
         manager.AddComponent(new ActivityManager());
         manager.AddComponent(new CommandManager());

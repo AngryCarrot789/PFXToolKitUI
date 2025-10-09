@@ -178,7 +178,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         };
 
         button.Click += static (sender, args) => {
-            IDesktopWindow? window = IDesktopWindow.FromVisual((Button) sender!);
+            IDesktopWindow? window = IDesktopWindow.DesktopWindowFromVisual((Button) sender!);
             if (window != null && window.OpenState == OpenState.Open) {
                 window.LocalContextData.Set(IsClosingToHideToBackground, true);
                 window.RequestClose();

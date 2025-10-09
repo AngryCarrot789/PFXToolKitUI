@@ -111,16 +111,22 @@ public sealed class ActivityManager : IDisposable {
     /// Creates and starts an activity task.
     /// </summary>
     /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="cancellable">Specifies if the task should be directly cancellable</param>
     /// <returns>The activity task</returns>
-    public ActivityTask RunTask(Func<Task> action) => this.RunTask(action, (CancellationTokenSource?) null);
+    public ActivityTask RunTask(Func<Task> action, bool cancellable = false) {
+        return ActivityTask.InternalStartActivity(this, action, new DispatcherActivityProgress(), cancellable ? new CancellationTokenSource() : null, true);
+    }
 
     /// <summary>
     /// Creates and starts an activity task.
     /// </summary>
     /// <param name="action">The user-specified action to invoke in the activity task</param>
     /// <param name="progress">The progress storage object to be used by the activity</param>
+    /// <param name="cancellable">Specifies if the task should be directly cancellable</param>
     /// <returns>The activity task</returns>
-    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress) => this.RunTask(action, progress, null);
+    public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, bool cancellable = false) {
+        return ActivityTask.InternalStartActivity(this, action, progress, cancellable ? new CancellationTokenSource() : null, true);
+    }
 
     /// <summary>
     /// Creates and starts an activity task.
@@ -131,7 +137,9 @@ public sealed class ActivityManager : IDisposable {
     /// When null, the activity cannot be cancelled and must run to completion or complete exceptionally
     /// </param>
     /// <returns>The activity task</returns>
-    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cancellation) => this.RunTask(action, new DispatcherActivityProgress(), cancellation);
+    public ActivityTask RunTask(Func<Task> action, CancellationTokenSource? cancellation) {
+        return this.RunTask(action, new DispatcherActivityProgress(), cancellation);
+    }
 
     /// <summary>
     /// Creates and starts an activity task.
@@ -144,25 +152,31 @@ public sealed class ActivityManager : IDisposable {
     /// </param>
     /// <returns>The activity task</returns>
     public ActivityTask RunTask(Func<Task> action, IActivityProgress progress, CancellationTokenSource? cancellation) {
-        return ActivityTask.InternalStartActivity(this, action, progress, cancellation);
+        return ActivityTask.InternalStartActivity(this, action, progress, cancellation, false);
     }
 
     /// <summary>
     /// Creates and starts an activity that produces a result.
     /// </summary>
     /// <param name="action">The user-specified action to invoke in the activity task</param>
+    /// <param name="cancellable">Specifies if the task should be directly cancellable</param>
     /// <typeparam name="T">The type of return value</typeparam>
     /// <returns>The activity task</returns>
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action) => this.RunTask(action, (CancellationTokenSource?) null);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, bool cancellable = false) {
+        return ActivityTask<T>.InternalStartActivity(this, action, new DispatcherActivityProgress(), cancellable ? new CancellationTokenSource() : null, true);
+    }
 
     /// <summary>
     /// Creates and starts an activity that produces a result.
     /// </summary>
     /// <param name="action">The user-specified action to invoke in the activity task</param>
     /// <param name="progress">The progress storage object to be used by the activity</param>
+    /// <param name="cancellable">Specifies if the task should be directly cancellable</param>
     /// <typeparam name="T">The type of return value</typeparam>
     /// <returns>The activity task</returns>
-    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress) => this.RunTask(action, progress, null);
+    public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, bool cancellable = false) {
+        return ActivityTask<T>.InternalStartActivity(this, action, progress, cancellable ? new CancellationTokenSource() : null, true);
+    }
 
     /// <summary>
     /// Creates and starts an activity that produces a result.
@@ -188,7 +202,7 @@ public sealed class ActivityManager : IDisposable {
     /// <typeparam name="T">The type of return value</typeparam>
     /// <returns>The activity task</returns>
     public ActivityTask<T> RunTask<T>(Func<Task<T>> action, IActivityProgress progress, CancellationTokenSource? cancellation) {
-        return ActivityTask<T>.InternalStartActivity(this, action, progress, cancellation);
+        return ActivityTask<T>.InternalStartActivity(this, action, progress, cancellation, false);
     }
 
     /// <summary>

@@ -18,11 +18,13 @@
 // 
 
 using System.Diagnostics.CodeAnalysis;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
+using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Interactivity.Windowing;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
@@ -111,4 +113,31 @@ public interface IWindowBase : ITopLevel {
     /// <exception cref="InvalidOperationException">Not on the main thread</exception>
     /// <remarks>This method does not throw <see cref="OperationCanceledException"/></remarks>
     Task WaitForClosedAsync(CancellationToken cancellationToken = default);
+    
+    /// <summary>
+    /// Tries to get the window from the visual, or returns null, if the visual isn't in a <see cref="IWindowBase"/>
+    /// </summary>
+    /// <param name="visual">The visual to get the window of</param>
+    /// <returns>The window, or null</returns>
+    static IWindowBase? WindowFromVisual(Visual visual) {
+        IContextData context = DataManager.GetFullContextData(visual);
+        if (TryGetFromContext(context, out ITopLevel? topLevel)) {
+            return topLevel as IWindowBase;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Tries to get the window from the visual
+    /// </summary>
+    /// <param name="visual">The visual to get the window of</param>
+    /// <param name="window">The window the visual exists in</param>
+    /// <returns>
+    /// True if the visual existed in a window. False if either no <see cref="IWindowManager"/>
+    /// existed or <see cref="TryGetWindowFromVisual"/> returned false
+    /// </returns>
+    static bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IWindowBase? window) {
+        return (window = WindowFromVisual(visual)) != null;
+    }
 }
