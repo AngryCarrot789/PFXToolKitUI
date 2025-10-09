@@ -5,11 +5,11 @@
     <!-- having to scroll down in visual studio's designer to "Colour" or "Brush" -->
     <!-- #################################################################################### -->
 
-    <Color x:Key="ABrush.Foreground.Static.Color">#0F0F0F</Color>
-    <Color x:Key="ABrush.Foreground.Deeper.Color">#232323</Color>
-    <Color x:Key="ABrush.Foreground.Disabled.Color">#4D4D4D</Color>
-    <Color x:Key="ABrush.Glyph.Static.Color">#232323</Color>
-    <Color x:Key="ABrush.Glyph.Disabled.Color">#4B4B4B</Color>
+    <Color x:Key="ABrush.Foreground.Static.Color">#000000</Color>
+    <Color x:Key="ABrush.Foreground.Deeper.Color">#333333</Color>
+    <Color x:Key="ABrush.Foreground.Disabled.Color">#535353</Color>
+    <Color x:Key="ABrush.Glyph.Static.Color">#333333</Color>
+    <Color x:Key="ABrush.Glyph.Disabled.Color">#5A5A5A</Color>
     <Color x:Key="ABrush.Glyph.MouseOver.Color">#050505</Color>
     <Color x:Key="ABrush.Glyph.MouseDown.Color">#141414</Color>
     <Color x:Key="ABrush.Glyph.Selected.Color">#1B1B1B</Color>

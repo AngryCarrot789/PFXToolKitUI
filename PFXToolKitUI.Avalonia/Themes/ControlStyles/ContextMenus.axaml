@@ -38,10 +38,23 @@
                         CornerRadius="{TemplateBinding CornerRadius}">
                     <Grid RowDefinitions="Auto,1,*">
                         <Border Grid.Row="0" Background="{DynamicResource ABrush.Tone6.Background.Static}">
-                            <TextBlock Text="{TemplateBinding ContextCaption}"
-                                       FontSize="16"
-                                       FontWeight="Bold"
-                                       Padding="8,5"/>
+                            <DockPanel LastChildFill="False">
+                                <TextBlock Text="{TemplateBinding ContextCaption}"
+                                           FontSize="16"
+                                           FontWeight="Bold"
+                                           Padding="8,4,4,4"
+                                           DockPanel.Dock="Left"/>
+                                
+                                <TextBlock Text="{TemplateBinding ObjectName}"
+                                           IsVisible="{TemplateBinding ObjectName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource ABrush.Foreground.Deeper}"
+                                           Padding="4,0,8,0"
+                                           FontWeight="Bold"
+                                           TextTrimming="PrefixCharacterEllipsis"
+                                           MaxWidth="150"
+                                           DockPanel.Dock="Right"/>
+                            </DockPanel>
                         </Border>
                         <Border Grid.Row="1" Background="{TemplateBinding BorderBrush}"/>
                         <ScrollViewer Grid.Row="2" Theme="{StaticResource SimpleMenuScrollViewer}">
@@ -87,9 +100,20 @@
     <Design.PreviewWith>
         <Grid RowDefinitions="Auto,1,*">
             <Border Grid.Row="0" Background="{DynamicResource ABrush.Tone6.Background.Static}">
-                <TextBlock Text="My Context Menu" FontSize="16"
-                           FontWeight="Bold"
-                           Padding="8,5"/>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="My Context menu"
+                               FontSize="16"
+                               FontWeight="Bold"
+                               Padding="8,3,0,3"/>
+                                
+                    <TextBlock Text="Obj name"
+                               VerticalAlignment="Center"
+                               Foreground="{DynamicResource ABrush.Foreground.Deeper}"
+                               Padding="0,0,8,0"
+                               FontWeight="Bold"
+                               TextTrimming="LeadingCharacterEllipsis"
+                               MaxWidth="200"/>
+                </StackPanel>
             </Border>
             <Border Grid.Row="1" Background="{DynamicResource Popup.Static.Border}"/>
             <ScrollViewer Grid.Row="2" Theme="{StaticResource SimpleMenuScrollViewer}">

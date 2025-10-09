@@ -37,6 +37,7 @@ public delegate void ContextRegistryContextEventHandler(ContextRegistry registry
 public class ContextRegistry {
     private readonly SortedList<int, Dictionary<string, IContextGroup>> groups;
     private string? caption;
+    private string? objectName;
 
     /// <summary>
     /// Gets the groups in our registry
@@ -51,9 +52,19 @@ public class ContextRegistry {
         set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
     }
 
+    /// <summary>
+    /// Gets or sets an optional secondary caption, such as the readable name of an object,
+    /// and is shown in less obvious text (i.e. darker foreground brush with a dark themes)
+    /// </summary>
+    public string? ObjectName {
+        get => this.objectName;
+        set => PropertyHelper.SetAndRaiseINE(ref this.objectName, value, this, static t => t.ObjectNameChanged?.Invoke(t));
+    }
+    
     public bool IsOpened { get; private set; }
 
     public event ContextRegistryEventHandler? CaptionChanged;
+    public event ContextRegistryEventHandler? ObjectNameChanged;
     public event ContextRegistryContextEventHandler? Opened;
     public event ContextRegistryEventHandler? Closed;
     

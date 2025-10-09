@@ -36,8 +36,9 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
 
     public static readonly AttachedProperty<ContextRegistry?> ContextRegistryProperty = AvaloniaProperty.RegisterAttached<AdvancedContextMenu, Control, ContextRegistry?>("ContextRegistry");
     public static readonly StyledProperty<string?> ContextCaptionProperty = AvaloniaProperty.Register<AdvancedContextMenu, string?>(nameof(ContextCaption));
+    public static readonly StyledProperty<string?> ObjectNameProperty = AvaloniaProperty.Register<AdvancedContextMenu, string?>(nameof(ObjectName));
 
-    private readonly IBinder<ContextRegistry> captionBinder;
+    private readonly IBinder<ContextRegistry> captionBinder, objectNameBinder;
     private readonly Dictionary<Type, Stack<Control>> itemCache;
     private InputElement? currentTarget;
     private readonly EventHandler<ContextRequestedEventArgs> requestContextHandler;
@@ -51,6 +52,11 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         set => this.SetValue(ContextCaptionProperty, value);
     }
 
+    public string? ObjectName {
+        get => this.GetValue(ObjectNameProperty);
+        set => this.SetValue(ObjectNameProperty, value);
+    }
+
     public IContextData? CapturedContext { get; private set; }
 
     public ContextRegistry MyContextRegistry { get; }
@@ -58,7 +64,8 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     public AdvancedContextMenu(ContextRegistry registry) {
         this.MyContextRegistry = registry ?? throw new ArgumentNullException(nameof(registry));
         this.MyContextRegistry.RequestClose += this.ContextRegistryOnRequestClose;
-        this.captionBinder = new EventUpdateBinder<ContextRegistry>(nameof(this.MyContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
+        this.captionBinder = new EventUpdateBinder<ContextRegistry>(nameof(ContextRegistry.CaptionChanged), (b) => b.Control.SetValue(ContextCaptionProperty, b.Model.Caption));
+        this.objectNameBinder = new EventUpdateBinder<ContextRegistry>(nameof(ContextRegistry.ObjectNameChanged), (b) => b.Control.SetValue(ObjectNameProperty, b.Model.ObjectName));
         this.itemCache = new Dictionary<Type, Stack<Control>>();
         this.Opening += this.OnMenuOpening;
         this.Closed += this.OnMenuClosed;
@@ -95,11 +102,13 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         base.OnLoaded(e);
         this.MyContextRegistry.OnOpened(this.CapturedContext ?? EmptyContext.Instance);
         this.captionBinder.Attach(this, this.MyContextRegistry);
+        this.objectNameBinder.Attach(this, this.MyContextRegistry);
     }
 
     protected override void OnUnloaded(RoutedEventArgs e) {
         base.OnUnloaded(e);
         this.captionBinder.Detach();
+        this.objectNameBinder.Detach();
         this.MyContextRegistry.OnClosed();
     }
 
