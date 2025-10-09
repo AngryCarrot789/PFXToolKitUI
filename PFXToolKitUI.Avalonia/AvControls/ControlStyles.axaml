@@ -25,6 +25,7 @@
                                            IsVisible="{TemplateBinding Icon, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"
                                            Margin="{TemplateBinding IconPadding}"/>
                         <ContentPresenter Grid.Row="0" Grid.Column="0" x:Name="PART_ContentPresenter"
+                                          Margin="{TemplateBinding ContentPadding}"
                                           Content="{TemplateBinding Content}"
                                           ContentTemplate="{TemplateBinding ContentTemplate}"
                                           IsVisible="{TemplateBinding Content, Converter={x:Static c:NullToBoolConverter.NullToFalse}}"

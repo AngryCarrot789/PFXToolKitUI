@@ -35,6 +35,7 @@ public class IconButton : Button, IIconButton {
     public static readonly StyledProperty<Dock> IconPlacementProperty = AvaloniaProperty.Register<IconButton, Dock>(nameof(IconPlacement));
     public static readonly StyledProperty<double> SpacingProperty = AvaloniaProperty.Register<IconButton, double>(nameof(Spacing), 5.0);
     public static readonly StyledProperty<Thickness> IconPaddingProperty = AvaloniaProperty.Register<IconButton, Thickness>(nameof(IconPadding), new Thickness(3.0));
+    public static readonly StyledProperty<Thickness> ContentPaddingProperty = AvaloniaProperty.Register<IconButton, Thickness>(nameof(ContentPadding), new Thickness(2.0));
 
     private double? iconW = 64, iconH = 64; // prevent crashing in designer due to infinitely or giant sized icons
 
@@ -73,10 +74,15 @@ public class IconButton : Button, IIconButton {
         get => this.GetValue(SpacingProperty);
         set => this.SetValue(SpacingProperty, value);
     }
-    
+
     public Thickness IconPadding {
         get => this.GetValue(IconPaddingProperty);
         set => this.SetValue(IconPaddingProperty, value);
+    }
+
+    public Thickness ContentPadding {
+        get => this.GetValue(ContentPaddingProperty);
+        set => this.SetValue(ContentPaddingProperty, value);
     }
 
     private IconControl? PART_IconControl;
@@ -91,10 +97,17 @@ public class IconButton : Button, IIconButton {
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
         base.OnPropertyChanged(change);
 
-        if (change.Property == ContentProperty || change.Property == IconProperty ||
-            change.Property == SpacingProperty || change.Property == IconPlacementProperty) {
+        if (change.Property == ContentProperty
+            || change.Property == IconProperty
+            || change.Property == SpacingProperty
+            || change.Property == IconPlacementProperty
+            || this.ShouldUpdateForPaddingChange(change)) {
             this.UpdateGridArrangement();
         }
+    }
+
+    private bool ShouldUpdateForPaddingChange(AvaloniaPropertyChangedEventArgs change) {
+        return this.PART_IconControl != null && (change.Property == IconPaddingProperty || change.Property == ContentPaddingProperty) && (this.PART_IconControl!.IsVisible && this.PART_IconControl!.IsVisible);
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
@@ -117,35 +130,40 @@ public class IconButton : Button, IIconButton {
         bool hasText = this.PART_ContentPresenter!.IsVisible = this.Content != null && (!(this.Content is string str) || !string.IsNullOrEmpty(str));
         bool hasBoth = hasIcon && hasText;
         bool isHorizontal = placement == Dock.Left || placement == Dock.Right;
-        GridLength spacing = new GridLength(this.Spacing);
         if (hasBoth) {
-            Grid.SetColumnSpan( this.PART_IconControl,      isHorizontal ? 1 : 3);
-            Grid.SetColumnSpan( this.PART_ContentPresenter, isHorizontal ? 1 : 3);
-            Grid.SetRowSpan(    this.PART_IconControl,      isHorizontal ? 3 : 1);
-            Grid.SetRowSpan(    this.PART_ContentPresenter, isHorizontal ? 3 : 1);
-            this.PART_IconControl.SetValue(     isHorizontal ? Grid.RowProperty : Grid.ColumnProperty, 0);
+            double existingPadding;
+            Grid.SetColumnSpan(this.PART_IconControl, isHorizontal ? 1 : 3);
+            Grid.SetColumnSpan(this.PART_ContentPresenter, isHorizontal ? 1 : 3);
+            Grid.SetRowSpan(this.PART_IconControl, isHorizontal ? 3 : 1);
+            Grid.SetRowSpan(this.PART_ContentPresenter, isHorizontal ? 3 : 1);
+            this.PART_IconControl.SetValue(isHorizontal ? Grid.RowProperty : Grid.ColumnProperty, 0);
             this.PART_ContentPresenter.SetValue(isHorizontal ? Grid.RowProperty : Grid.ColumnProperty, 0);
 
             switch (this.IconPlacement) {
                 case Dock.Left:
                     Grid.SetColumn(this.PART_IconControl, 0);
                     Grid.SetColumn(this.PART_ContentPresenter, 2);
+                    existingPadding = this.IconPadding.Right + this.ContentPadding.Left;
                     break;
                 case Dock.Bottom:
                     Grid.SetRow(this.PART_IconControl, 2);
                     Grid.SetRow(this.PART_ContentPresenter, 0);
+                    existingPadding = this.IconPadding.Top + this.ContentPadding.Bottom;
                     break;
                 case Dock.Right:
                     Grid.SetColumn(this.PART_IconControl, 2);
                     Grid.SetColumn(this.PART_ContentPresenter, 0);
+                    existingPadding = this.IconPadding.Left + this.ContentPadding.Right;
                     break;
                 case Dock.Top:
                     Grid.SetRow(this.PART_IconControl, 0);
                     Grid.SetRow(this.PART_ContentPresenter, 2);
+                    existingPadding = this.IconPadding.Bottom + this.ContentPadding.Top;
                     break;
                 default: throw new ArgumentOutOfRangeException();
             }
-            
+
+            GridLength spacing = new GridLength(Math.Max(this.Spacing - existingPadding, 0.0));
             this.SpacingRowDefinition!.Height = spacing;
             this.SpacingColumnDefinition!.Width = spacing;
         }
