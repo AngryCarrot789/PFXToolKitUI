@@ -34,6 +34,7 @@ public class IconControl : Control, IIconButton {
     private static readonly RenderOptions s_AliasRenderOptions = new RenderOptions() { EdgeMode = EdgeMode.Aliased, BitmapInterpolationMode = BitmapInterpolationMode.HighQuality };
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconControl, Icon?>(nameof(Icon));
     public static readonly StyledProperty<StretchMode> StretchProperty = AvaloniaProperty.Register<IconControl, StretchMode>(nameof(Stretch), StretchMode.UniformNoUpscale);
+    public static readonly StyledProperty<bool> UseBoundsHitTestProperty = AvaloniaProperty.Register<IconControl, bool>(nameof(UseBoundsHitTest), true);
 
     /// <summary>
     /// Gets or sets the icon we use for drawing this control
@@ -46,6 +47,15 @@ public class IconControl : Control, IIconButton {
     public StretchMode Stretch {
         get => this.GetValue(StretchProperty);
         set => this.SetValue(StretchProperty, value);
+    }
+    
+    /// <summary>
+    /// Gets or sets if the icon should be hit-test visible by its visual bounds rather than
+    /// rendering data. This is implemented by drawing a transparent background before the icon itself
+    /// </summary>
+    public bool UseBoundsHitTest {
+        get => this.GetValue(UseBoundsHitTestProperty);
+        set => this.SetValue(UseBoundsHitTestProperty, value);
     }
 
     public double? IconMaxWidth { get; set; }
@@ -104,6 +114,10 @@ public class IconControl : Control, IIconButton {
 
     public override void Render(DrawingContext context) {
         base.Render(context);
+
+        if (this.UseBoundsHitTest) {
+            context.DrawRectangle(Brushes.Transparent, null, this.Bounds);
+        }
 
         if (this.Icon is AbstractAvaloniaIcon icon) {
             if (IIconPreferences.TryGetInstance(out IIconPreferences? prefs) && !prefs.UseAntiAliasing) {
