@@ -311,7 +311,7 @@ public abstract class ApplicationPFX : IComponentManager {
             await service.ShowMessage("App startup failed", "Failed to initialise application", exception.ToString());
         }
 
-        this.Dispatcher.Shutdown();
+        this.Dispatcher.Post(this.Shutdown);
     }
 
     /// <summary>
