@@ -29,32 +29,32 @@ public static class TextBoxContextRegistry {
     public static readonly DataKey<TextBox> TextBoxDataKey = DataKeys.Create<TextBox>(nameof(TextBox));
 
     static TextBoxContextRegistry() {
-        FixedContextGroup group = Registry.GetFixedGroup("general");
-        group.AddEntry(new TextBoxContextEntry("Undo", (t) => t.Undo(), TextBox.CanUndoProperty) {InputGestureText = "CTRL+Z"});
-        group.AddEntry(new TextBoxContextEntry("Redo", (t) => t.Redo(), TextBox.CanRedoProperty) {InputGestureText = "CTRL+Y or CTRL+SHIFT+Z"});
+        FixedWeightedMenuEntryGroup group = Registry.GetFixedGroup("general");
+        group.AddEntry(new TextBoxMenuEntry("Undo", (t) => t.Undo(), TextBox.CanUndoProperty) {InputGestureText = "CTRL+Z"});
+        group.AddEntry(new TextBoxMenuEntry("Redo", (t) => t.Redo(), TextBox.CanRedoProperty) {InputGestureText = "CTRL+Y or CTRL+SHIFT+Z"});
         group.AddSeparator();
-        group.AddEntry(new TextBoxContextEntry("Cut", (t) => t.Cut(), TextBox.CanCutProperty) {InputGestureText = "CTRL+X"});
-        group.AddEntry(new TextBoxContextEntry("Copy", (t) => t.Copy(), TextBox.CanCopyProperty) {InputGestureText = "CTRL+C"});
-        group.AddEntry(new TextBoxContextEntry("Paste", (t) => t.Paste(), TextBox.CanPasteProperty) {InputGestureText = "CTRL+V"});
+        group.AddEntry(new TextBoxMenuEntry("Cut", (t) => t.Cut(), TextBox.CanCutProperty) {InputGestureText = "CTRL+X"});
+        group.AddEntry(new TextBoxMenuEntry("Copy", (t) => t.Copy(), TextBox.CanCopyProperty) {InputGestureText = "CTRL+C"});
+        group.AddEntry(new TextBoxMenuEntry("Paste", (t) => t.Paste(), TextBox.CanPasteProperty) {InputGestureText = "CTRL+V"});
         group.AddSeparator();
-        group.AddEntry(new TextBoxContextEntry("Select All", (t) => t.SelectAll(), null) {InputGestureText = "CTRL+A"});
+        group.AddEntry(new TextBoxMenuEntry("Select All", (t) => t.SelectAll(), null) {InputGestureText = "CTRL+A"});
         group.AddSeparator();
-        group.AddEntry(new TextBoxContextEntry("Clear Text", (t) => t.Clear(), null));
+        group.AddEntry(new TextBoxMenuEntry("Clear Text", (t) => t.Clear(), null));
     }
 }
 
-public class TextBoxContextEntry : CustomContextEntry {
+public class TextBoxMenuEntry : CustomMenuEntry {
     private readonly Action<TextBox> invoke;
     private readonly DirectProperty<TextBox, bool>? canExecuteProperty;
     private TextBox? currTb;
 
-    public TextBoxContextEntry(string header, Action<TextBox> invoke, DirectProperty<TextBox, bool>? canExecuteProperty) : base(header, null) {
+    public TextBoxMenuEntry(string header, Action<TextBox> invoke, DirectProperty<TextBox, bool>? canExecuteProperty) : base(header, null) {
         this.invoke = invoke;
         this.canExecuteProperty = canExecuteProperty;
         this.CapturedContextChanged += this.OnCapturedContextChanged;
     }
 
-    private void OnCapturedContextChanged(BaseContextEntry sender, IContextData? oldCtx, IContextData? newCtx) {
+    private void OnCapturedContextChanged(BaseMenuEntry sender, IContextData? oldCtx, IContextData? newCtx) {
         if (newCtx != null && TextBoxContextRegistry.TextBoxDataKey.TryGetContext(newCtx, out var newTextBox)) {
             if (!ReferenceEquals(this.currTb, newTextBox)) {
                 this.OnTextBoxChanged(this.currTb, newTextBox);

@@ -25,13 +25,13 @@ using PFXToolKitUI.Utils.Collections.Observable;
 namespace PFXToolKitUI.AdvancedMenuService;
 
 /// <summary>
-/// A context entry that is a regular entry but also contain child entries in a drop-down menu.
-/// This is different from <see cref="IContextGroup"/>
+/// A menu entry that is a regular entry but also contain child entries in a drop-down menu.
+/// This is different from <see cref="IWeightedMenuEntryGroup"/>
 /// </summary>
-public class ContextEntryGroup : BaseContextEntry {
+public class MenuEntryGroup : BaseMenuEntry {
     private bool showDummyItemWhenEmpty = true;
 
-    public ObservableList<IContextObject> Items { get; }
+    public ObservableList<IMenuEntry> Items { get; }
 
     /// <summary>
     /// Gets or sets whether to show a dummy item when <see cref="Items"/> is empty
@@ -48,18 +48,18 @@ public class ContextEntryGroup : BaseContextEntry {
 
     public event BaseContextEntryEventHandler? ShowDummyItemWhenEmptyChanged;
 
-    public ContextEntryGroup() {
-        this.Items = new ObservableList<IContextObject>();
+    public MenuEntryGroup() {
+        this.Items = new ObservableList<IMenuEntry>();
     }
 
-    public ContextEntryGroup(string displayName, string? description = null, Icon? icon = null) : base(displayName, description, icon) {
-        this.Items = new ObservableList<IContextObject>();
+    public MenuEntryGroup(string displayName, string? description = null, Icon? icon = null) : base(displayName, description, icon) {
+        this.Items = new ObservableList<IMenuEntry>();
     }
 
-    public bool TryGetGroupById(string uniqueId, [NotNullWhen(true)] out ContextEntryGroup? group) {
+    public bool TryGetGroupById(string uniqueId, [NotNullWhen(true)] out MenuEntryGroup? group) {
         ArgumentException.ThrowIfNullOrEmpty(uniqueId);
-        foreach (IContextObject obj in this.Items) {
-            if (obj is ContextEntryGroup g && g.UniqueID == uniqueId) {
+        foreach (IMenuEntry obj in this.Items) {
+            if (obj is MenuEntryGroup g && g.UniqueID == uniqueId) {
                 group = g;
                 return true;
             }

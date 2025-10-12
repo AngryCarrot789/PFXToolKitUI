@@ -34,7 +34,7 @@ public static class ThemeContextRegistry {
         Registry.GetFixedGroup("root").AddCommand("commands.themes.ShowKeysInheritingFromThemeCommand", "Show Inherited By", "Shows a list of theme keys that currently inherit from this");
     }
 
-    private class DeleteInputStrokeEntry : CustomContextEntry {
+    private class DeleteInputStrokeEntry : CustomMenuEntry {
         public ShortcutEntry Entry { get; }
 
         public IInputStroke Stroke { get; }

@@ -33,9 +33,9 @@ namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 public class AdvancedCustomMenuItem : AdvancedMenuItem {
     private bool canExecute;
     private TextBlock? InputGestureTextBlock;
-    private readonly IBinder<CustomContextEntry> gestureBinder = new EventUpdateBinder<CustomContextEntry>(nameof(CustomContextEntry.InputGestureTextChanged), b => b.Control.SetValue(TextBlock.TextProperty, !string.IsNullOrWhiteSpace(b.Model.InputGestureText) ? b.Model.InputGestureText : null));
+    private readonly IBinder<CustomMenuEntry> gestureBinder = new EventUpdateBinder<CustomMenuEntry>(nameof(CustomMenuEntry.InputGestureTextChanged), b => b.Control.SetValue(TextBlock.TextProperty, !string.IsNullOrWhiteSpace(b.Model.InputGestureText) ? b.Model.InputGestureText : null));
 
-    public new CustomContextEntry? Entry => (CustomContextEntry?) base.Entry;
+    public new CustomMenuEntry? Entry => (CustomMenuEntry?) base.Entry;
 
     public bool IsExecuting { get; private set; }
 
@@ -76,7 +76,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
             if (this.IsExecuting) {
                 this.CanExecute = false;
             }
-            else if (this.Entry is CustomContextEntry entry) {
+            else if (this.Entry is CustomMenuEntry entry) {
                 IContextData ctx = this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance;
                 this.CanExecute = entry.CanExecute(ctx);
             }
@@ -98,7 +98,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
         }
 
         this.IsExecuting = true;
-        if (!(this.Entry is CustomContextEntry entry)) {
+        if (!(this.Entry is CustomMenuEntry entry)) {
             base.OnClick(e);
             this.IsExecuting = false;
             this.UpdateCanExecute();
@@ -114,7 +114,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
         }
     }
 
-    private bool DispatchCommand(CustomContextEntry entry) {
+    private bool DispatchCommand(CustomMenuEntry entry) {
         IContextData context = this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance;
         if (!entry.CanExecute(context)) {
             return false;

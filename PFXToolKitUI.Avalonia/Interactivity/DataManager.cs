@@ -427,13 +427,13 @@ public class DataManager {
     }
 
     /// <summary>
-    /// Sets the data key used to key the data context object. This should only be used if absolutely
+    /// Sets the data key used to key the <see cref="StyledElement.DataContext"/>. This should only be used if absolutely
     /// necessary, since runtime type-checking is required in <see cref="EvaluateContextDataRaw"/>
     /// </summary>
     public static void SetDataContextDataKey(AvaloniaObject obj, DataKey? value) => obj.SetValue(DataContextDataKeyProperty, value);
 
     /// <summary>
-    /// Gets the data key used to key the data context object
+    /// Gets the data key used to key the <see cref="StyledElement.DataContext"/>
     /// </summary>
     public static DataKey? GetDataContextDataKey(AvaloniaObject obj) => obj.GetValue(DataContextDataKeyProperty);
 

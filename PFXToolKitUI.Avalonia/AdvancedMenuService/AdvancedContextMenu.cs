@@ -43,7 +43,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     private InputElement? currentTarget;
     private readonly EventHandler<ContextRequestedEventArgs> requestContextHandler;
 
-    public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
+    public Dictionary<int, DynamicGroupPlaceholderMenuEntry>? DynamicInsertion { get; set; }
 
     public Dictionary<int, int>? DynamicInserted { get; set; }
 
@@ -172,16 +172,16 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
             // Generate context menu, if required
             if (!contextMenus.TryGetValue(newValue, out AdvancedContextMenu? menu)) {
                 contextMenus[newValue] = menu = new AdvancedContextMenu(newValue);
-                List<IContextObject> contextObjects = new List<IContextObject>();
+                List<IMenuEntry> contextObjects = new List<IMenuEntry>();
 
                 int i = 0;
-                foreach (KeyValuePair<string, IContextGroup> entry in newValue.Groups) {
+                foreach (KeyValuePair<string, IWeightedMenuEntryGroup> entry in newValue.Groups) {
                     if (i++ != 0)
                         contextObjects.Add(new SeparatorEntry());
 
                     switch (entry.Value) {
-                        case FixedContextGroup fixedGroup:     contextObjects.AddRange(fixedGroup.Items); break;
-                        case DynamicContextGroup dynamicGroup: contextObjects.Add(new DynamicGroupPlaceholderContextObject(dynamicGroup)); break;
+                        case FixedWeightedMenuEntryGroup fixedGroup:     contextObjects.AddRange(fixedGroup.Items); break;
+                        case DynamicWeightedMenuEntryGroup dynamicGroup: contextObjects.Add(new DynamicGroupPlaceholderMenuEntry(dynamicGroup)); break;
                     }
                 }
 

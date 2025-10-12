@@ -20,16 +20,17 @@
 namespace PFXToolKitUI.AdvancedMenuService;
 
 /// <summary>
-/// An interface for any group in a context registry. So far there are fixed and dynamic groups.
+/// An interface for any "group" within a menu system.
 /// <para>
-/// Fixed groups, represented by <see cref="FixedContextGroup"/>, have fixed number of
-/// <see cref="IContextObject"/> entries typically created before the context registry is fully initialised
+/// Fixed groups, represented by <see cref="FixedWeightedMenuEntryGroup"/>, have fixed number of
+/// <see cref="IMenuEntry"/> entries typically created before the context registry is fully initialised.
+/// Dynamically changing visibility, caption, tooltip, icons, etc. is possible, but is tedious.
 /// </para>
 /// <para>
-/// Dynamic groups, represented by <see cref="DynamicContextGroup"/>, generate their entries
+/// Dynamic groups, represented by <see cref="DynamicWeightedMenuEntryGroup"/>, generate their entries
 /// when required. Their generator callback is given the context available at generation, which
-/// allows highly customisable menu options based on the available context and therefore states of
-/// objects, rather than staying static and unchangeable like <see cref="FixedContextGroup"/>
+/// allows for highly customisable menu options based on the available context and therefore states of
+/// objects.
 /// </para>
 /// </summary>
-public interface IContextGroup;
+public interface IWeightedMenuEntryGroup;

@@ -42,7 +42,7 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
 
     public IContextData CapturedContext => DataManager.GetFullContextData(this);
 
-    public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion {
+    public Dictionary<int, DynamicGroupPlaceholderMenuEntry>? DynamicInsertion {
         get => throw new InvalidOperationException();
         set => throw new InvalidOperationException();
     }
@@ -56,7 +56,7 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
 
     private readonly Dictionary<Type, Stack<Control>> itemCache;
     private InputElement? lastFocus;
-    private ObservableItemProcessorIndexing<ContextEntryGroup>? processor;
+    private ObservableItemProcessorIndexing<MenuEntryGroup>? processor;
 
     public AdvancedTopLevelMenu() {
         this.itemCache = new Dictionary<Type, Stack<Control>>();
@@ -92,14 +92,14 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         }
     }
 
-    private void OnItemAdded(object sender, int index, ContextEntryGroup item) {
+    private void OnItemAdded(object sender, int index, MenuEntryGroup item) {
         AdvancedMenuItem menuItem = (AdvancedMenuItem) AdvancedMenuHelper.CreateItem(this, item);
         menuItem.OnAdding(this, this, item);
         this.Items.Insert(index, menuItem);
         menuItem.OnAdded();
     }
 
-    private void OnItemRemoved(object sender, int index, ContextEntryGroup item) {
+    private void OnItemRemoved(object sender, int index, MenuEntryGroup item) {
         ItemCollection list = this.Items;
         this.OnItemRemoved(list, index, (AdvancedMenuItem) list[index]!);
     }
@@ -112,7 +112,7 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         this.PushCachedItem(type, item);
     }
 
-    private void OnItemMoved(object sender, int oldindex, int newindex, ContextEntryGroup item) {
+    private void OnItemMoved(object sender, int oldindex, int newindex, MenuEntryGroup item) {
         ItemCollection list = this.Items;
         if (newindex < 0 || newindex >= list.Count)
             throw new IndexOutOfRangeException($"{nameof(newindex)} is not within range: {(newindex < 0 ? "less than zero" : "greater than list length")} ({newindex})");

@@ -30,16 +30,16 @@ public class SenderEventRelayTest {
     private const string TestTextAsCustomParameter = "mr sexy!";
     
     private int handleCount;
-    private CommandContextEntry entry;
+    private CommandMenuEntry entry;
 
     [Fact]
     [SuppressMessage("Usage", "CA2263:Prefer generic overload when type is known")]
     public void TestOrder() {
-        SenderEventRelay relay1 = SenderEventRelay.Create<CommandContextEntry>(nameof(CommandContextEntry.DescriptionChanged), this.Handler1);
-        SenderEventRelay relay2 = SenderEventRelay.Create(nameof(CommandContextEntry.DescriptionChanged), typeof(CommandContextEntry), this.Handler2);
-        SenderEventRelay relay3 = SenderEventRelay.Create(nameof(CommandContextEntry.DescriptionChanged), typeof(CommandContextEntry), this.Handler3, TestTextAsCustomParameter);
+        SenderEventRelay relay1 = SenderEventRelay.Create<CommandMenuEntry>(nameof(CommandMenuEntry.DescriptionChanged), this.Handler1);
+        SenderEventRelay relay2 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), this.Handler2);
+        SenderEventRelay relay3 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), this.Handler3, TestTextAsCustomParameter);
 
-        this.entry = new CommandContextEntry("entry");
+        this.entry = new CommandMenuEntry("entry");
         relay1.AddEventHandler(this.entry);
         relay2.AddEventHandler(this.entry);
         relay3.AddEventHandler(this.entry);
@@ -49,7 +49,7 @@ public class SenderEventRelayTest {
         Assert.Equal(3, this.handleCount);
     }
 
-    private void Handler1(CommandContextEntry obj) {
+    private void Handler1(CommandMenuEntry obj) {
         Assert.Equal(this.entry, obj);
         this.handleCount++;
     }

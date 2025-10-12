@@ -20,7 +20,6 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using Avalonia.Interactivity;
 using PFXToolKitUI.AdvancedMenuService;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -39,20 +38,16 @@ public class CaptionSeparator : TemplatedControl, IAdvancedEntryConnection {
         set => this.SetValue(UseIconTrayPaddingProperty, value);
     }
 
-    public CaptionEntry? Entry { get; private set; }
+    public CaptionSeparatorEntry? Entry { get; private set; }
 
-    IContextObject? IAdvancedEntryConnection.Entry => this.Entry;
+    IMenuEntry? IAdvancedEntryConnection.Entry => this.Entry;
 
     public CaptionSeparator() {
         this.Focusable = false;
     }
 
-    protected override void OnLoaded(RoutedEventArgs e) {
-        base.OnLoaded(e);
-    }
-
-    public void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, IContextObject entry) {
-        this.Entry = (CaptionEntry) entry;
+    public void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, IMenuEntry entry) {
+        this.Entry = (CaptionSeparatorEntry) entry;
         this.UseIconTrayPadding = menu is Menu;
     }
 
@@ -69,7 +64,7 @@ public class CaptionSeparator : TemplatedControl, IAdvancedEntryConnection {
         this.Entry = null;
     }
 
-    private void OnTextChanged(CaptionEntry sender) {
+    private void OnTextChanged(CaptionSeparatorEntry sender) {
         this.Text = sender.Text;
     }
 }

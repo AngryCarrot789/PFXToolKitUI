@@ -27,8 +27,8 @@ public class DebugContextCommand : Command {
     private static readonly Dictionary<Type, Action<StringBuilder, int, object>> dataAppenders = new Dictionary<Type, Action<StringBuilder, int, object>>();
 
     static DebugContextCommand() {
-        RegisterExtendedDataHandler<BaseContextEntry>((sb, indent, entry) => {
-            if (entry is CommandContextEntry cmdEntry) {
+        RegisterExtendedDataHandler<BaseMenuEntry>((sb, indent, entry) => {
+            if (entry is CommandMenuEntry cmdEntry) {
                 sb.Append(new string(' ', indent)).Append("Command ID: ").AppendLine(cmdEntry.CommandId);
             }
         });
@@ -39,8 +39,8 @@ public class DebugContextCommand : Command {
     /// </summary>
     /// <param name="handler">The handler. Receives the string buffer, the indentation to be added (as whitespaces) and the object in question</param>
     /// <typeparam name="T">The type of context data</typeparam>
-    public static void RegisterExtendedDataHandler<T>(Action<StringBuilder, int, T> handler) where T : class {
-        dataAppenders[typeof(T)] = (sb, indent, obj) => handler(sb, indent, (T) obj);
+    public static void RegisterExtendedDataHandler<T>(Action<StringBuilder, int, object> handler) where T : class {
+        dataAppenders[typeof(T)] = handler;
     }
 
     protected override async Task ExecuteCommandAsync(CommandEventArgs e) {
@@ -59,7 +59,7 @@ public class DebugContextCommand : Command {
                     List<Action<StringBuilder, int, object>>? handlers = null;
                     for (Type? type = entry.Value.GetType(); type != null; type = type.BaseType) {
                         if (dataAppenders.TryGetValue(type, out Action<StringBuilder, int, object>? handler)) {
-                            (handlers ??= new List<Action<StringBuilder, int, object>>()).Add(handler);
+                            (handlers ??= []).Add(handler);
                         }
                     }
 

@@ -27,7 +27,7 @@ public delegate void ContextRegistryEventHandler(ContextRegistry registry);
 public delegate void ContextRegistryContextEventHandler(ContextRegistry registry, IContextData context);
 
 /// <summary>
-/// A class which stores a context entry hierarchy for use in context menus.
+/// A class which stores a menu entry hierarchy for use in context menus.
 /// <para>
 /// The idea is that there are known identifiable "groups" for certain actions,
 /// so that when plugins are available they can inject their own commands
@@ -35,14 +35,14 @@ public delegate void ContextRegistryContextEventHandler(ContextRegistry registry
 /// </para>
 /// </summary>
 public class ContextRegistry {
-    private readonly SortedList<int, Dictionary<string, IContextGroup>> groups;
+    private readonly SortedList<int, Dictionary<string, IWeightedMenuEntryGroup>> groups;
     private string? caption;
     private string? objectName;
 
     /// <summary>
     /// Gets the groups in our registry
     /// </summary>
-    public IEnumerable<KeyValuePair<string, IContextGroup>> Groups => this.groups.Select(x => x.Value).SelectMany(x => x);
+    public IEnumerable<KeyValuePair<string, IWeightedMenuEntryGroup>> Groups => this.groups.Select(x => x.Value).SelectMany(x => x);
 
     /// <summary>
     /// Gets or sets this registry's caption
@@ -74,7 +74,7 @@ public class ContextRegistry {
     public event ContextRegistryEventHandler? RequestClose;
 
     public ContextRegistry(string caption) {
-        this.groups = new SortedList<int, Dictionary<string, IContextGroup>>();
+        this.groups = new SortedList<int, Dictionary<string, IWeightedMenuEntryGroup>>();
         this.Caption = caption;
     }
     
@@ -87,11 +87,12 @@ public class ContextRegistry {
     }
 
     public void OnOpened(IContextData context) {
+        ArgumentNullException.ThrowIfNull(context);
         if (this.IsOpened)
             throw new InvalidOperationException("Already open");
 
         this.IsOpened = true;
-        this.Opened?.Invoke(this, context ?? EmptyContext.Instance);
+        this.Opened?.Invoke(this, context);
     }
 
     public void OnClosed() {
@@ -102,29 +103,29 @@ public class ContextRegistry {
         this.Closed?.Invoke(this);
     }
 
-    public FixedContextGroup GetFixedGroup(string name, int weight = 0) {
-        if (!this.GetDictionary(weight).TryGetValue(name, out IContextGroup? group))
-            this.SetDictionary(weight, name, group = new FixedContextGroup());
-        else if (!(group is FixedContextGroup))
+    public FixedWeightedMenuEntryGroup GetFixedGroup(string name, int weight = 0) {
+        if (!this.GetDictionary(weight).TryGetValue(name, out IWeightedMenuEntryGroup? group))
+            this.SetDictionary(weight, name, group = new FixedWeightedMenuEntryGroup());
+        else if (!(group is FixedWeightedMenuEntryGroup))
             throw new InvalidOperationException("Context group is not fixed: " + name);
-        return (FixedContextGroup) group;
+        return (FixedWeightedMenuEntryGroup) group;
     }
 
-    public DynamicContextGroup CreateDynamicGroup(string name, DynamicGenerateContextFunction generate, int weight = 0) {
-        if (!this.GetDictionary(weight).TryGetValue(name, out IContextGroup? group))
-            this.SetDictionary(weight, name, group = new DynamicContextGroup(generate));
-        else if (!(group is DynamicContextGroup))
+    public DynamicWeightedMenuEntryGroup CreateDynamicGroup(string name, DynamicGenerateContextFunction generate, int weight = 0) {
+        if (!this.GetDictionary(weight).TryGetValue(name, out IWeightedMenuEntryGroup? group))
+            this.SetDictionary(weight, name, group = new DynamicWeightedMenuEntryGroup(generate));
+        else if (!(group is DynamicWeightedMenuEntryGroup))
             throw new InvalidOperationException("Context group is not dynamic: " + name);
-        return (DynamicContextGroup) group;
+        return (DynamicWeightedMenuEntryGroup) group;
     }
 
-    private Dictionary<string, IContextGroup> GetDictionary(int weight) {
-        if (!this.groups.TryGetValue(weight, out Dictionary<string, IContextGroup>? dict))
-            this.groups[weight] = dict = new Dictionary<string, IContextGroup>();
+    private Dictionary<string, IWeightedMenuEntryGroup> GetDictionary(int weight) {
+        if (!this.groups.TryGetValue(weight, out Dictionary<string, IWeightedMenuEntryGroup>? dict))
+            this.groups[weight] = dict = new Dictionary<string, IWeightedMenuEntryGroup>();
         return dict;
     }
 
-    private void SetDictionary(int weight, string name, IContextGroup group) {
+    private void SetDictionary(int weight, string name, IWeightedMenuEntryGroup group) {
         this.GetDictionary(weight)[name] = group;
     }
 }

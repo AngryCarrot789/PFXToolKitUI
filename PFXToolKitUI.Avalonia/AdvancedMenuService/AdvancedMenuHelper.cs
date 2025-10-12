@@ -101,19 +101,19 @@ internal static class AdvancedMenuHelper {
         }
     }
 
-    public static void InsertVisualOrDynamicNodes(IAdvancedMenuOrItem item, int index, IList<IContextObject> entries) {
+    public static void InsertVisualOrDynamicNodes(IAdvancedMenuOrItem item, int index, IList<IMenuEntry> entries) {
         int visualIndex = index;
         IAdvancedMenu ownerMenu = item.OwnerMenu ?? throw new InvalidOperationException("No owner menu");
         for (int i = 0; i < entries.Count; i++) {
-            IContextObject entry = entries[i];
-            if (entry is DynamicGroupPlaceholderContextObject dynamicItem) {
-                Dictionary<int, DynamicGroupPlaceholderContextObject> dynamicMap = item.DynamicInsertion ??= new Dictionary<int, DynamicGroupPlaceholderContextObject>();
+            IMenuEntry entry = entries[i];
+            if (entry is DynamicGroupPlaceholderMenuEntry dynamicItem) {
+                Dictionary<int, DynamicGroupPlaceholderMenuEntry> dynamicMap = item.DynamicInsertion ??= new Dictionary<int, DynamicGroupPlaceholderMenuEntry>();
                 dynamicMap[visualIndex] = dynamicItem;
             }
             else {
                 Control element = CreateItem(ownerMenu, entry);
                 if (element is AdvancedMenuItem menuItem) {
-                    menuItem.OnAdding(ownerMenu, item, (BaseContextEntry) entry);
+                    menuItem.OnAdding(ownerMenu, item, (BaseMenuEntry) entry);
                     item.Items.Insert(visualIndex++, menuItem);
                     menuItem.OnAdded();
                 }
@@ -197,15 +197,15 @@ internal static class AdvancedMenuHelper {
         return null;
     }
 
-    public static Control CreateItem(IAdvancedMenu menu, IContextObject entry) {
+    public static Control CreateItem(IAdvancedMenu menu, IMenuEntry entry) {
         Control? element = menu.PopCachedItem(entry.GetType());
         if (element == null) {
             switch (entry) {
-                case CommandContextEntry _: element = new AdvancedCommandMenuItem(); break;
-                case CustomContextEntry _:  element = new AdvancedCustomMenuItem(); break;
-                case BaseContextEntry _:    element = new AdvancedMenuItem(); break;
+                case CommandMenuEntry _: element = new AdvancedCommandMenuItem(); break;
+                case CustomMenuEntry _:  element = new AdvancedCustomMenuItem(); break;
+                case BaseMenuEntry _:    element = new AdvancedMenuItem(); break;
                 case SeparatorEntry _:      element = new Separator() { Margin = new Thickness(5, 2) }; break;
-                case CaptionEntry _:        element = new CaptionSeparator(); break;
+                case CaptionSeparatorEntry _:        element = new CaptionSeparator(); break;
                 default:                    throw new Exception("Unknown item type: " + entry?.GetType());
             }
         }
@@ -229,7 +229,7 @@ internal static class AdvancedMenuHelper {
 
     public static void GenerateDynamicVisualItems(IAdvancedMenuOrItem element) {
         ClearDynamicVisualItems(element);
-        Dictionary<int, DynamicGroupPlaceholderContextObject>? insertion = element.DynamicInsertion;
+        Dictionary<int, DynamicGroupPlaceholderMenuEntry>? insertion = element.DynamicInsertion;
         if (insertion == null || insertion.Count < 1) {
             return;
         }
@@ -241,13 +241,13 @@ internal static class AdvancedMenuHelper {
         Dictionary<int, int> inserted = element.DynamicInserted ??= new Dictionary<int, int>();
 
         int offset = 0;
-        List<KeyValuePair<int, DynamicGroupPlaceholderContextObject>> items = insertion.OrderBy(x => x.Key).ToList();
-        foreach (KeyValuePair<int, DynamicGroupPlaceholderContextObject> item in items) {
+        List<KeyValuePair<int, DynamicGroupPlaceholderMenuEntry>> items = insertion.OrderBy(x => x.Key).ToList();
+        foreach (KeyValuePair<int, DynamicGroupPlaceholderMenuEntry> item in items) {
             // The key is a marker, we still need to post process the true index
             // This is also why we must insert from start to end
             int index = item.Key + offset;
-            List<IContextObject> generated = item.Value.DynamicGroup.GenerateItems(context);
-            if (generated.Any(x => x is DynamicGroupPlaceholderContextObject)) {
+            List<IMenuEntry> generated = item.Value.DynamicGroup.GenerateItems(context);
+            if (generated.Any(x => x is DynamicGroupPlaceholderMenuEntry)) {
                 throw new InvalidOperationException("Dynamic context entries cannot be provided by the generator");
             }
 
@@ -257,7 +257,7 @@ internal static class AdvancedMenuHelper {
         }
     }
 
-    public static void OnLogicalItemsAdded(IAdvancedMenuOrItem target, int logicalIndex, IList<IContextObject> entries) {
+    public static void OnLogicalItemsAdded(IAdvancedMenuOrItem target, int logicalIndex, IList<IMenuEntry> entries) {
         ClearDynamicVisualItems(target);
         InsertVisualOrDynamicNodes(target, logicalIndex, entries);
         if (target.IsOpen) {
@@ -265,11 +265,11 @@ internal static class AdvancedMenuHelper {
         }
     }
 
-    public static void OnLogicalItemsRemoved(IAdvancedMenuOrItem target, int logicalIndex, IList<IContextObject> entries) {
+    public static void OnLogicalItemsRemoved(IAdvancedMenuOrItem target, int logicalIndex, IList<IMenuEntry> entries) {
         IAdvancedMenu? container = target as IAdvancedMenu ?? target.OwnerMenu;
         ClearDynamicVisualItems(target);
         for (int i = entries.Count - 1; i >= 0; i--) {
-            if (!(entries[i] is DynamicGroupPlaceholderContextObject))
+            if (!(entries[i] is DynamicGroupPlaceholderMenuEntry))
                 RemoveVisualNode(container, target, logicalIndex);
         }
 
@@ -278,10 +278,10 @@ internal static class AdvancedMenuHelper {
         }
     }
 
-    public static void OnLogicalItemMoved(IAdvancedMenuOrItem target, int oldLogicalIndex, int newLogicalIndex, IContextObject entry) {
+    public static void OnLogicalItemMoved(IAdvancedMenuOrItem target, int oldLogicalIndex, int newLogicalIndex, IMenuEntry entry) {
         IAdvancedMenu? container = target as IAdvancedMenu ?? target.OwnerMenu;
         ClearDynamicVisualItems(target);
-        if (!(entry is DynamicGroupPlaceholderContextObject))
+        if (!(entry is DynamicGroupPlaceholderMenuEntry))
             RemoveVisualNode(container, target, oldLogicalIndex);
         InsertVisualOrDynamicNodes(target, newLogicalIndex, [entry]);
         
@@ -290,10 +290,10 @@ internal static class AdvancedMenuHelper {
         }
     }
 
-    public static void OnLogicalItemReplaced(IAdvancedMenuOrItem target, int logicalIndex, IContextObject oldEntry, IContextObject newEntry) {
+    public static void OnLogicalItemReplaced(IAdvancedMenuOrItem target, int logicalIndex, IMenuEntry oldEntry, IMenuEntry newEntry) {
         IAdvancedMenu? container = target as IAdvancedMenu ?? target.OwnerMenu;        
         ClearDynamicVisualItems(target);
-        if (!(oldEntry is DynamicGroupPlaceholderContextObject))
+        if (!(oldEntry is DynamicGroupPlaceholderMenuEntry))
             RemoveVisualNode(container, target, logicalIndex);
         InsertVisualOrDynamicNodes(target, logicalIndex, [newEntry]);
         

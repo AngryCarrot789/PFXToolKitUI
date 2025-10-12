@@ -25,11 +25,11 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
-public delegate void BaseContextEntryEventHandler(BaseContextEntry sender);
+public delegate void BaseContextEntryEventHandler(BaseMenuEntry sender);
 
-public delegate void BaseContextEntryIconChangedEventHandler(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon);
+public delegate void BaseContextEntryIconChangedEventHandler(BaseMenuEntry sender, Icon? oldIcon, Icon? newIcon);
 
-public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseContextEntry sender, IContextData? oldCapturedContext, IContextData? newCapturedContext);
+public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseMenuEntry sender, IContextData? oldCapturedContext, IContextData? newCapturedContext);
 
 public delegate DisabledHintInfo? BaseContextEntryProvideDisabledHint(IContextData context, ContextRegistry? sourceContextMenu);
 
@@ -41,18 +41,18 @@ public delegate DisabledHintInfo? BaseContextEntryProvideDisabledHint(IContextDa
 /// the header and icon, and also raise <see cref="CanExecuteChanged"/> when the executability may have changed
 /// </para>
 /// </summary>
-public abstract class BaseContextEntry : IContextObject, IUserLocalContext, IDisabledHintProvider {
+public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHintProvider {
     /// <summary>
-    /// Gets the general data key for accessing a context entry. UI controls for menu items will use
+    /// Gets the general data key for accessing a menu entry. UI controls for menu items will use
     /// this to update their local context with the entry they are currently attached to
     /// </summary>
-    public static readonly DataKey<BaseContextEntry> DataKey = DataKeys.Create<BaseContextEntry>(nameof(BaseContextEntry));
+    public static readonly DataKey<BaseMenuEntry> DataKey = DataKeys.Create<BaseMenuEntry>(nameof(BaseMenuEntry));
 
     private string? displayName, description;
     private Icon? icon, disabledIcon;
     private bool isInUse;
     private IContextData? capturedContext;
-    private Func<BaseContextEntry, bool>? isCheckedFunction;
+    private Func<BaseMenuEntry, bool>? isCheckedFunction;
 
     /// <summary>
     /// Gets or sets the header of the menu item
@@ -85,7 +85,7 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext, IDis
     }
     
     /// <summary>
-    /// Gets or sets the icon presented in the menu gutter (left side)
+    /// Gets or sets the icon presented in the menu gutter (left side) when this menu entry is disabled
     /// </summary>
     public Icon? DisabledIcon {
         get => this.disabledIcon;
@@ -111,12 +111,12 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext, IDis
     }
 
     /// <summary>
-    /// Gets or sets a function that specifies if this context entry is checked or not.
+    /// Gets or sets a function that specifies if this menu entry is checked or not.
     /// <para>
     /// Note, changing the value of this property will invoke <see cref="RaiseIsCheckedChanged"/>
     /// </para>
     /// </summary>
-    public Func<BaseContextEntry, bool>? IsCheckedFunction {
+    public Func<BaseMenuEntry, bool>? IsCheckedFunction {
         get => this.isCheckedFunction;
         set {
             if (this.isCheckedFunction != value) {
@@ -133,7 +133,7 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext, IDis
     public BaseContextEntryProvideDisabledHint? ProvideDisabledHint { get; set; }
 
     /// <summary>
-    /// Gets the custom user context for this context entry. This is only used for advanced customizations
+    /// Gets the custom user context for this menu entry. This is only used for advanced customizations
     /// of the entry instance, and has no relation to <see cref="CapturedContext"/>
     /// </summary>
     public IMutableContextData UserContext { get; } = new ContextData();
@@ -151,10 +151,10 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext, IDis
     /// </summary>
     public event BaseContextEntryEventHandler? CanExecuteChanged;
 
-    public BaseContextEntry() {
+    public BaseMenuEntry() {
     }
 
-    public BaseContextEntry(string displayName, string? description = null, Icon? icon = null) {
+    public BaseMenuEntry(string displayName, string? description = null, Icon? icon = null) {
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
         this.displayName = displayName;
         this.description = description;
@@ -174,17 +174,17 @@ public abstract class BaseContextEntry : IContextObject, IUserLocalContext, IDis
         return this.ProvideDisabledHint?.Invoke(context, sourceContextMenu);
     }
 
-    public static void InternalOnBecomeVisible(BaseContextEntry entry, IContextData capturedContext) {
+    public static void InternalOnBecomeVisible(BaseMenuEntry entry, IContextData capturedContext) {
         ArgumentNullException.ThrowIfNull(entry);
         ArgumentNullException.ThrowIfNull(capturedContext);
         if (entry.isInUse)
-            throw new InvalidOperationException("Context entry already in use");
+            throw new InvalidOperationException("Menu entry already in use");
 
         entry.isInUse = true;
         entry.CapturedContext = capturedContext;
     }
 
-    public static void InternalOnBecomeHidden(BaseContextEntry entry) {
+    public static void InternalOnBecomeHidden(BaseMenuEntry entry) {
         ArgumentNullException.ThrowIfNull(entry);
         if (!entry.isInUse)
             throw new InvalidOperationException("Context not in use");

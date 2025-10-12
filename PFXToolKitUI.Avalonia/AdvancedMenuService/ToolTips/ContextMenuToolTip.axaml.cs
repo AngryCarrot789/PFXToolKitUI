@@ -34,9 +34,9 @@ public partial class ContextMenuToolTip : UserControl, IToolTipControl {
     private static readonly Dictionary<Type, Type> hintInfoToControlType = new Dictionary<Type, Type>();
     private static readonly Dictionary<Type, Control> hintControlCache = new Dictionary<Type, Control>();
 
-    private readonly EventUpdateBinder<BaseContextEntry> normalToolTipBinder =
-        new EventUpdateBinder<BaseContextEntry>(
-            nameof(BaseContextEntry.DescriptionChanged),
+    private readonly EventUpdateBinder<BaseMenuEntry> normalToolTipBinder =
+        new EventUpdateBinder<BaseMenuEntry>(
+            nameof(BaseMenuEntry.DescriptionChanged),
             b => {
                 TextBlock? tb = ((ContextMenuToolTip) b.Control).PART_ToolTipText;
                 tb.IsVisible = !string.IsNullOrWhiteSpace(b.Model.Description);
@@ -44,7 +44,7 @@ public partial class ContextMenuToolTip : UserControl, IToolTipControl {
                 ((ContextMenuToolTip) b.Control).UpdateSeparator();
             });
 
-    private BaseContextEntry? currentEntry;
+    private BaseMenuEntry? currentEntry;
     private DisabledHintInfo? hintInfo;
     private Control? myCurrentDisabledHintControl;
     private readonly ColourBrushHandler normalTTForegroundHandler;
@@ -73,14 +73,14 @@ public partial class ContextMenuToolTip : UserControl, IToolTipControl {
         return tip;
     }
 
-    private static DisabledHintInfo? TryGetDisabledHintInfo(Control owner, BaseContextEntry entry) {
+    private static DisabledHintInfo? TryGetDisabledHintInfo(Control owner, BaseMenuEntry entry) {
         ContextRegistry? registry = (((AdvancedMenuItem) owner).OwnerMenu as AdvancedContextMenu)?.MyContextRegistry;
         DisabledHintInfo? hint = entry.ProvideDisabledHint?.Invoke(DataManager.GetFullContextData(owner), registry);
         if (hint != null) {
             return hint;
         }
 
-        if (entry is CommandContextEntry cmdEntry) {
+        if (entry is CommandMenuEntry cmdEntry) {
             if (CommandManager.Instance.TryFindCommandById(cmdEntry.CommandId, out Command? command)) {
                 if (command is IDisabledHintProvider hintProvider) {
                     hint = hintProvider.ProvideDisabledHint(DataManager.GetFullContextData(owner), registry);
@@ -95,7 +95,7 @@ public partial class ContextMenuToolTip : UserControl, IToolTipControl {
     }
 
     public void OnOpening(Control owner, CancelRoutedEventArgs e) {
-        BaseContextEntry? entry = ((AdvancedMenuItem) owner).Entry;
+        BaseMenuEntry? entry = ((AdvancedMenuItem) owner).Entry;
         if (entry != null) {
             if (!string.IsNullOrWhiteSpace(entry.Description)) {
                 return; // we at least have a description so we can show

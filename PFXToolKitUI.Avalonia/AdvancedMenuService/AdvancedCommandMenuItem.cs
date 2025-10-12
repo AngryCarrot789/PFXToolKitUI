@@ -47,7 +47,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         }
     }
 
-    public new CommandContextEntry? Entry => (CommandContextEntry?) base.Entry;
+    public new CommandMenuEntry? Entry => (CommandMenuEntry?) base.Entry;
 
     protected override bool IsEnabledCore => base.IsEnabledCore && this.CanExecute;
 
@@ -73,7 +73,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
             return;
         }
 
-        CommandContextEntry? entry = this.Entry;
+        CommandMenuEntry? entry = this.Entry;
         if (entry != null && CommandManager.Instance.GetCommandById(entry.CommandId) != null) {
             if (CommandIdToGestureConverter.CommandIdToGesture(entry.CommandId, out string? value)) {
                 this.InputGestureTextBlock.Text = value;

@@ -118,7 +118,7 @@ public sealed class CommandManager {
     /// non-null when called by the <see cref="ShortcutManager"/>
     /// </param>
     /// <param name="contextMenu">
-    /// The context menu that owns the context entry that caused the command to be executed
+    /// The context menu that owns the menu entry that caused the command to be executed
     /// </param>
     /// <param name="isUserInitiated">
     /// Whether a user effectively caused the command to execute (e.g. button/context/menu
@@ -140,7 +140,7 @@ public sealed class CommandManager {
     /// <param name="function">The function to execute</param>
     /// <param name="context">The context data passed to the function via command args</param>
     /// <param name="shortcut">The shortcut that caused the action to be run</param>
-    /// <param name="contextMenu">The context menu that owns the context entry that caused the action to be run</param>
+    /// <param name="contextMenu">The context menu that owns the menu entry that caused the action to be run</param>
     /// <param name="isUserInitiated">Whether a user effectively caused the command to execute</param>
     public async Task RunActionAsync(Func<CommandEventArgs, Task> function, IContextData context, ShortcutEntry? shortcut = null, ContextRegistry? contextMenu = null, bool isUserInitiated = true) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();

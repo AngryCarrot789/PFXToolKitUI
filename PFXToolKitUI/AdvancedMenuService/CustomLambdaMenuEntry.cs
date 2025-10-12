@@ -17,21 +17,28 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Icons;
+using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
-/// <summary>
-/// A context entry that executes a <see cref="CommandSystem.Command"/>
-/// </summary>
-public class CommandContextEntry : BaseContextEntry {
-    public string CommandId { get; }
 
-    public CommandContextEntry(string commandId) {
-        this.CommandId = commandId;
+/// <summary>
+/// A menu entry that has a <see cref="CanExecute"/> and <see cref="OnExecute"/> method
+/// </summary>
+public class CustomLambdaMenuEntry : CustomMenuEntry {
+    private readonly Func<IContextData, Task> execute;
+    private readonly Predicate<IContextData>? canExecute;
+    
+    public CustomLambdaMenuEntry(string displayName, Func<IContextData, Task> execute, Predicate<IContextData>? canExecute) : base(displayName, null) {
+        this.execute = execute;
+        this.canExecute = canExecute;
     }
 
-    public CommandContextEntry(string commandId, string displayName, string? description = null, Icon? icon = null) : base(displayName, description, icon) {
-        this.CommandId = commandId;
+    public override bool CanExecute(IContextData context) {
+        return this.canExecute == null || this.canExecute(context);
+    }
+
+    public override Task OnExecute(IContextData context) {
+        return this.execute(context);
     }
 }

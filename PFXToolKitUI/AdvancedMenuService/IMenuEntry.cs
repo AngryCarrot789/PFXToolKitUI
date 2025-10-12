@@ -20,7 +20,7 @@
 namespace PFXToolKitUI.AdvancedMenuService;
 
 /// <summary>
-/// The base interface for an object used in the advanced context system.
-/// This includes context menu entries, separators, captions, etc.
+/// The base interface for an object used in the advanced menu system.
+/// Examples include context menu items, menu items, separators, captions, etc.
 /// </summary>
-public interface IContextObject;
+public interface IMenuEntry;

@@ -42,7 +42,7 @@ public interface IAdvancedMenu : IAdvancedMenuOrItem {
     Control? PopCachedItem(Type entryType);
 
     /// <summary>
-    /// Creates or gets a cached item that can represent the given context object
+    /// Creates or gets a cached item that can represent the given menu entry
     /// </summary>
-    Control CreateItem(IContextObject entry) => AdvancedMenuHelper.CreateItem(this, entry);
+    Control CreateItem(IMenuEntry entry) => AdvancedMenuHelper.CreateItem(this, entry);
 }

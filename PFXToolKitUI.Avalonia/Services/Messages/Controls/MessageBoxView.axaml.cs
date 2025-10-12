@@ -20,6 +20,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
+using AvaloniaEdit;
+using AvaloniaEdit.Document;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
@@ -51,7 +53,7 @@ public partial class MessageBoxView : UserControl {
     });
 
     private readonly IBinder<MessageBoxInfo> headerBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.HeaderChanged), (b) => ((TextBlock) b.Control).Text = b.Model.Header);
-    private readonly IBinder<MessageBoxInfo> messageBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.MessageChanged), (b) => ((TextBox) b.Control).Text = b.Model.Message);
+    private readonly IBinder<MessageBoxInfo> messageBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.MessageChanged), (b) => ((TextEditor) b.Control).Text = b.Model.Message);
     private readonly IBinder<MessageBoxInfo> yesOkTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.YesOkTextChanged), (b) => ((Button) b.Control).Content = b.Model.YesOkText);
     private readonly IBinder<MessageBoxInfo> noTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.NoTextChanged), (b) => ((Button) b.Control).Content = b.Model.NoText);
     private readonly IBinder<MessageBoxInfo> cancelTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CancelTextChanged), (b) => ((Button) b.Control).Content = b.Model.CancelText);
@@ -61,6 +63,9 @@ public partial class MessageBoxView : UserControl {
 
     public MessageBoxView() {
         this.InitializeComponent();
+        this.PART_Message.Document = new TextDocument();
+        this.PART_Message.WordWrap = false;
+        
         this.headerBinder.AttachControl(this.PART_Header);
         this.messageBinder.AttachControl(this.PART_Message);
         this.yesOkTextBinder.AttachControl(this.PART_YesOkButton);

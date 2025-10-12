@@ -107,7 +107,6 @@ public static class AvUtils {
         private static readonly MethodInfo? RaiseResourcesChangedMethod;
         private static readonly PropertyInfo? InnerProperty;
 
-        private readonly Dictionary<object, object?>? dict_map;
         private Dictionary<object, object?>? map;
         private HashSet<object>? removedKeys;
 
@@ -125,7 +124,6 @@ public static class AvUtils {
 
         internal RDMultiChange(ResourceDictionary dictionary) {
             this.Dictionary = dictionary;
-            this.dict_map = (Dictionary<object, object?>?) InnerProperty?.GetValue(dictionary);
         }
 
         static RDMultiChange() {
@@ -137,7 +135,7 @@ public static class AvUtils {
 
         public void Dispose() {
             // Fallback to slow version -- need to update for new avalonia versions
-            if (this.dict_map == null || RaiseResourcesChangedMethod == null) {
+            if (RaiseResourcesChangedMethod == null) {
                 AppLogger.Instance.WriteLine("Warning: internal ResourceDictionary API changed. Cannot fast change");
                 if (this.removedKeys != null)
                     foreach (object key in this.removedKeys)
@@ -145,18 +143,20 @@ public static class AvUtils {
                 if (this.map != null)
                     this.Dictionary.SetItems(this.map);
             }
-            else {
+            else if (this.map != null || this.removedKeys != null) {
+                Dictionary<object, object?> dict_map = (Dictionary<object, object?>?) InnerProperty?.GetValue(this.Dictionary)!;
+                
                 bool anyChanges = false;
                 if (this.map?.Count > 0) {
                     anyChanges = true;
                     foreach (KeyValuePair<object, object?> entry in this.map)
-                        this.dict_map[entry.Key] = entry.Value;
+                        dict_map[entry.Key] = entry.Value;
                 }
 
                 if (this.removedKeys?.Count > 0) {
                     anyChanges = true;
                     foreach (object key in this.removedKeys)
-                        this.dict_map.Remove(key);
+                        dict_map.Remove(key);
                 }
 
                 if (anyChanges)

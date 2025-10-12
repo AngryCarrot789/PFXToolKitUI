@@ -17,20 +17,31 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
-/// <summary>
-/// Manages the top-level menu items for a window's main menu
-/// </summary>
-public class TopLevelMenuRegistry {
-    /// <summary>
-    /// Gets the menu item entries for this menu
-    /// </summary>
-    public ObservableList<MenuEntryGroup> Items { get; }
+public delegate void GroupCaptionEntryEventHandler(CaptionSeparatorEntry sender);
 
-    public TopLevelMenuRegistry() {
-        this.Items = new ObservableList<MenuEntryGroup>();
+/// <summary>
+/// A separator entry that also has text placed in between the separator line
+/// </summary>
+public class CaptionSeparatorEntry : IMenuEntry {
+    private string? text;
+
+    /// <summary>
+    /// Gets or sets our text. Note, overly long text may be clipped or trimmed with ellipses
+    /// if it were to take up an unreasonable amount of UI space.
+    /// Therefore, this should ideally have no more than around 20 characters
+    /// </summary>
+    public string? Text {
+        get => this.text;
+        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => t.TextChanged?.Invoke(t));
+    }
+
+    public event GroupCaptionEntryEventHandler? TextChanged;
+
+    public CaptionSeparatorEntry(string text) {
+        this.text = text;
     }
 }

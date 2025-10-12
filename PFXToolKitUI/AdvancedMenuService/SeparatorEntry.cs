@@ -20,6 +20,6 @@
 namespace PFXToolKitUI.AdvancedMenuService;
 
 /// <summary>
-/// An entry that is just a separator. Do not use cached instances! The same rule applies to any other context object too of course
+/// An entry that is just a separator. Do not use cached instances! The same rule applies to any other menu entry too of course
 /// </summary>
-public sealed class SeparatorEntry : IContextObject;
+public sealed class SeparatorEntry : IMenuEntry;

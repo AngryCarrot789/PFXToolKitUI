@@ -44,7 +44,7 @@ public interface IAdvancedMenuOrItem {
     /// <summary>
     /// Gets or sets a dictionary that maps the logical index of a dynamic group to the dynamic group itself
     /// </summary>
-    Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
+    Dictionary<int, DynamicGroupPlaceholderMenuEntry>? DynamicInsertion { get; set; }
     
     /// <summary>
     /// Gets or sets a dictionary that maps the logical index of a dynamic group to the number of items

@@ -23,12 +23,12 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
-public delegate void CustomContextEntryEventHandler(CustomContextEntry sender);
+public delegate void CustomContextEntryEventHandler(CustomMenuEntry sender);
 
 /// <summary>
-/// A context entry that has a <see cref="CanExecute"/> and <see cref="OnExecute"/> method
+/// A menu entry that has a <see cref="CanExecute"/> and <see cref="OnExecute"/> method
 /// </summary>
-public abstract class CustomContextEntry : BaseContextEntry {
+public abstract class CustomMenuEntry : BaseMenuEntry {
     private string? inputGestureText;
 
     public string? InputGestureText {
@@ -38,10 +38,10 @@ public abstract class CustomContextEntry : BaseContextEntry {
 
     public event CustomContextEntryEventHandler? InputGestureTextChanged;
 
-    protected CustomContextEntry() {
+    protected CustomMenuEntry() {
     }
 
-    protected CustomContextEntry(string displayName, string? description, Icon? icon = null) : base(displayName, description, icon) {
+    protected CustomMenuEntry(string displayName, string? description, Icon? icon = null) : base(displayName, description, icon) {
     }
 
     public virtual bool CanExecute(IContextData context) {

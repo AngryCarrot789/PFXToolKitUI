@@ -55,11 +55,11 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     /// </summary>
     public IAdvancedMenuOrItem? ParentNode { get; private set; }
 
-    public BaseContextEntry? Entry { get; private set; }
+    public BaseMenuEntry? Entry { get; private set; }
 
     bool IAdvancedMenuOrItem.IsOpen => this.IsSubMenuOpen;
 
-    public Dictionary<int, DynamicGroupPlaceholderContextObject>? DynamicInsertion { get; set; }
+    public Dictionary<int, DynamicGroupPlaceholderMenuEntry>? DynamicInsertion { get; set; }
 
     public Dictionary<int, int>? DynamicInserted { get; set; }
 
@@ -88,7 +88,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     private void UpdateIcon() {
-        BaseContextEntry? entry = this.Entry;
+        BaseMenuEntry? entry = this.Entry;
         this.myIconControl.Icon = entry == null
             ? null
             : this.IsEffectivelyEnabled
@@ -114,32 +114,32 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     protected virtual void OnLoadedOverride(RoutedEventArgs e) {
-        BaseContextEntry.InternalOnBecomeVisible(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
+        BaseMenuEntry.InternalOnBecomeVisible(this.Entry!, this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance);
         AdvancedMenuHelper.GenerateDynamicVisualItems(this);
         ApplicationPFX.Instance.Dispatcher.Post(() => AdvancedMenuHelper.NormaliseSeparators(this), DispatchPriority.Loaded);
     }
 
     protected virtual void OnUnloadedOverride(RoutedEventArgs e) {
-        BaseContextEntry.InternalOnBecomeHidden(this.Entry!);
+        BaseMenuEntry.InternalOnBecomeHidden(this.Entry!);
         AdvancedMenuHelper.ClearDynamicVisualItems(this);
     }
 
-    public virtual void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, BaseContextEntry entry) {
+    public virtual void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, BaseMenuEntry entry) {
         this.OwnerMenu = menu;
         this.ParentNode = parent;
         this.Entry = entry;
     }
 
     public virtual void OnAdded() {
-        BaseContextEntry entry = this.Entry!;
-        DataManager.GetContextData(this).Set(BaseContextEntry.DataKey, entry);
+        BaseMenuEntry entry = this.Entry!;
+        DataManager.GetContextData(this).Set(BaseMenuEntry.DataKey, entry);
 
         this.UpdateHeader(entry);
         entry.DisplayNameChanged += this.OnEntryDisplayNameChanged;
         entry.IconChanged += this.OnAnyEntryIconChanged;
         entry.DisabledIconChanged += this.OnAnyEntryIconChanged;
 
-        if (entry is ContextEntryGroup list) {
+        if (entry is MenuEntryGroup list) {
             AdvancedMenuHelper.OnLogicalItemsAdded(this, 0, list.Items);
             list.Items.ItemsAdded += this.ItemsOnItemsAdded;
             list.Items.ItemsRemoved += this.ItemsOnItemsRemoved;
@@ -155,8 +155,8 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     public virtual void OnRemoving() {
-        BaseContextEntry entry = this.Entry!;
-        if (entry is ContextEntryGroup list) {
+        BaseMenuEntry entry = this.Entry!;
+        if (entry is MenuEntryGroup list) {
             list.Items.ItemsAdded -= this.ItemsOnItemsAdded;
             list.Items.ItemsRemoved -= this.ItemsOnItemsRemoved;
             list.Items.ItemMoved -= this.ItemsOnItemMoved;
@@ -177,7 +177,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.DynamicInsertion = null;
         this.DynamicInserted = null;
 
-        DataManager.GetContextData(this).Remove(BaseContextEntry.DataKey);
+        DataManager.GetContextData(this).Remove(BaseMenuEntry.DataKey);
     }
 
     public virtual void OnRemoved() {
@@ -186,17 +186,17 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Entry = null;
     }
 
-    private void OnIsCheckedFunctionChanged(BaseContextEntry sender) {
+    private void OnIsCheckedFunctionChanged(BaseMenuEntry sender) {
         this.ToggleType = sender.IsCheckedFunction != null ? MenuItemToggleType.CheckBox : MenuItemToggleType.None;
         // IsCheckedChanged is fired after IsCheckedFunctionChanged so no need to double call UpdateIsChecked
         // this.UpdateIsChecked(sender);
     }
 
-    private void OnIsCheckedChanged(BaseContextEntry sender) {
+    private void OnIsCheckedChanged(BaseMenuEntry sender) {
         this.IsChecked = sender.IsCheckedFunction != null && sender.IsCheckedFunction(sender);
     }
 
-    private void OnCanExecuteChanged(BaseContextEntry baseContextEntry) {
+    private void OnCanExecuteChanged(BaseMenuEntry baseMenuEntry) {
         this.UpdateCanExecute();
 
         if (!this.IsVisibilityChanging) {
@@ -241,7 +241,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
     }
 
     private void UpdateIsEnabled() {
-        if (this.Entry is ContextEntryGroup g) {
+        if (this.Entry is MenuEntryGroup g) {
             this.IsEnabled = g.Items.Count > 0;
         }
         else {
@@ -254,33 +254,33 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.UpdateIsEnabled();
     }
 
-    protected virtual void UpdateHeader(BaseContextEntry entry) {
+    protected virtual void UpdateHeader(BaseMenuEntry entry) {
         this.Header = entry.DisplayName;
     }
 
-    private void ItemsOnItemsAdded(IObservableList<IContextObject> list, int index, IList<IContextObject> items) {
+    private void ItemsOnItemsAdded(IObservableList<IMenuEntry> list, int index, IList<IMenuEntry> items) {
         this.OnItemAddedOrRemoved();
         AdvancedMenuHelper.OnLogicalItemsAdded(this, index, items);
     }
 
-    private void ItemsOnItemsRemoved(IObservableList<IContextObject> list, int index, IList<IContextObject> items) {
+    private void ItemsOnItemsRemoved(IObservableList<IMenuEntry> list, int index, IList<IMenuEntry> items) {
         this.OnItemAddedOrRemoved();
         AdvancedMenuHelper.OnLogicalItemsRemoved(this, index, items);
     }
 
-    private void ItemsOnItemMoved(IObservableList<IContextObject> list, int oldIndex, int newIndex, IContextObject item) {
+    private void ItemsOnItemMoved(IObservableList<IMenuEntry> list, int oldIndex, int newIndex, IMenuEntry item) {
         AdvancedMenuHelper.OnLogicalItemMoved(this, oldIndex, newIndex, item);
     }
 
-    private void ItemsOnItemReplaced(IObservableList<IContextObject> list, int index, IContextObject oldItem, IContextObject newItem) {
+    private void ItemsOnItemReplaced(IObservableList<IMenuEntry> list, int index, IMenuEntry oldItem, IMenuEntry newItem) {
         AdvancedMenuHelper.OnLogicalItemReplaced(this, index, oldItem, newItem);
     }
 
-    private void OnAnyEntryIconChanged(BaseContextEntry sender, Icon? oldIcon, Icon? newIcon) {
+    private void OnAnyEntryIconChanged(BaseMenuEntry sender, Icon? oldIcon, Icon? newIcon) {
         this.UpdateIcon();
     }
 
-    private void OnEntryDisplayNameChanged(BaseContextEntry sender) {
+    private void OnEntryDisplayNameChanged(BaseMenuEntry sender) {
         this.UpdateHeader(sender);
     }
 

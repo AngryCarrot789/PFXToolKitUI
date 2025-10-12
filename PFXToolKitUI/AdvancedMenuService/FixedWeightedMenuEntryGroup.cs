@@ -24,37 +24,37 @@ namespace PFXToolKitUI.AdvancedMenuService;
 /// <summary>
 /// A fixed group of context items
 /// </summary>
-public class FixedContextGroup : IContextGroup {
-    private readonly List<IContextObject> items;
+public class FixedWeightedMenuEntryGroup : IWeightedMenuEntryGroup {
+    private readonly List<IMenuEntry> items;
 
     /// <summary>
     /// Gets our items
     /// </summary>
-    public IReadOnlyList<IContextObject> Items => this.items;
+    public IReadOnlyList<IMenuEntry> Items => this.items;
 
-    public FixedContextGroup() {
-        this.items = new List<IContextObject>();
+    public FixedWeightedMenuEntryGroup() {
+        this.items = new List<IMenuEntry>();
     }
 
-    public void AddEntry(IContextObject item) {
+    public void AddEntry(IMenuEntry item) {
         this.items.Add(item);
     }
 
     public void AddSeparator() => this.AddEntry(new SeparatorEntry());
 
-    public CaptionEntry AddHeader(string caption) {
-        CaptionEntry entry = new CaptionEntry(caption);
-        this.items.Add(entry);
-        return entry;
+    public CaptionSeparatorEntry AddHeader(string caption) {
+        CaptionSeparatorEntry separatorEntry = new CaptionSeparatorEntry(caption);
+        this.items.Add(separatorEntry);
+        return separatorEntry;
     }
 
-    public CommandContextEntry AddCommand(string cmdId, string displayName, string? description = null, Icon? icon = null) {
-        CommandContextEntry entry = new CommandContextEntry(cmdId, displayName, description, icon);
+    public CommandMenuEntry AddCommand(string cmdId, string displayName, string? description = null, Icon? icon = null) {
+        CommandMenuEntry entry = new CommandMenuEntry(cmdId, displayName, description, icon);
         this.AddEntry(entry);
         return entry;
     }
 
     public void AddDynamicSubGroup(DynamicGenerateContextFunction generate) {
-        this.AddEntry(new DynamicGroupPlaceholderContextObject(new DynamicContextGroup(generate)));
+        this.AddEntry(new DynamicGroupPlaceholderMenuEntry(new DynamicWeightedMenuEntryGroup(generate)));
     }
 }

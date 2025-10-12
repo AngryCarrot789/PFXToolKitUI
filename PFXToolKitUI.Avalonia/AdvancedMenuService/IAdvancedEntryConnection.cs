@@ -26,9 +26,9 @@ namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 /// An example implementation is <see cref="CaptionSeparator"/> which wants to listen to text changes on its entry
 /// </summary>
 public interface IAdvancedEntryConnection {
-    IContextObject? Entry { get; }
+    IMenuEntry? Entry { get; }
 
-    void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, IContextObject entry);
+    void OnAdding(IAdvancedMenu menu, IAdvancedMenuOrItem parent, IMenuEntry entry);
     void OnAdded();
     void OnRemoving();
     void OnRemoved();

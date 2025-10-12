@@ -1,5 +1,5 @@
 // 
-// Copyright (c) 2024-2025 REghZy
+// Copyright (c) 2023-2025 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -17,29 +17,18 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
-
 namespace PFXToolKitUI.AdvancedMenuService;
 
-public delegate void GroupCaptionEntryEventHandler(CaptionEntry sender);
-
 /// <summary>
-/// A context entry that is placed above a group of items. This is not necessarily related to <see cref="IContextGroup"/> objects
+/// An invisible placeholder which is where dynamic items will be inserted after
 /// </summary>
-public class CaptionEntry : IContextObject {
-    private string? text;
-
+public class DynamicGroupPlaceholderMenuEntry : IMenuEntry {
     /// <summary>
-    /// Gets or sets the text of this caption entry
+    /// Gets the dynamic context group we used to generate entries on demand
     /// </summary>
-    public string? Text {
-        get => this.text;
-        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => t.TextChanged?.Invoke(t));
-    }
-
-    public event GroupCaptionEntryEventHandler? TextChanged;
-
-    public CaptionEntry(string text) {
-        this.text = text;
+    public DynamicWeightedMenuEntryGroup DynamicGroup { get; }
+    
+    public DynamicGroupPlaceholderMenuEntry(DynamicWeightedMenuEntryGroup dynamicGroup) {
+        this.DynamicGroup = dynamicGroup;
     }
 }

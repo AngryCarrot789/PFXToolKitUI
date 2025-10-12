@@ -51,10 +51,10 @@ public class SimpleButtonCommandUsage : CommandUsage {
             return;
         }
 
-        NewFunction();
+        ExecuteCommand();
         return;
 
-        async void NewFunction() {
+        async void ExecuteCommand() {
             try {
                 Task task = CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
                 this.UpdateCanExecute();

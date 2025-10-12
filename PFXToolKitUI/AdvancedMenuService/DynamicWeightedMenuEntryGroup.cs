@@ -21,25 +21,25 @@ using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
-public delegate void DynamicGenerateContextFunction(DynamicContextGroup group, IContextData ctx, List<IContextObject> items);
+public delegate void DynamicGenerateContextFunction(DynamicWeightedMenuEntryGroup group, IContextData ctx, List<IMenuEntry> items);
 
 /// <summary>
-/// A dynamic group. The docs for <see cref="IContextGroup"/> explain this better, but this class
-/// contains a generator which generates the context objects based on the current state of the
+/// A dynamic group. The docs for <see cref="IWeightedMenuEntryGroup"/> explain this better, but this class
+/// contains a generator which generates the menu entries based on the current state of the
 /// application and also the <see cref="IContextData"/> provided to the generator
 /// </summary>
-public class DynamicContextGroup : IContextGroup {
+public class DynamicWeightedMenuEntryGroup : IWeightedMenuEntryGroup {
     private readonly DynamicGenerateContextFunction generate;
 
-    public DynamicContextGroup(DynamicGenerateContextFunction generate) {
+    public DynamicWeightedMenuEntryGroup(DynamicGenerateContextFunction generate) {
         ArgumentNullException.ThrowIfNull(generate);
         this.generate = generate;
     }
 
-    public List<IContextObject> GenerateItems(IContextData context) {
+    public List<IMenuEntry> GenerateItems(IContextData context) {
         ArgumentNullException.ThrowIfNull(context);
         
-        List<IContextObject> list = new List<IContextObject>();
+        List<IMenuEntry> list = new List<IMenuEntry>();
         this.generate(this, context, list);
         return list;
     }

@@ -41,7 +41,7 @@ public static class ShortcutContextRegistry {
         });
     }
 
-    private class DeleteInputStrokeEntry : CustomContextEntry {
+    private class DeleteInputStrokeEntry : CustomMenuEntry {
         public ShortcutEntry Entry { get; }
 
         public IInputStroke Stroke { get; }
