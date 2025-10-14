@@ -23,7 +23,7 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using PFXToolKitUI.Avalonia.AvControls.Dragger.Expressions;
+using ILMath;
 using PFXToolKitUI.Avalonia.Services;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Formatting;
@@ -48,7 +48,7 @@ public class ValueFinalizedEventArgs : RoutedEventArgs {
     /// entering a value. False when the value actually changed into a value the user wants
     /// </summary>
     public bool IsCancelled { get; }
-    
+
     public ValueFinalizedEventArgs(double finalValue, bool isCancelled, NumberDragger dragger) : base(NumberDragger.ValueFinalizedEvent, dragger) {
         this.FinalValue = finalValue;
         this.IsCancelled = isCancelled;
@@ -181,12 +181,17 @@ public class NumberDragger : RangeBase {
     }
 
     /// <summary>
-    /// Gets or sets if this number dragger should treat our value like an integer. This obviously means our value cannot have decimal places
+    /// Gets or sets if this number dragger should treat our value like an integer.
     /// </summary>
     public bool IsIntegerValue {
         get => this.GetValue(IsIntegerValueProperty);
         set => this.SetValue(IsIntegerValueProperty, value);
     }
+
+    /// <summary>
+    /// Gets the integer value, ensuring it's between the minimum and maximum integer values
+    /// </summary>
+    public long IntegerValue => Math.Clamp((long) Math.Round(this.Value), (long) Math.Ceiling(this.Minimum), (long) Math.Floor(this.Maximum));
 
     /// <summary>
     /// An event fired when the user inputs text (while <see cref="IsEditing"/> is true) that could not be converted
@@ -196,7 +201,7 @@ public class NumberDragger : RangeBase {
         add => this.AddHandler(InvalidInputEnteredEvent, value);
         remove => this.RemoveHandler(InvalidInputEnteredEvent, value);
     }
-    
+
     /// <summary>
     /// An event fired when the user releases their mouse cursor while dragging this
     /// control, or when they press enter when editing by hand. This is recommended over
@@ -214,14 +219,11 @@ public class NumberDragger : RangeBase {
     static NumberDragger() {
         ValueProperty.Changed.AddClassHandler<NumberDragger, double>((o, e) => o.OnValueChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
         ValueProperty.OverrideMetadata<NumberDragger>(new StyledPropertyMetadata<double>(coerce: (o, value) => {
-            double coerced = double.IsInfinity(value) || double.IsNaN(value) ? o.GetValue(ValueProperty) : Maths.Clamp(value, o.GetValue(MinimumProperty), o.GetValue(MaximumProperty));
-            if (o.GetValue(IsIntegerValueProperty))
-                coerced = (long) coerced;
-            return coerced;
+            double coerced = double.IsInfinity(value) || double.IsNaN(value) ? o.GetValue(ValueProperty) : value;
+            return Maths.Clamp(coerced, o.GetValue(MinimumProperty), o.GetValue(MaximumProperty));
         }));
 
         TextPreviewOverrideProperty.Changed.AddClassHandler<NumberDragger, string?>((o, e) => o.UpdateTextBlockOnly());
-        IsIntegerValueProperty.Changed.AddClassHandler<NumberDragger, bool>((o, e) => o.CoerceValue(ValueProperty));
 
         PropertyAffectsIgnoreLostFocusValueChange(NonFormattedRoundedPlacesForEditProperty, NonFormattedRoundedPlacesProperty, ValueFormatterProperty, ValueProperty);
         ValueFormatterProperty.Changed.AddClassHandler<NumberDragger, IValueFormatter?>((d, e) => {
@@ -321,11 +323,13 @@ public class NumberDragger : RangeBase {
 
     private static StandardCursorType DragDirectionToCursor(DragDirection dir) {
         switch (dir) {
-            case DragDirection.LeftDecrRightIncr: 
-            case DragDirection.LeftIncrRightDecr: return StandardCursorType.SizeWestEast;
-            case DragDirection.UpDecrDownIncr:    
-            case DragDirection.UpIncrDownDecr:    return StandardCursorType.SizeNorthSouth;
-            default:                              throw new ArgumentOutOfRangeException(nameof(dir), dir, null);
+            case DragDirection.LeftDecrRightIncr:
+            case DragDirection.LeftIncrRightDecr:
+                return StandardCursorType.SizeWestEast;
+            case DragDirection.UpDecrDownIncr:
+            case DragDirection.UpIncrDownDecr:
+                return StandardCursorType.SizeNorthSouth;
+            default: throw new ArgumentOutOfRangeException(nameof(dir), dir, null);
         }
     }
 
@@ -370,25 +374,32 @@ public class NumberDragger : RangeBase {
             return true;
         }
 
-        using ComplexNumericExpression.ExpressionState state = ComplexNumericExpression.DefaultParser.PushState();
-        state.SetVariable("value", this.Value);
         try {
-            parsedValue = state.Expression.Parse(parseText);
+            if (this.IsIntegerValue) {
+                Evaluator<long> evaluator = MathEvaluation.CompileExpression<long>("", parseText, CompilationMethod.Functional);
+                EvaluationContext<long> context = EvaluationContexts.CreateForInteger<long>();
+                context.RegisterVariable("value", (long) Math.Round(this.Value));
+                parsedValue = evaluator(context);
+            }
+            else {
+                Evaluator<double> evaluator = MathEvaluation.CompileExpression<double>("", parseText, CompilationMethod.Functional);
+                EvaluationContext<double> context = EvaluationContexts.CreateForDouble();
+                context.RegisterVariable("value", this.Value);
+                parsedValue = evaluator(context);
+            }
         }
         catch {
             this.RaiseEvent(new InvalidInputEnteredEventArgs(parseText, this));
             return false;
         }
 
-        if (this.ValueFormatter is IValueFormatter formatter) {
-            if (formatter.TryConvertToDouble(parsedValue.ToString(), out double value)) {
-                this.Value = value;
-                this.RaiseEvent(new ValueFinalizedEventArgs(parsedValue, false, this));
-                return true;
-            }
+        if (this.ValueFormatter is IValueFormatter formatter && formatter.TryConvertToDouble(parsedValue.ToString(), out double value)) {
+            this.Value = value;
+        }
+        else {
+            this.Value = parsedValue;
         }
 
-        this.Value = parsedValue;
         this.RaiseEvent(new ValueFinalizedEventArgs(parsedValue, false, this));
         return true;
     }
@@ -436,7 +447,7 @@ public class NumberDragger : RangeBase {
                 this.RaisePropertyChanged(IsDraggingProperty, true, false);
             if (this == e.Pointer.Captured)
                 e.Pointer.Capture(null);
-            
+
             if (state == 2)
                 this.RaiseEvent(new ValueFinalizedEventArgs(this.Value, false, this));
         }

@@ -40,11 +40,13 @@ public interface IRelayEventHandler {
 /// The default is <see cref="UIStorage"/>. Whether a new instance is needed is completely empirical
 /// </summary>
 public sealed class EventRelayStorage {
+    private static readonly Func<EventInfoKey, EventRelayStorage, Lazy<SenderEventRelay>> s_CreateLazyRelay = CreateLazyRelay;
+
     /// <summary>
     /// A shared instance for UI related relays
     /// </summary>
     public static readonly EventRelayStorage UIStorage = new EventRelayStorage();
-    
+
     private readonly ConcurrentDictionary<EventInfoKey, Lazy<SenderEventRelay>> eventInfoToRelayMap;
 
     // IDictionary<object, IDictionary<string, IRelayEventHandler[]>>
@@ -104,7 +106,7 @@ public sealed class EventRelayStorage {
     }
 
     public SenderEventRelay GetEventRelay(Type modelType, string eventName) {
-        return this.eventInfoToRelayMap.GetOrAdd(new EventInfoKey(modelType, eventName), CreateLazyRelay, this).Value;
+        return this.eventInfoToRelayMap.GetOrAdd(new EventInfoKey(modelType, eventName), s_CreateLazyRelay, this).Value;
     }
 
     private static Lazy<SenderEventRelay> CreateLazyRelay(EventInfoKey key, EventRelayStorage t) {

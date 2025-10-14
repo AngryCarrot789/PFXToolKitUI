@@ -8,6 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\ILMath\ILMath\ILMath.csproj" />
       <ProjectReference Include="..\PFXToolKitUI\PFXToolKitUI.csproj" />
     </ItemGroup>
 

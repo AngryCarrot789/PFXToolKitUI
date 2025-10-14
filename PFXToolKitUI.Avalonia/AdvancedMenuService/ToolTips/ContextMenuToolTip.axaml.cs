@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Avalonia.Controls;
 using Avalonia.Interactivity;
 using PFXToolKitUI.AdvancedMenuService;
@@ -73,6 +74,7 @@ public partial class ContextMenuToolTip : UserControl, IToolTipControl {
         return tip;
     }
 
+    [SuppressMessage("ReSharper", "SuspiciousTypeConversion.Global", Justification = $"Anything can implement {nameof(IDisabledHintProvider)}, we just have to support it")]
     private static DisabledHintInfo? TryGetDisabledHintInfo(Control owner, BaseMenuEntry entry) {
         ContextRegistry? registry = (((AdvancedMenuItem) owner).OwnerMenu as AdvancedContextMenu)?.MyContextRegistry;
         DisabledHintInfo? hint = entry.ProvideDisabledHint?.Invoke(DataManager.GetFullContextData(owner), registry);

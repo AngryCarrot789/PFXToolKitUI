@@ -77,6 +77,10 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         this.parseAndUpdate = parseAndUpdate;
     }
 
+    /// <summary>
+    /// Creates a (or gets a cached) string from the underlying model value, not the text box control itself
+    /// </summary>
+    /// <returns></returns>
     protected abstract string GetTextCore();
 
     protected override void UpdateModelOverride() {

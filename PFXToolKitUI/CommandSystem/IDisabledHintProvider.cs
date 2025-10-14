@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.AdvancedMenuService;
+using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.CommandSystem;
@@ -73,9 +74,15 @@ public sealed class SimpleDisabledHintInfo : DisabledHintInfo {
     /// Gets the main body text
     /// </summary>
     public string? Message { get; }
+    
+    /// <summary>
+    /// Gets the icon shown to the side of the caption
+    /// </summary>
+    public Icon? CaptionIcon { get; }
 
-    public SimpleDisabledHintInfo(string? caption, string? message) {
+    public SimpleDisabledHintInfo(string? caption, string? message, Icon? captionIcon = null) {
         this.Caption = caption;
         this.Message = message;
+        this.CaptionIcon = captionIcon;
     }
 }

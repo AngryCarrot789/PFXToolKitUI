@@ -90,7 +90,7 @@ public static class StandardIcons {
     public static readonly Icon StopIconColourful =
         IconManager.Instance.RegisterGeometryIcon(
             nameof(StopIconColourful),
-            [new GeometryEntry("M0 10V0H10V10H0", BrushManager.Instance.CreateConstant(SKColors.Red))]);
+            [new GeometryEntry("M0 10V0H10V10H0", BrushManager.Instance.CreateConstant(SKColors.IndianRed))]);
 
     public static readonly Icon StopIconDisabled =
         IconManager.Instance.RegisterGeometryIcon(

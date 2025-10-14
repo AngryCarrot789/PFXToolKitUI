@@ -27,6 +27,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Interactivity;
+using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Avalonia.ToolTips;
 
@@ -75,7 +76,7 @@ public static class ToolTipEx {
                 tip = (Control) Activator.CreateInstance(newTipType)! ?? throw new InvalidOperationException("Wut");
                 toolTipControlCache[newTipType] = tip = new ToolTipControlEx(tip);
             }
-            
+
             ToolTip.AddToolTipOpeningHandler(control, OnToolTipOpening);
             bool isOpen = ToolTip.GetIsOpen(control);
             if (isOpen)

@@ -31,12 +31,14 @@ public partial class SimpleDisabledHintInfoControl : UserControl, IDisabledHintI
         SimpleDisabledHintInfo info = (SimpleDisabledHintInfo) _info;
         this.PART_Caption.IsVisible = !string.IsNullOrWhiteSpace(info.Caption);
         this.PART_Caption.Text = info.Caption;
+        this.PART_IconControl.Icon = info.CaptionIcon;
+        this.PART_IconControl.IsVisible = info.CaptionIcon != null; 
 
         this.PART_MainText.IsVisible = !string.IsNullOrWhiteSpace(info.Message);
         this.PART_MainText.Text = info.Message;
     }
 
     public void OnDisconnected(DisabledHintInfo _info) {
-        SimpleDisabledHintInfo info = (SimpleDisabledHintInfo) _info;
+        this.PART_IconControl.Icon = null;
     }
 }
