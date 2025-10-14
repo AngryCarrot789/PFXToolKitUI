@@ -27,7 +27,6 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Interactivity;
-using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Avalonia.ToolTips;
 

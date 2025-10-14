@@ -19,18 +19,22 @@
 
 using System.Collections.ObjectModel;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Debouncing;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
 public delegate void SingleUserInputDataEventHandler(SingleUserInputInfo sender);
 
 public class SingleUserInputInfo : BaseTextUserInputInfo {
-    private ReadOnlyCollection<string>? textErrors;
-
+    private static readonly SendOrPostCallback s_UpdateTextErrors = static x => ((SingleUserInputInfo) x!).UpdateTextError();
+    
     private string text;
     private string? label;
     private int lineCountHint = 1;
+    private ReadOnlyCollection<string>? textErrors;
     private int minimumDialogWidthHint = -1;
+    private int debounceErrorsDelay;
+    private TimerDispatcherDebouncer? errorDebouncer;
 
     /// <summary>
     /// Gets the value the user have typed into the text field
@@ -38,15 +42,9 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     public string Text {
         get => this.text;
         set {
-            if (this.lineCountHint == 1) {
-                int index = value.AsSpan().IndexOfAny("\r\n");
-                if (index >= 0) {
-                    value = value.Substring(0, index);
-                }
-            }
-
+            value = CanonicalizeTextForLineCount(value, this.LineCountHint);
             PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => {
-                t.UpdateTextError();
+                HandleTextChanged(s_UpdateTextErrors, t, t.DebounceErrorsDelay, ref t.errorDebouncer, t.Validate);
                 t.TextChanged?.Invoke(t);
             });
         }
@@ -70,7 +68,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     public int LineCountHint {
         get => this.lineCountHint;
         set {
-            if (value < 1) 
+            if (value < 1)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
             PropertyHelper.SetAndRaiseINE(ref this.lineCountHint, value, this, static t => t.LineCountHintChanged?.Invoke(t));
         }
@@ -83,7 +81,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         get => this.minimumDialogWidthHint;
         set => PropertyHelper.SetAndRaiseINE(ref this.minimumDialogWidthHint, value, this, static t => t.MinimumDialogWidthHintChanged?.Invoke(t));
     }
-    
+
     /// <summary>
     /// A validation function that is given the current text and a list. If there's problems
     /// with the text, then error messages should be added to the list. 
@@ -108,11 +106,31 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         }
     }
 
+    /// <summary>
+    /// Gets or sets the amount of milliseconds to wait before actually querying <see cref="ValidateA"/>.
+    /// Default is 0, meaning do not wait. This property can be used for when <see cref="Validate"/> is expensive.
+    /// For example, it parses expressions, and you don't want it parsing until the user has stopped typing for some time.
+    /// </summary>
+    public int DebounceErrorsDelay {
+        get => this.debounceErrorsDelay;
+        set {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative");
+            if (this.debounceErrorsDelay == value)
+                return;
+
+            HandleDebounceDelayChanged(s_UpdateTextErrors, this, value, ref this.errorDebouncer);
+            this.debounceErrorsDelay = value;
+            this.DebounceErrorsDelayChanged?.Invoke(this);
+        }
+    }
+
     public event SingleUserInputDataEventHandler? TextChanged;
     public event SingleUserInputDataEventHandler? LabelChanged;
     public event SingleUserInputDataEventHandler? TextErrorsChanged;
     public event SingleUserInputDataEventHandler? LineCountHintChanged;
     public event SingleUserInputDataEventHandler? MinimumDialogWidthHintChanged;
+    public event SingleUserInputDataEventHandler? DebounceErrorsDelayChanged;
 
     public SingleUserInputInfo(string? defaultText) : this(null, null, null, defaultText) {
     }
@@ -126,6 +144,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     }
 
     private void UpdateTextError() {
+        this.errorDebouncer?.Reset();
         this.TextErrors = GetErrors(this.Text, this.Validate, this.HasErrors())?.AsReadOnly();
     }
 
@@ -143,5 +162,46 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         List<string> list = new List<string>();
         validate(new ValidationArgs(text, list, hasError));
         return list.Count > 0 ? list : null;
+    }
+    
+    public static void HandleTextChanged(SendOrPostCallback updateErrors, object state, int debounceDelay, ref TimerDispatcherDebouncer? debouncer, Action<ValidationArgs>? validate) {
+        if (debouncer == null && debounceDelay > 0 && validate != null)
+            debouncer = new TimerDispatcherDebouncer(TimeSpan.FromMilliseconds(debounceDelay), updateErrors, state);
+
+        if (debouncer != null && validate != null) {
+            debouncer.InvokeOrPostpone();
+        }
+        else {
+            // validate function might have been set to null at some point,
+            // so reset debouncer so we don't update later for no reason
+            debouncer?.Reset();
+            updateErrors(state);
+        }
+    }
+    
+    public static void HandleDebounceDelayChanged(SendOrPostCallback updateErrors, object state, int newValue, ref TimerDispatcherDebouncer? debouncer) {
+        if (debouncer != null) {
+            if (newValue == 0) {
+                if (debouncer.IsWaiting)
+                    ApplicationPFX.Instance.Dispatcher.Post(updateErrors, state);
+                        
+                debouncer.Reset();
+                debouncer = null;
+            }
+            else {
+                debouncer.Interval = TimeSpan.FromMilliseconds(newValue);
+            }
+        }
+    }
+    
+    public static string CanonicalizeTextForLineCount(string value, int lineCount) {
+        if (lineCount == 1) {
+            int index = value.AsSpan().IndexOfAny("\r\n");
+            if (index >= 0) {
+                value = value.Substring(0, index);
+            }
+        }
+
+        return value;
     }
 }

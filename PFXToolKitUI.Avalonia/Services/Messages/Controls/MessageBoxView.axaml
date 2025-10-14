@@ -5,10 +5,19 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
              xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
+             xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
              mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
-        <StackPanel x:Name="PART_MessageContainer" DockPanel.Dock="Top" Margin="10,10,10,0">
-            <TextBlock x:Name="PART_Header" Padding="0,0,0,2" Text="Message Here" FontSize="16" Foreground="{DynamicResource ABrush.ColourfulGlyph.Static}" FontWeight="Medium"/>
+        <StackPanel x:Name="PART_HeaderPanel" DockPanel.Dock="Top" Margin="10,10,10,0">
+            <StackPanel Orientation="Horizontal" Spacing="5">
+                <avc:IconControl x:Name="PART_IconControlInHeader"
+                                 Width="24" Height="24" Margin="0,0,0,3"
+                                 IsVisible="False" VerticalAlignment="Center"/>
+                <TextBlock x:Name="PART_Header" Padding="0,0,0,2"
+                           Text="Message Here" FontSize="16"
+                           Foreground="{DynamicResource ABrush.ColourfulGlyph.Static}"
+                           FontWeight="Medium" TextWrapping="Wrap" VerticalAlignment="Center"/>
+            </StackPanel>
             <Separator/>
         </StackPanel>
         <Border DockPanel.Dock="Bottom"
@@ -65,12 +74,20 @@
                 <Border Background="Transparent"/>
             </DockPanel>
         </Border>
-        <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Transparent">
-            <ae:TextEditor x:Name="PART_Message" Padding="0,5" 
-                           Margin="10,8,10,10"
-                           IsReadOnly="True" 
-                           Background="Transparent" 
-                           BorderThickness="0"/>
-        </ScrollViewer>
+        <DockPanel HorizontalSpacing="5" Margin="8,0,0,0">
+            <Panel DockPanel.Dock="Left">
+                <avc:IconControl x:Name="PART_IconControlInMessage"
+                                 Width="24" Height="24" Margin="0,8,0,0"
+                                 IsVisible="False"
+                                 VerticalAlignment="Top" HorizontalAlignment="Center"/>
+            </Panel>
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Transparent">
+                <ae:TextEditor x:Name="PART_Message" Padding="0,5"
+                               Margin="0,8,10,10"
+                               IsReadOnly="True"
+                               Background="Transparent"
+                               BorderThickness="0"/>
+            </ScrollViewer>
+        </DockPanel>
     </DockPanel>
 </UserControl>

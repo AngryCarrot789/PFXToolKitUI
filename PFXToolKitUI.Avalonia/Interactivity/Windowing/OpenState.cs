@@ -27,36 +27,41 @@ namespace PFXToolKitUI.Avalonia.Interactivity.Windowing;
 /// </summary>
 public enum OpenState {
     /// <summary>
-    /// The window or popup has not been shown yet. This is the default state for a newly created windows or popups.
+    /// The window or overlay has not been shown yet. This is the default state for a newly created windows or overlays.
     /// </summary>
     NotOpened,
 
     /// <summary>
-    /// The window or popup is in the process of opening
+    /// The window or overlay is in the process of opening
     /// </summary>
     Opening,
 
     /// <summary>
-    /// The window or popup is open and visible on screen
+    /// The window or overlay is open and visible on screen
     /// </summary>
     Open,
 
     /// <summary>
-    /// The window or popup has been requested to close. Its "try" close event handlers will be invoked which may wish to cancel the close operation.
+    /// The window or overlay has been requested to close. Its "try" close event handlers will be invoked which may wish to cancel the close operation.
     /// <para>
-    /// The window or popup will still be open at this point, and its open state may return back to <see cref="Open"/> if the close operation is cancelled
+    /// The window or overlay will still be open at this point, and its open state may return back to <see cref="Open"/> if the close operation is cancelled
+    /// </para>
+    /// <para>
+    /// Note, overlay windows may be forced closed, and may not actually enter this state. Therefore, their <see cref="IOverlayWindow.TryClose"/>
+    /// and <see cref="IOverlayWindow.TryCloseAsync"/> handlers won't be invoked. It's extremely important that
+    /// <see cref="OverlayWindowCloseEventArgs.IsForced"/> is taken into account
     /// </para>
     /// </summary>
     TryingToClose,
 
     /// <summary>
-    /// The window or popup is actually starting to close because the close operation was not cancelled.
-    /// The closing and closed event handlers will be invoked, and once they completed, the window or popup will finally close
+    /// The window or overlay is actually starting to close because the close operation was not cancelled.
+    /// The closing and closed event handlers will be invoked, and once they completed, the window or overlay will finally close
     /// </summary>
     Closing,
 
     /// <summary>
-    /// The window or popup has fully closed and is no longer visible (although the closing animation might still be playing; platform dependent).
+    /// The window or overlay has fully closed and is no longer visible (although the closing animation might still be playing; platform dependent).
     /// </summary>
     Closed
 }

@@ -57,6 +57,12 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
         this.overlayWindowHost = new OverlayWindowHostImpl(overlayContentHost);
     }
 
+    internal sealed class AppOverlayWindowStorage {
+        public readonly List<OverlayWindowManagerImpl> visibleManagers = new List<OverlayWindowManagerImpl>();
+
+        public static AppOverlayWindowStorage GetInstance() => ApplicationPFX.Instance.ComponentStorage.GetOrCreateComponent(m => new AppOverlayWindowStorage());
+    }
+
     public IOverlayWindow CreateWindow(OverlayWindowBuilder builder) {
         if (builder.Parent != null) {
             if (!(builder.Parent is OverlayWindowImpl parent))
@@ -70,6 +76,13 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
 
     public bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel) {
         return (topLevel = TopLevel.GetTopLevel(this.OverlayContentHost)) != null;
+    }
+
+    public async Task CloseAllOverlays(WindowCloseReason reason, bool isForced = false) {
+        isForced |= (reason == WindowCloseReason.ApplicationShutdown || reason == WindowCloseReason.OSShutdown);
+        foreach (OverlayWindowImpl impl in this.topLevelWindows) {
+            await impl.CloseDialogImpl(null, reason, true, isForced);
+        }
     }
 
     internal void OnPopupOpening(OverlayWindowImpl overlayWindow) {

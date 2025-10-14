@@ -50,7 +50,7 @@ public class AvaloniaPropertyToDataParameterAutoBinder<TModel> : BaseAvaloniaPro
 
     protected override void UpdateModelOverride() {
         if (this.CanUpdateModel && this.IsFullyAttached && this.Property != null && this.Parameter != null) {
-            object? newValue = this.myControl!.GetValue(this.Property);
+            object? newValue = this.Control.GetValue(this.Property);
             this.Parameter.SetObjectValue(this.Model, this.ToParameter != null ? this.ToParameter(newValue) : newValue);
         }
     }
@@ -58,7 +58,7 @@ public class AvaloniaPropertyToDataParameterAutoBinder<TModel> : BaseAvaloniaPro
     protected override void UpdateControlOverride(bool hasJustAttached) {
         if (this.IsFullyAttached && this.Property != null && this.Parameter != null) {
             object? newValue = this.Parameter.GetObjectValue(this.Model);
-            this.myControl!.SetValue(this.Property, this.ToProperty != null ? this.ToProperty(newValue) : newValue);
+            this.Control.SetValue(this.Property, this.ToProperty != null ? this.ToProperty(newValue) : newValue);
         }
     }
 

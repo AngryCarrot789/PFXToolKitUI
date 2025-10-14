@@ -68,7 +68,11 @@ public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     /// An event fired when the overlay window is requested to close. <see cref="IsClosing"/> and <see cref="IsClosed"/>
     /// will both be false at this time.
     /// <para>
-    /// This and <see cref="TryCloseAsync"/> are the only times that cancelling overlay window closure is possible
+    /// This and <see cref="TryCloseAsync"/> are the only times that cancelling overlay window closure is possible.
+    /// </para>
+    /// <para>
+    /// Note, this event is not fired if the overlay is being force closed. You must handle <see cref="Closing"/>
+    /// or <see cref="ClosingAsync"/> to account for this possibility (see <see cref="OverlayWindowCloseEventArgs.IsForced"/>)
     /// </para>
     /// </summary>
     event OverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>? TryClose;
@@ -78,6 +82,10 @@ public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     /// in their own tasks once all handlers of <see cref="TryClose"/> are invoked.
     /// <para>
     /// This and <see cref="TryClose"/> are the only times that cancelling overlay window closure is possible
+    /// </para>
+    /// <para>
+    /// Note, this event is not fired if the overlay is being force closed. You must handle <see cref="Closing"/>
+    /// or <see cref="ClosingAsync"/> to account for this possibility (see <see cref="OverlayWindowCloseEventArgs.IsForced"/>)
     /// </para>
     /// </summary>
     event AsyncOverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>? TryCloseAsync;
@@ -116,7 +124,7 @@ public class OverlayWindowEventArgs(IOverlayWindow dialog) : EventArgs {
 /// <summary>
 /// Event args for when an overlay window is closing and when closed
 /// </summary>
-public class OverlayWindowCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode) : OverlayWindowEventArgs(dialog) {
+public class OverlayWindowCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode, bool forced) : OverlayWindowEventArgs(dialog) {
     /// <summary>
     /// Gets the reason for why the overlay window is closing 
     /// </summary>
@@ -126,12 +134,24 @@ public class OverlayWindowCloseEventArgs(IOverlayWindow dialog, WindowCloseReaso
     /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IOverlayWindow.CloseAsync"/>)
     /// </summary>
     public bool IsFromCode { get; } = isFromCode;
+
+    /// <summary>
+    /// Gets whether the close operation is being forced. For example, the app or OS is shutting down,
+    /// or a window which contains a <see cref="IOverlayWindowHost"/> is being removed from the visual tree soon.
+    /// <para>
+    /// Failing to acknowledge the forced mode could mean a loss of data or the application locking up
+    /// (e.g. a <see cref="TaskCompletionSource"/> does not get completed because the logic did not expect
+    /// <see cref="IOverlayWindow.TryClose"/> and <see cref="IOverlayWindow.TryCloseAsync"/> to not be called, because
+    /// they are not called when this property is true)
+    /// </para>
+    /// </summary>
+    public bool IsForced { get; } = forced;
 }
 
 /// <summary>
 /// Event args for when trying to close an overlay window
 /// </summary>
-public class OverlayWindowCancelCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode) : OverlayWindowCloseEventArgs(dialog, reason, isFromCode) {
+public class OverlayWindowCancelCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode) : OverlayWindowCloseEventArgs(dialog, reason, isFromCode, false) {
     // We don't allow de-cancelling the close because it could lead to unexpected behaviour and issues
     private volatile bool isCancelled;
 

@@ -172,7 +172,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         return;
 
         void CloseInternalAsync() {
-            Task task = this.CloseDialogImpl(dialogResult, WindowCloseReason.WindowClosing, true);
+            Task task = this.CloseDialogImpl(dialogResult, WindowCloseReason.WindowClosing, true, false);
 
             // This may be a bad idea... but it makes tracking issues easier
             if (ApplicationPFX.Instance.Dispatcher.TryGetFrameManager(out IDispatcherFrameManager? frameManager)) {
@@ -186,7 +186,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         this.CheckStateForRequestClose();
         this.OpenState = OpenState.TryingToClose;
 
-        await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => this.CloseDialogImpl(dialogResult, WindowCloseReason.WindowClosing, true)).Unwrap();
+        await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => this.CloseDialogImpl(dialogResult, WindowCloseReason.WindowClosing, true, false)).Unwrap();
 
         return this.OpenState == OpenState.Closed;
     }
@@ -233,7 +233,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         this.tcsShowAsync = null;
     }
 
-    private async Task CloseDialogImpl(object? dialogResult, WindowCloseReason reason, bool isFromCode) {
+    internal async Task CloseDialogImpl(object? dialogResult, WindowCloseReason reason, bool isFromCode, bool forced) {
         // this.requestToCloseTask != null || this.isProcessingClosingInternal
         if (this.isProcessingClosingInternal)
             throw new InvalidOperationException("Reentrancy of " + nameof(this.CloseDialogImpl));
@@ -243,7 +243,10 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
 
         foreach (OverlayWindowImpl win in this.myOwnedPopups) {
             if (win.OpenState == OpenState.Open && !win.isProcessingClosingInternal) {
-                await win.CloseDialogImpl(null, reason, isFromCode);
+                await win.CloseDialogImpl(null, reason, isFromCode, forced);
+                if (win.OpenState != OpenState.Closed && !forced) {
+                    return;
+                }
             }
         }
 
@@ -251,48 +254,50 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             return;
 
-        this.OpenState = OpenState.TryingToClose;
-        this.isProcessingClosingInternal = true;
-        OverlayWindowCancelCloseEventArgs beforeClosingArgs = new OverlayWindowCancelCloseEventArgs(this, reason, isFromCode);
+        if (!forced) {
+            this.OpenState = OpenState.TryingToClose;
+            this.isProcessingClosingInternal = true;
+            OverlayWindowCancelCloseEventArgs beforeClosingArgs = new OverlayWindowCancelCloseEventArgs(this, reason, isFromCode);
 
-        try {
-            this.TryClose?.Invoke(this, beforeClosingArgs);
-        }
-        catch (Exception e) {
-            Debugger.Break();
-            AppLogger.Instance.WriteLine("Failed to invoke a handler to " + nameof(this.Closing));
-            AppLogger.Instance.WriteLine(e.GetToString());
-        }
-
-        Delegate[]? beforeClosingAsyncHandlers = this.TryCloseAsync?.GetInvocationList();
-        if (beforeClosingAsyncHandlers != null && beforeClosingAsyncHandlers.Length > 0) {
-            List<Task> tasks = new List<Task>();
-            foreach (Delegate handler in beforeClosingAsyncHandlers) {
-                tasks.Add(Task.Run(() => ((AsyncOverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>) handler)(this, beforeClosingArgs)));
+            try {
+                this.TryClose?.Invoke(this, beforeClosingArgs);
+            }
+            catch (Exception e) {
+                Debugger.Break();
+                AppLogger.Instance.WriteLine("Failed to invoke a handler to " + nameof(this.Closing));
+                AppLogger.Instance.WriteLine(e.GetToString());
             }
 
-            await Task.WhenAll(tasks);
+            Delegate[]? beforeClosingAsyncHandlers = this.TryCloseAsync?.GetInvocationList();
+            if (beforeClosingAsyncHandlers != null && beforeClosingAsyncHandlers.Length > 0) {
+                List<Task> tasks = new List<Task>();
+                foreach (Delegate handler in beforeClosingAsyncHandlers) {
+                    tasks.Add(Task.Run(() => ((AsyncOverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>) handler)(this, beforeClosingArgs)));
+                }
 
-            // Get all task exceptions that are not primarily OCE
-            List<Exception> errors = tasks.Select(x => x.Exception).NonNull().SelectMany(x => x.InnerExceptions.Where(y => !(y is OperationCanceledException))).ToList();
-            if (errors.Count > 0) {
-                Debugger.Break();
-                AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.TryCloseAsync));
-                foreach (Exception e in errors) {
-                    AppLogger.Instance.WriteLine(e.GetToString());
+                await Task.WhenAll(tasks);
+
+                // Get all task exceptions that are not primarily OCE
+                List<Exception> errors = tasks.Select(x => x.Exception).NonNull().SelectMany(x => x.InnerExceptions.Where(y => !(y is OperationCanceledException))).ToList();
+                if (errors.Count > 0) {
+                    Debugger.Break();
+                    AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.TryCloseAsync));
+                    foreach (Exception e in errors) {
+                        AppLogger.Instance.WriteLine(e.GetToString());
+                    }
                 }
             }
-        }
 
-        this.isProcessingClosingInternal = false;
-        if (beforeClosingArgs.IsCancelled) {
-            this.OpenState = OpenState.Open;
-            return;
+            this.isProcessingClosingInternal = false;
+            if (beforeClosingArgs.IsCancelled) {
+                this.OpenState = OpenState.Open;
+                return;
+            }
         }
 
         this.myDialogResult = dialogResult;
         this.OpenState = OpenState.Closing;
-        OverlayWindowCloseEventArgs closingArgs = new OverlayWindowCloseEventArgs(this, reason, isFromCode);
+        OverlayWindowCloseEventArgs closingArgs = new OverlayWindowCloseEventArgs(this, reason, isFromCode, forced);
 
         try {
             this.Closing?.Invoke(this, closingArgs);
@@ -330,7 +335,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         this.DisposeResourcesForClosed();
 
         this.myManager.OnPopupClosed(this);
-        this.Closed?.Invoke(this, new OverlayWindowCloseEventArgs(this, reason, isFromCode));
+        this.Closed?.Invoke(this, closingArgs);
         this.tcsWaitForClosed?.TrySetResult();
         this.tcsWaitForClosed = null;
 

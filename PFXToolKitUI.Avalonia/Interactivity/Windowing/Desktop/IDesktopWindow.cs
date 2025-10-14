@@ -262,6 +262,11 @@ public class WindowCloseEventArgs(IDesktopWindow window, WindowCloseReason reaso
     /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IDesktopWindow.RequestCloseAsync"/>)
     /// </summary>
     public bool IsFromCode { get; } = isFromCode;
+
+    /// <summary>
+    /// Gets whether the window will absolutely be force-closed due to <see cref="Reason"/> being OS or App shutdown
+    /// </summary>
+    public bool IsEffectivelyForced => this.Reason == WindowCloseReason.OSShutdown || this.Reason == WindowCloseReason.ApplicationShutdown;
 }
 
 /// <summary>

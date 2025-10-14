@@ -85,10 +85,10 @@ public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventH
     }
 
     protected override void OnAttached() {
-        EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.AddHandler(this.Model, this, this.eventRelay);
     }
 
     protected override void OnDetached() {
-        EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, this.eventRelay);
+        EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, this.eventRelay);
     }
 }

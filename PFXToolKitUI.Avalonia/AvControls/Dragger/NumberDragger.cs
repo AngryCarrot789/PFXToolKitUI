@@ -378,13 +378,13 @@ public class NumberDragger : RangeBase {
             if (this.IsIntegerValue) {
                 Evaluator<long> evaluator = MathEvaluation.CompileExpression<long>("", parseText, CompilationMethod.Functional);
                 EvaluationContext<long> context = EvaluationContexts.CreateForInteger<long>();
-                context.RegisterVariable("value", (long) Math.Round(this.Value));
+                context.RegisterVariable("v", (long) Math.Round(this.Value));
                 parsedValue = evaluator(context);
             }
             else {
                 Evaluator<double> evaluator = MathEvaluation.CompileExpression<double>("", parseText, CompilationMethod.Functional);
                 EvaluationContext<double> context = EvaluationContexts.CreateForDouble();
-                context.RegisterVariable("value", this.Value);
+                context.RegisterVariable("v", this.Value);
                 parsedValue = evaluator(context);
             }
         }

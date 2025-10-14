@@ -40,10 +40,11 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
     /// <summary>
     /// Gets or sets if the model value can be updated when the text box loses focus too.
-    /// Default is true, which is the recommended value because the user may not
-    /// realise their change was undone since they had to click the Enter key to confirm changes.
+    /// The default value is false, which can be annoying, but prevents issues with infinite message box loops.
+    /// To aid with this being false, there's a visual indicator on text boxes when being edited that
+    /// lets the user know they must confirm their input to publish the change.
     /// </summary>
-    public bool CanApplyValueOnLostFocus { get; set; } = true;
+    public bool CanApplyValueOnLostFocus { get; set; } = false;
 
     /// <summary>
     /// Gets or sets if the text box should be re-focused when the update callback returns false.
@@ -87,7 +88,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     }
 
     protected override void UpdateControlOverride(bool hasJustAttached) {
-        TextBox tb = (TextBox) this.myControl!;
+        TextBox tb = (TextBox) this.Control;
         if (this.IsFullyAttached) {
             string newValue = this.GetTextCore();
             
@@ -152,7 +153,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 // This is to prevent infinite loops of dialogs being shown saying the value is incorrect format or whatever.
                 // User inputs bad value, dialog shows, user closes dialog and the text box is re-focused,
                 // user clicks away to do something else, lost focus is called and shows the dialog again, and it loops
-
+                
                 textBox.LostFocus -= this.OnLostFocus;
                 string oldText = textBox.Text ?? "";
                 bool canMoveFocus = this.CanMoveFocusUpwardsOnEscape && !AttachedTextBoxBinding.GetIsValueDifferent(textBox);
@@ -206,7 +207,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 return;
             }
 
-            TextBox textBox = (TextBox) this.myControl!;
+            TextBox textBox = (TextBox) this.Control;
             this.isChangingModel = true;
 
             // Read text before setting IsEnabled to false, because LostFocus will reset text to underlying value

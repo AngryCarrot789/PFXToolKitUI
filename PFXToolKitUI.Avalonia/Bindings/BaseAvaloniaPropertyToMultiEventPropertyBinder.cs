@@ -48,13 +48,13 @@ public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : B
     protected override void OnAttached() {
         base.OnAttached();
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.AddHandler(this.Model, this, aeh);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, aeh);
     }
 
     void IRelayEventHandler.OnEvent(object sender) => this.OnModelValueChanged();

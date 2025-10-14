@@ -86,7 +86,7 @@ public interface IOverlayWindowManager : ITopLevelManager {
     IOverlayWindow? GetActiveOverlay() {
         return this.TopLevelWindows.LastOrDefault(x => x.OpenState.IsOpenOrTryingToClose());
     }
-
+    
     bool ITopLevelManager.TryGetActiveOrMainTopLevel([NotNullWhen(true)] out ITopLevel? topLevel) {
         if ((topLevel = this.GetActiveOverlay()) == null)
             topLevel = this.ContentHost;
@@ -97,6 +97,13 @@ public interface IOverlayWindowManager : ITopLevelManager {
     /// Tries to get the top level of this overlay window manager
     /// </summary>
     bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel);
+
+    /// <summary>
+    /// Closes all opened overlays, recursively
+    /// </summary>
+    /// <param name="reason"></param>
+    /// <param name="isForced">Forces overlays to close. Only use if absolutely necessary (such as owner desktop window closing or os/app shutting down)</param>
+    Task CloseAllOverlays(WindowCloseReason reason, bool isForced = false);
 
     /// <summary>
     /// Tries to get the <see cref="IOverlayWindow"/> instance that a specific visual control exists in.

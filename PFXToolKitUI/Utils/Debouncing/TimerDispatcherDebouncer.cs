@@ -32,7 +32,10 @@ public class TimerDispatcherDebouncer {
     /// <summary>
     /// Gets the interval of this debouncer
     /// </summary>
-    public TimeSpan Interval { get; }
+    public TimeSpan Interval {
+        get => this.timer.Interval;
+        set => this.timer.Interval = value;
+    }
 
     /// <summary>
     /// Gets the dispatcher we post the callback to
@@ -49,6 +52,11 @@ public class TimerDispatcherDebouncer {
     /// </summary>
     public bool HasEnoughTimeElapsed => Time.GetSystemTicks() - this.lastTrigger >= this.Interval.Ticks;
 
+    /// <summary>
+    /// Gets whether the callback has been postponed, and we're still waiting for it to be invoked
+    /// </summary>
+    public bool IsWaiting => this.timer.IsEnabled;
+
     public TimerDispatcherDebouncer(TimeSpan interval, Action callback, DispatchPriority priority = DispatchPriority.Default) : this(interval, callback, ApplicationPFX.Instance.Dispatcher, priority) {
     }
 
@@ -62,10 +70,9 @@ public class TimerDispatcherDebouncer {
         this.callback = callback;
         this.state = state;
         this.Dispatcher = dispatcher;
-        this.Interval = interval;
         this.Priority = priority;
         this.timer = dispatcher.CreateTimer(priority);
-        this.timer.Interval = this.Interval;
+        this.timer.Interval = interval;
         this.timer.Tick += this.OnTimerTicked;
     }
 

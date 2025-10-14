@@ -19,39 +19,51 @@
 
 using System.Collections.ObjectModel;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Debouncing;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
 public delegate void DoubleUserInputDataEventHandler(DoubleUserInputInfo sender);
 
 public class DoubleUserInputInfo : BaseTextUserInputInfo {
-    private string textA, textB = "";
+    private static readonly SendOrPostCallback s_UpdateTextErrorsAForced = static x => ((DoubleUserInputInfo) x!).UpdateTextAError(true);
+    private static readonly SendOrPostCallback s_UpdateTextErrorsBForced = static x => ((DoubleUserInputInfo) x!).UpdateTextBError(true);
+    
+    private string textA = "", textB = "";
     private string? labelA, labelB;
     private int lineCountHintA = 1, lineCountHintB = 1;
     private ReadOnlyCollection<string>? textErrorsA, textErrorsB;
     private bool isUpdatingErrorA, isUpdatingErrorB;
     private bool doUpdateBAfterA, doUpdateAAfterB;
+    private int debounceErrorsDelayA, debounceErrorsDelayB;
+    private TimerDispatcherDebouncer? errorDebouncerA, errorDebouncerB;
 
     /// <summary>
     /// Gets or sets the text in the A field
     /// </summary>
     public string TextA {
         get => this.textA;
-        set => PropertyHelper.SetAndRaiseINE(ref this.textA, value, this, static t => {
-            t.UpdateTextAError(true);
-            t.TextAChanged?.Invoke(t);
-        });
+        set {
+            value = SingleUserInputInfo.CanonicalizeTextForLineCount(value, this.LineCountHintA);
+            PropertyHelper.SetAndRaiseINE(ref this.textA, value, this, static t => {
+                SingleUserInputInfo.HandleTextChanged(s_UpdateTextErrorsAForced, t, t.DebounceErrorsDelayA, ref t.errorDebouncerA, t.ValidateA);
+                t.TextAChanged?.Invoke(t);
+            });
+        }
     }
-    
+
     /// <summary>
     /// Gets or sets the text in the B field
     /// </summary>
     public string TextB {
         get => this.textB;
-        set => PropertyHelper.SetAndRaiseINE(ref this.textB, value, this, static t => {
-            t.UpdateTextBError(true);
-            t.TextBChanged?.Invoke(t);
-        });
+        set {
+            value = SingleUserInputInfo.CanonicalizeTextForLineCount(value, this.LineCountHintB);
+            PropertyHelper.SetAndRaiseINE(ref this.textB, value, this, static t => {
+                SingleUserInputInfo.HandleTextChanged(s_UpdateTextErrorsBForced, t, t.DebounceErrorsDelayB, ref t.errorDebouncerB, t.ValidateB);
+                t.TextBChanged?.Invoke(t);
+            });
+        }
     }
 
     /// <summary>
@@ -144,9 +156,45 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
         }
     }
 
+    /// <summary>
+    /// Gets or sets the amount of milliseconds to wait before actually querying <see cref="ValidateA"/>. Default is 0, meaning do not wait.
+    /// </summary>
+    public int DebounceErrorsDelayA {
+        get => this.debounceErrorsDelayA;
+        set {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative");
+            if (this.debounceErrorsDelayA == value)
+                return;
+
+            SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsAForced, this, value, ref this.errorDebouncerA);
+            this.debounceErrorsDelayA = value;
+            this.DebounceErrorsDelayAChanged?.Invoke(this);
+        }
+    }
+
+
+    /// <summary>
+    /// Gets or sets the amount of milliseconds to wait before actually querying <see cref="ValidateB"/>. Default is 0, meaning do not wait.
+    /// </summary>
+    public int DebounceErrorsDelayB {
+        get => this.debounceErrorsDelayB;
+        set {
+            if (value < 0)
+                throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative");
+            if (this.debounceErrorsDelayB == value)
+                return;
+
+            SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsBForced, this, value, ref this.errorDebouncerB);
+            this.debounceErrorsDelayB = value;
+            this.DebounceErrorsDelayBChanged?.Invoke(this);
+        }
+    }
+
     public event DoubleUserInputDataEventHandler? TextAChanged, TextBChanged, LabelAChanged, LabelBChanged;
     public event DoubleUserInputDataEventHandler? LineCountHintAChanged, LineCountHintBChanged;
     public event DoubleUserInputDataEventHandler? TextErrorsAChanged, TextErrorsBChanged;
+    public event DoubleUserInputDataEventHandler? DebounceErrorsDelayAChanged, DebounceErrorsDelayBChanged;
 
     public DoubleUserInputInfo() {
     }
@@ -165,6 +213,8 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// if calling from <see cref="ValidateB"/>, depending on how one value depends on another
     /// </param>
     public void UpdateTextAError(bool force) {
+        this.errorDebouncerA?.Reset();
+        
         if (force) {
             if (this.isUpdatingErrorA) {
                 return;
@@ -193,6 +243,8 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// if calling from <see cref="ValidateA"/>, depending on how one value depends on another
     /// </param>
     public void UpdateTextBError(bool force) {
+        this.errorDebouncerB?.Reset();
+        
         if (force) {
             if (this.isUpdatingErrorB) {
                 return;

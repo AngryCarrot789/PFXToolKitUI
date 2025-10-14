@@ -52,16 +52,13 @@ public interface IMessageDialogService {
     /// to produce <see cref="MessageBoxResult.None"/>
     /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, message) {
+    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
+        return this.ShowMessage(new MessageBoxInfo(caption, message) {
             Buttons = buttons,
             DefaultButton = defaultButton,
             PersistentDialogName = persistentDialogName,
             DialogCancellation = dialogCancellation
-        };
-        
-        info.SetDefaultButtonText();
-        return this.ShowMessage(info);
+        }.SetDefaultButtonText());
     }
 
     /// <summary>
@@ -81,16 +78,13 @@ public interface IMessageDialogService {
     /// to produce <see cref="MessageBoxResult.None"/>
     /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
-        MessageBoxInfo info = new MessageBoxInfo(caption, header, message) {
+    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
+        return this.ShowMessage(new MessageBoxInfo(caption, header, message) {
             Buttons = buttons,
             DefaultButton = defaultButton,
             PersistentDialogName = persistentDialogName,
             DialogCancellation = dialogCancellation
-        };
-        
-        info.SetDefaultButtonText();
-        return this.ShowMessage(info);
+        }.SetDefaultButtonText());
     }
 
     /// <summary>
@@ -107,12 +101,12 @@ public sealed class EmptyMessageDialogService : IMessageDialogService {
     /// </summary>
     public static EmptyMessageDialogService Instance { get; } = new EmptyMessageDialogService();
 
-    public Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+    public Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
         PrintToLogs(caption, message, buttons);
         return Task.FromResult(MessageBoxResult.None);
     }
 
-    public Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButton buttons = MessageBoxButton.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
+    public Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null) {
         PrintToLogs(caption, message, buttons);
         return Task.FromResult(MessageBoxResult.None);
     }
@@ -122,7 +116,7 @@ public sealed class EmptyMessageDialogService : IMessageDialogService {
         return Task.FromResult(MessageBoxResult.None);
     }
 
-    private static void PrintToLogs(string caption, string message, MessageBoxButton buttons) {
+    private static void PrintToLogs(string caption, string message, MessageBoxButtons buttons) {
         AppLogger.Instance.WriteLine("No message dialog service available");
         AppLogger.Instance.WriteLine("# " + caption);
         AppLogger.Instance.WriteLine("#   " + message);

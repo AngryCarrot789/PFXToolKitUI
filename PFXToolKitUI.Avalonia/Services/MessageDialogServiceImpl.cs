@@ -49,24 +49,12 @@ public class MessageDialogServiceImpl : IMessageDialogService {
         return await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => ShowMessageBoxInMainThread(info), captureContext: true).Unwrap();
     }
 
-    private static bool IsPersistentButtonValidFor(MessageBoxResult button, MessageBoxButton buttons) {
-        switch (button) {
-            case MessageBoxResult.None:   return false;
-            case MessageBoxResult.OK:     return buttons == MessageBoxButton.OK || buttons == MessageBoxButton.OKCancel;
-            case MessageBoxResult.Cancel: return buttons == MessageBoxButton.OKCancel || buttons == MessageBoxButton.YesNoCancel;
-            case MessageBoxResult.Yes:
-            case MessageBoxResult.No:
-                return buttons == MessageBoxButton.YesNoCancel || buttons == MessageBoxButton.YesNo;
-            default: throw new ArgumentOutOfRangeException(nameof(button), button, null);
-        }
-    }
-
     private static async Task<MessageBoxResult> ShowMessageBoxInMainThread(MessageBoxInfo info) {
         ArgumentNullException.ThrowIfNull(info);
         if (!string.IsNullOrWhiteSpace(info.PersistentDialogName)) {
             PersistentDialogResult persistent = PersistentDialogResult.GetInstance(info.PersistentDialogName);
             if (persistent.Button is MessageBoxResult result) {
-                if (IsPersistentButtonValidFor(result, info.Buttons)) {
+                if (result.IsValidResultOf(info.Buttons)) {
                     return result;
                 }
 

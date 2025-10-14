@@ -144,7 +144,7 @@ public abstract class Command {
     /// <param name="args">Command event args</param>
     protected virtual Task OnAlreadyExecuting(CommandEventArgs args) {
         if (args.IsUserInitiated)
-            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete", defaultButton: MessageBoxResult.OK);
+            return IMessageDialogService.Instance.ShowMessage("Already running", "This command is already running. Please wait for it to complete", MessageBoxButtons.OK, MessageBoxResult.OK);
 
         return Task.CompletedTask;
     }

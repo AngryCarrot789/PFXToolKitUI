@@ -62,12 +62,12 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, I
     protected override void OnAttached() {
         base.OnAttached();
         foreach (SenderEventRelay relay in this.eventRelay)
-            EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, relay);
+            EventRelayStorage.UIStorage.AddHandler(this.Model, this, relay);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
         foreach (SenderEventRelay relay in this.eventRelay)
-            EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, relay);
+            EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, relay);
     }
 }

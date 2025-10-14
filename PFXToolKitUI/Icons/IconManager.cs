@@ -80,7 +80,7 @@ public abstract class IconManager {
     public abstract Icon RegisterIconUsingBitmap(string name, SKBitmap bitmap);
 
     public abstract Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry);
-
+    
     /// <summary>
     /// Adds the icon key, with the given name. Throws if the name is
     /// invalid (null, empty or whitespaces) or an icon exists with the name already

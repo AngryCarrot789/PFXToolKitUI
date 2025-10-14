@@ -53,12 +53,12 @@ public abstract class BaseAvaloniaPropertyBinder<TModel> : BaseBinder<TModel> wh
 
     protected override void OnAttached() {
         if (this.Property != null)
-            this.myControl!.PropertyChanged += this.OnControlPropertyChanged;
+            this.Control.PropertyChanged += this.OnControlPropertyChanged;
     }
 
     protected override void OnDetached() {
         if (this.Property != null)
-            this.myControl!.PropertyChanged -= this.OnControlPropertyChanged;
+            this.Control.PropertyChanged -= this.OnControlPropertyChanged;
     }
 
     /// <summary>

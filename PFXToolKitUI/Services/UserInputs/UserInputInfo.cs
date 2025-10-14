@@ -103,12 +103,13 @@ public abstract class UserInputInfo : ITransferableData {
     public abstract bool HasErrors();
 
     /// <summary>
-    /// Forces any errors to be re-calculated. This is because this object will be in its
-    /// initialised state and only just connected to the UI, so this method should set any
-    /// errors forcefully.
+    /// Forces any errors to be re-calculated. This is called when the dialog first opens because
+    /// this object will be in its initial state and only just connected to the UI, so this method
+    /// should set any errors forcefully.
     /// <para>
-    /// This method does not need to call <see cref="RaiseHasErrorsChanged"/>, because this
-    /// method is only typically used just before calling <see cref="HasErrors"/>
+    /// This method is also invoked just before the dialog closes, to ensure <see cref="HasErrors"/>
+    /// returns the absolutely true case, in case implementers have some sort of delay between input
+    /// change and errors updated
     /// </para>
     /// </summary>
     public abstract void UpdateAllErrors();

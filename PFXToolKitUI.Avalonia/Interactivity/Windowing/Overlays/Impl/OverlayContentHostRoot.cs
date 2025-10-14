@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
@@ -46,6 +47,16 @@ public class OverlayContentHostRoot : ContentControl {
 
     internal void SetupForPopupDialogManager(OverlayWindowManagerImpl overlayManager) {
         this.Manager = overlayManager;
+    }
+
+    protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
+        base.OnAttachedToVisualTree(e);
+        OverlayWindowManagerImpl.AppOverlayWindowStorage.GetInstance().visibleManagers.Add(this.Manager);
+    }
+
+    protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
+        base.OnDetachedFromVisualTree(e);
+        OverlayWindowManagerImpl.AppOverlayWindowStorage.GetInstance().visibleManagers.Remove(this.Manager);
     }
 
     public void AddPopupToVisualTree(OverlayWindowImpl overlayWindow) {

@@ -22,7 +22,7 @@ namespace PFXToolKitUI.Utils.Debouncing;
 /// <summary>
 /// A class that posts a callback to the dispatcher once a specific amount of time since the last post attempt has ellapsed
 /// </summary>
-public class DemandDispatcherDebouncer : IDebouncer {
+public class NOTUSED_DemandDispatcherDebouncer : IDebouncer {
     private static readonly SendOrPostCallback s_CallbackWithAction = static a => ((Action) a!)();
     private readonly SendOrPostCallback callback;
     private readonly object? state;
@@ -47,16 +47,16 @@ public class DemandDispatcherDebouncer : IDebouncer {
     
     public bool HasRunOnce => this.lastTrigger != 0;
 
-    public DemandDispatcherDebouncer(TimeSpan interval, Action callback, DispatchPriority priority = DispatchPriority.Default) : this(interval, callback, ApplicationPFX.Instance.Dispatcher, priority) {
+    public NOTUSED_DemandDispatcherDebouncer(TimeSpan interval, Action callback, DispatchPriority priority = DispatchPriority.Default) : this(interval, callback, ApplicationPFX.Instance.Dispatcher, priority) {
     }
 
-    public DemandDispatcherDebouncer(TimeSpan interval, Action callback, IDispatcher dispatcher, DispatchPriority priority = DispatchPriority.Default) : this(interval, s_CallbackWithAction, callback, dispatcher, priority) {
+    public NOTUSED_DemandDispatcherDebouncer(TimeSpan interval, Action callback, IDispatcher dispatcher, DispatchPriority priority = DispatchPriority.Default) : this(interval, s_CallbackWithAction, callback, dispatcher, priority) {
     }
 
-    public DemandDispatcherDebouncer(TimeSpan interval, SendOrPostCallback callback, object? state, DispatchPriority priority = DispatchPriority.Default) : this(interval, callback, state, ApplicationPFX.Instance.Dispatcher, priority) {
+    public NOTUSED_DemandDispatcherDebouncer(TimeSpan interval, SendOrPostCallback callback, object? state, DispatchPriority priority = DispatchPriority.Default) : this(interval, callback, state, ApplicationPFX.Instance.Dispatcher, priority) {
     }
 
-    public DemandDispatcherDebouncer(TimeSpan interval, SendOrPostCallback callback, object? state, IDispatcher dispatcher, DispatchPriority priority = DispatchPriority.Default) {
+    public NOTUSED_DemandDispatcherDebouncer(TimeSpan interval, SendOrPostCallback callback, object? state, IDispatcher dispatcher, DispatchPriority priority = DispatchPriority.Default) {
         this.Dispatcher = dispatcher;
         this.Interval = interval;
         this.Priority = priority;

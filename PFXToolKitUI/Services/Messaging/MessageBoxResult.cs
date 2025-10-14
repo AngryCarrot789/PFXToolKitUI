@@ -48,3 +48,27 @@ public enum MessageBoxResult {
     /// </summary>
     No = 4,
 }
+
+public static class MessageBoxResultExtensions {
+    /// <summary>
+    /// Checks if the result of a message box is valid for the button selection.
+    /// </summary>
+    /// <param name="result">The result from a message box dialog</param>
+    /// <param name="buttons">The buttons available to click</param>
+    /// <returns>
+    /// True if the result is applicable to the buttons. Always returns
+    /// false when the result is <see cref="MessageBoxResult.None"/>
+    /// </returns>
+    /// <exception cref="ArgumentOutOfRangeException">Invalid <see cref="MessageBoxResult"/></exception>
+    public static bool IsValidResultOf(this MessageBoxResult result, MessageBoxButtons buttons) {
+        switch (result) {
+            case MessageBoxResult.None:   return false;
+            case MessageBoxResult.OK:     return buttons == MessageBoxButtons.OK || buttons == MessageBoxButtons.OKCancel;
+            case MessageBoxResult.Cancel: return buttons == MessageBoxButtons.OKCancel || buttons == MessageBoxButtons.YesNoCancel;
+            case MessageBoxResult.Yes:
+            case MessageBoxResult.No:
+                return buttons == MessageBoxButtons.YesNoCancel || buttons == MessageBoxButtons.YesNo;
+            default: throw new ArgumentOutOfRangeException(nameof(result), result, null);
+        }
+    }
+}

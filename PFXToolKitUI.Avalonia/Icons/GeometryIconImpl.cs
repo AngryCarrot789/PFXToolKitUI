@@ -29,10 +29,10 @@ namespace PFXToolKitUI.Avalonia.Icons;
 public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
     public IEnumerable<GeometryEntry> GeometryEntries => this.myGeometryEntries;
 
-    private GeometryEntryRef[] GeometryEntryRefs {
+    private GeometryEntryWrapper[] GeometryEntryRefs {
         get {
             if (this.myGeometryEntryRefs == null) {
-                this.myGeometryEntryRefs = this.myGeometryEntries.Select(e => new GeometryEntryRef(this, e)).ToArray();
+                this.myGeometryEntryRefs = this.myGeometryEntries.Select(e => new GeometryEntryWrapper(this, e)).ToArray();
                 AppLogger.Instance.WriteLine($"[Icon] Generated SVG for '{this.Name}'. Bounds = {this.GetBounds()}");
             }
 
@@ -41,7 +41,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
     }
 
     private readonly GeometryEntry[] myGeometryEntries;
-    private GeometryEntryRef[]? myGeometryEntryRefs;
+    private GeometryEntryWrapper[]? myGeometryEntryRefs;
 
     public GeometryIconImpl(string name, GeometryEntry[] geometry) : base(name) {
         this.myGeometryEntries = geometry;
@@ -63,7 +63,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
         // }
 
         {
-            GeometryEntryRef[] entries = this.GeometryEntryRefs;
+            GeometryEntryWrapper[] entries = this.GeometryEntryRefs;
             if (entries.Length < 1) {
                 return;
             }
@@ -90,7 +90,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
             Matrix transform = Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(offset.X, offset.Y);
 
             using (context.PushTransform(transform)) {
-                foreach (GeometryEntryRef geo in entries) {
+                foreach (GeometryEntryWrapper geo in entries) {
                     if (geo.geometry != null) {
                         if (geo.myPen == null && geo.myPenBrush != null) {
                             geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
@@ -106,7 +106,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
     public Rect GetBounds() {
         int count = 0;
         double l = double.MaxValue, t = double.MaxValue, r = double.MinValue, b = double.MinValue;
-        foreach (GeometryEntryRef? geometry in this.GeometryEntryRefs) {
+        foreach (GeometryEntryWrapper? geometry in this.GeometryEntryRefs) {
             if (geometry.geometry == null) {
                 continue;
             }
@@ -128,7 +128,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
         // return (size, t.ToSKMatrix());
     }
 
-    private class GeometryEntryRef {
+    internal class GeometryEntryWrapper {
         private readonly GeometryIconImpl iconImpl;
         public readonly GeometryEntry entry;
         public readonly Geometry? geometry;
@@ -136,7 +136,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
         public IBrush? myFillBrush, myPenBrush;
         public IPen? myPen;
 
-        public GeometryEntryRef(GeometryIconImpl iconImpl, GeometryEntry entry) {
+        public GeometryEntryWrapper(GeometryIconImpl iconImpl, GeometryEntry entry) {
             this.iconImpl = iconImpl;
             this.entry = entry;
 

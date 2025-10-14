@@ -90,11 +90,11 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
 
     protected override void OnAttached() {
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayStorage.UIStorage.AddHandler(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.AddHandler(this.Model, this, aeh);
     }
 
     protected override void OnDetached() {
         foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayStorage.UIStorage.RemoveHandler(this.myModel!, this, aeh);
+            EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, aeh);
     }
 }

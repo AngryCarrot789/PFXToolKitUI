@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -215,10 +216,22 @@ public partial class UserInputDialogView : UserControl {
             return;
         }
 
+        // Force update errors in case there's a delay between input change and errors updated
+        this.DoUpdateAllErrors();
+        
         UserInputInfo? data = this.UserInputInfo;
-        if (data != null && !data.HasErrors()) {
-            this.OwnerWindow.RequestClose(BoolBox.True);
+        if (data == null) {
+            if (this.OwnerWindow != null)
+                Debug.Assert(this.OwnerWindow.OpenState == OpenState.Closing || this.OwnerWindow.OpenState == OpenState.Closed);
+            return;
         }
+
+        // Do nothing if there's errors present.
+        if (data.HasErrors()) {
+            return;
+        }
+
+        this.OwnerWindow.RequestClose(BoolBox.True);
     }
 
     /// <summary>

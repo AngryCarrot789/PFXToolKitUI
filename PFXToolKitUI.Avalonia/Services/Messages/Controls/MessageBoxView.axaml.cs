@@ -22,10 +22,12 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using AvaloniaEdit;
 using AvaloniaEdit.Document;
+using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
+using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 
@@ -54,12 +56,14 @@ public partial class MessageBoxView : UserControl {
 
     private readonly IBinder<MessageBoxInfo> headerBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.HeaderChanged), (b) => ((TextBlock) b.Control).Text = b.Model.Header);
     private readonly IBinder<MessageBoxInfo> messageBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.MessageChanged), (b) => ((TextEditor) b.Control).Text = b.Model.Message);
+    private readonly IBinder<MessageBoxInfo> iconBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.IconChanged), (b) => ((IconControl) b.Control).Icon = b.Model.Icon);
     private readonly IBinder<MessageBoxInfo> yesOkTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.YesOkTextChanged), (b) => ((Button) b.Control).Content = b.Model.YesOkText);
     private readonly IBinder<MessageBoxInfo> noTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.NoTextChanged), (b) => ((Button) b.Control).Content = b.Model.NoText);
     private readonly IBinder<MessageBoxInfo> cancelTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CancelTextChanged), (b) => ((Button) b.Control).Content = b.Model.CancelText);
     private readonly IBinder<MessageBoxInfo> autrTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.AlwaysUseThisResultTextChanged), (b) => ((CheckBox) b.Control).Content = b.Model.AlwaysUseThisResultText);
     private readonly IBinder<MessageBoxInfo> autrBinder = new AvaloniaPropertyToEventPropertyBinder<MessageBoxInfo>(CheckBox.IsCheckedProperty, nameof(MessageBoxInfo.AlwaysUseThisResultChanged), (b) => ((CheckBox) b.Control).IsChecked = b.Model.AlwaysUseThisResult, (b) => b.Model.AlwaysUseThisResult = ((CheckBox) b.Control).IsChecked == true);
     private readonly IBinder<MessageBoxInfo> autrUntilCloseBinder = new AvaloniaPropertyToEventPropertyBinder<MessageBoxInfo>(CheckBox.IsCheckedProperty, nameof(MessageBoxInfo.AlwaysUseThisResultUntilAppClosesChanged), (b) => ((CheckBox) b.Control).IsChecked = b.Model.AlwaysUseThisResultUntilAppCloses, (b) => b.Model.AlwaysUseThisResultUntilAppCloses = ((CheckBox) b.Control).IsChecked == true);
+    private IconControl? activeIconControl;
 
     public MessageBoxView() {
         this.InitializeComponent();
@@ -74,21 +78,44 @@ public partial class MessageBoxView : UserControl {
         this.autrTextBinder.AttachControl(this.PART_AlwaysUseThisResult);
         this.autrBinder.AttachControl(this.PART_AlwaysUseThisResult);
         this.autrUntilCloseBinder.AttachControl(this.PART_AUTR_UntilAppCloses);
-        this.PART_Header.PropertyChanged += this.OnHeaderTextBlockPropertyChanged;
 
         this.PART_YesOkButton.Click += this.OnConfirmButtonClicked;
         this.PART_NoButton.Click += this.OnNoButtonClicked;
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
     }
 
-    private void OnHeaderTextBlockPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
-        if (e.Property == TextBlock.TextProperty) {
-            this.PART_MessageContainer.IsVisible = !string.IsNullOrWhiteSpace(e.GetNewValue<string?>());
-        }
-    }
-
     static MessageBoxView() {
         MessageBoxDataProperty.Changed.AddClassHandler<MessageBoxView, MessageBoxInfo?>((o, e) => o.OnMessageBoxDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    }
+    
+    private void OnHeaderChanged(MessageBoxInfo messageBoxInfo) {
+        this.UpdateHeaderPanelAndIconPlacement();
+    }
+
+    private void OnIconChanged(MessageBoxInfo messageBoxInfo, Icon? oldIcon, Icon? newIcon) {
+        this.UpdateHeaderPanelAndIconPlacement();
+    }
+
+    private void UpdateHeaderPanelAndIconPlacement() {
+        if (this.MessageBoxData != null) {
+            this.PART_HeaderPanel.IsVisible = !string.IsNullOrWhiteSpace(this.PART_Header.Text);
+            if (this.PART_HeaderPanel.IsVisible) {
+                this.PART_IconControlInMessage.Icon = null;
+                this.PART_IconControlInMessage.IsVisible = false;
+                this.PART_IconControlInHeader.Icon = this.MessageBoxData.Icon;
+                this.PART_IconControlInHeader.IsVisible = this.MessageBoxData.Icon != null;
+            }
+            else {
+                this.PART_IconControlInHeader.Icon = null;
+                this.PART_IconControlInHeader.IsVisible = false;
+                this.PART_IconControlInMessage.Icon = this.MessageBoxData.Icon;
+                this.PART_IconControlInMessage.IsVisible = this.MessageBoxData.Icon != null;
+            }
+        }
+        else if (this.activeIconControl != null) {
+            this.activeIconControl.Icon = null;
+            this.activeIconControl = null;
+        }
     }
 
     private void OnConfirmButtonClicked(object? sender, RoutedEventArgs e) {
@@ -98,12 +125,12 @@ public partial class MessageBoxView : UserControl {
         }
 
         switch (data.Buttons) {
-            case MessageBoxButton.OK:
-            case MessageBoxButton.OKCancel:
+            case MessageBoxButtons.OK:
+            case MessageBoxButtons.OKCancel:
                 this.RequestClose(MessageBoxResult.OK);
                 return;
-            case MessageBoxButton.YesNoCancel:
-            case MessageBoxButton.YesNo:
+            case MessageBoxButtons.YesNoCancel:
+            case MessageBoxButtons.YesNo:
                 this.RequestClose(MessageBoxResult.Yes);
                 return;
             default:
@@ -118,7 +145,7 @@ public partial class MessageBoxView : UserControl {
             return;
         }
 
-        if ((data.Buttons == MessageBoxButton.YesNo || data.Buttons == MessageBoxButton.YesNoCancel)) {
+        if ((data.Buttons == MessageBoxButtons.YesNo || data.Buttons == MessageBoxButtons.YesNoCancel)) {
             this.RequestClose(MessageBoxResult.No);
         }
         else {
@@ -132,21 +159,25 @@ public partial class MessageBoxView : UserControl {
             return;
         }
 
-        if ((data.Buttons == MessageBoxButton.OKCancel || data.Buttons == MessageBoxButton.YesNoCancel)) {
+        if (data.Buttons == MessageBoxButtons.OKCancel || data.Buttons == MessageBoxButtons.YesNoCancel) {
             this.RequestClose(MessageBoxResult.Cancel);
         }
         else {
             this.RequestClose(MessageBoxResult.None);
         }
     }
-
+    
     private void OnMessageBoxDataChanged(MessageBoxInfo? oldData, MessageBoxInfo? newData) {
         if (oldData != null) {
+            oldData.HeaderChanged -= this.OnHeaderChanged;
+            oldData.IconChanged -= this.OnIconChanged;
             oldData.ButtonsChanged -= this.OnActiveButtonsChanged;
             oldData.AlwaysUseThisResultChanged -= this.UpdateAlwaysUseThisResultUntilAppCloses;
         }
 
         if (newData != null) {
+            newData.HeaderChanged -= this.OnHeaderChanged;
+            newData.IconChanged -= this.OnIconChanged;
             newData.ButtonsChanged += this.OnActiveButtonsChanged;
             newData.AlwaysUseThisResultChanged += this.UpdateAlwaysUseThisResultUntilAppCloses;
         }
@@ -168,6 +199,7 @@ public partial class MessageBoxView : UserControl {
         // Set visible when data is null, for debugging
         this.PART_AUTRPanel.IsVisible = newData == null || !string.IsNullOrWhiteSpace(newData.PersistentDialogName);
 
+        this.UpdateHeaderPanelAndIconPlacement();
         this.UpdateVisibleButtons();
         if (newData != null) {
             ApplicationPFX.Instance.Dispatcher.Post(() => {
@@ -209,22 +241,22 @@ public partial class MessageBoxView : UserControl {
         }
 
         switch (data.Buttons) {
-            case MessageBoxButton.OK:
+            case MessageBoxButtons.OK:
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = false;
                 this.PART_CancelButton.IsVisible = false;
                 break;
-            case MessageBoxButton.OKCancel:
+            case MessageBoxButtons.OKCancel:
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = false;
                 this.PART_CancelButton.IsVisible = true;
                 break;
-            case MessageBoxButton.YesNoCancel:
+            case MessageBoxButtons.YesNoCancel:
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = true;
                 this.PART_CancelButton.IsVisible = true;
                 break;
-            case MessageBoxButton.YesNo:
+            case MessageBoxButtons.YesNo:
                 this.PART_YesOkButton.IsVisible = true;
                 this.PART_NoButton.IsVisible = true;
                 this.PART_CancelButton.IsVisible = false;

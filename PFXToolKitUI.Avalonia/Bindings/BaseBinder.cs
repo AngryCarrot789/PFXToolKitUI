@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia.Controls;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
@@ -65,6 +66,8 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     public event BinderEventHandler<TModel>? UpdateControlWithoutModel;
     public event BinderEventHandler<TModel>? ControlUpdated;
     public event BinderEventHandler<TModel>? ModelUpdated;
+    public event BinderModelChangedEventHandler<TModel>? ModelChanged;
+    public event BinderControlChangedEventHandler<TModel>? ControlChanged;
 
     protected BaseBinder() {
     }
@@ -111,41 +114,38 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     protected abstract void UpdateControlOverride(bool hasJustAttached);
 
     public void Attach(Control control, TModel model) {
+        ArgumentNullException.ThrowIfNull(model);
+        ArgumentNullException.ThrowIfNull(control);
         if (this.IsFullyAttached)
             throw new Exception("Already fully attached");
         if (this.myControl != null)
             throw new InvalidOperationException("A control is already attached");
         if (this.myModel != null)
             throw new InvalidOperationException("A model is already attached");
-        if (model == null)
-            throw new ArgumentNullException(nameof(model));
-        if (control == null)
-            throw new ArgumentNullException(nameof(control));
 
         this.CheckAttachControl(control);
         this.CheckAttachModel(model);
 
         this.myModel = model;
-        this.OnModelAttached();
+        this.ModelChanged?.Invoke(this, null, model);
 
         this.myControl = control;
-        this.OnControlAttached();
+        this.ControlChanged?.Invoke(this, null, control);
 
         this.AttachInternal();
     }
 
     public void AttachControl(Control control) {
+        ArgumentNullException.ThrowIfNull(control);
         if (this.IsFullyAttached)
             throw new Exception("Already fully attached");
         if (this.myControl != null)
             throw new InvalidOperationException("A control is already attached");
-        if (control == null)
-            throw new ArgumentNullException(nameof(control));
 
         this.CheckAttachControl(control);
 
         this.myControl = control;
-        this.OnControlAttached();
+        this.ControlChanged?.Invoke(this, null, control);
         if (this.myModel != null) {
             this.AttachInternal();
         }
@@ -155,17 +155,17 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     }
 
     public void AttachModel(TModel model) {
+        ArgumentNullException.ThrowIfNull(model);
         if (this.IsFullyAttached)
             throw new Exception("Already fully attached");
         if (this.myModel != null)
             throw new InvalidOperationException("A model is already attached");
-        if (model == null)
-            throw new ArgumentNullException(nameof(model));
 
         this.CheckAttachModel(model);
 
         this.myModel = model;
-        this.OnModelAttached();
+        this.ModelChanged?.Invoke(this, null, model);
+        
         if (this.myControl != null) {
             this.AttachInternal();
         }
@@ -175,27 +175,34 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         if (!this.IsFullyAttached)
             throw new Exception("Not fully attached");
 
-        this.TryDetachInternal();
-        this.OnModelDetaching();
-        this.myModel = null;
+        TModel? oldModel = this.myModel;
+        Control? oldControl = this.myControl;
+        Debug.Assert(oldControl != null && oldModel != null);
 
-        this.OnControlDetaching();
+        this.IsFullyAttached = false;
+        this.OnDetached();
+
+        this.myModel = null;
+        this.ModelChanged?.Invoke(this, oldModel, null);
+
         this.myControl = null;
+        this.ControlChanged?.Invoke(this, oldControl, null);
     }
 
     public void DetachControl() {
-        if (this.myControl == null)
+        Control? oldControl = this.myControl;
+        if (oldControl == null)
             throw new InvalidOperationException("No control is attached");
 
         this.TryDetachInternal();
-        this.OnControlDetaching();
         this.myControl = null;
+        this.ControlChanged?.Invoke(this, oldControl, null);
     }
 
     public void DetachModel() {
         if (this.myModel == null)
             throw new InvalidOperationException("No model is attached");
-        
+
         this.DetachModelInternal();
         if (this.myControl != null) {
             this.UpdateControlWithoutModel?.Invoke(this);
@@ -204,8 +211,11 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
     private void DetachModelInternal() {
         this.TryDetachInternal();
-        this.OnModelDetaching();
+        TModel? oldModel = this.myModel;
+        Debug.Assert(oldModel != null);
+        
         this.myModel = null;
+        this.ModelChanged?.Invoke(this, oldModel, null);
     }
 
     public void SwitchControl(Control? newControl) {
@@ -242,18 +252,6 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     protected virtual void CheckAttachModel(TModel model) {
     }
 
-    protected virtual void OnModelAttached() {
-    }
-
-    protected virtual void OnModelDetaching() {
-    }
-
-    protected virtual void OnControlAttached() {
-    }
-
-    protected virtual void OnControlDetaching() {
-    }
-
     protected abstract void OnAttached();
 
     protected abstract void OnDetached();
@@ -266,8 +264,8 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
     private void TryDetachInternal() {
         if (this.IsFullyAttached) {
-            this.OnDetached();
             this.IsFullyAttached = false;
+            this.OnDetached();
         }
     }
 }

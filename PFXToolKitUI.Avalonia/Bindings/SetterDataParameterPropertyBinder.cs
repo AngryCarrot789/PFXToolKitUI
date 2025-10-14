@@ -61,7 +61,7 @@ public class SetterDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaPro
 
     protected override void UpdateModelOverride() {
         if (this.IsFullyAttached && this.Property != null) {
-            object? newValue = this.myControl!.GetValue(this.Property);
+            object? newValue = this.Control.GetValue(this.Property);
             this.HasError = this.Setter(this, newValue);
         }
     }
@@ -69,7 +69,7 @@ public class SetterDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaPro
     protected override void UpdateControlOverride(bool hasJustAttached) {
         if (this.IsFullyAttached && this.Property != null) {
             TValue? newValue = this.Parameter.GetValue(this.Model);
-            this.myControl!.SetValue(this.Property, this.ParamToPropForGetter(newValue));
+            this.Control.SetValue(this.Property, this.ParamToPropForGetter(newValue));
         }
     }
 

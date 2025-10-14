@@ -34,7 +34,7 @@ public interface IDispatcherTimer {
     bool IsEnabled { get; set; }
 
     /// <summary>
-    /// Gets or sets the callback interval
+    /// Gets or sets the callback interval. Note, updating this will may cause <see cref="Tick"/> to be invoked sooner or later
     /// </summary>
     TimeSpan Interval { get; set; }
 
