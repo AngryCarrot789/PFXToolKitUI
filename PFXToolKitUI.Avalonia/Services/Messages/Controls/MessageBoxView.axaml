@@ -77,7 +77,7 @@
         <DockPanel HorizontalSpacing="5" Margin="8,0,0,0">
             <Panel DockPanel.Dock="Left">
                 <avc:IconControl x:Name="PART_IconControlInMessage"
-                                 Width="24" Height="24" Margin="0,8,0,0"
+                                 Width="24" Height="24" Margin="0,8,2,0"
                                  IsVisible="False"
                                  VerticalAlignment="Top" HorizontalAlignment="Center"/>
             </Panel>

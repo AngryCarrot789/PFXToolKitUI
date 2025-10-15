@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Services.Messaging;
@@ -52,10 +53,11 @@ public interface IMessageDialogService {
     /// to produce <see cref="MessageBoxResult.None"/>
     /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
+    Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, Icon? icon = null, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
         return this.ShowMessage(new MessageBoxInfo(caption, message) {
             Buttons = buttons,
             DefaultButton = defaultButton,
+            Icon = icon,
             PersistentDialogName = persistentDialogName,
             DialogCancellation = dialogCancellation
         }.SetDefaultButtonText());
@@ -78,15 +80,16 @@ public interface IMessageDialogService {
     /// to produce <see cref="MessageBoxResult.None"/>
     /// </param>
     /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
-    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
+    Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, Icon? icon = null, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
         return this.ShowMessage(new MessageBoxInfo(caption, header, message) {
             Buttons = buttons,
             DefaultButton = defaultButton,
+            Icon = icon,
             PersistentDialogName = persistentDialogName,
             DialogCancellation = dialogCancellation
         }.SetDefaultButtonText());
     }
-
+    
     /// <summary>
     /// Shows a message box dialog that is dynamically customisable; 3 buttons, caption, header and message
     /// </summary>
