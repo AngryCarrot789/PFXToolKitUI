@@ -43,6 +43,10 @@ public static class AttachedTextBoxBinding {
     public static readonly AttachedProperty<Thickness> OverlayBorderThicknessProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, Thickness>("OverlayBorderThickness",  typeof(AttachedTextBoxBinding), new Thickness(1));
     private static readonly AttachedProperty<BrushFlipFlopTimer?> FlipFlopProperty = AvaloniaProperty.RegisterAttached<TextBox, BrushFlipFlopTimer?>("FlipFlop", typeof(AttachedTextBoxBinding));
 
+    // Re-use flipflops to save on some allocations
+    private static readonly List<BrushFlipFlopTimer> CachedFlipFlops = new List<BrushFlipFlopTimer>();
+    private const int MaxCachedFlipFlops = 10;
+    
     static AttachedTextBoxBinding() {
         IsValueDifferentProperty.Changed.Subscribe(new AnonymousObserver<AvaloniaPropertyChangedEventArgs<bool>>(OnIsValueDifferentChanged));
     }
@@ -51,10 +55,17 @@ public static class AttachedTextBoxBinding {
         if (e.NewValue.GetValueOrDefault()) {
             BrushFlipFlopTimer? flipFlop = e.Sender.GetValue(FlipFlopProperty);
             if (flipFlop == null) {
-                IColourBrush brushLow = lowBrush ??= BrushManager.Instance.GetDynamicThemeBrush("TextBox.ValueChanged.Low.Border");
-                IColourBrush brushHigh = highBrush ??= BrushManager.Instance.GetDynamicThemeBrush("TextBox.ValueChanged.High.Border");
+                if (CachedFlipFlops.Count > 0) {
+                    flipFlop = CachedFlipFlops[CachedFlipFlops.Count - 1];
+                    CachedFlipFlops.RemoveAt(CachedFlipFlops.Count - 1);
+                }
+                else {
+                    IColourBrush brushLow = lowBrush ??= BrushManager.Instance.GetDynamicThemeBrush("TextBox.ValueChanged.Low.Border");
+                    IColourBrush brushHigh = highBrush ??= BrushManager.Instance.GetDynamicThemeBrush("TextBox.ValueChanged.High.Border");
+                    flipFlop = new BrushFlipFlopTimer(TimeSpan.FromSeconds(0.4), brushLow, brushHigh) { StartHigh = true };
+                }
                 
-                e.Sender.SetValue(FlipFlopProperty, flipFlop = new BrushFlipFlopTimer(TimeSpan.FromSeconds(0.4), brushLow, brushHigh) {StartHigh = true});
+                e.Sender.SetValue(FlipFlopProperty, flipFlop);
             }
             
             flipFlop.SetTarget(e.Sender, OverlayBorderBrushProperty);
@@ -68,6 +79,10 @@ public static class AttachedTextBoxBinding {
                 Debug.Assert(flipFlop != null);
                 flipFlop.IsEnabled = false;
                 flipFlop.ClearTarget();
+                if (CachedFlipFlops.Count < MaxCachedFlipFlops) {
+                    e.Sender.SetValue(FlipFlopProperty, null);
+                    CachedFlipFlops.Add(flipFlop);
+                }
             }
             else {
                 Debug.Assert(e.Sender.GetValue(FlipFlopProperty) == null);

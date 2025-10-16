@@ -30,6 +30,7 @@ public class FlipFlopTimer {
     private long totalChangesSinceStart;
     private bool isEnabled, isDisabledForLevelChangeLimit;
     private bool startHigh;
+    private IDispatcherTimer? timer;
 
     /// <summary>
     /// Gets or sets the time between level changes
@@ -117,8 +118,6 @@ public class FlipFlopTimer {
     /// Fired when the high state changes.
     /// </summary>
     public event FlipFlopTimerStateChangedEventHandler? IsHighChanged;
-
-    private IDispatcherTimer? timer;
 
     public FlipFlopTimer(TimeSpan interval) {
         this.Interval = interval;

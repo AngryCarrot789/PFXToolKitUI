@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -37,22 +38,38 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
     private readonly Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate;
     private bool isChangingModel, isResettingTextToModel;
+    private bool hasUserModifiedValueSinceUpdate;
+    private EventHandler<RoutedEventArgs>? onLostFocus;
+    private EventHandler<KeyEventArgs>? onKeyDown;
+    private EventHandler<TextChangedEventArgs>? onTextChanged;
 
     /// <summary>
-    /// Gets or sets if the model value can be updated when the text box loses focus too.
-    /// The default value is false, which can be annoying, but prevents issues with infinite message box loops.
-    /// To aid with this being false, there's a visual indicator on text boxes when being edited that
-    /// lets the user know they must confirm their input to publish the change.
+    /// Gets or sets if the model value can be updated when the text box loses focus.
     /// </summary>
-    public bool CanApplyValueOnLostFocus { get; set; } = false;
+    public bool CanApplyValueOnLostFocus { get; set; } = true;
 
     /// <summary>
     /// Gets or sets if the text box should be re-focused when the update callback returns false.
-    /// Default is true, because it's annoying to the user to have to re-click the text box again
+    /// Default is true, because it's annoying to the user to have to re-click the text box again.
     /// </summary>
     public bool FocusTextBoxOnError { get; set; } = true;
 
+    /// <summary>
+    /// Gets or sets if the text box is a multi-line text box.
+    /// Setting this as true will prevent the model from being updated when the user clicks the enter key
+    /// </summary>
+    public bool IsMultiLineTextBox { get; set; }
+
     public bool CanMoveFocusUpwardsOnEscape { get; set; } = true;
+
+    protected bool HasUserModifiedValueSinceUpdate {
+        get => this.hasUserModifiedValueSinceUpdate;
+        set {
+            this.hasUserModifiedValueSinceUpdate = value;
+            if (this.myControl != null)
+                AttachedTextBoxBinding.SetIsValueDifferent((TextBox) this.myControl, value);
+        }
+    }
 
     /// <summary>
     /// Fired when the user presses the escape button. Before being fired, focus 
@@ -91,7 +108,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         TextBox tb = (TextBox) this.Control;
         if (this.IsFullyAttached) {
             string newValue = this.GetTextCore();
-            
+
             this.isResettingTextToModel = true;
             tb.Text = newValue;
             BugFix.TextBox_UpdateSelection(tb);
@@ -101,37 +118,52 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 tb.IsUndoEnabled = false;
                 tb.IsUndoEnabled = true;
             }
-            
+
             this.isResettingTextToModel = false;
         }
-        
-        AttachedTextBoxBinding.SetIsValueDifferent(tb, false);
+
+        this.HasUserModifiedValueSinceUpdate = false;
     }
 
     protected override void CheckAttachControl(Control control) {
         base.CheckAttachControl(control);
-        if (!(control is TextBox))
+        if (!(control is TextBox tb))
             throw new InvalidOperationException("Attempt to attach non-textbox");
+        if (TextBoxBinderUtils.GetIsAttachedToBTTB(tb))
+            throw new InvalidOperationException("Text box is already attached via another text box binder");
     }
 
     protected override void OnAttached() {
         TextBox tb = (TextBox) this.Control;
-        tb.LostFocus += this.OnLostFocus;
-        tb.KeyDown += this.OnKeyDown;
-        tb.TextChanged += this.OnTextChanged;
-        AttachedTextBoxBinding.SetIsValueDifferent(tb, false);
+        tb.LostFocus += this.onLostFocus ??= this.OnLostFocus;
+        tb.KeyDown += this.onKeyDown ??= this.OnKeyDown;
+        tb.TextChanged += this.onTextChanged ??= this.OnTextChanged;
+        this.HasUserModifiedValueSinceUpdate = false;
+        TextBoxBinderUtils.SetIsAttachedToBTTB(tb, true);
     }
 
     protected override void OnDetached() {
+        Debug.Assert(this.onLostFocus != null && this.onKeyDown != null && this.onTextChanged != null);
         TextBox tb = (TextBox) this.Control;
-        tb.LostFocus -= this.OnLostFocus;
-        tb.KeyDown -= this.OnKeyDown;
-        tb.TextChanged -= this.OnTextChanged;
-        AttachedTextBoxBinding.SetIsValueDifferent(tb, false);
+        tb.LostFocus -= this.onLostFocus;
+        tb.KeyDown -= this.onKeyDown;
+        tb.TextChanged -= this.onTextChanged;
+        this.HasUserModifiedValueSinceUpdate = false;
+        TextBoxBinderUtils.SetIsAttachedToBTTB(tb, false);
     }
 
     private void OnLostFocus(object? sender, RoutedEventArgs e) {
-        if (this.CanApplyValueOnLostFocus) {
+        Debug.Assert(this.myControl == sender);
+
+        // Only apply value when the user has typed something, otherwise we risk issues with message box loops.
+        // For example, two TBs with binders that are mis-configured such that GetTextCore() returns
+        // a value that cannot be converted back (which is a bug anyway)
+        // - The user clicks one TB, then the other.
+        // - Loss of focus on TB 1 shows a message box, and if that MSG box has a default button,
+        //   will focus that and cause the other TB to lose focus, and now there's two message boxes
+        // - Then, closing one dialog re-focuses a TB but user has to click the other
+        //   message box to close it, causing loss of focus and showing another message box.
+        if (this.CanApplyValueOnLostFocus && this.HasUserModifiedValueSinceUpdate) {
             if (!this.isChangingModel) {
                 ApplicationPFX.Instance.Dispatcher.Post(this.HandleUpdateModelFromText, DispatchPriority.Input);
             }
@@ -151,53 +183,59 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
                 // When the user clicks escape, we want to temporarily disable lost focus handling and move focus elsewhere.
                 // This is to prevent infinite loops of dialogs being shown saying the value is incorrect format or whatever.
-                // User inputs bad value, dialog shows, user closes dialog and the text box is re-focused,
-                // user clicks away to do something else, lost focus is called and shows the dialog again, and it loops
-                
+                // - User inputs bad value, dialog shows, user closes dialog and the text box is re-focused.
+                // - Then, user clicks away to do something else, lost focus is called and shows the dialog again, and it loops
+
                 textBox.LostFocus -= this.OnLostFocus;
                 string oldText = textBox.Text ?? "";
-                bool canMoveFocus = this.CanMoveFocusUpwardsOnEscape && !AttachedTextBoxBinding.GetIsValueDifferent(textBox);
-            
+                bool canMoveFocus = this.CanMoveFocusUpwardsOnEscape && !this.HasUserModifiedValueSinceUpdate;
+
                 this.UpdateControl(); // sets IsValueDifferent to false
-                
+
                 Debug.Assert(!this.isResettingTextToModel);
                 this.isResettingTextToModel = true;
-                
+
                 if (canMoveFocus) {
                     VisualTreeUtils.TryMoveFocusUpwards(textBox);
                 }
-                
+
                 // using Invoke here can potentially cause TextChanged event to be invoked since it
                 // has a higher priority so we wrap it with isResettingTextToModel to be sure,
                 // since we're still technically in the process of resetting text
                 Dispatcher.UIThread.Invoke(() => textBox.LostFocus += this.OnLostFocus, DispatcherPriority.Loaded);
-                
+
                 this.isResettingTextToModel = false;
 
                 // invoke callback to allow user code to maybe reverse some changes
                 this.EscapePressed?.Invoke(this, oldText);
-            
+
                 e.Handled = true;
                 break;
             }
             case Key.Enter: {
-                if (!this.isChangingModel) {
-                    this.HandleUpdateModelFromText();
+                if (!this.IsMultiLineTextBox) {
+                    if (!this.isChangingModel) {
+                        this.HandleUpdateModelFromText();
+                    }
+
+                    e.Handled = true;
                 }
-            
-                e.Handled = true;
+
                 break;
             }
         }
     }
-    
+
     private void OnTextChanged(object? sender, TextChangedEventArgs e) {
         TextBox textBox = (TextBox) sender!;
         if (!this.isChangingModel && !this.isResettingTextToModel && textBox.IsKeyboardFocusWithin) {
-            AttachedTextBoxBinding.SetIsValueDifferent(textBox, true);
+            // Only mark as user-modified when there's focus within. It's very unlikely that
+            // the user can make the text change without keyboard focus; undo/redo requires focus,
+            // which will therefore count as a user modification. External changes are not supported.
+            this.HasUserModifiedValueSinceUpdate = true;
         }
     }
-    
+
     /// <summary>
     /// Updates our model based on what's present in the text block
     /// </summary>
@@ -212,13 +250,13 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
             // Read text before setting IsEnabled to false, because LostFocus will reset text to underlying value
             string text = textBox.Text ?? "";
-            
+
             bool oldIsEnabled = textBox.IsEnabled;
             textBox.IsEnabled = false;
-            
-            AttachedTextBoxBinding.SetIsValueDifferent(textBox, false);
+
+            this.HasUserModifiedValueSinceUpdate = false;
             bool success = await this.parseAndUpdate(this, text);
-            
+
             textBox.IsEnabled = oldIsEnabled;
             this.UpdateControl();
             if (!success && this.FocusTextBoxOnError)
@@ -230,4 +268,10 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
             this.isChangingModel = false;
         }
     }
+}
+
+internal static class TextBoxBinderUtils {
+    public static readonly AttachedProperty<bool> IsAttachedToBTTBProperty = AvaloniaProperty.RegisterAttached<TextBox, bool>("IsAttachedToBTTB", typeof(TextBoxBinderUtils));
+    public static void SetIsAttachedToBTTB(TextBox obj, bool value) => obj.SetValue(IsAttachedToBTTBProperty, value);
+    public static bool GetIsAttachedToBTTB(TextBox obj) => obj.GetValue(IsAttachedToBTTBProperty);
 }
