@@ -82,6 +82,18 @@ public partial class MessageBoxView : UserControl {
         this.PART_YesOkButton.Click += this.OnConfirmButtonClicked;
         this.PART_NoButton.Click += this.OnNoButtonClicked;
         this.PART_CancelButton.Click += this.OnCancelButtonClicked;
+
+#if DEBUG
+        if (Design.IsDesignMode) {
+            this.MessageBoxData =  new MessageBoxInfo("Untested", "This feature is untested. Continue at your own risk!") {
+                Buttons = MessageBoxButtons.OKCancel,
+                DefaultButton = MessageBoxResult.Cancel,
+                YesOkText = "I understand, continue",
+                NoText = "Cancel", 
+                Icon = MessageBoxIcons.WarningIcon
+            };
+        }
+#endif
     }
 
     static MessageBoxView() {
