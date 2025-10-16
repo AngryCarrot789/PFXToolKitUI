@@ -201,3 +201,23 @@ public readonly struct ListSelectionModelChangedEventArgs(IList<LongRange> added
     /// </summary>
     public IList<LongRange> RemovedIndices { get; } = removedIndices;
 }
+
+public static class ListSelectionModelExtensions {
+    /// <summary>
+    /// Moves an item in the source list and updates the selection accordingly
+    /// </summary>
+    /// <param name="selectionModel">The selection model</param>
+    /// <param name="oldIndex">Old index</param>
+    /// <param name="newIndex">New index</param>
+    /// <typeparam name="T">Type of value</typeparam>
+    public static void MoveItemHelper<T>(this IListSelectionModel<T> selectionModel, int oldIndex, int newIndex) {
+        bool isSelected = selectionModel.IsSelected(oldIndex);
+        if (isSelected)
+            selectionModel.Deselect(oldIndex);
+        
+        selectionModel.SourceList.Move(oldIndex, newIndex);
+        
+        if (isSelected)
+            selectionModel.Select(newIndex);
+    }
+}

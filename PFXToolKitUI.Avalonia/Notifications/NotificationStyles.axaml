@@ -3,14 +3,15 @@
                     xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls;assembly=PFXToolKitUI.Avalonia"
                     xmlns:aa="clr-namespace:PFXToolKitUI.Avalonia.Activities;assembly=PFXToolKitUI.Avalonia"
                     xmlns:n="clr-namespace:PFXToolKitUI.Avalonia.Notifications"
-                    xmlns:pfxToolKitUi="clr-namespace:PFXToolKitUI;assembly=PFXToolKitUI">
+                    xmlns:pfxToolKitUi="clr-namespace:PFXToolKitUI;assembly=PFXToolKitUI"
+                    xmlns:ae="https://github.com/avaloniaui/avaloniaedit">
     <ControlTheme x:Key="{x:Type n:NotificationListBox}" TargetType="{x:Type n:NotificationListBox}" BasedOn="{StaticResource {x:Type ListBox}}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="0"/>
     </ControlTheme>
-    
+
     <ControlTheme x:Key="{x:Type n:NotificationListBoxItem}" TargetType="{x:Type n:NotificationListBoxItem}">
         <Setter Property="Background" Value="{DynamicResource ABrush.Tone6.Background.Static}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone7.Border.Static}"/>
@@ -24,15 +25,15 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}">
                     <DockPanel VerticalSpacing="2">
-                        <Border x:Name="PART_HeaderBorder" 
-                                BorderBrush="{TemplateBinding BorderBrush}" 
-                                BorderThickness="0,0,0,1" 
+                        <Border x:Name="PART_HeaderBorder"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="0,0,0,1"
                                 DockPanel.Dock="Top" Height="21">
                             <DockPanel>
                                 <!-- <Button x:Name="PART_Close" Content="X" DockPanel.Dock="Right" Padding="6,2" Background="Transparent" BorderThickness="0"/> -->
 
-                                <avc:IconButton x:Name="PART_Close" DockPanel.Dock="Right" 
-                                                Icon="{x:Static pfxToolKitUi:StandardIcons.CancelActivityIcon}" 
+                                <avc:IconButton x:Name="PART_Close" DockPanel.Dock="Right"
+                                                Icon="{x:Static pfxToolKitUi:StandardIcons.CancelActivityIcon}"
                                                 Background="Transparent" BorderThickness="0"/>
                                 <TextBlock Text="{TemplateBinding Caption}" VerticalAlignment="Center" Padding="4,2"/>
                             </DockPanel>
@@ -53,7 +54,29 @@
             </ControlTemplate>
         </Setter>
     </ControlTheme>
-    
+
+    <ControlTheme x:Key="{x:Type n:NotificationContent_TextNotification}" TargetType="{x:Type n:NotificationContent_TextNotification}">
+        <Setter Property="Template">
+            <ControlTemplate TargetType="{x:Type n:NotificationContent_TextNotification}">
+                <DockPanel HorizontalSpacing="5" Margin="0,0,0,0">
+                    <Panel DockPanel.Dock="Left">
+                        <avc:IconControl x:Name="PART_IconControl"
+                                         Width="24" Height="24" Margin="0,3,2,0"
+                                         IsVisible="False"
+                                         VerticalAlignment="Top" HorizontalAlignment="Center"/>
+                    </Panel>
+                    <ae:TextEditor x:Name="PART_Message" Padding="0,5"
+                                   Margin="0,0,2,2"
+                                   IsReadOnly="True"
+                                   HorizontalScrollBarVisibility="Disabled"
+                                   VerticalScrollBarVisibility="Disabled"
+                                   Background="Transparent"
+                                   BorderThickness="0"/>
+                </DockPanel>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+
     <Design.PreviewWith>
         <n:NotificationListBoxItem Caption="caption" Content="Ok test"/>
     </Design.PreviewWith>

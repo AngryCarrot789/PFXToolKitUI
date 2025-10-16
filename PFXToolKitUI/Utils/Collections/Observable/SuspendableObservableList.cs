@@ -48,11 +48,11 @@ public class SuspendableObservableList<T> : ObservableList<T> {
             base.OnItemReplaced(index, oldItem, newItem);
     }
 
-    protected override void OnItemMoved(int oldIndex, int newIndex, T item) {
+    protected override void OnPostItemMoved(int oldIndex, int newIndex, T item) {
         if (this.suspendEventsCount > 0)
             this.scheduledEvent = this.scheduledEvent != null ? throw new InvalidOperationException("Item move already scheduled") : new EventItemMoved(oldIndex, newIndex, item);
         else
-            base.OnItemMoved(oldIndex, newIndex, item);
+            base.OnPostItemMoved(oldIndex, newIndex, item);
     }
 
     public SuspendEventToken SuspendEvents() => new SuspendEventToken(this);
@@ -139,7 +139,7 @@ public class SuspendableObservableList<T> : ObservableList<T> {
         }
 
         public override void Dispatch(SuspendableObservableList<T> list) {
-            list.OnItemMoved(this.oldIndex, this.newIndex, this.item);
+            list.OnPostItemMoved(this.oldIndex, this.newIndex, this.item);
         }
     }
 }

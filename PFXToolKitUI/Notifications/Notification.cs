@@ -169,7 +169,7 @@ public abstract class Notification : IComponentManager {
     protected Notification() {
         this.myComponentStorage = new ComponentStorage(this);
         this.Actions = new ObservableList<NotificationAction>();
-        this.Actions.BeforeItemsAdded += (list, index, items) => {
+        this.Actions.ValidateAdd += (list, index, items) => {
             foreach (NotificationAction item in items) {
                 if (item.Notification != null)
                     throw new InvalidOperationException($"{nameof(NotificationAction)} already exists in another notification");

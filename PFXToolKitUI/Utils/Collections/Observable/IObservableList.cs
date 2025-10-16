@@ -39,23 +39,22 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <summary>
     /// An event fired when items are about to be added to this collection
     /// </summary>
-    public event ObservableListMultipleItemsEventHandler<T>? BeforeItemsAdded;
+    public event ObservableListMultipleItemsEventHandler<T>? ValidateAdd;
     
     /// <summary>
     /// An event fired when one or more items are about to be removed.
     /// </summary>
-    public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
-    
+    public event ObservableListBeforeRemovedEventHandler<T>? ValidateRemove;
     
     /// <summary>
     /// An event fired when an item is about to be replaced by another item
     /// </summary>
-    public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
+    public event ObservableListReplaceEventHandler<T>? ValidateReplace;
     
     /// <summary>
     /// An event fired when an item is about to be moved from one index to another
     /// </summary>
-    public event ObservableListMoveEventHandler<T>? BeforeItemMoved;
+    public event ObservableListMoveEventHandler<T>? ValidateMove;
     
     /// <summary>
     /// An event fired when one or more items are inserted into the list.

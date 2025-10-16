@@ -71,7 +71,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
     static NotificationListBoxItem() {
         ModelControlRegistry = new ModelControlRegistry<Notification, Control>();
-        ModelControlRegistry.RegisterType<TextNotification>((b) => new NotificationContent_TextBlock(b));
+        ModelControlRegistry.RegisterType<TextNotification>((b) => new NotificationContent_TextNotification(b));
         ModelControlRegistry.RegisterType<ActivityNotification>((b) => new NotificationContent_Activity(b));
     }
 
@@ -214,31 +214,6 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
     private void OnCommandMoved(object sender, int oldindex, int newindex, NotificationAction item) {
         if (this.PART_ActionPanel != null)
             this.PART_ActionPanel!.Children.Move(oldindex, newindex);
-    }
-
-    private class NotificationContent_TextBlock : TextBlock, INotificationContent {
-        private readonly TextNotification notification;
-        protected override Type StyleKeyOverride => typeof(TextBlock);
-
-        public NotificationContent_TextBlock(TextNotification textNotification) {
-            this.notification = textNotification;
-            this.Text = textNotification.Text;
-        }
-
-        private void OnTextChanged(Notification sender) {
-            Debug.Assert(this.notification == sender);
-
-            this.Text = this.notification.Text;
-        }
-
-        public void OnShown() {
-            this.Text = this.notification.Text;
-            this.notification.TextChanged += this.OnTextChanged;
-        }
-
-        public void OnHidden() {
-            this.notification.TextChanged -= this.OnTextChanged;
-        }
     }
 
     private class NotificationContent_Activity : ActivityListItem, INotificationContent {

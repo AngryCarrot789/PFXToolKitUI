@@ -19,6 +19,7 @@
 
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 
@@ -85,22 +86,31 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         this.SourceList = sourceList ?? throw new ArgumentNullException(nameof(sourceList));
         this.selectedIndices = new LongRangeUnion();
         this.SelectedItems = new ReadOnlyListDelegate(this);
-        this.SourceList.BeforeItemsRemoved += this.SourceListBeforeItemsRemoved;
-        this.SourceList.BeforeItemReplace += this.SourceListBeforeItemReplaced;
+        this.SourceList.ValidateRemove += this.SourceListValidateRemove;
+        this.SourceList.ValidateReplace += this.SourceListValidateReplaced;
         this.SourceList.ItemMoved += this.SourceListOnItemMoved;
     }
-
-    private void SourceListBeforeItemsRemoved(IObservableList<T> list, int index, int count) {
+    
+    private void SourceListValidateRemove(IObservableList<T> list, int index, int count) {
         this.DeselectRange(index, count);
     }
 
-    private void SourceListBeforeItemReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
+    private void SourceListValidateReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
         this.Deselect(index);
     }
 
     private void SourceListOnItemMoved(IObservableList<T> list, int oldindex, int newindex, T item) {
-        this.Deselect(oldindex);
-        this.Select(newindex);
+        if (this.IsSelected(oldindex)) {
+            try {
+                Debug.Fail("Move operations require special care when moving items; " +
+                           "the item must be deselected first, then reselected after the move has completed");
+            }
+            catch {
+                // ignored
+            }
+            
+            this.Deselect(oldindex);
+        }
     }
 
     public void Select(int index) => this.SelectRange(index, 1);
@@ -250,7 +260,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         public int Count => selection.Count;
 
         public T this[int index] => selection[index];
-        
+
         public IEnumerator<T> GetEnumerator() {
             foreach (LongRange range in selection.selectedIndices) {
                 for (int i = (int) range.Start; i < range.End; i++) {

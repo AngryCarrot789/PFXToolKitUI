@@ -38,7 +38,7 @@ public class NotificationManager : IComponentManager {
     public NotificationManager() {
         this.myComponentStorage = new ComponentStorage(this);
         this.Toasts = new ObservableList<Notification>();
-        this.Toasts.BeforeItemsAdded += (list, index, items) => {
+        this.Toasts.ValidateAdd += (list, index, items) => {
             foreach (Notification toast in items) {
                 if (toast == null)
                     throw new InvalidOperationException("Attempt to show null notification");

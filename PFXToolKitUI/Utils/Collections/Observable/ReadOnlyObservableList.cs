@@ -29,10 +29,10 @@ namespace PFXToolKitUI.Utils.Collections.Observable;
 public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<T> {
     private readonly IObservableList<T> delegateList;
 
-    public event ObservableListMultipleItemsEventHandler<T>? BeforeItemsAdded;
-    public event ObservableListBeforeRemovedEventHandler<T>? BeforeItemsRemoved;
-    public event ObservableListReplaceEventHandler<T>? BeforeItemReplace;
-    public event ObservableListMoveEventHandler<T>? BeforeItemMoved;
+    public event ObservableListMultipleItemsEventHandler<T>? ValidateAdd;
+    public event ObservableListBeforeRemovedEventHandler<T>? ValidateRemove;
+    public event ObservableListReplaceEventHandler<T>? ValidateReplace;
+    public event ObservableListMoveEventHandler<T>? ValidateMove;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsAdded;
     public event ObservableListMultipleItemsEventHandler<T>? ItemsRemoved;
     public event ObservableListReplaceEventHandler<T>? ItemReplaced;
@@ -43,10 +43,10 @@ public class ReadOnlyObservableList<T> : ReadOnlyCollection<T>, IObservableList<
 
     public ReadOnlyObservableList(IObservableList<T> list) : base(list) {
         this.delegateList = list;
-        list.BeforeItemsAdded += (sender, index, items) => this.BeforeItemsAdded?.Invoke(this, index, items);
-        list.BeforeItemsRemoved += (sender, index, count) => this.BeforeItemsRemoved?.Invoke(this, index, count);
-        list.BeforeItemReplace += (sender, index, oldItem, newItem) => this.BeforeItemReplace?.Invoke(this, index, oldItem, newItem);
-        list.BeforeItemMoved += (sender, oldIndex, newIndex, item) => this.BeforeItemMoved?.Invoke(this, oldIndex, newIndex, item);
+        list.ValidateAdd += (sender, index, items) => this.ValidateAdd?.Invoke(this, index, items);
+        list.ValidateRemove += (sender, index, count) => this.ValidateRemove?.Invoke(this, index, count);
+        list.ValidateReplace += (sender, index, oldItem, newItem) => this.ValidateReplace?.Invoke(this, index, oldItem, newItem);
+        list.ValidateMove += (sender, oldIndex, newIndex, item) => this.ValidateMove?.Invoke(this, oldIndex, newIndex, item);
         list.ItemsAdded += (sender, index, items) => this.ItemsAdded?.Invoke(this, index, items);
         list.ItemsRemoved += (sender, index, items) => this.ItemsRemoved?.Invoke(this, index, items);
         list.ItemReplaced += (sender, index, oldItem, newItem) => this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
