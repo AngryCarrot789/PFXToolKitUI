@@ -67,28 +67,50 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
         ITopLevel? parentTopLevel = TopLevelContextUtils.GetTopLevelFromContext();
         if (parentTopLevel != null) {
-            IWindowBase? window = WindowContextUtils.CreateWindow(parentTopLevel, (w) => ShowMessageBoxInWindow(info, w), (m, w) => ShowMessageBoxInOverlay(info, m, w));
-            if (window != null) {
-                MessageBoxView view = (MessageBoxView) window.Content!;
-
-                // Register cancellation to force-close dialog even if myTask is not completed
-                await using CancellationTokenRegistration register = info.DialogCancellation.Register(static t => {
-                    ApplicationPFX.Instance.Dispatcher.Post(static void (winRef) => {
-                        IWindowBase? win = (IWindowBase?) ((WeakReference) winRef!).Target;
-                        if (win != null && win.OpenState == OpenState.Open) {
-                            win.RequestClose();
-                        }
-                    }, t);
-                }, new WeakReference(window));
-
-                MessageBoxResult result = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
-                view.MessageBoxData = null; // unhook models' event handlers
-
-                if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && result != MessageBoxResult.None) {
-                    PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(result, info.AlwaysUseThisResultUntilAppCloses);
+            switch (parentTopLevel) {
+                case IOverlayWindow: {
+                    while (parentTopLevel is IOverlayWindow o && o.OpenState == OpenState.Closed)
+                        parentTopLevel = o.Owner;
+                    break;
                 }
+                case IDesktopWindow: {
+                    while (parentTopLevel is IDesktopWindow o && o.OpenState == OpenState.Closed)
+                        parentTopLevel = o.Owner;
+                    break;
+                }
+            }
 
-                return result;
+            if (parentTopLevel == null) {
+                WindowContextUtils.TryGetWindowManagerWithUsefulWindow(out _, out IDesktopWindow? desktopWindow);
+                if (desktopWindow != null && desktopWindow.OpenState != OpenState.Closed) {
+                    parentTopLevel = desktopWindow;
+                }
+            }
+
+            if (parentTopLevel != null) {
+                IWindowBase? window = WindowContextUtils.CreateWindow(parentTopLevel, (w) => ShowMessageBoxInWindow(info, w), (m, w) => ShowMessageBoxInOverlay(info, m, w));
+                if (window != null) {
+                    MessageBoxView view = (MessageBoxView) window.Content!;
+
+                    // Register cancellation to force-close dialog even if myTask is not completed
+                    await using CancellationTokenRegistration register = info.DialogCancellation.Register(static t => {
+                        ApplicationPFX.Instance.Dispatcher.Post(static void (winRef) => {
+                            IWindowBase? win = (IWindowBase?) ((WeakReference) winRef!).Target;
+                            if (win != null && win.OpenState == OpenState.Open) {
+                                win.RequestClose();
+                            }
+                        }, t);
+                    }, new WeakReference(window));
+
+                    MessageBoxResult result = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
+                    view.MessageBoxData = null; // unhook models' event handlers
+
+                    if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && result != MessageBoxResult.None) {
+                        PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(result, info.AlwaysUseThisResultUntilAppCloses);
+                    }
+
+                    return result;
+                }
             }
         }
 

@@ -32,11 +32,17 @@ public static class NumberUtils {
 
     private static void NumberStyleFromIntInput(ref string? input, out NumberStyles style) {
         if (input != null) {
-            if (input.StartsWith("0x", StringComparison.Ordinal))
+            if (input.StartsWith("0x", StringComparison.Ordinal)) {
                 input = input.Substring(2);
-            else if (input.StartsWith("-0x", StringComparison.Ordinal))
+                style = NumberStyles.HexNumber;
+            }
+            else if (input.StartsWith("-0x", StringComparison.Ordinal)) {
                 input = input.Substring(3);
-            style = NumberStyles.HexNumber;
+                style = NumberStyles.HexNumber;
+            }
+            else {
+                style = NumberStyles.Integer;
+            }
         }
         else {
             style = NumberStyles.Integer;
