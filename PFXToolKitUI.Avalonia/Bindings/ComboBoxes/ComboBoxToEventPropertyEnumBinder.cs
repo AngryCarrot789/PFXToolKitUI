@@ -35,6 +35,10 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
     private readonly SenderEventRelay eventRelay;
     private bool isUpdatingControl;
     private DataParameterEnumInfo<TEnum>? enumInfo;
+    
+    private readonly Dictionary<TEnum, ComboBoxItem> enumToItem = new Dictionary<TEnum, ComboBoxItem>();
+    private readonly Dictionary<TEnum, bool> enumToEnabledState = new Dictionary<TEnum, bool>();
+    private bool enabledComplement = true;
 
     /// <summary>
     /// Gets or sets the connected control
@@ -45,6 +49,20 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
     /// Gets or sets the connected model
     /// </summary>
     public object? Model { get; private set; }
+
+    /// <summary>
+    /// Gets or sets the complement value compared with the enabled state in our internal dictionary
+    /// to produce the final enabled state of items. Default value is true
+    /// </summary>
+    public bool EnabledComplement {
+        get => this.enabledComplement;
+        set {
+            if (this.enabledComplement != value) {
+                this.enabledComplement = value;
+                this.UpdateIsEnabledForAll();
+            }
+        }
+    }
 
     public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum?> getter, Action<object, TEnum> setter) {
         this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(modelType, eventName);
@@ -82,22 +100,63 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
 
         this.isUpdatingControl = true;
         this.Control!.Items.Clear();
+        this.enumToItem.Clear();
+        
         if ((info != null ? info.AllowedEnumList.Count : ENUM_VALUES.Count) > 0) {
-            foreach (TEnum enumValue in info?.EnumList ?? ENUM_VALUES) {
+            foreach (TEnum value in info?.EnumList ?? ENUM_VALUES) {
                 string displayText;
-                if (info != null && info.EnumToText.TryGetValue(enumValue, out string? text)) {
+                if (info != null && info.EnumToText.TryGetValue(value, out string? text)) {
                     displayText = text;
                 }
                 else {
-                    displayText = enumValue.ToString();
+                    displayText = value.ToString();
                 }
 
-                this.Control.Items.Add(new ComboBoxItem() { Content = displayText, Tag = enumValue });
+                ComboBoxItem cbi = new ComboBoxItem() { Content = displayText, Tag = value };
+                this.UpdateIsEnabled(cbi, value);
+                this.enumToItem[value] = cbi;
+                this.Control.Items.Add(cbi);
             }
         }
 
         this.isUpdatingControl = false;
         this.UpdateControl(this.getter(model));
+    }
+
+    private bool GetIsEnumEnabled(TEnum value) {
+        return !this.enumToEnabledState.TryGetValue(value, out bool b) || b;
+    }
+
+    private void UpdateIsEnabled(ComboBoxItem item) => this.UpdateIsEnabled(item, (TEnum) item.Tag!);
+    
+    private void UpdateIsEnabled(ComboBoxItem item, TEnum value) {
+        item.IsEnabled = this.EnabledComplement == this.GetIsEnumEnabled(value);
+    }
+    
+    private void UpdateIsEnabled(TEnum value) {
+        if (this.enumToItem.TryGetValue(value, out ComboBoxItem? comboBoxItem)) {
+            this.UpdateIsEnabled(comboBoxItem, value);
+        }
+    }
+
+    private void UpdateIsEnabledForAll() {
+        if (this.Control != null) {
+            foreach (object? item in this.Control.Items) {
+                this.UpdateIsEnabled((ComboBoxItem) item!);
+            }
+        }
+    }
+
+    public void SetIsEnabled(TEnum value, bool? state) {
+        if (state.HasValue) {
+            if (!this.enumToEnabledState.TryGetValue(value, out bool b) || b != state.Value) {
+                this.enumToEnabledState[value] = state.Value;
+                this.UpdateIsEnabled(value);
+            }
+        }
+        else if (this.enumToEnabledState.Remove(value)) {
+            this.UpdateIsEnabled(value);
+        }
     }
 
     public void Detach() {

@@ -53,6 +53,7 @@ public class DataParameterEnumInfo<TEnum> where TEnum : unmanaged, Enum {
     public ReadOnlyCollection<string> TextList { get; }
 
     private DataParameterEnumInfo(IEnumerable<TEnum> allowedEnumValues) {
+        // allowedEnumValues is processed for distinct values
         this.AllowedEnumList = allowedEnumValues.Select(x => (x, x.ToString())).ToList().AsReadOnly();
         this.EnumToText = CreateDictionary(this.AllowedEnumList.Select(x => new KeyValuePair<TEnum, string>(x.Item1, x.Item2)));
         this.TextToEnum = CreateDictionary(this.AllowedEnumList.Select(x => new KeyValuePair<string, TEnum>(x.Item2, x.Item1)));
