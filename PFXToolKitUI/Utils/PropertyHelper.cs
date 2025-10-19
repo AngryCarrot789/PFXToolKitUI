@@ -23,6 +23,65 @@ namespace PFXToolKitUI.Utils;
 /// A helper class for managing properties
 /// </summary>
 public static class PropertyHelper {
+    #region Ignore equal
+
+    public static void SetAndRaise<T>(ref T field, T newValue, Action onValueChanged) {
+        field = newValue;
+        onValueChanged();
+    }
+
+    /// <summary>
+    /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
+    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/> parameter 
+    /// </summary>
+    /// <param name="field">The field to set when it does not equal the new value</param>
+    /// <param name="newValue">The new value</param>
+    /// <param name="instance">A parameter to pass to <see cref="onValueChanged"/></param>
+    /// <param name="onValueChanged">A callback to fire when the field differs from the new value. Invoked after updating the field</param>
+    /// <typeparam name="T">The type of value</typeparam>
+    /// <typeparam name="TInstance">The type of parameter</typeparam>
+    public static void SetAndRaise<T, TInstance>(ref T field, T newValue, TInstance instance, Action<TInstance> onValueChanged) {
+        field = newValue;
+        onValueChanged(instance);
+    }
+
+    /// <summary>
+    /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
+    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/>
+    /// parameter and the old and new values
+    /// </summary>
+    /// <param name="field">The field to set when it does not equal the new value</param>
+    /// <param name="newValue">The new value</param>
+    /// <param name="instance">A parameter to pass to <see cref="onValueChanged"/></param>
+    /// <param name="onValueChanged">A callback to fire when the field differs from the new value. Invoked after updating the field</param>
+    /// <typeparam name="T">The type of value</typeparam>
+    /// <typeparam name="TInstance">The type of parameter</typeparam>
+    public static void SetAndRaise<T, TInstance>(ref T field, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
+        T oldValue = field;
+        field = newValue;
+        onValueChanged(instance, oldValue, newValue);
+    }
+
+    public static void SetAndRaiseEx<TOwner, T>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, Action onValueChanged) {
+        setter(propertyOwner, newValue);
+        onValueChanged();
+    }
+
+    public static void SetAndRaiseEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance> onValueChanged) {
+        setter(propertyOwner, newValue);
+        onValueChanged(instance);
+    }
+
+    public static void SetAndRaiseEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
+        T oldValue = getter(propertyOwner);
+        setter(propertyOwner, newValue);
+        onValueChanged(instance, oldValue, newValue);
+    }
+
+    #endregion
+
+    #region If-not-equal
+
     public static void SetAndRaiseINE<T>(ref T field, T newValue, Action onValueChanged) {
         if (!EqualityComparer<T>.Default.Equals(field, newValue)) {
             field = newValue;
@@ -124,7 +183,7 @@ public static class PropertyHelper {
             onValueChanged(instance);
         }
     }
-    
+
     public static void SetAndRaiseINEEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
         T oldValue = getter(propertyOwner);
         if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
@@ -132,4 +191,6 @@ public static class PropertyHelper {
             onValueChanged(instance, oldValue, newValue);
         }
     }
+
+    #endregion
 }

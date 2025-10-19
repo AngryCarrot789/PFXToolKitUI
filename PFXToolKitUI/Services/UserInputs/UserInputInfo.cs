@@ -70,10 +70,9 @@ public abstract class UserInputInfo : ITransferableData {
     }
 
     /// <summary>
-    /// Gets or sets the button that is focused by default. True for the confirm
-    /// button, False for the cancel button, null for none. Null is default
+    /// Gets or sets the button that is focused by default. The default is <see cref="ButtonType.None"/>, meaning no button is focused
     /// </summary>
-    public bool? DefaultButton { get; init; }
+    public ButtonType DefaultButton { get; init; }
     
     /// <summary>
     /// Fired when one or more errors change in this user input info. This is listened to by
@@ -113,4 +112,22 @@ public abstract class UserInputInfo : ITransferableData {
     /// </para>
     /// </summary>
     public abstract void UpdateAllErrors();
+
+    /// <summary>
+    /// Specifies the type of button the user can click to cause the dialog to produce a result
+    /// </summary>
+    public enum ButtonType {
+        /// <summary>
+        /// No button
+        /// </summary>
+        None,
+        /// <summary>
+        /// The confirm button
+        /// </summary>
+        Confirm,
+        /// <summary>
+        /// The cancel button
+        /// </summary>
+        Cancel
+    }
 }

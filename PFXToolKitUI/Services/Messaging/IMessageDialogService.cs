@@ -60,7 +60,7 @@ public interface IMessageDialogService {
             Icon = icon,
             PersistentDialogName = persistentDialogName,
             DialogCancellation = dialogCancellation
-        }.SetDefaultButtonText());
+        });
     }
 
     /// <summary>
@@ -87,7 +87,7 @@ public interface IMessageDialogService {
             Icon = icon,
             PersistentDialogName = persistentDialogName,
             DialogCancellation = dialogCancellation
-        }.SetDefaultButtonText());
+        });
     }
     
     /// <summary>

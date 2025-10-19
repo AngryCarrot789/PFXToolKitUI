@@ -29,4 +29,38 @@
             </ControlTemplate>
         </Setter>
     </ControlTheme>
+    
+    <ControlTheme x:Key="DepthSeparatorOnBrightBackgroundTheme" TargetType="{x:Type Separator}">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Background" Value="{DynamicResource Separator.WithDepth.Second.Static.Background}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Separator.WithDepth.First.Static.Background}"/>
+        <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        <Setter Property="Margin" Value="0,2"/>
+        <Setter Property="Height" Value="2"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"/>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
+    
+    <ControlTheme x:Key="VerticalDepthSeparatorOnBrightBackgroundTheme" TargetType="{x:Type Separator}">
+        <Setter Property="Focusable" Value="False"/>
+        <Setter Property="Background" Value="{DynamicResource Separator.WithDepth.Second.Static.Background}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource Separator.WithDepth.First.Static.Background}"/>
+        <Setter Property="BorderThickness" Value="1,0,0,0"/>
+        <Setter Property="Margin" Value="2,0"/>
+        <Setter Property="Width" Value="2"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"/>
+            </ControlTemplate>
+        </Setter>
+    </ControlTheme>
 </ResourceDictionary>

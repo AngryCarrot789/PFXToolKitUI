@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace PFXToolKitUI.Utils;
 
@@ -84,7 +85,7 @@ public static class ArrayUtils {
     public static unsafe T[]? CloneArrayUnsafe<T>(this T[]? array) where T : unmanaged {
         if (array == null)
             return null;
-        
+
         int length = array.Length;
         T[] values = new T[length];
         int bytes = sizeof(T) * length;
@@ -124,7 +125,7 @@ public static class ArrayUtils {
         newArray[array.Length] = value;
         return newArray;
     }
-    
+
     // RemoveAt([ # # # # # ], 4)
     //                    _
     public static T[] RemoveAt<T>(T[] array, int index) {
@@ -145,5 +146,13 @@ public static class ArrayUtils {
         }
 
         return -1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void ThrowIfOutOfBounds(Array array, int offset, int count) {
+        ArgumentNullException.ThrowIfNull(array);
+        long length = array.LongLength;
+        if ((uint) offset > (uint) length || (uint) count > (uint) (length - offset))
+            throw new ArgumentException($"Offset and count are out of bounds for the buffer: {offset} + {count}");
     }
 }

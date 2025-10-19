@@ -5,7 +5,7 @@ using PFXToolKitUI.Interactivity.Contexts;
 namespace PFXToolKitUI.Interactivity.Windowing;
 
 /// <summary>
-/// An interface that represents a top-level UI component like a window or popup.
+/// An interface that represents a top-level UI component like a window or overlay.
 /// </summary>
 public interface ITopLevel : IComponentManager {
     /// <summary>

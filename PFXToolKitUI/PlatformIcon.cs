@@ -39,4 +39,6 @@ public static class PlatformIcon {
                 new GeometryEntry("M215.604 416.3466c8.928 3.519 38.22 31.38 86.972 33.854 48.763 2.419 102.541-22.749 102.541-22.749s47.894-167.6 48.861-168.249c.33-.176-.604.484-.968.649-45.596 17.845-68.872 20.506-102.496 21.309-34.141.824-86.269-33.095-86.269-33.095L215.604 416.3466z", BrushManager.Instance.CreateConstant(SKColor.Parse("#FFB800"))),
                 new GeometryEntry("M321.51 50.7566l-48.995 167.017c0 0 39.803 39 95.867 35.768 56.098-3.267 86.532-20.945 93.976-23.442L511 61.5976c0 0-64.606 26.982-106.851 22.09C361.884 78.7946 335.594 60.8386 321.51 50.7566z", BrushManager.Instance.CreateConstant(SKColor.Parse("#7FBA00"))),
             ]);
+    
+    public static readonly Icon BlankIcon = IconManager.Instance.RegisterGeometryIcon(nameof(BlankIcon), []);
 }

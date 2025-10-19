@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 
@@ -31,9 +32,16 @@ public static class LogExceptionHelper {
     }
     
     public static async Task ShowMessageAndPrintToLogs(string caption, string message, Exception ex) {
-        AppLogger.Instance.WriteLine(caption + " - " + message);
-        AppLogger.Instance.WriteLine(ex.GetToString());
+        string text = ex.GetToString();
         
-        await IMessageDialogService.Instance.ShowMessage(caption, message + Environment.NewLine + Environment.NewLine + "See logs for more info");
+        AppLogger.Instance.WriteLine(caption + " - " + message);
+        AppLogger.Instance.WriteLine(text);
+
+        string message1 = message + Environment.NewLine + Environment.NewLine + "See logs for more info";
+        await IMessageDialogService.Instance.ShowMessage(new MessageBoxInfo(caption, message1) {
+            Buttons = MessageBoxButtons.OK,
+            Icon = MessageBoxIcons.ErrorIcon,
+            ExtraDetails = text
+        });
     }
 }

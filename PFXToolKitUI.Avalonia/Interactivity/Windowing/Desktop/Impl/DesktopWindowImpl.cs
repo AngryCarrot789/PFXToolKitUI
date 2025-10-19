@@ -209,20 +209,17 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             this.myNativeWindow.Height = d6;
     }
 
-    private static void OnSizingInfoPropertyChanged(WindowSizingInfo sender, string propertyName, double? oldValue, double? newValue) {
+    private static void OnSizingInfoPropertyChanged(WindowSizingInfo sender, string propertyName) {
         DesktopNativeWindow window = ((DesktopWindowImpl) sender.Window).myNativeWindow;
-        StyledProperty<double> property;
         switch (propertyName) {
-            case nameof(WindowSizingInfo.MinWidth):  property = Layoutable.MinWidthProperty; break;
-            case nameof(WindowSizingInfo.MinHeight): property = Layoutable.MinHeightProperty; break;
-            case nameof(WindowSizingInfo.MaxWidth):  property = Layoutable.MaxWidthProperty; break;
-            case nameof(WindowSizingInfo.MaxHeight): property = Layoutable.MaxHeightProperty; break;
-            case nameof(WindowSizingInfo.Width):     property = Layoutable.WidthProperty; break;
-            case nameof(WindowSizingInfo.Height):    property = Layoutable.HeightProperty; break;
+            case nameof(WindowSizingInfo.MinWidth):  window.SetValue(Layoutable.MinWidthProperty, sender.MinWidth ?? AvaloniaProperty.UnsetValue); break;
+            case nameof(WindowSizingInfo.MinHeight): window.SetValue(Layoutable.MinHeightProperty, sender.MinHeight ?? AvaloniaProperty.UnsetValue); break;
+            case nameof(WindowSizingInfo.MaxWidth):  window.SetValue(Layoutable.MaxWidthProperty, sender.MaxWidth ?? AvaloniaProperty.UnsetValue); break;
+            case nameof(WindowSizingInfo.MaxHeight): window.SetValue(Layoutable.MaxHeightProperty, sender.MaxHeight ?? AvaloniaProperty.UnsetValue); break;
+            case nameof(WindowSizingInfo.Width):     window.SetValue(Layoutable.WidthProperty, sender.Width ?? AvaloniaProperty.UnsetValue); break;
+            case nameof(WindowSizingInfo.Height):    window.SetValue(Layoutable.HeightProperty, sender.Height ?? AvaloniaProperty.UnsetValue); break;
             default:                                 return;
         }
-
-        window.SetValue(property, newValue ?? AvaloniaProperty.UnsetValue);
     }
 
     internal void OnNativeWindowOpening() {

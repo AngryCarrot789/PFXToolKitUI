@@ -164,12 +164,11 @@ public partial class UserInputDialogView : UserControl {
                 return;
             }
 
-            if (this.UserInputInfo?.DefaultButton is bool boolean) {
-                if (boolean) {
-                    this.PART_ConfirmButton.Focus();
-                }
-                else {
-                    this.PART_CancelButton.Focus();
+            if (newData != null) {
+                switch (newData.DefaultButton) {
+                    case UserInputInfo.ButtonType.None:    break;
+                    case UserInputInfo.ButtonType.Confirm: this.PART_ConfirmButton.Focus(); break;
+                    case UserInputInfo.ButtonType.Cancel:  this.PART_CancelButton.Focus(); break;
                 }
             }
         }, DispatchPriority.Loaded);
@@ -218,7 +217,7 @@ public partial class UserInputDialogView : UserControl {
 
         // Force update errors in case there's a delay between input change and errors updated
         this.DoUpdateAllErrors();
-        
+
         UserInputInfo? data = this.UserInputInfo;
         if (data == null) {
             if (this.OwnerWindow != null)
@@ -243,7 +242,7 @@ public partial class UserInputDialogView : UserControl {
     public static async Task<bool?> ShowDialogWindowAsync(UserInputInfo info, IDesktopWindow parentWindow) {
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(parentWindow);
-        
+
         UserInputDialogView view = new UserInputDialogView() {
             UserInputInfo = info
         };
@@ -281,11 +280,11 @@ public partial class UserInputDialogView : UserControl {
             }
         }
     }
-    
+
     public static async Task<bool?> ShowDialogOverlayAsync(UserInputInfo info, IOverlayWindowManager overlayManager, IOverlayWindow? parent) {
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(overlayManager);
-        
+
         UserInputDialogView view = new UserInputDialogView() {
             UserInputInfo = info
         };
@@ -300,7 +299,7 @@ public partial class UserInputDialogView : UserControl {
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue),
             CloseOnLostFocus = true
         });
-        
+
         overlayWindow.Control.AddHandler(KeyDownEvent, WindowOnKeyDown); // just in case on desktop
         overlayWindow.Opening += WindowOnWindowOpening;
         overlayWindow.Opened += WindowOnWindowOpened;
@@ -333,7 +332,7 @@ public partial class UserInputDialogView : UserControl {
         ITopLevel? parent = TopLevelContextUtils.GetTopLevelFromContext();
         return parent == null ? null : await ShowDialogWindowOrPopup(info, parent);
     }
-    
+
     public static async Task<bool?> ShowDialogWindowOrPopup(UserInputInfo info, ITopLevel parent) {
         ArgumentNullException.ThrowIfNull(info);
         ArgumentNullException.ThrowIfNull(parent);

@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 
 public delegate void WindowSizingInfoChangedEventHandler(WindowSizingInfo sender);
 
-public delegate void WindowSizeInfoDoubleValueChangedEventHandler(WindowSizingInfo sender, string propertyName, double? oldValue, double? newValue);
+public delegate void WindowSizeInfoDoubleValueChangedEventHandler(WindowSizingInfo sender, string propertyName);
 
 public delegate void WindowSizingInfoSizeToContentChangedEventHandler(WindowSizingInfo sender, SizeToContent oldSizeToContent, SizeToContent newSizeToContent);
 
@@ -49,32 +49,32 @@ public sealed class WindowSizingInfo {
 
     public double? MinWidth {
         get => this.minWidth;
-        set => PropertyHelper.SetAndRaiseINE(ref this.minWidth, value, this, static (t, o, n) => t.DoubleValueChanged?.Invoke(t, nameof(MinWidth), o, n));
+        set => PropertyHelper.SetAndRaise(ref this.minWidth, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MinWidth)));
     }
 
     public double? MinHeight {
         get => this.minHeight;
-        set => PropertyHelper.SetAndRaiseINE(ref this.minHeight, value, this, static (t, o, n) => t.DoubleValueChanged?.Invoke(t, nameof(MinHeight), o, n));
+        set => PropertyHelper.SetAndRaise(ref this.minHeight, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MinHeight)));
     }
 
     public double? MaxWidth {
         get => this.maxWidth;
-        set => PropertyHelper.SetAndRaiseINE(ref this.maxWidth, value, this, static (t, o, n) => t.DoubleValueChanged?.Invoke(t, nameof(MaxWidth), o, n));
+        set => PropertyHelper.SetAndRaise(ref this.maxWidth, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MaxWidth)));
     }
 
     public double? MaxHeight {
         get => this.maxHeight;
-        set => PropertyHelper.SetAndRaiseINE(ref this.maxHeight, value, this, static (t, o, n) => t.DoubleValueChanged?.Invoke(t, nameof(MaxHeight), o, n));
+        set => PropertyHelper.SetAndRaise(ref this.maxHeight, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MaxHeight)));
     }
 
     public double? Width {
         get => this.width;
-        set => PropertyHelper.SetAndRaiseINE(ref this.width, value, this, static (t, o, n) => t.DoubleValueChanged?.Invoke(t, nameof(Width), o, n));
+        set => PropertyHelper.SetAndRaise(ref this.width, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(Width)));
     }
 
     public double? Height {
         get => this.height;
-        set => PropertyHelper.SetAndRaiseINE(ref this.height, value, this, static (t, o, n) => t.DoubleValueChanged?.Invoke(t, nameof(Height), o, n));
+        set => PropertyHelper.SetAndRaise(ref this.height, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(Height)));
     }
 
     /// <summary>

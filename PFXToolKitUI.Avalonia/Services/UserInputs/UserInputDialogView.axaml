@@ -2,7 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-             mc:Ignorable="d" d:DesignWidth="800" d:DesignHeight="450"
+             mc:Ignorable="d" d:DesignWidth="400" d:DesignHeight="150"
              x:Class="PFXToolKitUI.Avalonia.Services.UserInputs.UserInputDialogView">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
         <StackPanel x:Name="PART_MessageContainer" DockPanel.Dock="Top" Margin="10,10,10,0"
@@ -13,35 +13,50 @@
         <Border DockPanel.Dock="Bottom"
                 Background="{DynamicResource ABrush.Tone4.Background.Static}"
                 BorderBrush="{DynamicResource ABrush.Tone4.Border.Static}"
-                BorderThickness="0,1,0,0"
-                Height="42">
-            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,0,10,0" Spacing="10">
-                <Button x:Name="PART_ConfirmButton" Content="OK" Width="72" Height="24" CornerRadius="3" FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}">
+                BorderThickness="0,1,0,0">
+            <StackPanel Orientation="Horizontal" 
+                        HorizontalAlignment="Right" 
+                        Margin="0,2,10,2" 
+                        Spacing="10" Height="34">
+                <StackPanel.Styles>
+                    <Style Selector="Button[IsPointerOver=False][IsFocused=False]">
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Padding" Value="8,1"/>
+                    </Style>
+                    <Style Selector="Button[IsPointerOver=True]">
+                        <Setter Property="BorderThickness" Value="3"/>
+                        <Setter Property="Padding" Value="6,1"/>
+                    </Style>
+                    <Style Selector="Button[IsFocused=True]">
+                        <Setter Property="BorderThickness" Value="3"/>
+                        <Setter Property="Padding" Value="6,1"/>
+                    </Style>
+                    <Style Selector="Button.NoOrCancel[IsPointerOver=True]">
+                        <Setter Property="Background" Value="Red"/>
+                        <Setter Property="BorderBrush" Value="Red"/>
+                    </Style>
+                    <Style Selector="Button.NoOrCancel[IsFocused=True]">
+                        <Setter Property="BorderBrush" Value="Red"/>
+                    </Style>
+                </StackPanel.Styles>
+                
+                <Button x:Name="PART_ConfirmButton" Content="OK" 
+                        MinWidth="72" Height="24" CornerRadius="3" 
+                        FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}">
                     <Button.Styles>
                         <Style Selector="Button[IsPointerOver=True]">
                             <Setter Property="Background" Value="{DynamicResource ABrush.AccentTone3.Background.Static}"/>
                             <Setter Property="BorderBrush" Value="{DynamicResource ABrush.AccentTone2.Background.Static}"/>
-                            <Setter Property="BorderThickness" Value="3"/>
                         </Style>
                         <Style Selector="Button[IsFocused=True]">
                             <Setter Property="BorderBrush" Value="{DynamicResource ABrush.AccentTone2.Background.Static}"/>
-                            <Setter Property="BorderThickness" Value="3"/>
                         </Style>
                     </Button.Styles>
                 </Button>
-                <Button x:Name="PART_CancelButton" Content="Cancel" Width="72" Height="24" CornerRadius="3" FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}">
-                    <Button.Styles>
-                        <Style Selector="Button[IsPointerOver=True]">
-                            <Setter Property="Background" Value="Red"/>
-                            <Setter Property="BorderBrush" Value="Red"/>
-                            <Setter Property="BorderThickness" Value="3"/>
-                        </Style>
-                        <Style Selector="Button[IsFocused=True]">
-                            <Setter Property="BorderBrush" Value="Red"/>
-                            <Setter Property="BorderThickness" Value="3"/>
-                        </Style>
-                    </Button.Styles>
-                </Button>
+                <Button x:Name="PART_CancelButton" Content="Cancel"
+                        MinWidth="72" Height="24" CornerRadius="3" 
+                        FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}"
+                        Classes="NoOrCancel"/>
             </StackPanel>
         </Border>
         <ContentControl x:Name="PART_InputFieldContent" Margin="10,5,10,10" Focusable="False"

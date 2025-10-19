@@ -192,4 +192,7 @@
 
     <SolidColorBrush x:Key="ABrush.PFX.StatusBar.Background" Color="{StaticResource ABrush.Tone5.Background.Static.Color}"/>
     <SolidColorBrush x:Key="ABrush.PFX.PropertyEditor.Separator.MouseOverBrush" Color="{DynamicResource ABrush.AccentTone2.Border.Static.Color}"/>
+    
+    <SolidColorBrush x:Key="Separator.WithDepth.First.Static.Background"      Color="{StaticResource ABrush.Tone6.Background.Static.Color}"/>
+    <SolidColorBrush x:Key="Separator.WithDepth.Second.Static.Background"     Color="{StaticResource ABrush.Tone1.Background.Static.Color}"/>
 </ResourceDictionary>

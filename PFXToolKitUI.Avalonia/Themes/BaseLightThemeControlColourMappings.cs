@@ -244,5 +244,7 @@ public static class BaseLightThemeControlColourMappings {
         ("Window.Static.Border",                             "ABrush.Tone5.Border.Static"),
         ("Window.Static.Foreground",                         "ABrush.Foreground.Static"),
         ("Window.Static.Title.Background",                   "ABrush.Tone6.Background.Static"),
+        ("Separator.WithDepth.First.Static.Background",      "ABrush.Tone6.Background.Static"),
+        ("Separator.WithDepth.Second.Static.Background",     "ABrush.Tone2.Background.Static"),
     ];
 }

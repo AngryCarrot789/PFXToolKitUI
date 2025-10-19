@@ -119,6 +119,11 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             : $"Unsupported top level '{parentTopLevel.GetType()}' type for message box");
         Console.WriteLine($"[{info.Caption}] {info.Header}");
         Console.WriteLine($"  {info.Message}");
+        if (!string.IsNullOrWhiteSpace(info.ExtraDetails)) {
+            Console.WriteLine("--- (extra details) ---");
+            Console.WriteLine(info.ExtraDetails);
+        }
+        
         return MessageBoxResult.None;
     }
 
