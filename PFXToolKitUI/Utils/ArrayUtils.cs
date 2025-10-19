@@ -151,8 +151,11 @@ public static class ArrayUtils {
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfOutOfBounds(Array array, int offset, int count) {
         ArgumentNullException.ThrowIfNull(array);
-        long length = array.LongLength;
-        if ((uint) offset > (uint) length || (uint) count > (uint) (length - offset))
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        
+        ulong length = (ulong) array.LongLength;
+        if ((uint) offset > length || (ulong) count > length - (uint) offset)
             throw new ArgumentException($"Offset and count are out of bounds for the buffer: {offset} + {count}");
     }
 }
