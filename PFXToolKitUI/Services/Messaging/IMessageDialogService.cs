@@ -29,11 +29,11 @@ namespace PFXToolKitUI.Services.Messaging;
 public interface IMessageDialogService {
     public static IMessageDialogService Instance {
         get {
-            if (!ApplicationPFX.TryGetComponent(out IMessageDialogService? service)) {
-                return EmptyMessageDialogService.Instance;
+            if (ApplicationPFX.TryGetComponent(out IMessageDialogService? service)) {
+                return service;
             }
 
-            return service;
+            return EmptyMessageDialogService.Instance;
         }
     }
 
@@ -52,7 +52,10 @@ public interface IMessageDialogService {
     /// A cancellation token that notifies the dialog to close, causing this method
     /// to produce <see cref="MessageBoxResult.None"/>
     /// </param>
-    /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
+    /// <returns>
+    /// The button that was clicked, or <see cref="MessageBoxResult.None"/> if the user closed the window,
+    /// or the OS closed it for some reason, or the <see cref="dialogCancellation"/> was cancelled
+    /// </returns>
     Task<MessageBoxResult> ShowMessage(string caption, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, Icon? icon = null, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
         return this.ShowMessage(new MessageBoxInfo(caption, message) {
             Buttons = buttons,
@@ -79,7 +82,10 @@ public interface IMessageDialogService {
     /// A cancellation token that notifies the dialog to close, causing this method
     /// to produce <see cref="MessageBoxResult.None"/>
     /// </param>
-    /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
+    /// <returns>
+    /// The button that was clicked, or <see cref="MessageBoxResult.None"/> if the user closed the window,
+    /// or the OS closed it for some reason, or the <see cref="dialogCancellation"/> was cancelled
+    /// </returns>
     Task<MessageBoxResult> ShowMessage(string caption, string header, string message, MessageBoxButtons buttons = MessageBoxButtons.OK, MessageBoxResult defaultButton = MessageBoxResult.None, Icon? icon = null, string? persistentDialogName = null, CancellationToken dialogCancellation = default) {
         return this.ShowMessage(new MessageBoxInfo(caption, header, message) {
             Buttons = buttons,
@@ -89,12 +95,15 @@ public interface IMessageDialogService {
             DialogCancellation = dialogCancellation
         });
     }
-    
+
     /// <summary>
     /// Shows a message box dialog that is dynamically customisable; 3 buttons, caption, header and message
     /// </summary>
     /// <param name="info">The data for the message box</param>
-    /// <returns>The button that was clicked or none if they clicked esc or something bad happened</returns>
+    /// <returns>
+    /// The button that was clicked, or <see cref="MessageBoxResult.None"/> if the user closed the window,
+    /// or the OS closed it for some reason, or the info's <see cref="MessageBoxInfo.DialogCancellation"/> was cancelled
+    /// </returns>
     Task<MessageBoxResult> ShowMessage(MessageBoxInfo info);
 }
 

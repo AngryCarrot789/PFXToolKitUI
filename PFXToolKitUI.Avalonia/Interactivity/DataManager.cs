@@ -207,19 +207,6 @@ public class DataManager {
     }
 
     /// <summary>
-    /// Clears the context data for the given element
-    /// </summary>
-    /// <param name="element">The element</param>
-    public static void ClearContextData(AvaloniaObject element, bool invalidate = true) {
-        if (element.IsSet(ContextDataProperty)) {
-            element.ClearValue(ContextDataProperty);
-            if (invalidate) {
-                InvalidateInheritedContext(element);
-            }
-        }
-    }
-
-    /// <summary>
     /// Gets or creates this control's context data
     /// </summary>
     /// <param name="element">The element to get the context data from</param>
@@ -243,8 +230,11 @@ public class DataManager {
     /// <param name="element">The element</param>
     /// <param name="inherited">The inherited context data</param>
     public static void SetDelegateContextData(AvaloniaObject element, IContextData inherited) {
-        IControlContextData? data = element.GetValue(ContextDataProperty);
-        element.SetValue(ContextDataProperty, data == null ? new InheritingControlContextData(element, inherited) : data.CreateInherited(inherited));
+        IControlContextData? oldData = element.GetValue(ContextDataProperty);
+        element.SetValue(ContextDataProperty, oldData == null 
+            ? new InheritingControlContextData(element, inherited) 
+            : new InheritingControlContextData(oldData, inherited));
+        
         InvalidateInheritedContext(element);
     }
 
@@ -252,10 +242,10 @@ public class DataManager {
     /// Makes the element's context data no longer inherit from anything. Only does anything if the current context is actually inheriting
     /// </summary>
     /// <param name="element">The element</param>
-    public static void ClearDelegateContextData(AvaloniaObject element) {
+    public static void ClearDelegateContextData(AvaloniaObject element, bool copyFromInheritedData = true) {
         IControlContextData? data = element.GetValue(ContextDataProperty);
         if (data is InheritingControlContextData inheriting) {
-            element.SetValue(ContextDataProperty, new ControlContextData(element, inheriting));
+            element.SetValue(ContextDataProperty, new ControlContextData(element, copyFromInheritedData ? inheriting : null));
             InvalidateInheritedContext(element);
         }
     }
@@ -263,7 +253,7 @@ public class DataManager {
     public static void SwapDelegateContextData(AvaloniaObject element, IContextData newDelegate) {
         IControlContextData? data = element.GetValue(ContextDataProperty);
         if (data is InheritingControlContextData inheriting) {
-            data = new ControlContextData(element, inheriting).CreateInherited(newDelegate);
+            data = new InheritingControlContextData(new ControlContextData(element, inheriting), newDelegate);
         }
         else {
             data = new InheritingControlContextData(element, newDelegate);

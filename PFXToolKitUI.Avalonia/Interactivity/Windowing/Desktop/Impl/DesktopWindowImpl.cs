@@ -178,6 +178,8 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         this.myNativeWindow.IsToolWindow = builder.IsToolWindow;
         this.myNativeWindow.ShowTitleBarIcon = builder.ShowTitleBarIcon;
         this.myNativeWindow.CanResize = builder.CanResize;
+        this.myNativeWindow.Builder_CanMinimize = builder.CanMinimize;
+        this.myNativeWindow.Builder_CanMaximize = builder.CanMaximize;
         this.myNativeWindow.SizeToContent = builder.SizeToContent;
         this.ApplyBuilderSizing(builder);
 

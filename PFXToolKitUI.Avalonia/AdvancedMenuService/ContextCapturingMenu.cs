@@ -54,7 +54,7 @@ public class ContextCapturingMenu : Menu {
         base.Close();
         if (wasOpen && this.lastFocus != null) {
             this.ClearValue(CapturedContextProperty);
-            DataManager.ClearContextData(this);
+            DataManager.ClearDelegateContextData(this, copyFromInheritedData: false);
             Debug.WriteLine("Cleared captured data context");
             if (this.lastFocus != this) {
                 this.lastFocus.Focus();

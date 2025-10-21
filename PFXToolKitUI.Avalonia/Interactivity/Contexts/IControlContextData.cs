@@ -33,11 +33,4 @@ public interface IControlContextData : IMutableContextData {
     /// Gets the control that owns this context data
     /// </summary>
     AvaloniaObject Owner { get; }
-
-    /// <summary>
-    /// Creates a new context data instance, which inherits data from the given context data. Inherited data is not prioritised 
-    /// </summary>
-    /// <param name="inherited">The data which is inherited</param>
-    /// <returns>A new context data instance</returns>
-    IControlContextData CreateInherited(IContextData inherited);
 }

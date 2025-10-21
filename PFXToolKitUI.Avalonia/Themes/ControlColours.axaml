@@ -167,8 +167,8 @@
     <SolidColorBrush x:Key="Expander.Pressed.Circle.Stroke"                   Color="{StaticResource ABrush.Tone5.Border.MouseDown.Color}"/>
     <SolidColorBrush x:Key="Expander.Disabled.Circle.Fill"                    Color="{StaticResource ABrush.Tone5.Background.Disabled.Color}"/>
     <SolidColorBrush x:Key="Expander.Disabled.Circle.Stroke"                  Color="{StaticResource ABrush.Tone5.Border.Disabled.Color}"/>
-    <SolidColorBrush x:Key="Expander.Static.Circle.Fill"                      Color="{StaticResource ABrush.Tone5.Background.Static.Color}"/>
-    <SolidColorBrush x:Key="Expander.Static.Circle.Stroke"                    Color="{StaticResource ABrush.Tone6.Border.Static.Color}"/>
+    <SolidColorBrush x:Key="Expander.Static.Circle.Fill"                      Color="{StaticResource ABrush.Tone6.Background.Static.Color}"/>
+    <SolidColorBrush x:Key="Expander.Static.Circle.Stroke"                    Color="{StaticResource ABrush.Tone7.Border.Static.Color}"/>
     <SolidColorBrush x:Key="Expander.Static.Arrow.Stroke"                     Color="{StaticResource ABrush.Glyph.Static.Color}"/>
     <SolidColorBrush x:Key="Expander.MouseOver.Arrow.Stroke"                  Color="{StaticResource ABrush.Glyph.MouseOver.Color}"/>
     <SolidColorBrush x:Key="Expander.Pressed.Arrow.Stroke"                    Color="{StaticResource ABrush.Glyph.MouseDown.Color}"/>

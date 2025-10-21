@@ -282,7 +282,7 @@ public class WindowCancelCloseEventArgs(IDesktopWindow window, WindowCloseReason
     public bool IsCancelled => this.isCancelled;
 
     /// <summary>
-    /// Sets <see cref="IsCancelled"/> to true
+    /// Sets <see cref="IsCancelled"/> to true, preventing the window from closing
     /// </summary>
     public void SetCancelled() => this.isCancelled = true;
 }

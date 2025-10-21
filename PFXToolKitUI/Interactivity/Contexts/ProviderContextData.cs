@@ -28,10 +28,6 @@ namespace PFXToolKitUI.Interactivity.Contexts;
 public class ProviderContextData : IContextData, IRandomAccessContextData {
     private Dictionary<string, ObjectProvider>? myData;
     
-#if DEBUG
-    public readonly string? DEBUG_STACKTRACE_CREATION = Debugger.IsAttached ? Environment.StackTrace : null;
-#endif
-
     public IEnumerable<KeyValuePair<string, object>> Entries {
         get {
             if (this.myData == null)

@@ -58,6 +58,9 @@ public sealed class DesktopNativeWindow : Window {
     private bool showTitleBarIcon;
     private bool isTitleBarVisible = true;
     private bool isToolWindow;
+    
+    internal bool Builder_CanMinimize;
+    internal bool Builder_CanMaximize;
 
     protected override Type StyleKeyOverride => typeof(DesktopNativeWindow);
 
@@ -262,20 +265,29 @@ public sealed class DesktopNativeWindow : Window {
     private const int TitleBarHeight_ToolWindow = 25;
     private const int TitleBarHeight_NormalWindow = 30;
     
-    private void UpdateTitleBarAndWindowChrome() {
+    internal void UpdateTitleBarAndWindowChrome() {
         if (this.PART_TitleBarPanel == null) {
             return;
         }
 
+        this.UpdateTitleBar();
+        this.UpdateChromeState();
+    }
+
+    internal void UpdateTitleBar() {
+        if (this.PART_TitleBarPanel == null) {
+            return;
+        }
+        
         this.ShowInTaskbar = !this.IsToolWindow;
-        this.CanMinimize = !this.IsToolWindow;
+        this.CanMinimize = !this.IsToolWindow && this.Builder_CanMinimize;
+        this.CanMaximize = !this.IsToolWindow && this.Builder_CanMaximize;
         if (!this.IsTitleBarVisible) {
             this.PART_TitleBarPanel.IsVisible = false;
         }
         else if (!this.IsToolWindow) {
             this.PART_TitleBarPanel.Height = TitleBarHeight_NormalWindow;
             this.PART_ButtonMinimize!.Width = ButtonWidth_NormalWindow;
-            this.PART_ButtonMinimize!.IsVisible = true;
             this.PART_ButtonRestore!.Width = ButtonWidth_NormalWindow;
             this.PART_ButtonMaximize!.Width = ButtonWidth_NormalWindow;
             this.PART_ButtonClose!.Width = ButtonWidth_NormalWindow;
@@ -283,16 +295,15 @@ public sealed class DesktopNativeWindow : Window {
         else {
             this.PART_TitleBarPanel.Height = TitleBarHeight_ToolWindow;
             this.PART_ButtonMinimize!.Width = ButtonWidth_ToolWindow;
-            this.PART_ButtonMinimize!.IsVisible = false;
             this.PART_ButtonRestore!.Width = ButtonWidth_ToolWindow;
             this.PART_ButtonMaximize!.Width = ButtonWidth_ToolWindow;
             this.PART_ButtonClose!.Width = ButtonWidth_ToolWindow;
         }
-
-        this.UpdateChromeState();
+        
+        this.UpdateTitleBarButtonVisibility();
     }
-    
-    private void UpdateChromeState() {
+
+    internal void UpdateChromeState() {
         if (!this.IsTitleBarVisible) {
             this.ExtendClientAreaTitleBarHeightHint = 0;
             this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.NoChrome;
@@ -341,7 +352,7 @@ public sealed class DesktopNativeWindow : Window {
             switch (this.WindowState) {
                 case WindowState.Normal:
                     this.PART_TitleBar!.IsVisible = true;
-                    this.PART_ButtonMaximize!.IsVisible = true;
+                    this.PART_ButtonMaximize!.IsVisible = this.CanMaximize;
                     this.PART_ButtonRestore!.IsVisible = false;
                     break;
                 case WindowState.Maximized:
@@ -369,6 +380,8 @@ public sealed class DesktopNativeWindow : Window {
                 default:                     this.PART_TitleBar!.IsVisible = false; break;
             }
         }
+
+        this.PART_ButtonMinimize!.IsVisible = this.CanMinimize;
     }
 
     private static void OnMinimizeButtonClick(object? sender, RoutedEventArgs e) {

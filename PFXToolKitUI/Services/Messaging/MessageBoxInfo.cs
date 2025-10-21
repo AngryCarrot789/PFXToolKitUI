@@ -30,15 +30,20 @@ public delegate void MessageBoxInfoIconChangedEventHandler(MessageBoxInfo sender
 /// A class for a basic message box class with a maximum of 3 buttons; Yes/OK, No and Cancel
 /// </summary>
 public class MessageBoxInfo {
-    private string? caption = "Alert";
+    public const string DefaultCaption = "Message";
+    public const string DefaultShowDetailsText = "Show details";
+    public const string DefaultHideDetailsText = "Hide details";
+    public const string DefaultAlwaysUseThisResultText = "Always use this option";
+
+    private string? caption = DefaultCaption;
     private string? header;
-    private string? message = "Message";
+    private string? message;
     private string? extraDetails;
     private string? yesOkText;
     private string? noText;
     private string? cancelText;
-    private string? showDetailsText = "Show details", hideDetailsText = "Hide details";
-    private string? alwaysUseThisResultText = "Always use this option";
+    private string? showDetailsText = DefaultShowDetailsText, hideDetailsText = DefaultHideDetailsText;
+    private string? alwaysUseThisResultText = DefaultAlwaysUseThisResultText;
     private bool alwaysUseThisResult;
     private bool alwaysUseThisResultUntilAppCloses = true;
     private MessageBoxButtons buttons;
@@ -132,7 +137,7 @@ public class MessageBoxInfo {
         get => this.showDetailsText;
         set => PropertyHelper.SetAndRaiseINE(ref this.showDetailsText, value, this, static t => t.ShowDetailsTextChanged?.Invoke(t));
     }
-    
+
     /// <summary>
     /// Gets or sets the text displayed in the toggle button when the extra details are visible
     /// </summary>
@@ -140,17 +145,17 @@ public class MessageBoxInfo {
         get => this.hideDetailsText;
         set => PropertyHelper.SetAndRaiseINE(ref this.hideDetailsText, value, this, static t => t.HideDetailsTextChanged?.Invoke(t));
     }
-    
+
     /// <summary>
     /// Gets the value of <see cref="YesOkText"/> if it has any non-whitespace chars, otherwise, returns a string based on <see cref="Buttons"/>
     /// </summary>
     public string ActualYesOkText => !string.IsNullOrWhiteSpace(this.YesOkText) ? this.YesOkText : GetDefaultYesOkText(this.buttons);
-    
+
     /// <summary>
     /// Gets the value of <see cref="NoText"/> if it has any non-whitespace chars, otherwise, <c>"No"</c>
     /// </summary>
     public string ActualNoText => !string.IsNullOrWhiteSpace(this.NoText) ? this.NoText : "No";
-    
+
     /// <summary>
     /// Gets the value of <see cref="CancelText"/> if it has any non-whitespace chars, otherwise, <c>"Cancel"</c>
     /// </summary>
@@ -237,6 +242,26 @@ public class MessageBoxInfo {
         this.caption = caption;
         this.header = header;
         this.message = message;
+    }
+
+    public MessageBoxInfo(MessageBoxTemplate template, CancellationToken dialogCancellation = default) : this() {
+        this.Caption = template.Caption;
+        this.Header = template.Header;
+        this.Message = template.Message;
+        this.ExtraDetails = template.ExtraDetails;
+        this.Buttons = template.Buttons;
+        this.Icon = template.Icon;
+        this.YesOkText = template.YesOkText;
+        this.NoText = template.NoText;
+        this.CancelText = template.CancelText;
+        this.ShowDetailsText = template.ShowDetailsText;
+        this.HideDetailsText = template.HideDetailsText;
+        this.PersistentDialogName = template.PersistentDialogName;
+        this.AlwaysUseThisResult = template.AlwaysUseThisResult;
+        this.AlwaysUseThisResultUntilAppCloses = template.AlwaysUseThisResultUntilAppCloses;
+        this.AlwaysUseThisResultText = template.AlwaysUseThisResultText;
+        this.DefaultButton = template.DefaultButton;
+        this.DialogCancellation = dialogCancellation;
     }
 
     private static string GetDefaultYesOkText(MessageBoxButtons buttons) {

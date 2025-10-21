@@ -60,7 +60,7 @@ public abstract class Command {
     protected Command(bool allowMultipleExecutions) {
         this.AllowMultipleExecutions = allowMultipleExecutions;
     }
-
+    
     // When focus changes, raise notification to update commands
     // Then fire ContextDataChanged for those command hooks or whatever, they can then disconnect
     // old event handlers and attach new ones

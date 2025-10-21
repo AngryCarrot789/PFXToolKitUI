@@ -17,15 +17,14 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Media;
+namespace PFXToolKitUI.Interactivity.Dialogs;
 
-namespace PFXToolKitUI.Avalonia.Themes.Attached;
-
-public static class ExpanderAttachedExtras {
-    public static readonly AttachedProperty<Thickness> ToggleButtonMarginProperty = AvaloniaProperty.RegisterAttached<Expander, Thickness>("ToggleButtonMargin", typeof(ExpanderAttachedExtras));
-    
-    public static void SetToggleButtonMargin(Expander obj, Thickness value) => obj.SetValue(ToggleButtonMarginProperty, value);
-    public static Thickness GetToggleButtonMargin(Expander obj) => obj.GetValue(ToggleButtonMarginProperty);
+/// <summary>
+/// A dialog operation whose underlying implementation uses a desktop window and therefore supports desktop features (such as activating the window)
+/// </summary>
+public interface IDesktopDialogOperation<T> : IDialogOperation<T> {
+    /// <summary>
+    /// Activates the 
+    /// </summary>
+    void Activate();
 }

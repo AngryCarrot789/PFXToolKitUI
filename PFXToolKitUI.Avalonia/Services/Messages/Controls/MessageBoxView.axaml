@@ -8,7 +8,7 @@
              xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
              xmlns:attached="clr-namespace:PFXToolKitUI.Avalonia.Themes.Attached"
              xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages.Controls"
-             mc:Ignorable="d" d:DesignWidth="600" d:DesignHeight="200">
+             mc:Ignorable="d">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
         <StackPanel x:Name="PART_HeaderPanel" DockPanel.Dock="Top" Margin="10,10,10,0">
             <StackPanel Orientation="Horizontal" Spacing="5">
@@ -26,84 +26,90 @@
                 Background="{DynamicResource ABrush.Tone4.Background.Static}"
                 BorderBrush="{DynamicResource ABrush.Tone4.Border.Static}"
                 BorderThickness="0,1,0,0">
-            <DockPanel>
-                <Expander x:Name="PART_Expander" 
-                          Background="Transparent" 
-                          BorderThickness="0" 
-                          DockPanel.Dock="Bottom" 
-                          Transitions="{x:Null}" 
-                          ContentTransition="{x:Null}"
-                          attached:ExpanderAttachedExtras.ToggleButtonMargin="2,0,0,3">
-                    <StackPanel>
-                        <Separator Theme="{StaticResource DepthSeparatorOnBrightBackgroundTheme}"/>
-                        <ae:TextEditor x:Name="PART_ExtraDetailsTextEditor" Padding="4"
-                                       Margin="0"
-                                       IsReadOnly="True"
-                                       Background="Transparent"
-                                       BorderThickness="0"/>
+            <Grid RowDefinitions="Auto,*">
+                <DockPanel>
+                    <StackPanel DockPanel.Dock="Left">
+                        <StackPanel x:Name="PART_AUTRPanel" Margin="4,2,0,0" VerticalAlignment="Center">
+                            <CheckBox x:Name="PART_AlwaysUseThisResult" Content="Always use this result"/>
+                            <CheckBox x:Name="PART_AUTR_UntilAppCloses" Content="(Until app closes)" tt:ToolTipEx.Tip="When un-selected, the result is saved after closing the program. The result can be reset in the preferences"/>
+                        </StackPanel>
+                        <Expander x:Name="PART_Expander"
+                                  Background="Transparent"
+                                  BorderThickness="0"
+                                  Transitions="{x:Null}"
+                                  ContentTransition="{x:Null}"
+                                  attached:ExpanderAttachedExtras.ToggleButtonMargin="2,2,0,2">
+                            <Expander.Styles>
+                                <Style Selector="Expander:expanded">
+                                    <Setter Property="Header" Value="{Binding Path=HideDetailsText, RelativeSource={RelativeSource AncestorType={x:Type local:MessageBoxView}}}"/>
+                                </Style>
+                                <Style Selector="Expander[IsExpanded=False]">
+                                    <Setter Property="Header" Value="{Binding Path=ShowDetailsText, RelativeSource={RelativeSource AncestorType={x:Type local:MessageBoxView}}}"/>
+                                </Style>
+                            </Expander.Styles>
+                        </Expander>
                     </StackPanel>
-                    <Expander.Styles>
-                        <Style Selector="Expander:expanded">
-                            <Setter Property="Header" Value="{Binding Path=HideDetailsText, RelativeSource={RelativeSource AncestorType={x:Type local:MessageBoxView}}}"/>
-                        </Style>
-                        <Style Selector="Expander[IsExpanded=False]">
-                            <Setter Property="Header" Value="{Binding Path=ShowDetailsText, RelativeSource={RelativeSource AncestorType={x:Type local:MessageBoxView}}}"/>
-                        </Style>
-                    </Expander.Styles>
-                </Expander>
-                <StackPanel x:Name="PART_AUTRPanel" DockPanel.Dock="Left" Margin="5,0,0,0" VerticalAlignment="Center">
-                    <CheckBox x:Name="PART_AlwaysUseThisResult" Content="Always use this result"/>
-                    <CheckBox x:Name="PART_AUTR_UntilAppCloses" Content="(Until app closes)" tt:ToolTipEx.Tip="When un-selected, the result is saved after closing the program. The result can be reset in the preferences"/>
-                </StackPanel>
-                <StackPanel DockPanel.Dock="Right" 
-                            Orientation="Horizontal" 
-                            Margin="0,2,10,2"
-                            Spacing="10" 
-                            Height="34">
-                    <StackPanel.Styles>
-                        <Style Selector="Button[IsPointerOver=False][IsFocused=False]">
-                            <Setter Property="BorderThickness" Value="1"/>
-                            <Setter Property="Padding" Value="8,1"/>
-                        </Style>
-                        <Style Selector="Button[IsPointerOver=True]">
-                            <Setter Property="BorderThickness" Value="3"/>
-                            <Setter Property="Padding" Value="6,1"/>
-                        </Style>
-                        <Style Selector="Button[IsFocused=True]">
-                            <Setter Property="BorderThickness" Value="3"/>
-                            <Setter Property="Padding" Value="6,1"/>
-                        </Style>
-                        <Style Selector="Button.NoOrCancel[IsPointerOver=True]">
-                            <Setter Property="Background" Value="Red"/>
-                            <Setter Property="BorderBrush" Value="Red"/>
-                        </Style>
-                        <Style Selector="Button.NoOrCancel[IsFocused=True]">
-                            <Setter Property="BorderBrush" Value="Red"/>
-                        </Style>
-                    </StackPanel.Styles>
-                    <Button x:Name="PART_YesOkButton" Content="Yes" MinWidth="72" Height="24" CornerRadius="3" 
-                            FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}">
-                        <Button.Styles>
+
+                    <StackPanel DockPanel.Dock="Top"
+                                Orientation="Horizontal"
+                                HorizontalAlignment="Right"
+                                Margin="10,2,10,2"
+                                Spacing="10"
+                                Height="34">
+                        <StackPanel.Styles>
+                            <Style Selector="Button[IsPointerOver=False][IsFocused=False]">
+                                <Setter Property="BorderThickness" Value="1"/>
+                                <Setter Property="Padding" Value="8,1"/>
+                            </Style>
                             <Style Selector="Button[IsPointerOver=True]">
-                                <Setter Property="Background" Value="{DynamicResource ABrush.AccentTone3.Background.Static}"/>
-                                <Setter Property="BorderBrush" Value="{DynamicResource ABrush.AccentTone2.Background.Static}"/>
+                                <Setter Property="BorderThickness" Value="3"/>
+                                <Setter Property="Padding" Value="6,1"/>
                             </Style>
                             <Style Selector="Button[IsFocused=True]">
-                                <Setter Property="BorderBrush" Value="{DynamicResource ABrush.AccentTone2.Background.Static}"/>
+                                <Setter Property="BorderThickness" Value="3"/>
+                                <Setter Property="Padding" Value="6,1"/>
                             </Style>
-                        </Button.Styles>
-                    </Button>
-                    <Button x:Name="PART_NoButton" Content="No" MinWidth="72" Height="24" CornerRadius="3" 
-                            FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}"
-                            Classes="NoOrCancel">
-                    </Button>
-                    <Button x:Name="PART_CancelButton" Content="Cancel" MinWidth="72" Height="24" CornerRadius="3" 
-                            FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}"
-                            Classes="NoOrCancel">
-                    </Button>
+                            <Style Selector="Button.NoOrCancel[IsPointerOver=True]">
+                                <Setter Property="Background" Value="Red"/>
+                                <Setter Property="BorderBrush" Value="Red"/>
+                            </Style>
+                            <Style Selector="Button.NoOrCancel[IsFocused=True]">
+                                <Setter Property="BorderBrush" Value="Red"/>
+                            </Style>
+                        </StackPanel.Styles>
+                        <Button x:Name="PART_YesOkButton" Content="Yes" MinWidth="72" Height="24" CornerRadius="3"
+                                FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}">
+                            <Button.Styles>
+                                <Style Selector="Button[IsPointerOver=True]">
+                                    <Setter Property="Background" Value="{DynamicResource ABrush.AccentTone3.Background.Static}"/>
+                                    <Setter Property="BorderBrush" Value="{DynamicResource ABrush.AccentTone2.Background.Static}"/>
+                                </Style>
+                                <Style Selector="Button[IsFocused=True]">
+                                    <Setter Property="BorderBrush" Value="{DynamicResource ABrush.AccentTone2.Background.Static}"/>
+                                </Style>
+                            </Button.Styles>
+                        </Button>
+                        <Button x:Name="PART_NoButton" Content="No" MinWidth="72" Height="24" CornerRadius="3"
+                                FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}"
+                                Classes="NoOrCancel">
+                        </Button>
+                        <Button x:Name="PART_CancelButton" Content="Cancel" MinWidth="72" Height="24" CornerRadius="3"
+                                FocusAdorner="{x:Null}" Theme="{StaticResource ButtonImplicitStyleSetters}"
+                                Classes="NoOrCancel">
+                        </Button>
+                    </StackPanel>
+                    <Border Background="Transparent" Padding="10,0"/>
+                </DockPanel>
+
+                <StackPanel Grid.Row="1" DockPanel.Dock="Bottom" IsVisible="{Binding ElementName=PART_Expander, Path=IsExpanded}">
+                    <Separator Theme="{StaticResource DepthSeparatorOnBrightBackgroundTheme}" Margin="0,1"/>
+                    <ae:TextEditor x:Name="PART_ExtraDetailsTextEditor" Padding="4"
+                                   Margin="0"
+                                   IsReadOnly="True"
+                                   Background="Transparent"
+                                   BorderThickness="0"/>
                 </StackPanel>
-                <Border Background="Transparent" Padding="10,0"/>
-            </DockPanel>
+            </Grid>
         </Border>
         <DockPanel HorizontalSpacing="5" Margin="8,0,0,0">
             <Panel DockPanel.Dock="Left">
@@ -112,12 +118,15 @@
                                  IsVisible="False"
                                  VerticalAlignment="Top" HorizontalAlignment="Center"/>
             </Panel>
-            <ScrollViewer HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden" Background="Transparent">
+            <ScrollViewer HorizontalScrollBarVisibility="Hidden" 
+                          VerticalScrollBarVisibility="Auto" 
+                          Background="Transparent">
                 <ae:TextEditor x:Name="PART_Message" Padding="0,5"
                                Margin="0,8,10,10"
                                IsReadOnly="True"
                                Background="Transparent"
-                               BorderThickness="0"/>
+                               BorderThickness="0"
+                               MinHeight="50"/>
             </ScrollViewer>
         </DockPanel>
     </DockPanel>

@@ -140,6 +140,8 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             MinWidth = 300, MinHeight = 100,
             MaxWidth = 800, MaxHeight = 800,
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
+            CanMinimize = false,
+            CanMaximize = false,
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
         });
 

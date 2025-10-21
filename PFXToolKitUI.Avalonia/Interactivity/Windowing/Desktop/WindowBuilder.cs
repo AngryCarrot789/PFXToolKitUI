@@ -100,6 +100,16 @@ public sealed class WindowBuilder {
     /// Gets or sets whether the window can be resized by the user
     /// </summary>
     public bool CanResize { get; set; } = true;
+    
+    /// <summary>
+    /// Gets or sets if the window can be minimized
+    /// </summary>
+    public bool CanMinimize { get; set; } = true;
+    
+    /// <summary>
+    /// Gets or sets if the window can be maximized
+    /// </summary>
+    public bool CanMaximize { get; set; } = true;
 
     /// <summary>
     /// Gets or sets the window's content

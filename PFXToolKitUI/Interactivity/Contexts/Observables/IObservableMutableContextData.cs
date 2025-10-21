@@ -17,15 +17,17 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using Avalonia;
-using Avalonia.Controls;
-using Avalonia.Media;
+namespace PFXToolKitUI.Interactivity.Contexts.Observables;
 
-namespace PFXToolKitUI.Avalonia.Themes.Attached;
+public delegate void ContextChangedEventHandler(IMutableContextData sender);
 
-public static class ExpanderAttachedExtras {
-    public static readonly AttachedProperty<Thickness> ToggleButtonMarginProperty = AvaloniaProperty.RegisterAttached<Expander, Thickness>("ToggleButtonMargin", typeof(ExpanderAttachedExtras));
-    
-    public static void SetToggleButtonMargin(Expander obj, Thickness value) => obj.SetValue(ToggleButtonMarginProperty, value);
-    public static Thickness GetToggleButtonMargin(Expander obj) => obj.GetValue(ToggleButtonMarginProperty);
+/// <summary>
+/// An interface for a mutable instance of <see cref="IContextData"/>
+/// </summary>
+public interface IObservableMutableContextData : IMutableContextData {
+    /// <summary>
+    /// Fired when one or more values are added to and/or removed from this mutable context
+    /// data object. If data is being batched, this event is fired once the batch counter reaches zero.
+    /// </summary>
+    event ContextChangedEventHandler ContextChanged;
 }

@@ -161,7 +161,7 @@ public class OverlayWindowCancelCloseEventArgs(IOverlayWindow dialog, WindowClos
     public bool IsCancelled => this.isCancelled;
 
     /// <summary>
-    /// Sets <see cref="IsCancelled"/> to true
+    /// Sets <see cref="IsCancelled"/> to true, preventing the overlay window from closing
     /// </summary>
     public void SetCancelled() => this.isCancelled = true;
 }
