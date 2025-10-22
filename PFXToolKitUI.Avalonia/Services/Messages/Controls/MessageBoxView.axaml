@@ -126,7 +126,7 @@
                                IsReadOnly="True"
                                Background="Transparent"
                                BorderThickness="0"
-                               MinHeight="50"/>
+                               MinHeight="40"/>
             </ScrollViewer>
         </DockPanel>
     </DockPanel>
