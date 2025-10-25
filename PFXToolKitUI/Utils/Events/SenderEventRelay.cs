@@ -65,7 +65,7 @@ public readonly struct SenderEventRelay {
             throw new Exception("Could not find event by name: " + senderType.Name + "." + eventName);
 
         Type handlerType = info.EventHandlerType ?? throw new Exception("Missing event handler type");
-        return new SenderEventRelay(info, EventUtils.CreateDelegateToInvokeActionFromEvent(handlerType, callback, senderType, state));
+        return new SenderEventRelay(info, EventReflectionUtils.CreateDelegateToInvokeActionFromEvent(handlerType, callback, senderType, state));
     }
 
     public void AddEventHandler(object model) => this.AddMethod.Invoke(model, this.HandlerDelegateInArray);

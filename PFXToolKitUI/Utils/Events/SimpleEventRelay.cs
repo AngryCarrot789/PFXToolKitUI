@@ -38,7 +38,7 @@ public readonly struct SimpleEventRelay {
         Type handlerType = info.EventHandlerType ?? throw new Exception("Missing event handler type");
 
         this.EventInfo = info;
-        this.HandlerDelegate = EventUtils.CreateDelegateToInvokeActionFromEvent(handlerType, callback);
+        this.HandlerDelegate = EventReflectionUtils.CreateDelegateToInvokeActionFromEvent(handlerType, callback);
     }
     
     public void AddEventHandler(object model) {

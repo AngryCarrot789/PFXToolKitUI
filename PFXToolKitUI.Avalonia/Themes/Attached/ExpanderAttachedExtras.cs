@@ -19,7 +19,6 @@
 
 using Avalonia;
 using Avalonia.Controls;
-using Avalonia.Media;
 
 namespace PFXToolKitUI.Avalonia.Themes.Attached;
 

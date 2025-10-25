@@ -22,7 +22,7 @@ using System.Reflection;
 
 namespace PFXToolKitUI.Utils.Events;
 
-public static class EventUtils {
+public static class EventReflectionUtils {
     internal static MethodInfo? InvokeActionMethod;
     internal static readonly Dictionary<Type, ParameterExpression[]> DelegateTypeToParameters = new Dictionary<Type, ParameterExpression[]>();
 
