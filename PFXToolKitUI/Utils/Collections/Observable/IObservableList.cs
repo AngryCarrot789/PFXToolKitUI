@@ -21,8 +21,6 @@ using System.Collections.Specialized;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
 
-public delegate void ObservableListBeforeAddedEventHandler<T>(IObservableList<T> list, int index, T item);
-
 public delegate void ObservableListBeforeRemovedEventHandler<T>(IObservableList<T> list, int index, int count);
 
 public delegate void ObservableListMultipleItemsEventHandler<T>(IObservableList<T> list, int index, IList<T> items);

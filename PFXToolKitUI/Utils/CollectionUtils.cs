@@ -158,9 +158,9 @@ public static class CollectionUtils {
         }
     }
 
-    public static void ForEach<T, TParam>(this IEnumerable<T> enumerable, TParam param, Action<T, TParam> consumer) {
+    public static void ForEach<T, TState>(this IEnumerable<T> enumerable, TState state, Action<T, TState> consumer) {
         foreach (T value in enumerable) {
-            consumer(value, param);
+            consumer(value, state);
         }
     }
 
