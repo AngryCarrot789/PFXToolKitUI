@@ -20,18 +20,18 @@
 namespace PFXToolKitUI.Utils;
 
 public static class MulticastUtils {
-    public static void AddProxy<TDelegate, TState>(ref int count, ref TDelegate? backingEvent, TDelegate value, TState state, Action<TState> attach) where TDelegate : Delegate? {
+    public static void AddProxy<TDelegate, TState>(ref int count, ref TDelegate? backingEvent, TDelegate handler, TState state, Action<TState> attachProxy) where TDelegate : Delegate? {
         if (Interlocked.Increment(ref count) == 1) {
-            attach(state);
+            attachProxy(state);
         }
 
-        Add(ref backingEvent, value);
+        Add(ref backingEvent, handler);
     }
 
-    public static void RemoveProxy<TDelegate, TState>(ref int count, ref TDelegate? backingEvent, TDelegate value, TState state, Action<TState> detach) where TDelegate : Delegate? {
-        Remove(ref backingEvent, value);
+    public static void RemoveProxy<TDelegate, TState>(ref int count, ref TDelegate? backingEvent, TDelegate handler, TState state, Action<TState> detachProxy) where TDelegate : Delegate? {
+        Remove(ref backingEvent, handler);
         if (Interlocked.Decrement(ref count) == 0) {
-            detach(state);
+            detachProxy(state);
         }
     }
 
