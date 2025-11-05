@@ -26,15 +26,28 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Dialogs;
 
+/// <summary>
+/// A helper class for creating <see cref="IDialogOperation{T}"/> instances
+/// </summary>
 public static class DialogOperations {
     /// <summary>
-    /// Creates a dialog operation object from a desktop window.
+    /// Creates a dialog operation object from a desktop window. The returned object will never prevent the window from closing.
+    /// However, if the caller cancels the window from closing when <see cref="IDialogOperation{T}.IsCompleted"/> becomes true,
+    /// then they will have to close the window manually. 
     /// </summary>
+    /// <param name="window">The window</param>
+    /// <typeparam name="T">The type of result value produced</typeparam>
+    /// <returns>The dialog operation</returns>
     public static IDesktopDialogOperation<T> WrapDesktopWindow<T>(IDesktopWindow window) => new DesktopDialogOperation<T>(window);
 
     /// <summary>
-    /// Creates a dialog operation object from an overlay window
+    /// Creates a dialog operation object from an overlay window. The returned object will never prevent the window from closing.
+    /// However, if the caller cancels the window from closing when <see cref="IDialogOperation{T}.IsCompleted"/> becomes true,
+    /// then they will have to close the window manually.
     /// </summary>
+    /// <param name="window">The overlay window</param>
+    /// <typeparam name="T">The type of result value produced</typeparam>
+    /// <returns>The dialog operation</returns>
     public static IDialogOperation<T> WrapOverlayWindow<T>(IOverlayWindow window) => new OverlayDialogOperation<T>(window);
 
     private class BaseDialogOperation<T> : IDialogOperation<T> {

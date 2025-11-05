@@ -25,9 +25,10 @@ namespace PFXToolKitUI.Interactivity.Dialogs;
 /// <summary>
 /// An interface that wraps a windowing mechanism to simplify dialog operations
 /// </summary>
+/// <typeparam name="T">The type of result value this operation produces</typeparam>
 public interface IDialogOperation<T> {
     /// <summary>
-    /// Gets the top level object that this dialog operation wraps
+    /// Gets the top level associated with this dialog operation 
     /// </summary>
     ITopLevel TopLevel { get; }
 
@@ -58,7 +59,7 @@ public interface IDialogOperation<T> {
     void SetCancelled();
     
     /// <summary>
-    /// Returns a task that becomes completed when <see cref="IsCompleted"/> is true.
+    /// Returns a task that becomes completed when <see cref="IsCompleted"/> becomes true.
     /// If <see cref="SetResult"/> is called, then the task contains the value passed to that method.
     /// However, if <see cref="SetCancelled"/> is called or the underlying mechanism causes the dialog
     /// to close without a result, this task will be cancelled.
@@ -67,5 +68,9 @@ public interface IDialogOperation<T> {
     /// A token to signal to stop waiting for the dialog result, causing the returned task to become cancelled immediately
     /// </param>
     /// <returns>A task that will either be completed with the result or cancelled</returns>
+    /// <exception cref="OperationCanceledException">
+    /// When awaited, thrown when the cancellation token became cancelled or <see cref="SetCancelled"/> was
+    /// called. The exception may contain the token that caused the cancellation.
+    /// </exception>
     Task<T> WaitForResultAsync(CancellationToken cancellationToken = default);
 }

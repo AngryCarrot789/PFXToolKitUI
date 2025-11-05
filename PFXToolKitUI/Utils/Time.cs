@@ -21,72 +21,27 @@ using System.Diagnostics;
 
 namespace PFXToolKitUI.Utils;
 
+/// <summary>
+/// Provides access to the system time
+/// </summary>
 public static class Time {
-    /// <summary>
-    /// This specifies how many ticks there are in 1 second. This usually never changes during
-    /// the app's runtime. Though, it might change for different operating systems
-    /// <para>
-    /// If one were to call <see cref="GetSystemTicks"/>, then <see cref="System.Threading.Thread.Sleep(int)"/>
-    /// for 1000ms, then <see cref="GetSystemTicks"/>, the interval will roughly equal to this field's value
-    /// </para>
-    /// </summary>
-    public static readonly long TICK_PER_SECOND = Stopwatch.Frequency; // windows = 10,000,000
-
-    public static readonly double TICK_PER_SECOND_D = Stopwatch.Frequency; // windows = 10,000,000.0d
-
-    /// <summary>
-    /// A multiplier for converting ticks to milliseconds
-    /// <para>
-    /// If one were to call <see cref="GetSystemMillis"/>, then <see cref="System.Threading.Thread.Sleep(int)"/>
-    /// for 1000ms, then <see cref="GetSystemMillis"/>, the interval will roughly equal to 1,000
-    /// </para>
-    /// </summary>
-    public static readonly long TICK_PER_MILLIS = TICK_PER_SECOND / 1000; // windows = 10,000
-
-    /// <summary>
-    /// A multiplier for converting ticks to milliseconds
-    /// <para>
-    /// If one were to call <see cref="GetSystemMillis"/>, then <see cref="System.Threading.Thread.Sleep(int)"/>
-    /// for 1000ms, then <see cref="GetSystemMillis"/>, the interval will roughly equal to 1,000
-    /// </para>
-    /// </summary>
-    public static readonly double TICK_PER_MILLIS_D = TICK_PER_SECOND_D / 1000.0d; // windows = 10,000.0d
-
-    /// <summary>
-    /// A multiplier for converting ticks to milliseconds
-    /// <para>
-    /// If one were to call <see cref="GetSystemNanos"/>, then <see cref="System.Threading.Thread.Sleep(int)"/>
-    /// for 1000ms, then <see cref="GetSystemNanos"/>, the interval will roughly equal to 1,000,000
-    /// </para>
-    /// </summary>
-    public static readonly long TICK_PER_NANOS = TICK_PER_SECOND / 1000000; // windows = 10
-
     /// <summary>
     /// Gets the system's performance counter ticks
     /// </summary>
-    public static long GetSystemTicks() {
-        return Stopwatch.GetTimestamp();
-    }
-
-    /// <summary>
-    /// Gets the system's performance counter ticks and converts them to nanoseconds
-    /// </summary>
-    public static long GetSystemNanos() {
-        return Stopwatch.GetTimestamp() / TICK_PER_NANOS;
-    }
+    public static long GetSystemTicks() => Stopwatch.GetTimestamp();
 
     /// <summary>
     /// Gets the system's performance counter ticks and converts them to milliseconds
     /// </summary>
     public static long GetSystemMillis() {
-        return Stopwatch.GetTimestamp() / TICK_PER_MILLIS;
+        return Stopwatch.GetTimestamp() / TimeSpan.TicksPerMillisecond;
     }
 
     /// <summary>
     /// Gets the system's performance counter ticks and converts them to milliseconds, as a double instead
     /// </summary>
     public static double GetSystemMillisD() {
-        return (double) Stopwatch.GetTimestamp() / TICK_PER_MILLIS_D;
+        return (double) Stopwatch.GetTimestamp() / TimeSpan.TicksPerMillisecond;
     }
 
     /// <summary>
@@ -94,7 +49,7 @@ public static class Time {
     /// </summary>
     /// <returns></returns>
     public static long GetSystemSeconds() {
-        return Stopwatch.GetTimestamp() / TICK_PER_SECOND;
+        return Stopwatch.GetTimestamp() / TimeSpan.TicksPerSecond;
     }
 
     /// <summary>
@@ -102,20 +57,21 @@ public static class Time {
     /// </summary>
     /// <returns></returns>
     public static double GetSystemSecondsD() {
-        return (double) Stopwatch.GetTimestamp() / TICK_PER_SECOND_D;
+        return (double) Stopwatch.GetTimestamp() / TimeSpan.TicksPerSecond;
     }
 
     /// <summary>
     /// Precision thread sleep timing
     /// <para>
-    /// This should, in most cases, guarantee the exact amount of time wanted, but it depends how tolerant <see cref="Thread.Sleep(int)"/> is
+    /// This should, in most cases, guarantee the exact amount of time wanted
     /// </para>
     /// </summary>
     /// <param name="delay">The exact number of milliseconds to sleep for</param>
-    public static void SleepFor(double delay) {
-        if (delay > 20.0d) {
+    /// <param name="osThreadPeriod">The maximum amount of milliseconds between os thread time slices</param>
+    public static void SleepFor(double delay, int osThreadPeriod = 18) {
+        if (delay >= osThreadPeriod) {
             // average windows thread-slice time == 15~ millis
-            Thread.Sleep((int) (delay - 20.0d));
+            Thread.Sleep((int) (delay - osThreadPeriod));
         }
 
         double nextTick = GetSystemMillisD() + delay;
@@ -127,14 +83,15 @@ public static class Time {
     /// <summary>
     /// Precision thread sleep timing
     /// <para>
-    /// This should, in most cases, guarantee the exact amount of time wanted, but it depends how tolerant <see cref="Thread.Sleep(int)"/> is
+    /// This should, in most cases, guarantee the exact amount of time wanted
     /// </para>
     /// </summary>
     /// <param name="delay">The exact number of milliseconds to sleep for</param>
-    public static void SleepFor(long delay) {
-        if (delay > 18) {
+    /// <param name="osThreadPeriod">The maximum amount of milliseconds between os thread time slices</param>
+    public static void SleepFor(long delay, int osThreadPeriod = 18) {
+        if (delay >= osThreadPeriod) {
             // average windows thread-slice time == 15~ millis
-            Thread.Sleep((int) (delay - 18));
+            Thread.Sleep((int) (delay - osThreadPeriod));
         }
 
         long nextTick = GetSystemMillis() + delay;
@@ -143,23 +100,22 @@ public static class Time {
         }
     }
 
-    public static double TicksToMillis(double ticks) => ticks / TICK_PER_MILLIS_D;
-
     /// <summary>
-    /// Asynchronous delay for a precision amount of time. When sleeping for anything less than 17 milliseconds,
+    /// Asynchronous delay for a precision amount of time. When sleeping for anything less than 18 milliseconds,
     /// <see cref="Task.Delay(int)"/> isn't used, therefore, this method is effectively blocking
     /// </summary>
-    /// <param name="delay"></param>
-    /// <param name="cancellation"></param>
-    public static async Task DelayForAsync(TimeSpan delay, CancellationToken cancellation) {
-        double nextTick = Stopwatch.GetTimestamp() / (double) TICK_PER_MILLIS + delay.TotalMilliseconds;
+    /// <param name="delay">The amount of time to delay for</param>
+    /// <param name="cancellation">Signals the delay to become cancelled</param>
+    /// <param name="osThreadPeriod">The maximum amount of milliseconds between os thread time slices</param>
+    public static async Task DelayForAsync(TimeSpan delay, CancellationToken cancellation, int osThreadPeriod = 18) {
+        double nextTick = Stopwatch.GetTimestamp() / (double) TimeSpan.TicksPerMillisecond + delay.TotalMilliseconds;
         int ms = (int) delay.TotalMilliseconds;
         
-        if (ms > 16) {
+        if (ms >= osThreadPeriod) {
             // average windows thread-slice time == 15~ millis
-            await Task.Delay(ms - 16, cancellation);
+            await Task.Delay(ms - osThreadPeriod, cancellation);
         }
-
+        
         double temp;
         while ((temp = GetSystemMillis() - nextTick) < -0.05 /* say 50 micros to do continuations to reschedule */) {
             // do nothing but loop for the rest of the duration, for precise timing

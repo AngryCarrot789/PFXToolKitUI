@@ -24,7 +24,7 @@ namespace PFXToolKitUI.Interactivity.Dialogs;
 /// </summary>
 public interface IDesktopDialogOperation<T> : IDialogOperation<T> {
     /// <summary>
-    /// Activates the 
+    /// Activates the window, which will bring it into the foreground
     /// </summary>
     void Activate();
 }
