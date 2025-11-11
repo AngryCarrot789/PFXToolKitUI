@@ -62,19 +62,23 @@ public class MultiBrushFlipFlopTimer : FlipFlopTimer {
             BrushExchange exchange = this.exchanges[i];
             IDisposable? lowBrushSubscription = null;
             IDisposable? highBrushSubscription = null;
-            if (exchange.LowBrush is DynamicAvaloniaColourBrush dLowBrush)
-                lowBrushSubscription = dLowBrush.Subscribe(obj => {
-                    Debug.Assert(this.subscriptions != null);
-                    if (!this.IsHigh)
-                        exchange.Target.SetValue(exchange.Property, obj);
-                });
+            if (exchange.LowBrush is DynamicAvaloniaColourBrush dLowBrush) {
+                lowBrushSubscription = dLowBrush.Subscribe(static (b, s) => {
+                    Tuple<MultiBrushFlipFlopTimer, BrushExchange> x = (Tuple<MultiBrushFlipFlopTimer, BrushExchange>) s!;
+                    Debug.Assert(x.Item1.subscriptions != null);
+                    if (!x.Item1.IsHigh)
+                        x.Item2.Target.SetValue(x.Item2.Property, b.CurrentBrush);
+                }, new Tuple<MultiBrushFlipFlopTimer, BrushExchange>(this, exchange));
+            }
 
-            if (exchange.HighBrush is DynamicAvaloniaColourBrush dHighBrush)
-                highBrushSubscription = dHighBrush.Subscribe(obj => {
-                    Debug.Assert(this.subscriptions != null);
-                    if (this.IsHigh)
-                        exchange.Target.SetValue(exchange.Property, obj);
-                });
+            if (exchange.HighBrush is DynamicAvaloniaColourBrush dHighBrush) {
+                highBrushSubscription = dHighBrush.Subscribe(static (b, s) => {
+                    Tuple<MultiBrushFlipFlopTimer, BrushExchange> x = (Tuple<MultiBrushFlipFlopTimer, BrushExchange>) s!;
+                    Debug.Assert(x.Item1.subscriptions != null);
+                    if (x.Item1.IsHigh)
+                        x.Item2.Target.SetValue(x.Item2.Property, b.CurrentBrush);
+                }, new Tuple<MultiBrushFlipFlopTimer, BrushExchange>(this, exchange));
+            }
 
             this.subscriptions[i] = (lowBrushSubscription, highBrushSubscription);
         }

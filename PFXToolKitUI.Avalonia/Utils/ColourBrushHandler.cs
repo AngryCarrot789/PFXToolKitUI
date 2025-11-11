@@ -86,7 +86,7 @@ public sealed class ColourBrushHandler {
     private void OnBrushOrTargetChanged() {
         if (this.myTarget != null && this.myBrush != null) {
             if (this.myBrushSubscription == null && this.myBrush is DynamicAvaloniaColourBrush dynBrush) {
-                this.myBrushSubscription = dynBrush.Subscribe(this.SetTargetBrushValue);
+                this.myBrushSubscription = dynBrush.Subscribe((b, s) => ((ColourBrushHandler) s!).SetTargetBrushValue(b.CurrentBrush), this);
             }
 
             this.SetTargetBrushValue(((AvaloniaColourBrush) this.myBrush).Brush);

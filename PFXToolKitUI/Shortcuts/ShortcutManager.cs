@@ -20,6 +20,7 @@
 using System.Diagnostics;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Shortcuts.Events;
 using PFXToolKitUI.Shortcuts.Inputs;
 using PFXToolKitUI.Shortcuts.Usage;
@@ -232,7 +233,7 @@ public abstract class ShortcutManager {
                 await CommandManager.Instance.Execute(command, context, shortcut, null);
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
             }
         }
     }

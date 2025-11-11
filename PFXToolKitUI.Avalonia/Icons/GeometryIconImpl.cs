@@ -141,9 +141,9 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
             this.entry = entry;
 
             if (entry.Fill is DynamicAvaloniaColourBrush b)
-                this.disposeFillBrush = b.Subscribe(this.OnFillBrushInvalidated, false);
+                this.disposeFillBrush = b.Subscribe(static (b, s) => ((GeometryEntryWrapper) s!).OnFillBrushInvalidated(b.CurrentBrush), this, invokeHandlerImmediately: false);
             if (entry.Stroke is DynamicAvaloniaColourBrush s)
-                this.disposeStrokeBrush = s.Subscribe(this.OnStrokeBrushInvalidated, false);
+                this.disposeStrokeBrush = s.Subscribe(static (b, s) => ((GeometryEntryWrapper) s!).OnStrokeBrushInvalidated(b.CurrentBrush), this, invokeHandlerImmediately: false);
 
             if (entry.Fill != null)
                 this.myFillBrush = ((AvaloniaColourBrush) entry.Fill).Brush;

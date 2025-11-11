@@ -25,6 +25,7 @@ using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Commands;
 
@@ -99,7 +100,7 @@ public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
                 await CommandManager.Instance.Execute(cmd, data, null, null);
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
             }
         }
     }

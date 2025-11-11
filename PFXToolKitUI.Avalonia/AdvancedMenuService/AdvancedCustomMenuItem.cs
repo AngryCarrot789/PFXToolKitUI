@@ -26,6 +26,7 @@ using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -128,7 +129,7 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
                 await entry.OnExecute(context);
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Internal Action Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Internal Action Error", exception);
             }
             finally {
                 this.IsExecuting = false;

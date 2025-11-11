@@ -56,10 +56,10 @@ public class BrushFlipFlopTimer : FlipFlopTimer {
         this.targetProperty = property;
 
         if (this.lowBrush is DynamicAvaloniaColourBrush dLowBrush)
-            this.lowBrushSubscription = dLowBrush.Subscribe(this.OnLowBrushValueChanged);
+            this.lowBrushSubscription = dLowBrush.Subscribe(static (b, s) => ((BrushFlipFlopTimer) s!).OnLowBrushValueChanged(b.CurrentBrush), this);
 
         if (this.highBrush is DynamicAvaloniaColourBrush dHighBrush)
-            this.highBrushSubscription = dHighBrush.Subscribe(this.OnHighBrushValueChanged);
+            this.highBrushSubscription = dHighBrush.Subscribe(static (b, s) => ((BrushFlipFlopTimer) s!).OnHighBrushValueChanged(b.CurrentBrush), this);
         
         this.UpdateBrush(this.IsHigh);
     }

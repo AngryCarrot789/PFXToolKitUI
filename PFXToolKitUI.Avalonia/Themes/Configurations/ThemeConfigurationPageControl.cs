@@ -193,7 +193,7 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
         if (themeKey != null) {
             this.activeThemeKey = themeKey;
             this.myActiveBrush = ((BrushManagerImpl) BrushManager.Instance).GetDynamicThemeBrush(themeKey);
-            this.disposeMyActiveBrush = this.myActiveBrush.Subscribe(this.OnColourChangedInTheme);
+            this.disposeMyActiveBrush = this.myActiveBrush.Subscribe(static (b, s) => ((ThemeConfigurationPageControl) s!).OnColourChangedInTheme(b.CurrentBrush), this);
             this.UpdateCanResetValue();
         }
         else {

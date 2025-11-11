@@ -26,21 +26,34 @@ namespace PFXToolKitUI.Utils;
 /// A helper class for handling exceptions thrown from a command
 /// </summary>
 public static class LogExceptionHelper {
-    public static Task ShowMessageAndPrintToLogs(string caption, Exception ex) {
-        return ShowMessageAndPrintToLogs(caption, "An exception occurred while executing command", ex);
+    public static Task ShowExceptionMessage(this IMessageDialogService service, string caption, Exception exception, bool printToLogger = true) {
+        return service.ShowExceptionMessage(caption, "An exception occurred while executing command", exception, printToLogger);
     }
-    
-    public static async Task ShowMessageAndPrintToLogs(string caption, string message, Exception ex) {
-        string text = ex.GetToString();
-        
-        AppLogger.Instance.WriteLine(caption + " - " + message);
-        AppLogger.Instance.WriteLine(text);
 
-        string message1 = message + Environment.NewLine + Environment.NewLine + "See logs for more info";
-        await IMessageDialogService.Instance.ShowMessage(new MessageBoxInfo(caption, message1) {
+    /// <summary>
+    /// Shows a message box with the caption and message, and specifies the exception as the extra details. Optionally prints the exception to the app logger
+    /// </summary>
+    /// <param name="service">Message dialog service</param>
+    /// <param name="caption">Dialog caption</param>
+    /// <param name="message">Dialog message</param>
+    /// <param name="exception">Exception</param>
+    /// <param name="printToLogger">True to print the exception to the logger too</param>
+    public static async Task ShowExceptionMessage(this IMessageDialogService service, string caption, string message, Exception exception, bool printToLogger = true) {
+        string exceptionText = exception.GetToString();
+
+        if (printToLogger) {
+            AppLogger.Instance.WriteLine(caption + " - " + message);
+            AppLogger.Instance.WriteLine(exceptionText);
+        }
+
+        string msgBody = message;
+        if (printToLogger)
+            msgBody += Environment.NewLine + Environment.NewLine + "See logs for more info";
+        
+        await service.ShowMessage(new MessageBoxInfo(caption, msgBody) {
             Buttons = MessageBoxButtons.OK,
             Icon = MessageBoxIcons.ErrorIcon,
-            ExtraDetails = text
+            ExtraDetails = exceptionText
         });
     }
 }

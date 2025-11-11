@@ -20,6 +20,7 @@
 using System.Diagnostics;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Notifications;
@@ -58,7 +59,7 @@ public class CommandNotificationAction : NotificationAction {
                 await CommandManager.Instance.Execute(this.CommandId, this.ContextData ?? EmptyContext.Instance, null, null);
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
             }
         }
     }

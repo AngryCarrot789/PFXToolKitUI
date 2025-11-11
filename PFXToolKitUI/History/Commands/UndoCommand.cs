@@ -37,7 +37,7 @@ public class UndoCommand : BaseHistoryCommand {
                 await manager.UndoAsync();
             }
             catch (InvalidHistoryException ex) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Failed to undo", ex.Message, ex);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Failed to undo", ex.Message, ex);
             }
         }
     }

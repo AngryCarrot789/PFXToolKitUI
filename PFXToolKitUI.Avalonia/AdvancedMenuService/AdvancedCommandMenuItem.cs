@@ -26,6 +26,7 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -130,7 +131,7 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
                 await CommandManager.Instance.Execute(command, context, null, sourceMenu);
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
             }
             finally {
                 this.IsExecuting = false;

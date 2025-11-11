@@ -25,17 +25,6 @@ using System.Diagnostics;
 namespace PFXToolKitUI.Utils.Events;
 
 /// <summary>
-/// An interface implemented by an object that can receive events when use in conjunction with <see cref="EventRelayStorage"/>
-/// </summary>
-public interface IRelayEventHandler {
-    /// <summary>
-    /// Invoked when the sender's event is invoked
-    /// </summary>
-    /// <param name="sender">The object whose event was invoked</param>
-    void OnEvent(object sender);
-}
-
-/// <summary>
 /// Used as storage space for cached event relays and manages all object instances that may cause event to be fired.
 /// The default is <see cref="UIStorage"/>. Whether a new instance is needed is completely empirical
 /// </summary>
@@ -132,4 +121,15 @@ public sealed class EventRelayStorage {
             }
         }
     }
+}
+
+/// <summary>
+/// An interface implemented by an object that can receive events when use in conjunction with <see cref="EventRelayStorage"/>
+/// </summary>
+public interface IRelayEventHandler {
+    /// <summary>
+    /// Invoked when the sender's event is invoked
+    /// </summary>
+    /// <param name="sender">The object whose event was invoked</param>
+    void OnEvent(object sender);
 }

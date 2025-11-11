@@ -53,7 +53,7 @@ public class BrushManagerImpl : BrushManager {
         }
 
         // Since these brushes can be quite expensive to listen for changes, we want to try and always cache them
-        DynamicAvaloniaColourBrush brush = new DynamicAvaloniaColourBrush(themeKey);
+        DynamicAvaloniaColourBrush brush = new DynamicAvaloniaColourBrush(this, themeKey);
         this.dynamicBrushes[themeKey] = brush;
         return brush;
     }

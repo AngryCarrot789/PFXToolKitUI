@@ -43,7 +43,7 @@ public delegate void ActivityManagerPrimaryActivityChangedEventHandler(ActivityM
 /// // the ActivityManager, which is why we use it in a using block
 /// using CancellationTokenSource cts = new CancellationTokenSource();
 /// Result<byte[]> bytes = await ActivityManager.Instance.RunTask(async () => {
-///     ActivityTask task = ActivityManager.Instance.CurrentTask;
+///     ActivityTask task = ActivityTask.Current;
 ///     IActivityProgress progress = task.Progress;
 ///     progress.Caption = "Produce data";
 ///     {
@@ -73,7 +73,7 @@ public sealed class ActivityManager : IDisposable {
     /// Gets the application's main activity manager
     /// </summary>
     public static ActivityManager Instance => ApplicationPFX.GetComponent<ActivityManager>();
-
+    
     private readonly AsyncLocal<ActivityTask?> localActivities;
     private readonly List<ActivityTask> activeTasks; // all tasks
     private readonly ObservableList<ActivityTask> backgroundTasks; // tasks not present in a dialog
@@ -88,6 +88,12 @@ public sealed class ActivityManager : IDisposable {
     /// not present in a foreground dialog. This list is only modified on the main thread
     /// </summary>
     public ReadOnlyObservableList<ActivityTask> BackgroundTasks { get; }
+    
+    /// <summary>
+    /// Gets the activity running in the current asynchronous control flow
+    /// </summary>
+    /// <exception cref="InvalidOperationException">No task in the current control flow</exception>
+    public ActivityTask CurrentTask => this.localActivities.Value ?? throw new InvalidOperationException("No task running on this thread");
 
     /// <summary>
     /// Fired when a task is started. This is fired on the main thread
@@ -213,13 +219,7 @@ public sealed class ActivityManager : IDisposable {
     public bool TryGetCurrentTask([NotNullWhen(true)] out ActivityTask? task) {
         return (task = this.localActivities.Value) != null;
     }
-
-    /// <summary>
-    /// Gets the activity running in the current asynchronous control flow
-    /// </summary>
-    /// <exception cref="InvalidOperationException">No task in the current control flow</exception>
-    public ActivityTask CurrentTask => this.localActivities.Value ?? throw new InvalidOperationException("No task running on this thread");
-
+    
     /// <summary>
     /// Gets either the current task's activity progress tracker, or the <see cref="EmptyActivityProgress"/> instance
     /// </summary>

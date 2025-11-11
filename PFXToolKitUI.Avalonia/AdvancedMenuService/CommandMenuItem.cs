@@ -28,6 +28,7 @@ using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -166,7 +167,7 @@ public class CommandMenuItem : MenuItem {
                 await CommandManager.Instance.Execute(cmdId, context, null, sourceMenu);
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
             }
             finally {
                 this.IsExecuting = false;

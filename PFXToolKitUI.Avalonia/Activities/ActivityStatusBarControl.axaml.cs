@@ -28,6 +28,7 @@ using PFXToolKitUI.Activities.Pausable;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
@@ -170,7 +171,7 @@ public partial class ActivityStatusBarControl : UserControl {
                     await CommandManager.Instance.Execute("commands.pfx.ShowActivityListCommand", DataManager.GetFullContextData(this), null, null);
                 }
                 catch (Exception exception) when (!Debugger.IsAttached) {
-                    await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                    await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
                 }
                 finally {
                     this.isExecutingShowActivityListCmd = false;

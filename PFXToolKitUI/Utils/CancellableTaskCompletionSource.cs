@@ -22,6 +22,11 @@ using System.Diagnostics;
 namespace PFXToolKitUI.Utils;
 
 // A helper class deriving TCS that allows an external cancellation signal to mark it as completed
+/// <summary>
+/// A special <see cref="TaskCompletionSource"/> that takes a cancellation token that, when cancelled,
+/// calls <see cref="TaskCompletionSource.TrySetResult"/> or <see cref="TaskCompletionSource.TrySetCanceled(CancellationToken)"/>
+/// (based on the boolean passed in the constructor)
+/// </summary>
 public sealed class CancellableTaskCompletionSource : TaskCompletionSource, IDisposable {
     private static readonly Action<object?> s_HandleOnTokenCancelled = static t => ((CancellableTaskCompletionSource) t!).OnTokenCancelled();
     

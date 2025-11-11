@@ -21,6 +21,7 @@ using System.Diagnostics;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.CommandUsages;
@@ -61,7 +62,7 @@ public class SimpleButtonCommandUsage : CommandUsage {
                 await task;
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
             }
             finally {
                 this.UpdateCanExecute();

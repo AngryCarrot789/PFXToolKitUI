@@ -38,6 +38,7 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Notifications;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
@@ -327,7 +328,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
                         // ignored
                     }
                     catch (Exception exception) when (!Debugger.IsAttached) {
-                        await LogExceptionHelper.ShowMessageAndPrintToLogs("Notification Action Error", exception);
+                        await IMessageDialogService.Instance.ShowExceptionMessage("Notification Action Error", exception);
                     }
                 }
             }

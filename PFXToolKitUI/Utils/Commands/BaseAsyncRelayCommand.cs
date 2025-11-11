@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Utils.Commands;
 
@@ -145,7 +146,7 @@ public abstract class BaseAsyncRelayCommand : BaseRelayCommand, IAsyncRelayComma
             // ignored
         }
         catch (Exception exception) when (!Debugger.IsAttached) {
-            await LogExceptionHelper.ShowMessageAndPrintToLogs("Application Action Error", exception);
+            await IMessageDialogService.Instance.ShowExceptionMessage("Application Action Error", exception);
         }
         finally {
             this.isRunningState = 0;

@@ -142,7 +142,7 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         if (this.IsReallyVisible) {
             if (this.myDynamicBrush != null) {
                 DisposableUtils.Dispose(ref this.myDynamicBrushSubscription);
-                this.myDynamicBrushSubscription = this.myDynamicBrush.Subscribe(this.OnDynamicBrushChanged);
+                this.myDynamicBrushSubscription = this.myDynamicBrush.Subscribe(static (b, s) => ((ThemeConfigTreeViewItem) s!).OnDynamicBrushChanged(b.CurrentBrush), this);
             }
         }
         else {

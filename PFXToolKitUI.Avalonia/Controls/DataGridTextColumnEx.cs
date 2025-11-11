@@ -26,6 +26,7 @@ using Avalonia.Styling;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Controls;
@@ -96,7 +97,7 @@ public class DataGridTextColumnEx : DataGridTextColumn {
                 await CommandManager.Instance.Execute(command, DataManager.GetFullContextData(cell), null, null);
             }
             catch (Exception exception) when (!Debugger.IsAttached) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
             }
         }
     }

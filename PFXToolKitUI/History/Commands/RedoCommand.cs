@@ -37,7 +37,7 @@ public class RedoCommand : BaseHistoryCommand {
                 await manager.RedoAsync();
             }
             catch (InvalidHistoryException ex) {
-                await LogExceptionHelper.ShowMessageAndPrintToLogs("Failed to redo", ex.Message, ex);
+                await IMessageDialogService.Instance.ShowExceptionMessage("Failed to redo", ex.Message, ex);
             }
         }
     }

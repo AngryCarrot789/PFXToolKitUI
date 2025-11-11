@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Windows.Input;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.Utils.Commands;
 
@@ -99,7 +100,7 @@ public class SimpleCommandWrapper : BaseAsyncRelayCommand {
             await this.manager.Execute(command, ctx, null, null);
         }
         catch (Exception exception) when (!Debugger.IsAttached) {
-            await LogExceptionHelper.ShowMessageAndPrintToLogs("Command Error", exception);
+            await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
         }
     }
 }
