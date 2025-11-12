@@ -32,9 +32,9 @@ namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
 /// </summary>
 /// <typeparam name="TModel">The type of model</typeparam>
 public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TModel : class {
-    public delegate void EscapePressedEventHandler(BaseTextBoxBinder<TModel> sender, string oldText);
+    public delegate void ValueCancelledEventHandler(BaseTextBoxBinder<TModel> sender, ValueCancelledEventArgs e);
 
-    public delegate void ValueConfirmedEventHandler(BaseTextBoxBinder<TModel> sender, string oldText);
+    public delegate void ValueConfirmedEventHandler(BaseTextBoxBinder<TModel> sender, ValueConfirmedEventArgs e);
 
     private readonly Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate;
     private bool isChangingModel, isResettingTextToModel;
@@ -72,12 +72,12 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     }
 
     /// <summary>
-    /// Fired when the user presses the escape button. Before being fired, focus 
+    /// Fired when the user presses the escape button or the text box loses focus when <see cref="CanApplyValueOnLostFocus"/> is false.
     /// </summary>
-    public event EscapePressedEventHandler? EscapePressed;
+    public event ValueCancelledEventHandler? ValueCancelled;
 
     /// <summary>
-    /// Fired when the user confirms their value, either by pressing ENTER or when the text box loses focus when <see cref="CanApplyValueOnLostFocus"/>
+    /// Fired when the user confirms their value, either by pressing ENTER or when the text box loses focus when <see cref="CanApplyValueOnLostFocus"/> is true.
     /// </summary>
     public event ValueConfirmedEventHandler? ValueConfirmed;
 
@@ -163,13 +163,20 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         //   will focus that and cause the other TB to lose focus, and now there's two message boxes
         // - Then, closing one dialog re-focuses a TB but user has to click the other
         //   message box to close it, causing loss of focus and showing another message box.
-        if (this.CanApplyValueOnLostFocus && this.HasUserModifiedValueSinceUpdate) {
+        bool hasValueChangedSinceUpdate = this.HasUserModifiedValueSinceUpdate;
+        if (this.CanApplyValueOnLostFocus && hasValueChangedSinceUpdate) {
             if (!this.isChangingModel) {
                 ApplicationPFX.Instance.Dispatcher.Post(this.HandleUpdateModelFromText, DispatchPriority.Input);
             }
         }
         else {
+            string? text = hasValueChangedSinceUpdate ? ((TextBox) sender!).Text : null;
             this.UpdateControl();
+
+            // Only fire when the user has actually changed the value
+            if (hasValueChangedSinceUpdate) {
+                this.ValueCancelled?.Invoke(this, new ValueCancelledEventArgs(text ?? ""));
+            }
         }
     }
 
@@ -187,7 +194,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 // - Then, user clicks away to do something else, lost focus is called and shows the dialog again, and it loops
 
                 textBox.LostFocus -= this.OnLostFocus;
-                string oldText = textBox.Text ?? "";
+                string text = textBox.Text ?? "";
                 bool canMoveFocus = this.CanMoveFocusUpwardsOnEscape && !this.HasUserModifiedValueSinceUpdate;
 
                 this.UpdateControl(); // sets IsValueDifferent to false
@@ -207,7 +214,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 this.isResettingTextToModel = false;
 
                 // invoke callback to allow user code to maybe reverse some changes
-                this.EscapePressed?.Invoke(this, oldText);
+                this.ValueCancelled?.Invoke(this, new ValueCancelledEventArgs(text));
 
                 e.Handled = true;
                 break;
@@ -262,7 +269,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
             if (!success && this.FocusTextBoxOnError)
                 await ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => BugFix.TextBox_FocusSelectAll(textBox));
 
-            this.ValueConfirmed?.Invoke(this, text);
+            this.ValueConfirmed?.Invoke(this, new ValueConfirmedEventArgs(text, success));
         }
         finally {
             this.isChangingModel = false;
@@ -274,4 +281,23 @@ internal static class TextBoxBinderUtils {
     public static readonly AttachedProperty<bool> IsAttachedToBTTBProperty = AvaloniaProperty.RegisterAttached<TextBox, bool>("IsAttachedToBTTB", typeof(TextBoxBinderUtils));
     public static void SetIsAttachedToBTTB(TextBox obj, bool value) => obj.SetValue(IsAttachedToBTTBProperty, value);
     public static bool GetIsAttachedToBTTB(TextBox obj) => obj.GetValue(IsAttachedToBTTBProperty);
+}
+
+public readonly struct ValueCancelledEventArgs(string text) {
+    /// <summary>
+    /// Gets the text that was in the text box when the user pressed escape
+    /// </summary>
+    public string Text { get; } = text;
+}
+
+public readonly struct ValueConfirmedEventArgs(string text, bool isSuccess) {
+    /// <summary>
+    /// Gets the text that was in the text box when the user confirmed the value (the same value passed to the parse and update callback)
+    /// </summary>
+    public string Text { get; } = text;
+
+    /// <summary>
+    /// Gets whether the value confirmation was successful and resulted in the model being updated (the parse and update callback for the binder returned true)
+    /// </summary>
+    public bool IsSuccess { get; } = isSuccess;
 }
