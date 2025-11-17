@@ -18,6 +18,7 @@
 // 
 
 using System.Collections.Specialized;
+using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
 
@@ -112,5 +113,5 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// </summary>
     /// <param name="items">The items to remove</param>
     /// <returns>The indices removed</returns>
-    LongRangeUnion RemoveRange(IEnumerable<T> items);
+    IntegerSet<int> RemoveRange(IEnumerable<T> items);
 }

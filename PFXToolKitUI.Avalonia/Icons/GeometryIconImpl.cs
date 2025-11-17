@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using Avalonia;
 using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
@@ -33,7 +34,7 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
         get {
             if (this.myGeometryEntryRefs == null) {
                 this.myGeometryEntryRefs = this.myGeometryEntries.Select(e => new GeometryEntryWrapper(this, e)).ToArray();
-                AppLogger.Instance.WriteLine($"[Icon] Generated SVG for '{this.Name}'. Bounds = {this.GetBounds()}");
+                Debug.WriteLine($"[Icon] Generated SVG for '{this.Name}'. Bounds = {this.GetBounds()}");
             }
 
             return this.myGeometryEntryRefs;

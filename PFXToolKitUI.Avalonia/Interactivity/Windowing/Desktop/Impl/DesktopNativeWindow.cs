@@ -313,9 +313,11 @@ public sealed class DesktopNativeWindow : Window {
         else {
             this.SystemDecorations = SystemDecorations.Full;
             this.ExtendClientAreaToDecorationsHint = true;
-            this.ExtendClientAreaChromeHints = IsUsingLLdxgi
-                ? ExtendClientAreaChromeHints.PreferSystemChrome
-                : ExtendClientAreaChromeHints.SystemChrome;
+            // this.ExtendClientAreaChromeHints = IsUsingLLdxgi
+            //     ? ExtendClientAreaChromeHints.PreferSystemChrome
+            //     : ExtendClientAreaChromeHints.SystemChrome;
+            
+            this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.PreferSystemChrome;
             
             this.ExtendClientAreaTitleBarHeightHint = this.IsToolWindow ? TitleBarHeight_ToolWindow : TitleBarHeight_NormalWindow;
         }

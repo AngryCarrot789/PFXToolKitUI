@@ -23,7 +23,6 @@ using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Skia;
-using Avalonia.Threading;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Gradients;
@@ -241,8 +240,6 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
     private readonly Application App = Application.Current ?? throw new Exception("No app");
     private readonly BrushManagerImpl brushManager;
     private List<UsageToken>? handlers;
-    private EventHandler? handleThemeChanged;
-    private EventHandler<ResourcesChangedEventArgs>? handleResourcesChanged;
 
     public string ThemeKey { get; }
 
@@ -304,10 +301,6 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
         return token;
     }
 
-    private void OnThemeChanged(object? sender, EventArgs e) {
-        this.FindBrush();
-    }
-
     private void Unsubscribe(UsageToken token) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
         if (this.ReferenceCount == 0) {
@@ -323,9 +316,10 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
         }
     }
 
-    private void OnResourcesChanged(object? sender, ResourcesChangedEventArgs e) => this.FindBrush();
-
-    private void FindBrush() {
+    /// <summary>
+    /// Fetches our brush value from the application resources, and updates <see cref="CurrentBrush"/> accordingly (if it has changed) and invokes any listeners
+    /// </summary>
+    internal void ReevaluateBrush() {
         if (this.App.TryGetResource(this.ThemeKey, this.App.ActualThemeVariant, out object? value)) {
             switch (value) {
                 case IBrush brush: {
@@ -368,9 +362,8 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
     }
 
     private void HookResourceAndFindBrush() {
-        this.App.ActualThemeVariantChanged += (this.handleThemeChanged ??= this.OnThemeChanged);
-        this.App.ResourcesChanged += (this.handleResourcesChanged ??= this.OnResourcesChanged);
-        this.FindBrush();
+        this.brushManager.AddBrushAsListener(this);
+        this.ReevaluateBrush();
     }
 
     private void UnhookResourceAndClearBrush() {
@@ -378,9 +371,7 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
         // it should be impossible for it to not get removed
         Debug.Assert(this.handlers == null || this.handlers.Count < 1);
 
-        this.App.ActualThemeVariantChanged -= this.handleThemeChanged;
-        this.App.ResourcesChanged -= this.handleResourcesChanged;
-
+        this.brushManager.RemoveBrushAsListener(this);
         if (this.CurrentBrush != null) {
             this.CurrentBrush = null;
             this.NotifyHandlersBrushChanged();

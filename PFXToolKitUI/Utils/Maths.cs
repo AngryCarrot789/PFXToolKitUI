@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Numerics;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Utils;
@@ -155,6 +156,28 @@ public static class Maths {
 
     public static bool WillAdditionOverflow(long a, long b) => (b > 0 && a > long.MaxValue - b) || (b < 0 && a < long.MinValue - b);
 
+    public static bool WillAdditionOverflow<T>(T a, T b) where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
+        return (b > T.Zero && a > T.MaxValue - b) || (b < T.Zero && a < T.MinValue - b);
+    }
+
+    /// <summary>
+    /// Adds two numbers. If the 2nd value is negative, the summation is clamped to <see cref="IMinMaxValue{T}.MinValue"/>.
+    /// If the 2nd value is positive, the summation is clamped to <see cref="IMinMaxValue{T}.MaxValue"/>
+    /// </summary>
+    /// <param name="a">Left value</param>
+    /// <param name="b">Right value</param>
+    /// <typeparam name="T">The type of number</typeparam>
+    /// <returns>The result of <c>a + b</c>, while clamping to the min and max values</returns>
+    public static T SumAndClampOverflow<T>(T a, T b) where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
+        if (b == T.Zero)
+            return a;
+        else if (b > T.Zero)
+            return a <= unchecked(T.MaxValue - b) ? unchecked(a + b) : T.MaxValue;
+        else
+            return a >= unchecked(T.MinValue - b) ? unchecked(a + b) : T.MinValue;
+    }
+
+
     /// <summary>
     /// Adds a signed value to an unsigned int. If the addition results in overflow, the value is
     /// clamped to <see cref="uint.MaxValue"/>. If the addition results in underflow, the value is clamped to 0
@@ -168,7 +191,7 @@ public static class Maths {
         uint s = (uint) -b;
         return s > a ? 0 /* clamp underflow */ : (a - s);
     }
-    
+
     /// <summary>
     /// Adds two unsigned integers, returning <see cref="uint.MaxValue"/> if the addition results in overflow
     /// </summary>
@@ -178,7 +201,7 @@ public static class Maths {
     public static ulong SumAndClampOverflow(uint a, uint b) {
         return b > (uint.MaxValue - a) ? uint.MaxValue : (a + b);
     }
-    
+
     /// <summary>
     /// Adds a signed value to an unsigned long. If the addition results in overflow, the value is
     /// clamped to <see cref="ulong.MaxValue"/>. If the addition results in underflow, the value is clamped to 0
@@ -192,7 +215,7 @@ public static class Maths {
         ulong s = (ulong) -b;
         return s > a ? 0 /* clamp underflow */ : (a - s);
     }
-    
+
     /// <summary>
     /// Adds two unsigned longs, returning <see cref="ulong.MaxValue"/> if the addition results in overflow
     /// </summary>

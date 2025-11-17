@@ -21,7 +21,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Controls.Selection;
 using PFXToolKitUI.Interactivity.Selections;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx2;
 
@@ -36,7 +36,7 @@ public sealed class SelectionModelBinder<T> {
         this.SelectionModel = selectionModel;
         this.Selection = selection;
 
-        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToLongRangeUnion().ToList(), ReadOnlyCollection<LongRange>.Empty));
+        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToIntegerRangeUnion().ToList(), ReadOnlyCollection<IntegerRange<int>>.Empty));
         selectionModel.SelectionChanged += this.OnSelectionModelSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
@@ -50,14 +50,14 @@ public sealed class SelectionModelBinder<T> {
 
         this.SelectionModel.BeginBatchUpdate();
         
-        foreach (LongRange range in e.RemovedIndices) {
+        foreach (IntegerRange<int> range in e.RemovedIndices) {
             Debug.Assert(range.Length > 0);
-            this.SelectionModel.DeselectRange((int) range.Start, (int) (range.End - 1));
+            this.SelectionModel.DeselectRange(range.Start, range.End - 1);
         }
 
-        foreach (LongRange range in e.AddedIndices) {
+        foreach (IntegerRange<int> range in e.AddedIndices) {
             Debug.Assert(range.Length > 0);
-            this.SelectionModel.SelectRange((int) range.Start, (int) (range.End - 1));
+            this.SelectionModel.SelectRange(range.Start, range.End - 1);
         }
         
         this.SelectionModel.EndBatchUpdate();
@@ -73,7 +73,7 @@ public sealed class SelectionModelBinder<T> {
         this.isUpdatingModel = true;
 
         if (e.DeselectedIndexes.Count > 0) {
-            LongRangeUnion union = new LongRangeUnion();
+            IntegerSet<int> union = new IntegerSet<int>();
             foreach (int i in e.DeselectedIndexes) {
                 union.Add(i);
             }
@@ -82,7 +82,7 @@ public sealed class SelectionModelBinder<T> {
         }
         
         if (e.SelectedIndexes.Count > 0) {
-            LongRangeUnion union = new LongRangeUnion();
+            IntegerSet<int> union = new IntegerSet<int>();
             foreach (int i in e.SelectedIndexes) {
                 union.Add(i);
             }

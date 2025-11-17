@@ -20,6 +20,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
 
@@ -191,14 +192,14 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         }
     }
 
-    public LongRangeUnion RemoveRange(IEnumerable<T> items) {
+    public IntegerSet<int> RemoveRange(IEnumerable<T> items) {
         this.CheckReentrancy();
         if (!(items is IList<T> list)) {
             list = items.ToList();
         }
 
         // Calculate a union of ranges to remove
-        LongRangeUnion union = new LongRangeUnion();
+        IntegerSet<int> union = new IntegerSet<int>();
         foreach (T item in list) {
             int index = this.myItems.IndexOf(item);
             if (index != -1) {
@@ -206,17 +207,17 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             }
         }
 
-        if (union.RangeCount > 0) {
+        if (union.Ranges.Count > 0) {
             // We could iterate front to back and increase start offset by length each time,
             // however it's more efficient to remove back to front
-            List<LongRange> indices = union.ToList();
+            List<IntegerRange<int>> indices = union.ToList();
             for (int i = indices.Count - 1; i >= 0; i--) {
-                LongRange range = indices[i];
+                IntegerRange<int> range = indices[i];
                 if (range.Length == 1) {
-                    this.RemoveItem((int) range.Start);
+                    this.RemoveItem(range.Start);
                 }
                 else {
-                    this.RemoveRange((int) range.Start, (int) range.Length);
+                    this.RemoveRange(range.Start, range.Length);
                 }
             }
         }
@@ -346,36 +347,5 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
     private sealed class SimpleMonitor(ObservableList<T> collection) : IDisposable {
         public void Dispose() => collection.blockReentrancyCount--;
-    }
-
-    public static void Test() {
-        ObservableList<int> list = new ObservableList<int>();
-
-        // Indexable processor removes back to front as an optimisation, can disable in constructor
-        ObservableItemProcessor.MakeIndexable(list, (s, i, o) => {
-            Console.WriteLine($"Added '{o}' at {i}");
-        }, (s, i, o) => {
-            Console.WriteLine($"Removed '{o}' at {i}");
-        }, (s, oldI, newI, o) => {
-            Console.WriteLine($"Moved '{o}' from {oldI} to {newI}");
-        });
-
-        list.Add(0);
-        list.Add(1);
-        list.Add(2);
-        list.Add(3);
-        list.Add(4);
-        list.Add(5);
-        list.Add(6);
-        list.Add(7);
-        list.Add(8);
-
-        // list = 0,1,2,3,4,5,6,7,8
-        // Removing 4 items at index 2 removes 2,3,4,5
-        // Remaining list = 0,1,6,7,8
-        list.RemoveRange(2, 4);
-
-        // assert list.Count == 5
-        // assert list == [0,1,6,7,8]
     }
 }

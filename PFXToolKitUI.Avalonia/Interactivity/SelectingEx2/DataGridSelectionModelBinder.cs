@@ -22,8 +22,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Controls;
 using PFXToolKitUI.Interactivity.Selections;
-using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx2;
 
@@ -38,7 +38,7 @@ public sealed class DataGridSelectionModelBinder<T> {
         this.DataGrid = dataGrid;
         this.Selection = selection;
 
-        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToLongRangeUnion().ToList(), ReadOnlyCollection<LongRange>.Empty));
+        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToIntegerRangeUnion().ToList(), ReadOnlyCollection<IntegerRange<int>>.Empty));
         dataGrid.SelectionChanged += this.OnDataGridSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
@@ -52,14 +52,14 @@ public sealed class DataGridSelectionModelBinder<T> {
 
         ObservableList<T> srcList = this.Selection.SourceList;
         IList? list = this.DataGrid.SelectedItems;
-        foreach (LongRange range in e.RemovedIndices) {
-            for (int i = (int) range.Start; i < range.End; i++) {
+        foreach (IntegerRange<int> range in e.RemovedIndices) {
+            for (int i = range.Start; i < range.End; i++) {
                 list.Remove(srcList[i]);
             }
         }
 
-        foreach (LongRange range in e.AddedIndices) {
-            for (int i = (int) range.Start; i < range.End; i++) {
+        foreach (IntegerRange<int> range in e.AddedIndices) {
+            for (int i = range.Start; i < range.End; i++) {
                 list.Add(srcList[i]);
             }
         }

@@ -17,8 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Interactivity.Selections;
 
@@ -34,7 +34,7 @@ public interface IListSelectionModel {
     /// <summary>
     /// Enumerates the selected indices
     /// </summary>
-    IEnumerable<LongRange> SelectedIndices { get; }
+    IEnumerable<IntegerRange<int>> SelectedIndices { get; }
 
     /// <summary>
     /// An event fired when the selection state changes
@@ -58,7 +58,7 @@ public interface IListSelectionModel {
     /// Select a list of ranges of items
     /// </summary>
     /// <param name="union"></param>
-    void SelectRanges(LongRangeUnion union);
+    void SelectRanges(IntegerSet<int> union);
 
     /// <summary>
     /// Deselect a single item
@@ -77,7 +77,7 @@ public interface IListSelectionModel {
     /// Deselect a list of ranges of items
     /// </summary>
     /// <param name="union"></param>
-    void DeselectRanges(LongRangeUnion union);
+    void DeselectRanges(IntegerSet<int> union);
 
     /// <summary>
     /// Check if the item at the index is selected
@@ -95,25 +95,25 @@ public interface IListSelectionModel {
     /// Replaces the current selection with the new selected index, deselecting everything else
     /// </summary>
     /// <param name="index">The index to make selected. Anything else will become deselected</param>
-    void SetSelection(int index) => this.SetSelection([LongRange.FromStartAndLength(index, 1)]);
+    void SetSelection(int index) => this.SetSelection([IntegerRange.FromStartAndLength(index, 1)]);
     
     /// <summary>
     /// Replaces the current selection with the new selection, deselecting everything else
     /// </summary>
     /// <param name="range">The range to make selected. Anything else will become deselected</param>
-    void SetSelection(LongRange range) => this.SetSelection([range]);
+    void SetSelection(IntegerRange<int> range) => this.SetSelection([range]);
     
     /// <summary>
     /// Replaces the current selection with the provided selection, deselecting everything else
     /// </summary>
     /// <param name="indices">The indices to make selected. Anything else will become deselected</param>
-    void SetSelection(IEnumerable<int> indices) => this.SetSelection(new LongRangeUnion(indices.Select(t => LongRange.FromStartAndLength(t, 1))));
+    void SetSelection(IEnumerable<int> indices) => this.SetSelection(new IntegerSet<int>(indices.Select(t => IntegerRange.FromStartAndLength(t, 1))));
 
     /// <summary>
     /// Replaces the current selection with the provided selection, deselecting everything else
     /// </summary>
     /// <param name="ranges">The ranges to make selected. Anything outside the ranges will become deselected</param>
-    void SetSelection(LongRangeUnion ranges);
+    void SetSelection(IntegerSet<int> ranges);
 
     /// <summary>
     /// Deselects all items
@@ -121,10 +121,10 @@ public interface IListSelectionModel {
     void Clear();
 
     /// <summary>
-    /// Returns a new <see cref="LongRangeUnion"/> containing the selected indices
+    /// Returns a new <see cref="IntegerSet{T}"/> containing the selected indices
     /// </summary>
     /// <returns>The selected indices</returns>
-    LongRangeUnion ToLongRangeUnion();
+    IntegerSet<int> ToIntegerRangeUnion();
 }
 
 /// <summary>
@@ -190,16 +190,16 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     bool? IsItemSelected(T item);
 }
 
-public readonly struct ListSelectionModelChangedEventArgs(IList<LongRange> addedIndices, IList<LongRange> removedIndices) {
+public readonly struct ListSelectionModelChangedEventArgs(IList<IntegerRange<int>> addedIndices, IList<IntegerRange<int>> removedIndices) {
     /// <summary>
     /// The ranges containing indices that are now selected
     /// </summary>
-    public IList<LongRange> AddedIndices { get; } = addedIndices;
+    public IList<IntegerRange<int>> AddedIndices { get; } = addedIndices;
 
     /// <summary>
     /// The ranges containing indices that are no longer selected
     /// </summary>
-    public IList<LongRange> RemovedIndices { get; } = removedIndices;
+    public IList<IntegerRange<int>> RemovedIndices { get; } = removedIndices;
 }
 
 public static class ListSelectionModelExtensions {
