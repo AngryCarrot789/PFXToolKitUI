@@ -69,20 +69,15 @@ public readonly struct IntegerRange<T> : IEquatable<IntegerRange<T>> where T : u
     /// </summary>
     /// <param name="other">The other range</param>
     /// <returns>True if the other is entirely within the current instance</returns>
-    public bool Contains(IntegerRange<T> other) {
-        return this.Contains(other.Start) && this.Contains(other.End == T.MinValue ? T.MinValue : unchecked(other.End - T.One));
-    }
+    public bool Contains(IntegerRange<T> other) => other.IsEmpty || (this.Start <= other.Start && other.End <= this.End);
 
     /// <summary>
-    /// Returns true when the other range overlaps this range
+    /// Returns true when the other range overlaps this range. Returns false when the current instance or <see cref="other"/> is empty 
     /// </summary>
     /// <param name="other">The other range</param>
     /// <returns>True if the other overlaps the current instance</returns>
     public bool Overlaps(IntegerRange<T> other) {
-        return this.Contains(other.Start) ||
-               this.Contains(other.End == T.MinValue ? T.MinValue : unchecked(other.End - T.One)) ||
-               other.Contains(this.Start) ||
-               other.Contains(this.End == T.MinValue ? T.MinValue : unchecked(this.End - T.One));
+        return this.Start < other.End && other.Start < this.End && !this.IsEmpty && !other.IsEmpty;
     }
 
     public IntegerRange<T> Clamp(IntegerRange<T> range) {
@@ -91,14 +86,22 @@ public readonly struct IntegerRange<T> : IEquatable<IntegerRange<T>> where T : u
         return start > end ? default : new IntegerRange<T>(start, end);
     }
 
-    public (IntegerRange<T>, IntegerRange<T>) Split(T location) {
+    /// <summary>
+    /// Splits this range into two, with no gap inbetween
+    /// </summary>
+    /// <param name="location">The splitting location</param>
+    /// <param name="left">The left split</param>
+    /// <param name="right">The right split</param>
+    /// <exception cref="ArgumentOutOfRangeException">The location is not within the bounds of the current instance</exception>
+    public void Split(T location, out IntegerRange<T> left, out IntegerRange<T> right) {
         if (!this.Contains(location))
             throw new ArgumentOutOfRangeException(nameof(location));
 
-        return (new IntegerRange<T>(this.Start, location), new IntegerRange<T>(location, this.End));
+        left = new IntegerRange<T>(this.Start, location);
+        right = new IntegerRange<T>(location, this.End);
     }
 
-    public bool Equals(IntegerRange<T> other) => this.Start.Equals(other.Start) && this.End.Equals(other.End);
+    public bool Equals(IntegerRange<T> other) => this.Start == other.Start && this.End == other.End;
 
     public override bool Equals(object? obj) => obj is IntegerRange<T> other && this.Equals(other);
 
@@ -124,7 +127,7 @@ public static class IntegerRange {
         ArgumentOutOfRangeException.ThrowIfNegative(length);
         if (start > T.MaxValue - length)
             ThrowAdditionOverflows();
-        
+
         return new IntegerRange<T>(start, unchecked(start + length));
     }
 
