@@ -23,8 +23,6 @@ using PFXToolKitUI.DataTransfer;
 namespace PFXToolKitUI.Avalonia.Bindings;
 
 public class ErroringDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaPropertyBinder<TModel> where TModel : class, ITransferableData {
-    private bool hasError;
-
     public delegate bool PropertyToParameterFunction(object? prop, out TValue? value);
 
     public DataParameter<TValue> Parameter { get; }
@@ -33,10 +31,10 @@ public class ErroringDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaP
     private readonly PropertyToParameterFunction PropToParam;
 
     public bool HasError {
-        get => this.hasError;
+        get => field;
         set {
-            if (this.hasError != value) {
-                this.hasError = value;
+            if (field != value) {
+                field = value;
                 this.IsErrorChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -77,7 +75,7 @@ public class ErroringDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaP
         }
     }
 
-    private void OnDataParameterValueChanged(DataParameter parameter, ITransferableData owner) => this.UpdateControl();
+    private void OnDataParameterValueChanged(object? sender, DataParameterValueChangedEventArgs e) => this.UpdateControl();
 
     protected override void OnAttached() {
         base.OnAttached();

@@ -19,14 +19,12 @@
 
 using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.PropertyEditing.DataTransfer;
 
-public delegate void SlotAnticipatedLineCountChangedEventHandler(DataParameterStringPropertyEditorSlot sender);
-
 public class DataParameterStringPropertyEditorSlot : DataParameterPropertyEditorSlot {
     private string? value;
-    private int anticipatedLineCount = -1;
 
     public string? Value {
         get => this.value;
@@ -45,16 +43,16 @@ public class DataParameterStringPropertyEditorSlot : DataParameterPropertyEditor
     /// Gets or sets the number of lines that will probably be taken up by this property. Default is -1, which means ignored. Value must be -1 or greater than 0
     /// </summary>
     public int AnticipatedLineCount {
-        get => this.anticipatedLineCount;
+        get => field;
         set {
             if (value < 0 && value != -1)
                 throw new ArgumentOutOfRangeException(nameof(value), "Value must be -1 or greater than zero");
 
-            PropertyHelper.SetAndRaiseINE(ref this.anticipatedLineCount, value, this, static t => t.AnticipatedLineCountChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref field, value, this, this.AnticipatedLineCountChanged);
         }
-    }
+    } = -1;
 
-    public event SlotAnticipatedLineCountChangedEventHandler? AnticipatedLineCountChanged;
+    public event EventHandler? AnticipatedLineCountChanged;
 
     public new DataParameterString Parameter => (DataParameterString) base.Parameter;
 

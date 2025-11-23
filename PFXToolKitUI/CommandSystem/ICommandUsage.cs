@@ -19,10 +19,9 @@
 
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.CommandSystem;
-
-public delegate void CommandUsageIconChangedEventHandler(ICommandUsage usage, Icon? oldIcon, Icon? newIcon);
 
 /// <summary>
 /// An object that is associated with, typically, a single UI control, and manages specific behaviours in relation to a command
@@ -47,7 +46,7 @@ public interface ICommandUsage {
     /// <summary>
     /// Fired when the <see cref="Icon"/> changes
     /// </summary>
-    event CommandUsageIconChangedEventHandler? IconChanged;
+    event EventHandler<ValueChangedEventArgs<Icon?>>? IconChanged;
 
     /// <summary>
     /// Triggers an update on this usage. This may cause a button (that executes the command) to

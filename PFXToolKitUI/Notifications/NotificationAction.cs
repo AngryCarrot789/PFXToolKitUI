@@ -19,45 +19,40 @@
 
 using System.Diagnostics;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Notifications;
-
-public delegate void NotificationActionEventHandler(NotificationAction sender);
-
-public delegate void NotificationActionContextDataChangedEventHandler(NotificationAction sender, IContextData? oldData, IContextData? newData);
 
 /// <summary>
 /// An action that can be executed from within a notification. These actions are invoked within
 /// a command context, so they have additional local async context.
 /// </summary>
 public abstract class NotificationAction {
-    private Notification? notification;
-    private string? text, tooltip;
+    private string? text;
 
     /// <summary>
     /// Gets or sets the text content of the command
     /// </summary>
     public string? Text {
         get => this.text;
-        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => t.TextChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, this.TextChanged);
     }
 
     /// <summary>
     /// Gets or sets the tooltip for this command
     /// </summary>
     public string? ToolTip {
-        get => this.tooltip;
-        set => PropertyHelper.SetAndRaiseINE(ref this.tooltip, value, this, static t => t.ToolTipChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ToolTipChanged);
     }
 
     /// <summary>
     /// Gets the notification that this command exists in
     /// </summary>
     public Notification? Notification {
-        get => this.notification;
+        get => field;
         internal set {
-            PropertyHelper.SetAndRaiseINE(ref this.notification, value, this, static t => t.NotificationChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref field, value, this, this.NotificationChanged);
             if (value != null) {
                 if (!ReferenceEquals(this.ContextData, value.ContextData)) {
                     this.ContextData = value.ContextData;
@@ -77,15 +72,15 @@ public abstract class NotificationAction {
     /// </summary>
     public IContextData? ContextData { get; private set; }
 
-    public event NotificationActionEventHandler? NotificationChanged;
-    public event NotificationActionEventHandler? TextChanged;
-    public event NotificationActionEventHandler? ToolTipChanged;
-    public event NotificationActionContextDataChangedEventHandler? ContextDataChanged;
+    public event EventHandler? NotificationChanged;
+    public event EventHandler? TextChanged;
+    public event EventHandler? ToolTipChanged;
+    public event EventHandler<ValueChangedEventArgs<IContextData?>>? ContextDataChanged;
 
     /// <summary>
     /// Fired as a hint that <see cref="CanExecute"/> may return a different value prior to this event being fired
     /// </summary>
-    public event NotificationActionEventHandler? CanExecuteChanged;
+    public event EventHandler? CanExecuteChanged;
 
     protected NotificationAction() {
     }
@@ -113,12 +108,12 @@ public abstract class NotificationAction {
     /// <param name="oldData">The previous context data</param>
     /// <param name="newData">The new context data</param>
     protected virtual void OnContextChanged(IContextData? oldData, IContextData? newData) {
-        this.ContextDataChanged?.Invoke(this, oldData, newData);
+        this.ContextDataChanged?.Invoke(this, new ValueChangedEventArgs<IContextData?>(oldData, newData));
         this.RaiseCanExecuteChanged();
     }
 
     protected void RaiseCanExecuteChanged() {
-        this.CanExecuteChanged?.Invoke(this);
+        this.CanExecuteChanged?.Invoke(this, EventArgs.Empty);
     }
 
     internal static void InternalOnNotificationContextChanged(NotificationAction action, IContextData? oldCtx, IContextData? newCtx) {

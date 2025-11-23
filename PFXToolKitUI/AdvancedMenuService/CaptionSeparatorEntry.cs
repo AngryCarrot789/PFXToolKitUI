@@ -17,11 +17,9 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.AdvancedMenuService;
-
-public delegate void GroupCaptionEntryEventHandler(CaptionSeparatorEntry sender);
 
 /// <summary>
 /// A separator entry that also has text placed in between the separator line
@@ -36,10 +34,10 @@ public class CaptionSeparatorEntry : IMenuEntry {
     /// </summary>
     public string? Text {
         get => this.text;
-        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => t.TextChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, this.TextChanged);
     }
 
-    public event GroupCaptionEntryEventHandler? TextChanged;
+    public event EventHandler? TextChanged;
 
     public CaptionSeparatorEntry(string text) {
         this.text = text;

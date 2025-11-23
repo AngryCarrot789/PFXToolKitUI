@@ -22,8 +22,6 @@ using PFXToolKitUI.Shortcuts;
 
 namespace PFXToolKitUI.Configurations.Shortcuts;
 
-public delegate void ModifiedShortcutsChangedEventHandler(ShortcutEditorConfigurationPage page);
-
 public class ShortcutEditorConfigurationPage : ConfigurationPage {
     public ShortcutManager ShortcutManager { get; }
 

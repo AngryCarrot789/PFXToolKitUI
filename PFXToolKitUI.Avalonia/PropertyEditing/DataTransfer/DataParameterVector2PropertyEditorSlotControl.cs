@@ -113,7 +113,7 @@ public class DataParameterVector2PropertyEditorSlotControl : BaseDataParameterPr
         this.SlotModel!.HasMultipleValuesChanged -= this.OnHasMultipleValuesChanged;
     }
 
-    private void OnHasMultipleValuesChanged(DataParameterPropertyEditorSlot sender) {
+    private void OnHasMultipleValuesChanged(object? o, EventArgs eventArgs) {
         this.UpdateDraggerMultiValueState();
     }
 

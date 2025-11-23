@@ -20,18 +20,15 @@
 using System.ComponentModel;
 using System.Reflection;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.PropertyEditing.Core;
-
-public delegate void INPCPropertyEditorSlotDisplayNameChangedEventHandler(INPCPropertyEditorSlot sender);
 
 /// <summary>
 /// A property editor slot that supports any kind of value type object
 /// </summary>
 public class INPCPropertyEditorSlot : PropertyEditorSlot {
     private bool isProcessingValueChange;
-    private bool hasMultipleValues;
-    private bool hasProcessedMultipleValuesSinceSetup;
     protected bool lastQueryHasMultipleValues;
     private string displayName;
     
@@ -47,22 +44,22 @@ public class INPCPropertyEditorSlot : PropertyEditorSlot {
     /// </summary>
     public string DisplayName {
         get => this.displayName;
-        set => PropertyHelper.SetAndRaiseINE(ref this.displayName, value, this, static t => t.DisplayNameChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.displayName, value, this, this.DisplayNameChanged);
     }
-    
+
     /// <summary>
     /// Gets whether the slot has multiple handlers and they all have different underlying values.
     /// This is used to present some sort of signal in the UI warning the user before they try to modify it.
     /// This state must be updated manually by derived classes when the values are no longer different
     /// </summary>
     public bool HasMultipleValues {
-        get => this.hasMultipleValues;
+        get => field;
         protected set {
-            if (this.hasMultipleValues != value) {
+            if (field != value) {
                 if (value)
                     this.HasProcessedMultipleValuesSinceSetup = false;
-                this.hasMultipleValues = value;
-                this.HasMultipleValuesChanged?.Invoke(this);
+                field = value;
+                this.HasMultipleValuesChanged?.Invoke(this, EventArgs.Empty);
             }
         }
     }
@@ -72,19 +69,19 @@ public class INPCPropertyEditorSlot : PropertyEditorSlot {
     /// updated since <see cref="BasePropertyEditorItem.IsCurrentlyApplicable"/> became true
     /// </summary>
     public bool HasProcessedMultipleValuesSinceSetup {
-        get => this.hasProcessedMultipleValuesSinceSetup;
-        set => PropertyHelper.SetAndRaiseINE(ref this.hasProcessedMultipleValuesSinceSetup, value, this, static t => t.HasProcessedMultipleValuesChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.HasProcessedMultipleValuesChanged);
     }
-    
+
     /// <summary>
     /// Gets the current value of the selected object(s)
     /// </summary>
     public object? CurrentValue { get; private set; }
 
-    public event PropertyEditorSlotEventHandler? CurrentValueChanged;
-    public event PropertyEditorSlotEventHandler? HasMultipleValuesChanged;
-    public event PropertyEditorSlotEventHandler? HasProcessedMultipleValuesChanged;
-    public event PropertyEditorSlotEventHandler? DisplayNameChanged;
+    public event EventHandler? CurrentValueChanged;
+    public event EventHandler? HasMultipleValuesChanged;
+    public event EventHandler? HasProcessedMultipleValuesChanged;
+    public event EventHandler? DisplayNameChanged;
     
     public INPCPropertyEditorSlot(Type type, string propertyName) : base(type) {
         this.PropertyInfo = type.GetProperty(propertyName) ?? throw new Exception("No such property: " + type.Name + "." + propertyName);
@@ -123,7 +120,7 @@ public class INPCPropertyEditorSlot : PropertyEditorSlot {
     }
     
     protected void OnValueChanged(bool? hasMultipleValues = null, bool? hasProcessedMultiValueSinceSetup = null) {
-        this.CurrentValueChanged?.Invoke(this);
+        this.CurrentValueChanged?.Invoke(this, EventArgs.Empty);
         if (hasMultipleValues.HasValue)
             this.HasMultipleValues = hasMultipleValues.Value;
         if (hasProcessedMultiValueSinceSetup.HasValue)

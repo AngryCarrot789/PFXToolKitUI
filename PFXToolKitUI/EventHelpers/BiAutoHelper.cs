@@ -17,12 +17,11 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils.Events;
+
+namespace PFXToolKitUI.EventHelpers;
 
 public class BiAutoHelper<TA, TB> where TA : class where TB : class {
-    public delegate void BiAutoHelperValueAChangedEventHandler(BiAutoHelper<TA, TB> sender, TA? oldValueA, TA? newValueA);
-    public delegate void BiAutoHelperValueBChangedEventHandler(BiAutoHelper<TA, TB> sender, TB? oldValueB, TB? newValueB);
-    
     private readonly Action<TA, TB>? onEnabled;
     private readonly Action<TA, TB>? onDisabled;
 
@@ -35,7 +34,7 @@ public class BiAutoHelper<TA, TB> where TA : class where TB : class {
             if (this.valueA != null && this.valueB != null)
                 this.onDisabled?.Invoke(this.valueA, this.valueB);
             
-            PropertyHelper.SetAndRaiseINE(ref this.valueA, value, this, static (t, o, n) => t.ValueAChanged?.Invoke(t, o, n));
+            PropertyHelper.SetAndRaiseINE(ref this.valueA, value, this, this.ValueAChanged);
             
             if (value != null && this.valueB != null)
                 this.onEnabled?.Invoke(value, this.valueB);
@@ -48,15 +47,15 @@ public class BiAutoHelper<TA, TB> where TA : class where TB : class {
             if (this.valueA != null && this.valueB != null)
                 this.onDisabled?.Invoke(this.valueA, this.valueB);
             
-            PropertyHelper.SetAndRaiseINE(ref this.valueB, value, this, static (t, o, n) => t.ValueBChanged?.Invoke(t, o, n));
+            PropertyHelper.SetAndRaiseINE(ref this.valueB, value, this, this.ValueBChanged);
             
             if (this.valueA != null && value != null)
                 this.onEnabled?.Invoke(this.valueA, value);
         }
     }
 
-    public event BiAutoHelperValueAChangedEventHandler? ValueAChanged;
-    public event BiAutoHelperValueBChangedEventHandler? ValueBChanged;
+    public event EventHandler? ValueAChanged;
+    public event EventHandler? ValueBChanged;
     
     public BiAutoHelper(Action<TA, TB> onEnabled, Action<TA, TB> onDisabled) {
         this.onEnabled = onEnabled;

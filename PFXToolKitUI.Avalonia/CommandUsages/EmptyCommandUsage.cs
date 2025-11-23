@@ -20,6 +20,7 @@
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.CommandUsages;
 
@@ -33,7 +34,7 @@ public class EmptyCommandUsage : ICommandUsage {
     }
 
     public IContextData ContextData => EmptyContext.Instance;
-    public event CommandUsageIconChangedEventHandler? IconChanged;
+    public event EventHandler<ValueChangedEventArgs<Icon?>>? IconChanged;
 
     public void UpdateCanExecuteLater() {
     }

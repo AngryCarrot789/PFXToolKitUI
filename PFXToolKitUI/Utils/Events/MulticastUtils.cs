@@ -17,7 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Utils;
+namespace PFXToolKitUI.Utils.Events;
 
 public static class MulticastUtils {
     public static void AddProxy<TDelegate, TState>(ref int count, ref TDelegate? backingEvent, TDelegate handler, TState state, Action<TState> attachProxy) where TDelegate : Delegate? {

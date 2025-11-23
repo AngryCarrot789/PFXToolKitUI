@@ -18,11 +18,9 @@
 // 
 
 using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Configurations;
-
-public delegate void ConfigurationPageEventHandler(ConfigurationPage sender);
 
 /// <summary>
 /// The base class for a configuration page model. A page is what is presented
@@ -33,7 +31,7 @@ public delegate void ConfigurationPageEventHandler(ConfigurationPage sender);
 /// </para>
 /// </summary>
 public abstract class ConfigurationPage : ITransferableData {
-    private bool isModified, ignoreDataParamChange;
+    private bool ignoreDataParamChange;
 
     /// <summary>
     /// Gets the configuration context currently applicable to this page. This is updated when the page
@@ -46,21 +44,21 @@ public abstract class ConfigurationPage : ITransferableData {
     /// Gets or sets if this page has been modified since being loaded. This determines if it requires saving
     /// </summary>
     public bool IsModified {
-        get => this.isModified;
-        set => PropertyHelper.SetAndRaiseINE(ref this.isModified, value, this, static t => t.IsModifiedChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IsModifiedChanged);
     }
 
     public TransferableData TransferableData { get; }
 
-    public event ConfigurationPageEventHandler? IsModifiedChanged;
+    public event EventHandler? IsModifiedChanged;
 
     protected ConfigurationPage() {
         this.TransferableData = new TransferableData(this);
     }
 
-    private static void MarkModifiedOnDataParameterChanged(DataParameter parameter, ITransferableData owner) {
-        if (!((ConfigurationPage) owner).ignoreDataParamChange)
-            ((ConfigurationPage) owner).IsModified = true;
+    private static void MarkModifiedOnDataParameterChanged(object? sender, DataParameterValueChangedEventArgs e) {
+        if (!((ConfigurationPage) e.Owner).ignoreDataParamChange)
+            ((ConfigurationPage) e.Owner).IsModified = true;
     }
 
     protected static void AffectsIsModified(DataParameter parameter) {

@@ -21,8 +21,6 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Activities;
 
-public delegate void ActivityProgressEventHandler(IActivityProgress tracker);
-
 /// <summary>
 /// Used to track progression of an activity
 /// </summary>
@@ -45,17 +43,17 @@ public interface IActivityProgress {
     /// <summary>
     /// An event fired when the <see cref="IsIndeterminate"/> property changes
     /// </summary>
-    event ActivityProgressEventHandler IsIndeterminateChanged;
+    event EventHandler IsIndeterminateChanged;
 
     /// <summary>
     /// An event fired when the <see cref="Caption"/> property changes
     /// </summary>
-    event ActivityProgressEventHandler CaptionChanged;
+    event EventHandler CaptionChanged;
 
     /// <summary>
     /// An event fired when the <see cref="Text"/> property changes
     /// </summary>
-    event ActivityProgressEventHandler TextChanged;
+    event EventHandler TextChanged;
 
     /// <summary>
     /// Gets this activity's completion state

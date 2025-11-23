@@ -32,17 +32,16 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
 
     private GeometryEntryWrapper[] GeometryEntryRefs {
         get {
-            if (this.myGeometryEntryRefs == null) {
-                this.myGeometryEntryRefs = this.myGeometryEntries.Select(e => new GeometryEntryWrapper(this, e)).ToArray();
+            if (field == null) {
+                field = this.myGeometryEntries.Select(e => new GeometryEntryWrapper(this, e)).ToArray();
                 Debug.WriteLine($"[Icon] Generated SVG for '{this.Name}'. Bounds = {this.GetBounds()}");
             }
 
-            return this.myGeometryEntryRefs;
+            return field;
         }
     }
 
     private readonly GeometryEntry[] myGeometryEntries;
-    private GeometryEntryWrapper[]? myGeometryEntryRefs;
 
     public GeometryIconImpl(string name, GeometryEntry[] geometry) : base(name) {
         this.myGeometryEntries = geometry;

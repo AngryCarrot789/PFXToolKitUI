@@ -18,11 +18,9 @@
 // 
 
 using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Services.UserInputs;
-
-public delegate void UserInputInfoEventHandler(UserInputInfo info);
 
 /// <summary>
 /// The base class for a user input dialog's model, which contains generic
@@ -30,8 +28,6 @@ public delegate void UserInputInfoEventHandler(UserInputInfo info);
 /// </summary>
 public abstract class UserInputInfo : ITransferableData {
     private string? caption, message;
-    private string? confirmText = "OK";
-    private string? cancelText = "Cancel";
 
     public TransferableData TransferableData { get; }
 
@@ -40,7 +36,7 @@ public abstract class UserInputInfo : ITransferableData {
     /// </summary>
     public string? Caption {
         get => this.caption;
-        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, this.CaptionChanged);
     }
 
     /// <summary>
@@ -50,24 +46,24 @@ public abstract class UserInputInfo : ITransferableData {
     /// </summary>
     public string? Message {
         get => this.message;
-        set => PropertyHelper.SetAndRaiseINE(ref this.message, value, this, static t => t.MessageChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.message, value, this, this.MessageChanged);
     }
 
     /// <summary>
     /// Gets or sets the text in the confirm button
     /// </summary>
     public string? ConfirmText {
-        get => this.confirmText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.confirmText, value, this, static t => t.ConfirmTextChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ConfirmTextChanged);
+    } = "OK";
 
     /// <summary>
     /// Gets or sets the text in the cancel button
     /// </summary>
     public string? CancelText {
-        get => this.cancelText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.cancelText, value, this, static t => t.CancelTextChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CancelTextChanged);
+    } = "Cancel";
 
     /// <summary>
     /// Gets or sets the button that is focused by default. The default is <see cref="ButtonType.None"/>, meaning no button is focused
@@ -78,9 +74,9 @@ public abstract class UserInputInfo : ITransferableData {
     /// Fired when one or more errors change in this user input info. This is listened to by
     /// the GUI to invoke <see cref="HasErrors"/> and update the confirm button
     /// </summary>
-    public event UserInputInfoEventHandler? HasErrorsChanged;
-    public event UserInputInfoEventHandler? CaptionChanged, MessageChanged;
-    public event UserInputInfoEventHandler? ConfirmTextChanged, CancelTextChanged;
+    public event EventHandler? HasErrorsChanged;
+    public event EventHandler? CaptionChanged, MessageChanged;
+    public event EventHandler? ConfirmTextChanged, CancelTextChanged;
 
     protected UserInputInfo() {
         this.TransferableData = new TransferableData(this);
@@ -94,7 +90,7 @@ public abstract class UserInputInfo : ITransferableData {
     /// <summary>
     /// Raises the <see cref="HasErrorsChanged"/> event
     /// </summary>
-    public void RaiseHasErrorsChanged() => this.HasErrorsChanged?.Invoke(this);
+    public void RaiseHasErrorsChanged() => this.HasErrorsChanged?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
     /// Checks if there are no errors present. This is used to enable or disable the confirm button

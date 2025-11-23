@@ -120,7 +120,7 @@ public abstract class ToolBarButton {
         this.UpdateCanExecuteLater();
     }
 
-    private void OnContextInvalidated(IButtonElement button) {
+    private void OnContextInvalidated(object? sender, EventArgs e) {
         this.OnContextChanged();
     }
 }

@@ -37,8 +37,6 @@ public class IconButton : Button, IIconButton {
     public static readonly StyledProperty<Thickness> IconPaddingProperty = AvaloniaProperty.Register<IconButton, Thickness>(nameof(IconPadding), new Thickness(3.0));
     public static readonly StyledProperty<Thickness> ContentPaddingProperty = AvaloniaProperty.Register<IconButton, Thickness>(nameof(ContentPadding), new Thickness(2.0));
 
-    private double? iconW = 64, iconH = 64; // prevent crashing in designer due to infinitely or giant sized icons
-
     public Icon? Icon {
         get => this.GetValue(IconProperty);
         set => this.SetValue(IconProperty, value);
@@ -50,20 +48,20 @@ public class IconButton : Button, IIconButton {
     }
 
     public double? IconMaxWidth {
-        get => this.iconW;
+        get => field;
         set {
-            this.iconW = value;
+            field = value;
             IconButtonHelper.SetMaxWidth(this.PART_IconControl, value);
         }
-    }
+    } = 64;
 
     public double? IconMaxHeight {
-        get => this.iconH;
+        get => field;
         set {
-            this.iconH = value;
+            field = value;
             IconButtonHelper.SetMaxHeight(this.PART_IconControl, value);
         }
-    }
+    } = 64;
 
     public Dock IconPlacement {
         get => this.GetValue(IconPlacementProperty);

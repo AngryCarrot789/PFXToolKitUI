@@ -23,8 +23,6 @@ using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.Activities;
 
-public delegate void TotalCompletionChangedEventHandler(CompletionState state);
-
 /// <summary>
 /// Represents the state of a completable action
 /// </summary>
@@ -37,7 +35,7 @@ public abstract class CompletionState {
     /// </summary>
     public abstract double TotalCompletion { get; set; }
 
-    public event TotalCompletionChangedEventHandler? CompletionValueChanged;
+    public event EventHandler? CompletionValueChanged;
 
     protected CompletionState() {
         this.ranges = new Stack<CompletionRange>();
@@ -48,7 +46,7 @@ public abstract class CompletionState {
     /// Raises the <see cref="CompletionValueChanged"/> event
     /// </summary>
     protected virtual void OnCompletionValueChanged() {
-        this.CompletionValueChanged?.Invoke(this);
+        this.CompletionValueChanged?.Invoke(this, EventArgs.Empty);
     }
 
     /// <summary>
@@ -266,12 +264,11 @@ public sealed class EmptyCompletionState : CompletionState {
 /// </summary>
 public sealed class ConcurrentCompletionState : CompletionState {
     private readonly RapidDispatchActionEx updateCompletionValue;
-    private double myCompletion;
 
     public override double TotalCompletion {
-        get => this.myCompletion;
+        get => field;
         set {
-            double previous = Interlocked.Exchange(ref this.myCompletion, value);
+            double previous = Interlocked.Exchange(ref field, value);
             if (!DoubleUtils.AreClose(previous, value))
                 this.updateCompletionValue?.InvokeAsync();
         }
@@ -286,15 +283,13 @@ public sealed class ConcurrentCompletionState : CompletionState {
 /// A simple implementation of <see cref="CompletionState"/>
 /// </summary>
 public sealed class SimpleCompletionState : CompletionState {
-    private double myCompletion;
-
     public override double TotalCompletion {
-        get => this.myCompletion;
+        get => field;
         set {
-            if (DoubleUtils.AreClose(this.myCompletion, value))
+            if (DoubleUtils.AreClose(field, value))
                 return;
 
-            this.myCompletion = value;
+            field = value;
             base.OnCompletionValueChanged();
         }
     }

@@ -85,7 +85,7 @@ public abstract class AutomaticDataParameterNumberPropertyEditorSlotControl<T> :
         }
     }
 
-    private void OnIsAutomaticChanged(DataParameter parameter, ITransferableData owner) {
+    private void OnIsAutomaticChanged(object? sender, DataParameterValueChangedEventArgs e) {
         this.UpdateTextPreview();
     }
 
@@ -111,8 +111,8 @@ public abstract class AutomaticDataParameterNumberPropertyEditorSlotControl<T> :
         }
     }
 
-    protected override void OnHasMultipleValuesChanged(DataParameterPropertyEditorSlot sender) {
-        base.OnHasMultipleValuesChanged(sender);
+    protected override void OnHasMultipleValuesChanged(object? sender, EventArgs eventArgs) {
+        base.OnHasMultipleValuesChanged(sender, eventArgs);
         this.UpdateTextPreview();
     }
 }

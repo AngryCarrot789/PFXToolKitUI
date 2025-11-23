@@ -53,7 +53,7 @@ public class CaptionSeparator : TemplatedControl, IAdvancedEntryConnection {
 
     public void OnAdded() {
         this.Entry!.TextChanged += this.OnTextChanged;
-        this.OnTextChanged(this.Entry);
+        this.OnTextChanged(this.Entry, EventArgs.Empty);
     }
 
     public void OnRemoving() {
@@ -64,7 +64,7 @@ public class CaptionSeparator : TemplatedControl, IAdvancedEntryConnection {
         this.Entry = null;
     }
 
-    private void OnTextChanged(CaptionSeparatorEntry sender) {
-        this.Text = sender.Text;
+    private void OnTextChanged(object? o, EventArgs e) {
+        this.Text = ((CaptionSeparatorEntry) o!).Text;
     }
 }

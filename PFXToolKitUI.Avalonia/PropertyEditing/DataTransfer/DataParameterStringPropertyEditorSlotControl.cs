@@ -62,7 +62,7 @@ public class DataParameterStringPropertyEditorSlotControl : BaseDataParameterPro
         this.SlotModel!.AnticipatedLineCountChanged -= this.OnAnticipatedLineCountChanged;
     }
 
-    private void OnAnticipatedLineCountChanged(DataParameterStringPropertyEditorSlot sender) {
+    private void OnAnticipatedLineCountChanged(object? o, EventArgs eventArgs) {
         this.UpdateTextBoxHeight();
     }
 

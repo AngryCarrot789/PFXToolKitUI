@@ -19,8 +19,8 @@
 
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Icons;
-using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.AdvancedMenuService;
 
@@ -29,24 +29,22 @@ namespace PFXToolKitUI.AdvancedMenuService;
 /// This is different from <see cref="IWeightedMenuEntryGroup"/>
 /// </summary>
 public class MenuEntryGroup : BaseMenuEntry {
-    private bool showDummyItemWhenEmpty = true;
-
     public ObservableList<IMenuEntry> Items { get; }
 
     /// <summary>
     /// Gets or sets whether to show a dummy item when <see cref="Items"/> is empty
     /// </summary>
     public bool ShowDummyItemWhenEmpty {
-        get => this.showDummyItemWhenEmpty;
-        set => PropertyHelper.SetAndRaiseINE(ref this.showDummyItemWhenEmpty, value, this, static t => t.ShowDummyItemWhenEmptyChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ShowDummyItemWhenEmptyChanged);
+    } = true;
 
     /// <summary>
     /// Gets or sets the unique ID associated with this group. This is relative to the parent entry.
     /// </summary>
     public string? UniqueID { get; set; }
 
-    public event BaseContextEntryEventHandler? ShowDummyItemWhenEmptyChanged;
+    public event EventHandler? ShowDummyItemWhenEmptyChanged;
 
     public MenuEntryGroup() {
         this.Items = new ObservableList<IMenuEntry>();

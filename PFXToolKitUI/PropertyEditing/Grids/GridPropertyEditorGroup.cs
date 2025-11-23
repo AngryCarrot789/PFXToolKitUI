@@ -17,29 +17,25 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.PropertyEditing.Grids;
 
-public delegate void GridPropertyEditorGroupEventHandler(GridPropertyEditorGroup sender);
-
 public class GridPropertyEditorGroup : SimplePropertyEditorGroup {
     private readonly Dictionary<BasePropertyEditorObject, (int, int)> PropObjLocation;
-    private List<GridColumnDefinition> columns = new List<GridColumnDefinition>();
-    private List<GridRowDefinition> rows = new List<GridRowDefinition>();
 
     public List<GridColumnDefinition> Columns {
-        get => this.columns;
-        set => PropertyHelper.SetAndRaiseINE(ref this.columns, value, this, static t => t.ColumnsChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ColumnsChanged);
+    } = new List<GridColumnDefinition>();
 
     public List<GridRowDefinition> Rows {
-        get => this.rows;
-        set => PropertyHelper.SetAndRaiseINE(ref this.rows, value, this, static t => t.RowsChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.RowsChanged);
+    } = new List<GridRowDefinition>();
 
-    public event GridPropertyEditorGroupEventHandler? ColumnsChanged;
-    public event GridPropertyEditorGroupEventHandler? RowsChanged;
+    public event EventHandler? ColumnsChanged;
+    public event EventHandler? RowsChanged;
 
     public GridPropertyEditorGroup(Type applicableType, GroupType groupType = GroupType.NoExpander) : base(applicableType, groupType) {
         this.PropObjLocation = new Dictionary<BasePropertyEditorObject, (int, int)>();

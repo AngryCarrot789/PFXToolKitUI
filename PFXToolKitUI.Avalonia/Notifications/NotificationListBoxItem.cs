@@ -27,7 +27,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
-using PFXToolKitUI.Activities;
 using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 using PFXToolKitUI.Avalonia.Bindings;
@@ -36,6 +35,7 @@ using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.CommandSystem;
+using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Notifications;
 using PFXToolKitUI.Services.Messaging;
@@ -43,7 +43,6 @@ using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
-using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Notifications;
 
@@ -135,7 +134,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         this.Model.IsAutoHideActiveChanged += this.OnIsAutoHideActiveChanged;
         this.Model.AlertModeChanged += this.OnAlertModeChanged;
         if (this.Model.IsAutoHideActive) {
-            this.OnIsAutoHideActiveChanged(this.Model);
+            this.OnIsAutoHideActiveChanged(this.Model, EventArgs.Empty);
         }
 
         this.processor = ObservableItemProcessor.MakeIndexable(this.Model!.Actions, this.OnCommandInserted, this.OnCommandRemoved, this.OnCommandMoved);
@@ -167,18 +166,18 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
     protected override void OnRemovedFromList() {
     }
 
-    private void ModelOnCaptionChanged(Notification sender) {
-        this.Caption = sender.Caption ?? "";
+    private void ModelOnCaptionChanged(object? o, EventArgs e) {
+        this.Caption = this.Model!.Caption ?? "";
     }
 
-    private void OnIsAutoHideActiveChanged(Notification sender) {
-        if (!sender.IsAutoHideActive) {
-            this.Opacity = sender.NotificationManager != null ? 1.0 : 0.0;
+    private void OnIsAutoHideActiveChanged(object? o, EventArgs e) {
+        if (!this.Model!.IsAutoHideActive) {
+            this.Opacity = this.Model!.NotificationManager != null ? 1.0 : 0.0;
             return;
         }
 
-        TimeSpan preExistingTime = DateTime.Now - sender.AutoHideStartTime;
-        TimeSpan delay = sender.AutoHideDelay - preExistingTime;
+        TimeSpan preExistingTime = DateTime.Now - this.Model!.AutoHideStartTime;
+        TimeSpan delay = this.Model!.AutoHideDelay - preExistingTime;
         if (delay >= TimeSpan.FromMilliseconds(50)) {
             this.animation = new Animation {
                 Duration = delay,
@@ -189,12 +188,12 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
                 }
             };
 
-            this.animation.RunAsync(this, sender.CancellationToken);
+            this.animation.RunAsync(this, this.Model!.CancellationToken);
         }
     }
 
-    private void OnAlertModeChanged(Notification sender) {
-        this.alertFlipFlop.Value2 = sender.AlertMode != NotificationAlertMode.None;
+    private void OnAlertModeChanged(object? o, EventArgs e) {
+        this.alertFlipFlop.Value2 = this.Model!.AlertMode != NotificationAlertMode.None;
     }
 
     // Note: the buttons are added/removed when the actual notification is added to/removed from the notification list box.
@@ -231,7 +230,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             }
         }
 
-        private void OnIsCompletedChanged(ActivityTask sender) {
+        private void OnIsCompletedChanged(object? o, EventArgs e) {
             this.notification.ActivityTask.IsCompletedChanged -= this.OnIsCompletedChanged;
             this.notification.Hide();
         }
@@ -334,7 +333,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
             }
 
             // Delegate NotificationAction's CanExecuteChange to the ICommand version
-            private void OnCanExecuteChanged(NotificationAction sender) => this.RaiseCanExecuteChanged();
+            private void OnCanExecuteChanged(object? o, EventArgs e) => this.RaiseCanExecuteChanged();
 
             public void OnButtonAttachedToVT() {
                 this.cmd = button.myAction!;

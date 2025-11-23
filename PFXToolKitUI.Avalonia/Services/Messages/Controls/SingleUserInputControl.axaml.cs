@@ -79,7 +79,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         this.myData.TextErrorsChanged += this.UpdateTextErrors;
         this.UpdateLabelVisibility();
         this.UpdateFooterVisibility();
-        this.UpdateTextErrors(this.myData);
+        this.UpdateTextErrors(this.myData, EventArgs.Empty);
     }
 
     public void Disconnect() {
@@ -98,8 +98,8 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         target.SetValue(DataValidationErrors.ErrorsProperty, errors ?? AvaloniaProperty.UnsetValue);
     }
 
-    private void UpdateTextErrors(SingleUserInputInfo info) {
-        SetErrorsOrClear(this.PART_TextBox, info.TextErrors);
+    private void UpdateTextErrors(object? sender, EventArgs eventArgs) {
+        SetErrorsOrClear(this.PART_TextBox, ((SingleUserInputInfo) sender!).TextErrors);
     }
 
     public bool FocusPrimaryInput() {
@@ -120,6 +120,6 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
     private void UpdateLabelVisibility() => this.PART_Label.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Label);
     private void UpdateFooterVisibility() => this.PART_FooterTextBlock.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Footer);
 
-    private void OnLabelChanged(SingleUserInputInfo sender) => this.UpdateLabelVisibility();
-    private void OnFooterChanged(BaseTextUserInputInfo sender) => this.UpdateFooterVisibility();
+    private void OnLabelChanged(object? o, EventArgs eventArgs) => this.UpdateLabelVisibility();
+    private void OnFooterChanged(object? o, EventArgs eventArgs) => this.UpdateFooterVisibility();
 }

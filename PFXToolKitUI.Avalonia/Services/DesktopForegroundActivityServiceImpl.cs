@@ -116,9 +116,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             IsToolWindow = true
         });
 
-        ActivityProgressEventHandler captionChangedHandler = prog => window.Title = prog.Caption;
-        progress.CaptionChanged += captionChangedHandler;
-
+        progress.CaptionChanged += (s, _) => window.Title = ((IActivityProgress) s!).Caption;
         window.TryClose += (sender, args) => {
             bool forceClose = options.DialogCancellation.IsCancellationRequested;
             bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
@@ -135,14 +133,14 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             }
         };
 
-        window.Opened += static (sender, args) => {
-            ActivityTask theTask = ((ActivityProgressRowControl) ((StackPanel) sender.Content!).Children[0]).ActivityTask!;
+        window.Opened += static (s, args) => {
+            ActivityTask theTask = ((ActivityProgressRowControl) ((StackPanel) ((IDesktopWindow) s!).Content!).Children[0]).ActivityTask!;
             Debug.Assert(theTask != null);
             SetIsActivityPresentInDialog(theTask, true);
         };
 
-        window.Closed += static (sender, args) => {
-            ActivityProgressRowControl myContent = (ActivityProgressRowControl) ((StackPanel) sender.Content!).Children[0];
+        window.Closed += static (s, args) => {
+            ActivityProgressRowControl myContent = (ActivityProgressRowControl) ((StackPanel) ((IDesktopWindow) s!).Content!).Children[0];
             ActivityTask theTask = myContent.ActivityTask!;
             Debug.Assert(theTask != null);
 
@@ -162,7 +160,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
 
         window.Title = progress.Caption ?? "Activity Progress";
         await window.ShowDialogAsync();
-        progress.CaptionChanged -= captionChangedHandler;
+        progress.CaptionChanged -= (EventHandler) ((s, _) => window.Title = ((IActivityProgress) s!).Caption);
 
         bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
         return new WaitForActivityResult(isMinimizingToBackground, false);
@@ -258,8 +256,8 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
         };
 
         // clean up sub activity controls in case dialogCancellation becomes cancelled
-        window.Closing += static (sender, args) => {
-            StackPanel panel = (StackPanel) sender.Content!;
+        window.Closing += static (s, args) => {
+            StackPanel panel = (StackPanel) ((IDesktopWindow) s!).Content!;
             foreach (Control control in panel.Children)
                 ((SubActivityProgressRowControl) control).SubActivity = null;
 

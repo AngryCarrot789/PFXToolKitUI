@@ -21,13 +21,9 @@ using Avalonia;
 using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Themes;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Utils;
-
-public delegate void ColourBrushHandlerBrushChangedEventHandler(ColourBrushHandler sender, IColourBrush? oldBrush, IColourBrush? newBrush);
-
-public delegate void ColourBrushHandlerCurrentBrushChangedEventHandler(ColourBrushHandler sender, IBrush? oldCurrentBrush, IBrush? newCurrentBrush);
 
 /// <summary>
 /// Manages a <see cref="PFXToolKitUI.Themes.IColourBrush"/> applied to a property of a control, while also managing dynamic brush changes
@@ -36,7 +32,6 @@ public sealed class ColourBrushHandler {
     private AvaloniaObject? myTarget;
     private IColourBrush? myBrush;
     private IDisposable? myBrushSubscription;
-    private IBrush? currentBrush;
 
     /// <summary>
     /// Gets or sets the brush
@@ -48,7 +43,7 @@ public sealed class ColourBrushHandler {
             if (value != oldBrush) {
                 this.DisposeSubscription();
                 this.myBrush = value;
-                this.BrushChanged?.Invoke(this, oldBrush, value);
+                this.BrushChanged?.Invoke(this, new ValueChangedEventArgs<IColourBrush?>(oldBrush, value));
                 this.OnBrushOrTargetChanged();
             }
         }
@@ -60,17 +55,17 @@ public sealed class ColourBrushHandler {
     /// Gets the brush currently assigned to the target control. Null when <see cref="Brush"/> is null or there is no target control
     /// </summary>
     public IBrush? CurrentBrush {
-        get => this.currentBrush;
-        private set => PropertyHelper.SetAndRaiseINE(ref this.currentBrush, value, this, static (t, o, n) => t.CurrentBrushChanged?.Invoke(t, o, n));
+        get => field;
+        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CurrentBrushChanged);
     }
 
     /// <summary>
     /// Note this is fired before <see cref="CurrentBrush"/> is updated, and we
     /// may have no target set so it might not get updated at all
     /// </summary>
-    public event ColourBrushHandlerBrushChangedEventHandler? BrushChanged;
+    public event EventHandler<ValueChangedEventArgs<IColourBrush?>>? BrushChanged;
     
-    public event ColourBrushHandlerCurrentBrushChangedEventHandler? CurrentBrushChanged;
+    public event EventHandler<ValueChangedEventArgs<IBrush?>>? CurrentBrushChanged;
 
     public ColourBrushHandler(AvaloniaProperty<IBrush?> property) {
         this.Property = property;

@@ -24,9 +24,9 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Media;
 using PFXToolKitUI.Activities;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
-using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 

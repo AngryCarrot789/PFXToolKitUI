@@ -21,6 +21,7 @@ using Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Utils.Commands;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Configurations;
 
@@ -86,15 +87,15 @@ public partial class ConfigurationDialogView : UserControl {
         this.UpdateCommands();
     }
 
-    private void OnEditorContextChanged(ConfigurationPanelControl sender, ConfigurationContext? oldContext, ConfigurationContext? newContext) {
-        if (oldContext != null)
-            oldContext.ModifiedPagesUpdated -= this.OnModifiedPagesChanged;
-        if (newContext != null)
-            newContext.ModifiedPagesUpdated += this.OnModifiedPagesChanged;
+    private void OnEditorContextChanged(object? o, ValueChangedEventArgs<ConfigurationContext?> e) {
+        if (e.OldValue != null)
+            e.OldValue.ModifiedPagesUpdated -= this.OnModifiedPagesChanged;
+        if (e.NewValue != null)
+            e.NewValue.ModifiedPagesUpdated += this.OnModifiedPagesChanged;
         this.UpdateCommands();
     }
 
-    private void OnModifiedPagesChanged(ConfigurationContext context) {
+    private void OnModifiedPagesChanged(object? sender, EventArgs e) {
         this.UpdateCommands();
     }
 

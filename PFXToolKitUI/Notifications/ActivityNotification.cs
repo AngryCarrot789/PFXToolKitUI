@@ -40,7 +40,7 @@ public class ActivityNotification : Notification {
         this.ActivityTask.Progress.CaptionChanged -= this.ProgressOnCaptionChanged;
     }
 
-    private void ProgressOnCaptionChanged(IActivityProgress tracker) {
-        this.Caption = tracker.Caption;
+    private void ProgressOnCaptionChanged(object? sender, EventArgs e) {
+        this.Caption = ((IActivityProgress) sender!).Caption;
     }
 }

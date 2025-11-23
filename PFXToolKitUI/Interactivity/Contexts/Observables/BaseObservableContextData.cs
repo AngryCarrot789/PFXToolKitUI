@@ -41,13 +41,13 @@ public abstract class BaseObservableContextData : IObservableMutableContextData 
     /// </summary>
     protected abstract IDictionary<string, object> InternalDictionary { get; }
 
-    public event ContextChangedEventHandler? ContextChanged;
+    public event EventHandler? ContextChanged;
 
     protected BaseObservableContextData() {
     }
 
     protected void RaiseContextChanged() {
-        this.ContextChanged?.Invoke(this);
+        this.ContextChanged?.Invoke(this, EventArgs.Empty);
     }
 
     void IMutableContextData.OnEnterBatchScope() {

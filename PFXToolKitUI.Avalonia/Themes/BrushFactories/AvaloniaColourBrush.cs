@@ -19,7 +19,6 @@
 
 using System.Diagnostics;
 using Avalonia;
-using Avalonia.Controls;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using Avalonia.Skia;
@@ -252,7 +251,7 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
     /// </summary>
     public IBrush? CurrentBrush { get; private set; }
 
-    public event DynamicColourBrushChangedEventHandler? BrushChanged;
+    public event EventHandler? BrushChanged;
 
     internal DynamicAvaloniaColourBrush(BrushManagerImpl brushManager, string themeKey) {
         this.brushManager = brushManager;
@@ -358,7 +357,7 @@ public sealed class DynamicAvaloniaColourBrush : AvaloniaColourBrush, IDynamicCo
             }
         }
 
-        this.BrushChanged?.Invoke(this);
+        this.BrushChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void HookResourceAndFindBrush() {

@@ -19,16 +19,9 @@
 
 using Avalonia.Controls;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
-
-public delegate void OverlayWindowEventHandler(IOverlayWindow sender, EventArgs e);
-
-public delegate void OverlayWindowEventHandler<in TEventArgs>(IOverlayWindow sender, TEventArgs e) where TEventArgs : EventArgs;
-
-public delegate Task AsyncOverlayWindowEventHandler<in TEventArgs>(IOverlayWindow sender, TEventArgs e) where TEventArgs : EventArgs;
-
-public delegate void OverlayWindowBorderBrushChangedEventHandler(IOverlayWindow sender, IColourBrush? oldValue, IColourBrush? newValue);
 
 /// <summary>
 /// An overlay window within a single-view application. Typically only used on mobile platforms
@@ -57,12 +50,12 @@ public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     /// <summary>
     /// An event fired when the overlay window is in the process of opening but has not been shown on screen yet.
     /// </summary>
-    event OverlayWindowEventHandler? Opening;
+    event EventHandler? Opening;
 
     /// <summary>
     /// An event fired when the overlay window is fully opening. This is fired before the task returned by <see cref="ShowAsync"/> is completed
     /// </summary>
-    event OverlayWindowEventHandler? Opened;
+    event EventHandler? Opened;
 
     /// <summary>
     /// An event fired when the overlay window is requested to close. <see cref="IsClosing"/> and <see cref="IsClosed"/>
@@ -75,7 +68,7 @@ public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     /// or <see cref="ClosingAsync"/> to account for this possibility (see <see cref="OverlayWindowCloseEventArgs.IsForced"/>)
     /// </para>
     /// </summary>
-    event OverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>? TryClose;
+    event EventHandler<OverlayWindowCancelCloseEventArgs>? TryClose;
 
     /// <summary>
     /// An asynchronous event fired when the overlay window is requested to close. The handlers are invoked
@@ -88,19 +81,19 @@ public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     /// or <see cref="ClosingAsync"/> to account for this possibility (see <see cref="OverlayWindowCloseEventArgs.IsForced"/>)
     /// </para>
     /// </summary>
-    event AsyncOverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>? TryCloseAsync;
+    event AsyncEventHandler<OverlayWindowCancelCloseEventArgs>? TryCloseAsync;
 
     /// <summary>
     /// An event fired when the overlay window is actually about to close. This is fired after <see cref="IsClosing"/> is set as true,
     /// but before <see cref="IsClosed"/> is set as true.
     /// </summary>
-    event OverlayWindowEventHandler<OverlayWindowCloseEventArgs>? Closing;
+    event EventHandler<OverlayWindowCloseEventArgs>? Closing;
 
     /// <summary>
     /// An event fired when the overlay window is actually about to close. The handlers are invoked in their own tasks once all handlers
     /// of <see cref="Closing"/> are invoked.
     /// </summary>
-    event AsyncOverlayWindowEventHandler<OverlayWindowCloseEventArgs>? ClosingAsync;
+    event AsyncEventHandler<OverlayWindowCloseEventArgs>? ClosingAsync;
 
     /// <summary>
     /// An event fired when the overlay window is fully closed. <see cref="IsClosing"/> is set to false and <see cref="IsClosed"/>
@@ -109,9 +102,12 @@ public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     /// This is fired before the task returned by <see cref="CloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
     /// </para>
     /// </summary>
-    event OverlayWindowEventHandler<OverlayWindowCloseEventArgs>? Closed;
+    event EventHandler<OverlayWindowCloseEventArgs>? Closed;
 
-    event OverlayWindowBorderBrushChangedEventHandler BorderBrushChanged;
+    /// <summary>
+    /// An event fired when <see cref="BorderBrush"/> changes
+    /// </summary>
+    event EventHandler<ValueChangedEventArgs<IColourBrush?>> BorderBrushChanged;
 }
 
 /// <summary>

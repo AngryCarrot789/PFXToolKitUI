@@ -18,22 +18,16 @@
 // 
 
 using System.Collections.ObjectModel;
-using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Debouncing;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Services.UserInputs;
-
-public delegate void SingleUserInputDataEventHandler(SingleUserInputInfo sender);
 
 public class SingleUserInputInfo : BaseTextUserInputInfo {
     private static readonly SendOrPostCallback s_UpdateTextErrors = static x => ((SingleUserInputInfo) x!).UpdateTextError();
     
     private string text;
     private string? label;
-    private int lineCountHint = 1;
-    private ReadOnlyCollection<string>? textErrors;
-    private int minimumDialogWidthHint = -1;
-    private int debounceErrorsDelay;
     private TimerDispatcherDebouncer? errorDebouncer;
 
     /// <summary>
@@ -45,7 +39,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
             value = CanonicalizeTextForLineCount(value, this.LineCountHint);
             PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => {
                 HandleTextChanged(s_UpdateTextErrors, t, t.DebounceErrorsDelay, ref t.errorDebouncer, t.Validate);
-                t.TextChanged?.Invoke(t);
+                t.TextChanged?.Invoke(t, EventArgs.Empty);
             });
         }
     }
@@ -55,7 +49,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     /// </summary>
     public string? Label {
         get => this.label;
-        set => PropertyHelper.SetAndRaiseINE(ref this.label, value, this, static t => t.LabelChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.label, value, this, this.LabelChanged);
     }
 
     /// <summary>
@@ -66,21 +60,21 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     /// </para>
     /// </summary>
     public int LineCountHint {
-        get => this.lineCountHint;
+        get => field;
         set {
             if (value < 1)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
-            PropertyHelper.SetAndRaiseINE(ref this.lineCountHint, value, this, static t => t.LineCountHintChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref field, value, this, this.LineCountHintChanged);
         }
-    }
+    } = 1;
 
     /// <summary>
     /// Gets or sets a hint for the minimum width of the dialog. Default is -1, meaning no hint
     /// </summary>
     public int MinimumDialogWidthHint {
-        get => this.minimumDialogWidthHint;
-        set => PropertyHelper.SetAndRaiseINE(ref this.minimumDialogWidthHint, value, this, static t => t.MinimumDialogWidthHintChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.MinimumDialogWidthHintChanged);
+    } = -1;
 
     /// <summary>
     /// A validation function that is given the current text and a list. If there's problems
@@ -92,15 +86,15 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     /// Gets the current list of errors present. This value will either be null, or it will have at least one element
     /// </summary>
     public ReadOnlyCollection<string>? TextErrors {
-        get => this.textErrors;
+        get => field;
         private set {
             if (value?.Count < 1) {
                 value = null; // set empty to null for simplified usage of the property
             }
 
-            if (!ReferenceEquals(this.textErrors, value)) {
-                this.textErrors = value;
-                this.TextErrorsChanged?.Invoke(this);
+            if (!ReferenceEquals(field, value)) {
+                field = value;
+                this.TextErrorsChanged?.Invoke(this, EventArgs.Empty);
                 this.RaiseHasErrorsChanged();
             }
         }
@@ -112,25 +106,25 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     /// For example, it parses expressions, and you don't want it parsing until the user has stopped typing for some time.
     /// </summary>
     public int DebounceErrorsDelay {
-        get => this.debounceErrorsDelay;
+        get => field;
         set {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative");
-            if (this.debounceErrorsDelay == value)
+            if (field == value)
                 return;
 
             HandleDebounceDelayChanged(s_UpdateTextErrors, this, value, ref this.errorDebouncer);
-            this.debounceErrorsDelay = value;
-            this.DebounceErrorsDelayChanged?.Invoke(this);
+            field = value;
+            this.DebounceErrorsDelayChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
-    public event SingleUserInputDataEventHandler? TextChanged;
-    public event SingleUserInputDataEventHandler? LabelChanged;
-    public event SingleUserInputDataEventHandler? TextErrorsChanged;
-    public event SingleUserInputDataEventHandler? LineCountHintChanged;
-    public event SingleUserInputDataEventHandler? MinimumDialogWidthHintChanged;
-    public event SingleUserInputDataEventHandler? DebounceErrorsDelayChanged;
+    public event EventHandler? TextChanged;
+    public event EventHandler? LabelChanged;
+    public event EventHandler? TextErrorsChanged;
+    public event EventHandler? LineCountHintChanged;
+    public event EventHandler? MinimumDialogWidthHintChanged;
+    public event EventHandler? DebounceErrorsDelayChanged;
 
     public SingleUserInputInfo(string? defaultText) : this(null, null, null, defaultText) {
     }

@@ -24,10 +24,6 @@ using PFXToolKitUI.Utils.Collections.Observable;
 
 namespace PFXToolKitUI.Activities;
 
-public delegate void ActivityManagerTaskIndexEventHandler(ActivityManager activityManager, ActivityTask task, int index);
-
-public delegate void ActivityManagerPrimaryActivityChangedEventHandler(ActivityManager activityManager, ActivityTask? oldActivityTask, ActivityTask? newActivity);
-
 /// <summary>
 /// A service which manages activity tasks.
 /// <para>
@@ -73,7 +69,7 @@ public sealed class ActivityManager : IDisposable {
     /// Gets the application's main activity manager
     /// </summary>
     public static ActivityManager Instance => ApplicationPFX.GetComponent<ActivityManager>();
-    
+
     private readonly AsyncLocal<ActivityTask?> localActivities;
     private readonly List<ActivityTask> activeTasks; // all tasks
     private readonly ObservableList<ActivityTask> backgroundTasks; // tasks not present in a dialog
@@ -88,7 +84,7 @@ public sealed class ActivityManager : IDisposable {
     /// not present in a foreground dialog. This list is only modified on the main thread
     /// </summary>
     public ReadOnlyObservableList<ActivityTask> BackgroundTasks { get; }
-    
+
     /// <summary>
     /// Gets the activity running in the current asynchronous control flow
     /// </summary>
@@ -98,12 +94,12 @@ public sealed class ActivityManager : IDisposable {
     /// <summary>
     /// Fired when a task is started. This is fired on the main thread
     /// </summary>
-    public event ActivityManagerTaskIndexEventHandler? TaskStarted;
+    public event EventHandler<ActivityTaskIndexEventArgs>? TaskStarted;
 
     /// <summary>
     /// Fired when a task is completed in any way. Fired on the main thread
     /// </summary>
-    public event ActivityManagerTaskIndexEventHandler? TaskCompleted;
+    public event EventHandler<ActivityTaskIndexEventArgs>? TaskCompleted;
 
     public ActivityManager() {
         this.localActivities = new AsyncLocal<ActivityTask?>();
@@ -219,7 +215,7 @@ public sealed class ActivityManager : IDisposable {
     public bool TryGetCurrentTask([NotNullWhen(true)] out ActivityTask? task) {
         return (task = this.localActivities.Value) != null;
     }
-    
+
     /// <summary>
     /// Gets either the current task's activity progress tracker, or the <see cref="EmptyActivityProgress"/> instance
     /// </summary>
@@ -251,7 +247,7 @@ public sealed class ActivityManager : IDisposable {
     internal static void InternalOnTaskStarted(ActivityManager manager, ActivityTask task) {
         int index = manager.activeTasks.Count;
         manager.activeTasks.Insert(index, task);
-        manager.TaskStarted?.Invoke(manager, task, index);
+        manager.TaskStarted?.Invoke(manager, new ActivityTaskIndexEventArgs(task, index));
 
         // The activity task object can be used before the even get started, since starting
         // one requires starting a Task which then calls InternalPreActivateTask which
@@ -274,7 +270,7 @@ public sealed class ActivityManager : IDisposable {
         }
 
         manager.activeTasks.RemoveAt(index);
-        manager.TaskCompleted?.Invoke(manager, task, index);
+        manager.TaskCompleted?.Invoke(manager, new ActivityTaskIndexEventArgs(task, index));
         manager.backgroundTasks.Remove(task); // don't care if not removed
 
         ActivityTask.InternalPostCompleted(task);
@@ -324,4 +320,9 @@ public sealed class ActivityManager : IDisposable {
     }
 
     #endregion
+}
+
+public readonly struct ActivityTaskIndexEventArgs(ActivityTask activityTask, int index) {
+    public ActivityTask ActivityTask { get; } = activityTask;
+    public int Index { get; } = index;
 }

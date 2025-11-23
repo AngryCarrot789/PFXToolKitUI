@@ -23,7 +23,6 @@ public abstract class BaseSimpleValueFormatter : IValueFormatter {
     private int nonEditingRoundedPlaces;
     private int editingRoundedPlaces;
     private string? tempNonEditingRoundedPlacesFormat, tempEditingRoundedPlacesFormat;
-    private string? myRoundedPlaceValueFormat;
 
     /// <summary>
     /// Gets a helper value, used by <see cref="NonEditingRoundedPlacesFormat"/> and <see cref="EditingRoundedPlacesFormat"/>
@@ -35,13 +34,13 @@ public abstract class BaseSimpleValueFormatter : IValueFormatter {
     /// </summary>
     protected string? RoundedPlaceValueFormat {
         get {
-            return this.myRoundedPlaceValueFormat;
+            return field;
         }
         set {
-            if (ReferenceEquals(this.myRoundedPlaceValueFormat, value))
+            if (ReferenceEquals(field, value))
                 return;
 
-            this.myRoundedPlaceValueFormat = value;
+            field = value;
             this.tempNonEditingRoundedPlacesFormat = null;
             this.tempEditingRoundedPlacesFormat = null;
             this.OnInvalidateFormat();

@@ -17,7 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.EventHelpers;
 
 namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
 
@@ -52,7 +52,9 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, I
     /// </param>
     public TextBoxToEventPropertyBinder(string[] eventNames, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate) : base(parseAndUpdate) {
         this.getText = getText;
-        this.eventRelay = eventNames.Select(name => EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), name)).ToArray();
+        this.eventRelay = new SenderEventRelay[eventNames.Length];
+        for (int i = 0; i < eventNames.Length; i++)
+            this.eventRelay[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]);
     }
     
     void IRelayEventHandler.OnEvent(object sender) => this.UpdateControl();

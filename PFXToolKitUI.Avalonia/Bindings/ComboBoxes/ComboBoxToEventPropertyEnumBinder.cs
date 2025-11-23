@@ -21,9 +21,9 @@ using System.Collections.ObjectModel;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.PropertyEditing.DataTransfer.Enums;
 using PFXToolKitUI.Utils;
-using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings.ComboBoxes;
 
@@ -38,7 +38,6 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
     
     private readonly Dictionary<TEnum, ComboBoxItem> enumToItem = new Dictionary<TEnum, ComboBoxItem>();
     private readonly Dictionary<TEnum, bool> enumToEnabledState = new Dictionary<TEnum, bool>();
-    private bool enabledComplement = true;
 
     /// <summary>
     /// Gets or sets the connected control
@@ -55,14 +54,14 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
     /// to produce the final enabled state of items. Default value is true
     /// </summary>
     public bool EnabledComplement {
-        get => this.enabledComplement;
+        get => field;
         set {
-            if (this.enabledComplement != value) {
-                this.enabledComplement = value;
+            if (field != value) {
+                field = value;
                 this.UpdateIsEnabledForAll();
             }
         }
-    }
+    } = true;
 
     public ComboBoxToEventPropertyEnumBinder(Type modelType, string eventName, Func<object, TEnum?> getter, Action<object, TEnum> setter) {
         this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(modelType, eventName);

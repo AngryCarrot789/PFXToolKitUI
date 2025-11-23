@@ -25,17 +25,15 @@ using PFXToolKitUI.Utils;
 namespace PFXToolKitUI.PropertyEditing.DataTransfer;
 
 public abstract class BaseDataParameterNumberPropertyEditorSlot : DataParameterFormattablePropertyEditorSlot {
-    private DragStepProfile stepProfile;
-    
     public DragStepProfile StepProfile {
-        get => this.stepProfile;
+        get => field;
         set {
-            this.stepProfile = value;
-            this.StepProfileChanged?.Invoke(this);
+            field = value;
+            this.StepProfileChanged?.Invoke(this, EventArgs.Empty);
         }
     }
-    
-    public event DataParameterPropertyEditorSlotEventHandler? StepProfileChanged;
+
+    public event EventHandler? StepProfileChanged;
     
     protected BaseDataParameterNumberPropertyEditorSlot(DataParameter parameter, Type applicableType, string? displayName = null) : base(parameter, applicableType, displayName) {
     }

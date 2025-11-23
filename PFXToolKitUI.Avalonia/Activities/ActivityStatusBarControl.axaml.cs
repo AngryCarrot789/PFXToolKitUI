@@ -32,6 +32,7 @@ using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 
@@ -129,30 +130,30 @@ public partial class ActivityStatusBarControl : UserControl {
 
         this.UpdatePauseContinueButton(newActivity?.PausableTask);
         this.PART_CancelActivityButton.IsEnabled = true;
-        this.OnActivityTaskTextChanged(prog);
-        this.OnPrimaryActionCompletionValueChanged(prog?.CompletionState);
-        this.OnActivityTaskIndeterminateChanged(prog);
+        this.OnActivityTaskTextChanged(prog, EventArgs.Empty);
+        this.OnPrimaryActionCompletionValueChanged(prog?.CompletionState, EventArgs.Empty);
+        this.OnActivityTaskIndeterminateChanged(prog, EventArgs.Empty);
     }
 
-    private void OnCurrentActivityPausableTaskChanged(ActivityTask sender, AdvancedPausableTask? oldTask, AdvancedPausableTask? newTask) {
-        if (oldTask != null)
-            oldTask.PausedStateChanged -= this.OnPausedStateChanged;
-        if (newTask != null)
-            newTask.PausedStateChanged += this.OnPausedStateChanged;
+    private void OnCurrentActivityPausableTaskChanged(object? o, ValueChangedEventArgs<AdvancedPausableTask?> e) {
+        if (e.OldValue != null)
+            e.OldValue.PausedStateChanged -= this.OnPausedStateChanged;
+        if (e.NewValue != null)
+            e.NewValue.PausedStateChanged += this.OnPausedStateChanged;
 
-        ApplicationPFX.Instance.Dispatcher.Post(() => this.UpdatePauseContinueButton(newTask));
+        ApplicationPFX.Instance.Dispatcher.Post(() => this.UpdatePauseContinueButton(e.NewValue));
     }
 
-    private void OnActivityTaskTextChanged(IActivityProgress? tracker) {
-        this.PART_TaskBodyText.Text = tracker?.Text ?? "";
+    private void OnActivityTaskTextChanged(object? sender, EventArgs e) {
+        this.PART_TaskBodyText.Text = ((IActivityProgress?) sender)?.Text ?? "";
     }
 
-    private void OnPrimaryActionCompletionValueChanged(CompletionState? state) {
-        this.PART_ActiveBgProgress.Value = state?.TotalCompletion ?? 0.0;
+    private void OnPrimaryActionCompletionValueChanged(object? sender, EventArgs e) {
+        this.PART_ActiveBgProgress.Value = ((CompletionState?) sender)?.TotalCompletion ?? 0.0;
     }
 
-    private void OnActivityTaskIndeterminateChanged(IActivityProgress? tracker) {
-        this.PART_ActiveBgProgress.IsIndeterminate = tracker?.IsIndeterminate ?? false;
+    private void OnActivityTaskIndeterminateChanged(object? sender, EventArgs e) {
+        this.PART_ActiveBgProgress.IsIndeterminate = ((IActivityProgress?) sender)?.IsIndeterminate ?? false;
     }
 
     private void PART_CancelActivityButton_OnClick(object? sender, RoutedEventArgs e) {
@@ -181,10 +182,12 @@ public partial class ActivityStatusBarControl : UserControl {
     }
 
 
-    private Task OnPausedStateChanged(AdvancedPausableTask task) {
-        return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
-            this.UpdatePauseContinueButton(task);
+    private Task OnPausedStateChanged(object? sender, EventArgs e) {
+        ApplicationPFX.Instance.Dispatcher.Post(() => {
+            this.UpdatePauseContinueButton((AdvancedPausableTask) sender!);
         });
+
+        return Task.CompletedTask;
     }
 
     private void UpdatePauseContinueButton(AdvancedPausableTask? task) {

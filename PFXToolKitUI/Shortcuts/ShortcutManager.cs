@@ -28,8 +28,6 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Shortcuts;
 
-public delegate void ShortcutActivityEventHandler(ShortcutInputProcessor processor);
-
 /// <summary>
 /// A class for storing and managing shortcuts
 /// </summary>

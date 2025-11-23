@@ -19,13 +19,9 @@
 
 using System.Diagnostics;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.History;
-
-public delegate void HistoryManagerEventHandler(HistoryManager sender);
-
-public delegate void HistoryManagerOperationEventHandler(HistoryManager sender, HistoryOperation operation);
 
 /// <summary>
 /// A class that manages a collection of undo-able and redo-able actions
@@ -38,23 +34,20 @@ public sealed class HistoryManager {
     private readonly LinkedList<HistoryOperation> redoList;
     private readonly Stack<List<HistoryOperation>> mergingStack = new Stack<List<HistoryOperation>>();
 
-    private bool isUndoInProgress;
-    private bool isRedoInProgress;
-
     /// <summary>
     /// Returns true when another undo operation is still running
     /// </summary>
     public bool IsUndoInProgress {
-        get => this.isUndoInProgress;
-        private set => PropertyHelper.SetAndRaiseINE(ref this.isUndoInProgress, value, this, static t => t.IsUndoInProgressChanged?.Invoke(t));
+        get => field;
+        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IsUndoInProgressChanged);
     }
 
     /// <summary>
     /// Returns true when another redo operation is still running
     /// </summary>
     public bool IsRedoInProgress {
-        get => this.isRedoInProgress;
-        private set => PropertyHelper.SetAndRaiseINE(ref this.isRedoInProgress, value, this, static t => t.IsRedoInProgressChanged?.Invoke(t));
+        get => field;
+        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IsRedoInProgressChanged);
     }
 
     public bool IsBusy => this.IsUndoInProgress || this.IsRedoInProgress;
@@ -69,10 +62,10 @@ public sealed class HistoryManager {
     /// </summary>
     public bool HasRedoOperations => this.redoList.Count > 0;
 
-    public event HistoryManagerEventHandler? IsUndoInProgressChanged;
-    public event HistoryManagerEventHandler? IsRedoInProgressChanged;
-    public event HistoryManagerOperationEventHandler? BeforeUndo, BeforeRedo;
-    public event HistoryManagerOperationEventHandler? AfterUndo, AfterRedo;
+    public event EventHandler? IsUndoInProgressChanged;
+    public event EventHandler? IsRedoInProgressChanged;
+    public event EventHandler<HistoryOperation>? BeforeUndo, BeforeRedo;
+    public event EventHandler<HistoryOperation>? AfterUndo, AfterRedo;
 
     private int globalStackDepth;
 
@@ -287,10 +280,9 @@ public sealed class HistoryManager {
     }
 
     private sealed class JoinedHistoryOperation(List<HistoryOperation> operations) : HistoryOperation {
-        private string? myText;
         private bool isDisposed;
 
-        public override string Text => this.myText ??= string.Join(", ", operations.Select(x => x.Text));
+        public override string Text => field ??= string.Join(", ", operations.Select(x => x.Text));
 
         protected override async Task OnUndo() {
             if (this.isDisposed)

@@ -18,18 +18,15 @@
 // 
 
 using System.Text;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Shortcuts;
-
-public delegate void ShortcutEntryShortcutChangedEventHandler(ShortcutEntry sender, IShortcut oldShortcut, IShortcut newShortcut);
 
 /// <summary>
 /// A class used to store a reference to a <see cref="Shortcut"/> and its
 /// owning <see cref="ShortcutGroupEntry"/>, and also other shortcut data
 /// </summary>
 public sealed class ShortcutEntry : IKeyMapEntry {
-    private IShortcut shortcut;
-
     public ShortcutManager? Manager => this.Parent?.Manager;
 
     public ShortcutGroupEntry? Parent { get; }
@@ -85,26 +82,21 @@ public sealed class ShortcutEntry : IKeyMapEntry {
     /// The shortcut itself. Will not be null
     /// </summary>
     public IShortcut Shortcut {
-        get => this.shortcut;
+        get => field;
         set {
-            IShortcut oldShortcut = this.shortcut;
-            if (ReferenceEquals(oldShortcut, value)) {
-                return;
-            }
-
-            this.shortcut = value ?? throw new ArgumentNullException(nameof(value), "Shortcut cannot be null");
-            this.ShortcutChanged?.Invoke(this, oldShortcut, value);
+            ArgumentNullException.ThrowIfNull(value);
+            PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ShortcutChanged);
         }
     }
 
-    public event ShortcutEntryShortcutChangedEventHandler? ShortcutChanged;
+    public event EventHandler<ValueChangedEventArgs<IShortcut>>? ShortcutChanged;
 
     public ShortcutEntry(ShortcutGroupEntry groupEntry, string name, IShortcut shortcut, bool isGlobal = false) {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name cannot be null, empty, or consist of only whitespaces");
         this.Parent = groupEntry ?? throw new ArgumentNullException(nameof(groupEntry), "Collection cannot be null");
         this.Name = name;
-        this.shortcut = shortcut ?? throw new ArgumentNullException(nameof(shortcut));
+        this.Shortcut = shortcut ?? throw new ArgumentNullException(nameof(shortcut));
         this.FullPath = groupEntry.GetPathForName(name);
         this.IsGlobal = isGlobal;
         this.IsInherited = true;

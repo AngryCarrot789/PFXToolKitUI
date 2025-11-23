@@ -19,7 +19,7 @@
 
 using System.Reflection;
 
-namespace PFXToolKitUI.Utils.Events;
+namespace PFXToolKitUI.EventHelpers;
 
 /// <summary>
 /// A struct that generates an event handler (in the form of an action) from almost any event

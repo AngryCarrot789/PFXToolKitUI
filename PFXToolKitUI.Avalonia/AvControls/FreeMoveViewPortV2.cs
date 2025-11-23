@@ -38,17 +38,14 @@ public class FreeMoveViewPortV2 : Border {
     public static readonly DirectProperty<FreeMoveViewPortV2, double> ExtentWidthProperty = AvaloniaProperty.RegisterDirect<FreeMoveViewPortV2, double>("ExtentWidth", o => o.ExtentWidth, null);
     public static readonly DirectProperty<FreeMoveViewPortV2, double> ExtentHeightProperty = AvaloniaProperty.RegisterDirect<FreeMoveViewPortV2, double>("ExtentHeight", o => o.ExtentHeight, null);
 
-    private double _extentWidth;
-    private double _extentHeight;
-
     public double ExtentWidth {
-        get => this._extentWidth;
-        set => this.SetAndRaise(ExtentWidthProperty, ref this._extentWidth, value);
+        get => field;
+        set => this.SetAndRaise(ExtentWidthProperty, ref field, value);
     }
 
     public double ExtentHeight {
-        get => this._extentHeight;
-        set => this.SetAndRaise(ExtentHeightProperty, ref this._extentHeight, value);
+        get => field;
+        set => this.SetAndRaise(ExtentHeightProperty, ref field, value);
     }
 
     public double MinimumZoomScale {

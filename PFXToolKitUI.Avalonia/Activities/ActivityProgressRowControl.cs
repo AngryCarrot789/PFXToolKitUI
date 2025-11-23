@@ -28,6 +28,7 @@ using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Utils.Commands;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Activities;
 
@@ -115,13 +116,14 @@ public class ActivityProgressRowControl : TemplatedControl {
         this.UpdatePauseContinueButton(newTask?.PausableTask);
     }
 
-    private void OnActivityPausableTaskChanged(ActivityTask sender, AdvancedPausableTask? oldTask, AdvancedPausableTask? newTask) {
-        if (oldTask != null)
-            oldTask.PausedStateChanged -= this.OnPausedStateChanged;
-        if (newTask != null)
-            newTask.PausedStateChanged += this.OnPausedStateChanged;
+    private void OnActivityPausableTaskChanged(object? o, ValueChangedEventArgs<AdvancedPausableTask?> e) {
+        if (e.OldValue != null)
+            e.OldValue.PausedStateChanged -= this.OnPausedStateChanged;
+        
+        if (e.NewValue != null)
+            e.NewValue.PausedStateChanged += this.OnPausedStateChanged;
 
-        ApplicationPFX.Instance.Dispatcher.Post(() => this.UpdatePauseContinueButton(newTask));
+        ApplicationPFX.Instance.Dispatcher.Post(() => this.UpdatePauseContinueButton(e.NewValue));
     }
 
     private void UpdateCancelButton() {
@@ -137,9 +139,9 @@ public class ActivityProgressRowControl : TemplatedControl {
         this.ActivityTask?.TryCancel();
     }
 
-    private Task OnPausedStateChanged(AdvancedPausableTask task) {
+    private Task OnPausedStateChanged(object? sender, EventArgs e) {
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(() => {
-            this.UpdatePauseContinueButton(task);
+            this.UpdatePauseContinueButton((AdvancedPausableTask) sender!);
         });
     }
 

@@ -145,7 +145,7 @@ public sealed class PropertyEditorSlotContainerControl : ContentControl {
     private void OnSelectionChanged(bool oldValue, bool newValue) {
     }
 
-    private void Model_IsCurrentlyApplicableChanged(BasePropertyEditorItem sender) {
+    private void Model_IsCurrentlyApplicableChanged(object? o, EventArgs eventArgs) {
         this.UpdateVisibility();
     }
 

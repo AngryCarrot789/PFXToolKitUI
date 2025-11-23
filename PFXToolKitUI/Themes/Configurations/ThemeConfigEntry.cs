@@ -21,8 +21,6 @@ using PFXToolKitUI.DataTransfer;
 
 namespace PFXToolKitUI.Themes.Configurations;
 
-public delegate void ThemeConfigEntryEventHandler(ThemeConfigEntry sender);
-
 /// <summary>
 /// An entry for a colour in a theme
 /// </summary>
@@ -60,7 +58,7 @@ public class ThemeConfigEntry : IThemeTreeEntry, ITransferableData {
     /// <summary>
     /// Raised when <see cref="InheritedFromKey"/> changes. This is only fired internally
     /// </summary>
-    public event ThemeConfigEntryEventHandler? InheritedFromKeyChanged;
+    public event EventHandler? InheritedFromKeyChanged;
     
     public ThemeConfigEntry(string displayName, string themeKey) {
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
@@ -83,6 +81,6 @@ public class ThemeConfigEntry : IThemeTreeEntry, ITransferableData {
 
         this.InheritedFromKey = inheritFrom;
         this.InheritanceDepth = depth;
-        this.InheritedFromKeyChanged?.Invoke(this);
+        this.InheritedFromKeyChanged?.Invoke(this, EventArgs.Empty);
     }
 }

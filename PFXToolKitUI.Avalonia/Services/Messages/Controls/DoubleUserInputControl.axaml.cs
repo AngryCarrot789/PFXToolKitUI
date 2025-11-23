@@ -76,8 +76,8 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         this.UpdateLabelAVisibility();
         this.UpdateLabelBVisibility();
         this.UpdateFooterVisibility();
-        this.UpdateTextErrorsA(this.myData);
-        this.UpdateTextErrorsB(this.myData);
+        this.UpdateTextErrorsA(this.myData, EventArgs.Empty);
+        this.UpdateTextErrorsB(this.myData, EventArgs.Empty);
     }
 
     public void Disconnect() {
@@ -91,12 +91,12 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         this.myData = null;
     }
 
-    private void UpdateTextErrorsA(DoubleUserInputInfo info) {
-        SingleUserInputControl.SetErrorsOrClear(this.PART_TextBoxA, info.TextErrorsA);
+    private void UpdateTextErrorsA(object? o, EventArgs eventArgs) {
+        SingleUserInputControl.SetErrorsOrClear(this.PART_TextBoxA, ((DoubleUserInputInfo) o!).TextErrorsA);
     }
 
-    private void UpdateTextErrorsB(DoubleUserInputInfo info) {
-        SingleUserInputControl.SetErrorsOrClear(this.PART_TextBoxB, info.TextErrorsB);
+    private void UpdateTextErrorsB(object? o, EventArgs eventArgs) {
+        SingleUserInputControl.SetErrorsOrClear(this.PART_TextBoxB, ((DoubleUserInputInfo) o!).TextErrorsB);
     }
 
     public bool FocusPrimaryInput() {
@@ -109,7 +109,7 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     private void UpdateLabelBVisibility() => this.PART_LabelA.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.LabelA);
     private void UpdateFooterVisibility() => this.PART_FooterTextBlock.IsVisible = !string.IsNullOrWhiteSpace(this.myData!.Footer);
 
-    private void OnLabelAChanged(DoubleUserInputInfo sender) => this.UpdateLabelAVisibility();
-    private void OnLabelBChanged(DoubleUserInputInfo sender) => this.UpdateLabelBVisibility();
-    private void OnFooterChanged(BaseTextUserInputInfo sender) => this.UpdateFooterVisibility();
+    private void OnLabelAChanged(object? o, EventArgs eventArgs) => this.UpdateLabelAVisibility();
+    private void OnLabelBChanged(object? o, EventArgs eventArgs) => this.UpdateLabelBVisibility();
+    private void OnFooterChanged(object? o, EventArgs eventArgs) => this.UpdateFooterVisibility();
 }

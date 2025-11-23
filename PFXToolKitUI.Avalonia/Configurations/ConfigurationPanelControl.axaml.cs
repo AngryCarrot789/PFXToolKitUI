@@ -28,10 +28,9 @@ using PFXToolKitUI.Avalonia.Configurations.Trees;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Services.Messaging;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Configurations;
-
-public delegate void ConfigurationPanelEditorActiveContextChangedEventHandler(ConfigurationPanelControl sender, ConfigurationContext? oldActiveContext, ConfigurationContext? newActiveContext);
 
 public partial class ConfigurationPanelControl : UserControl {
     public static readonly StyledProperty<ConfigurationManager?> ConfigurationManagerProperty = AvaloniaProperty.Register<ConfigurationPanelControl, ConfigurationManager?>(nameof(ConfigurationManager));
@@ -47,19 +46,12 @@ public partial class ConfigurationPanelControl : UserControl {
 
     public ConfigurationContext? ActiveContext {
         get => this.activeContext;
-        set {
-            ConfigurationContext? oldActiveContext = this.activeContext;
-            if (oldActiveContext == value)
-                return;
-
-            this.activeContext = value;
-            this.ActiveContextChanged?.Invoke(this, oldActiveContext, value);
-        }
+        set => PropertyHelper.SetAndRaiseINE(ref this.activeContext, value, this, this.ActiveContextChanged);
     }
 
     public bool IsConfigurationManagerChanging { get; private set; }
 
-    public event ConfigurationPanelEditorActiveContextChangedEventHandler? ActiveContextChanged;
+    public event EventHandler<ValueChangedEventArgs<ConfigurationContext?>>? ActiveContextChanged;
 
     public ConfigurationPanelControl() {
         this.InitializeComponent();

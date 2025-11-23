@@ -19,14 +19,10 @@
 
 using PFXToolKitUI.Composition;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Notifications;
-
-public delegate void NotificationEventHandler(Notification sender);
-
-public delegate void NotificationContextDataChangedEventHandler(Notification sender, IContextData? oldContextData, IContextData? newContextData);
 
 /// <summary>
 /// The base class for a notification type. The standard notification types
@@ -37,14 +33,10 @@ public delegate void NotificationContextDataChangedEventHandler(Notification sen
 /// </summary>
 public abstract class Notification : IComponentManager {
     private readonly ComponentStorage myComponentStorage;
-    private string? caption;
-    private bool canAutoHide = true;
     private bool isAutoHideActive;
     private bool flagRestartAutoHide;
     private CancellationTokenSource? ctsAutoHide;
-    private IContextData? myContextData;
     private TimeSpan autoHideDelay = TimeSpan.FromSeconds(5);
-    private NotificationAlertMode alertMode;
 
     ComponentStorage IComponentManager.ComponentStorage => this.myComponentStorage;
 
@@ -52,8 +44,8 @@ public abstract class Notification : IComponentManager {
     /// Gets or sets the text displayed in the notification's header
     /// </summary>
     public string? Caption {
-        get => this.caption;
-        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CaptionChanged);
     }
 
     /// <summary>
@@ -66,19 +58,19 @@ public abstract class Notification : IComponentManager {
     /// </para>
     /// </summary>
     public bool CanAutoHide {
-        get => this.canAutoHide;
+        get => field;
         set {
-            if (this.canAutoHide != value) {
-                this.canAutoHide = value;
+            if (field != value) {
+                field = value;
                 if (!value) {
                     this.flagRestartAutoHide = false;
                     this.CancelAutoHide();
                 }
 
-                this.CanAutoHideChanged?.Invoke(this);
+                this.CanAutoHideChanged?.Invoke(this, EventArgs.Empty);
             }
         }
-    }
+    } = true;
 
     /// <summary>
     /// Gets whether this notification is currently in the process of auto-hiding.
@@ -86,7 +78,7 @@ public abstract class Notification : IComponentManager {
     /// </summary>
     public bool IsAutoHideActive {
         get => this.isAutoHideActive;
-        private set => PropertyHelper.SetAndRaiseINE(ref this.isAutoHideActive, value, this, static t => t.IsAutoHideActiveChanged?.Invoke(t));
+        private set => PropertyHelper.SetAndRaiseINE(ref this.isAutoHideActive, value, this, this.IsAutoHideActiveChanged);
     }
 
     /// <summary>
@@ -107,7 +99,7 @@ public abstract class Notification : IComponentManager {
                     throw new ArgumentOutOfRangeException(nameof(value), "Value is too large");
 
                 this.autoHideDelay = value;
-                this.AutoHideDelayChanged?.Invoke(this);
+                this.AutoHideDelayChanged?.Invoke(this, EventArgs.Empty);
             }
         }
     }
@@ -121,12 +113,12 @@ public abstract class Notification : IComponentManager {
     /// Gets or sets the context for this notification. This may be used by our <see cref="Actions"/>
     /// </summary>
     public IContextData? ContextData {
-        get => this.myContextData;
+        get => field;
         set {
-            IContextData? oldContextData = this.myContextData;
+            IContextData? oldContextData = field;
             if (!Equals(oldContextData, value)) {
-                this.myContextData = value;
-                this.ContextDataChanged?.Invoke(this, oldContextData, value);
+                field = value;
+                this.ContextDataChanged?.Invoke(this, new ValueChangedEventArgs<IContextData?>(oldContextData, value));
                 foreach (NotificationAction action in this.Actions) {
                     NotificationAction.InternalOnNotificationContextChanged(action, oldContextData, value);
                 }
@@ -138,8 +130,8 @@ public abstract class Notification : IComponentManager {
     /// Gets or sets the alert mode
     /// </summary>
     public NotificationAlertMode AlertMode {
-        get => this.alertMode;
-        set => PropertyHelper.SetAndRaiseINE(ref this.alertMode, value, this, static t => t.AlertModeChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.AlertModeChanged);
     }
 
     public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
@@ -159,12 +151,12 @@ public abstract class Notification : IComponentManager {
     /// </summary>
     public bool IsVisible => this.NotificationManager != null;
 
-    public event NotificationEventHandler? CaptionChanged;
-    public event NotificationEventHandler? CanAutoHideChanged;
-    public event NotificationEventHandler? IsAutoHideActiveChanged;
-    public event NotificationEventHandler? AutoHideDelayChanged;
-    public event NotificationContextDataChangedEventHandler? ContextDataChanged;
-    public event NotificationEventHandler? AlertModeChanged;
+    public event EventHandler? CaptionChanged;
+    public event EventHandler? CanAutoHideChanged;
+    public event EventHandler? IsAutoHideActiveChanged;
+    public event EventHandler? AutoHideDelayChanged;
+    public event EventHandler<ValueChangedEventArgs<IContextData?>>? ContextDataChanged;
+    public event EventHandler? AlertModeChanged;
 
     protected Notification() {
         this.myComponentStorage = new ComponentStorage(this);

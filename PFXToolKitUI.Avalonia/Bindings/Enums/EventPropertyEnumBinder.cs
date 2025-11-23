@@ -17,7 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.EventHelpers;
 
 namespace PFXToolKitUI.Avalonia.Bindings.Enums;
 

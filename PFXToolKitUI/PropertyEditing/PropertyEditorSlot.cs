@@ -21,16 +21,12 @@ using System.Collections.ObjectModel;
 
 namespace PFXToolKitUI.PropertyEditing;
 
-public delegate void PropertyEditorSlotEventHandler(PropertyEditorSlot sender);
-
 /// <summary>
 /// The base class for a slot in a property editor. This is what stores the data used to
 /// modify one or more actual data properties in the UI. This is basically a single row in the editor
 /// </summary>
 public abstract class PropertyEditorSlot : BasePropertyEditorItem {
     private static readonly ReadOnlyCollection<object> EmptyList = new List<object>().AsReadOnly();
-
-    private bool isSelected;
 
     public abstract bool IsSelectable { get; }
 
@@ -39,15 +35,15 @@ public abstract class PropertyEditorSlot : BasePropertyEditorItem {
     /// to the automation controls to set the active automation sequence to the one this slot is related to
     /// </summary>
     public bool IsSelected {
-        get => this.isSelected && this.IsSelectable;
+        get => field && this.IsSelectable;
         set {
             if (!this.IsSelectable)
                 throw new InvalidOperationException("Not selectable");
-            if (this.isSelected == value)
+            if (field == value)
                 return;
-            this.isSelected = value;
+            field = value;
             PropertyEditor.InternalProcessSelectionChanged(this);
-            this.IsSelectedChanged?.Invoke(this);
+            this.IsSelectedChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -78,9 +74,9 @@ public abstract class PropertyEditorSlot : BasePropertyEditorItem {
     /// </summary>
     public virtual ApplicabilityMode ApplicabilityMode => ApplicabilityMode.All;
 
-    public event PropertyEditorSlotEventHandler? IsSelectedChanged;
-    public event PropertyEditorSlotEventHandler? HandlersLoaded;
-    public event PropertyEditorSlotEventHandler? HandlersCleared;
+    public event EventHandler? IsSelectedChanged;
+    public event EventHandler? HandlersLoaded;
+    public event EventHandler? HandlersCleared;
 
     protected PropertyEditorSlot(Type applicableType) : base(applicableType) {
         this.Handlers = EmptyList;
@@ -104,7 +100,7 @@ public abstract class PropertyEditorSlot : BasePropertyEditorItem {
 
         this.OnClearingHandlers();
         this.Handlers = EmptyList;
-        this.HandlersCleared?.Invoke(this);
+        this.HandlersCleared?.Invoke(this, EventArgs.Empty);
         this.IsCurrentlyApplicable = false;
     }
 
@@ -140,7 +136,7 @@ public abstract class PropertyEditorSlot : BasePropertyEditorItem {
     /// Called just after all handlers are fulled loaded. When this is cleared, there is guaranteed to be 1 or more loaded handlers
     /// </summary>
     protected virtual void OnHandlersLoaded() {
-        this.HandlersLoaded?.Invoke(this);
+        this.HandlersLoaded?.Invoke(this, EventArgs.Empty);
     }
 
     private static bool GetApplicable(PropertyEditorSlot slot, IReadOnlyList<object> input, out IReadOnlyList<object> output) {

@@ -26,8 +26,6 @@ namespace PFXToolKitUI.Avalonia.CommandUsages;
 /// </summary>
 /// <typeparam name="T">The model type</typeparam>
 public class CommandUsageModelHelper<T> where T : class {
-    public delegate void ModelUsageEventHandler(CommandUsageModelHelper<T> helper);
-
     /// <summary>
     /// Gets the current model object. Null when disconnected, Non-null when connected
     /// </summary>
@@ -40,7 +38,7 @@ public class CommandUsageModelHelper<T> where T : class {
     /// state or any other data it needs when the model state changes
     /// </para>
     /// </summary>
-    public event ModelUsageEventHandler? Connected;
+    public event EventHandler? Connected;
 
     /// <summary>
     /// An event fired when our <see cref="Model"/> is about to be set to null (meaning the command usage's
@@ -49,7 +47,7 @@ public class CommandUsageModelHelper<T> where T : class {
     /// This should remove any event handlers from <see cref="Model"/>
     /// </para>
     /// </summary>
-    public event ModelUsageEventHandler? Disconnected;
+    public event EventHandler? Disconnected;
 
     public CommandUsageModelHelper() {
     }
@@ -65,11 +63,11 @@ public class CommandUsageModelHelper<T> where T : class {
         }
 
         if (this.Model != null) {
-            this.Disconnected?.Invoke(this);
+            this.Disconnected?.Invoke(this, EventArgs.Empty);
         }
 
         if ((this.Model = newModel) != null) {
-            this.Connected?.Invoke(this);
+            this.Connected?.Invoke(this, EventArgs.Empty);
         }
 
         usage.UpdateCanExecuteLater();

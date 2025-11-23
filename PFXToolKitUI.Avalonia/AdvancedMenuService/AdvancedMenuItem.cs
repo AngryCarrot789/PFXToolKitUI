@@ -29,6 +29,7 @@ using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
@@ -102,7 +103,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.OnLoadedOverride(e);
         this.IsVisibilityChanging = false;
 
-        this.OnIsCheckedFunctionChanged(this.Entry!);
+        this.OnIsCheckedFunctionChanged(this.Entry!, EventArgs.Empty);
         this.UpdateIsEnabled();
     }
 
@@ -186,17 +187,19 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Entry = null;
     }
 
-    private void OnIsCheckedFunctionChanged(BaseMenuEntry sender) {
+    private void OnIsCheckedFunctionChanged(object? o, EventArgs e) {
+        BaseMenuEntry sender = (BaseMenuEntry) o!;
         this.ToggleType = sender.IsCheckedFunction != null ? MenuItemToggleType.CheckBox : MenuItemToggleType.None;
         // IsCheckedChanged is fired after IsCheckedFunctionChanged so no need to double call UpdateIsChecked
         // this.UpdateIsChecked(sender);
     }
 
-    private void OnIsCheckedChanged(BaseMenuEntry sender) {
+    private void OnIsCheckedChanged(object? o, EventArgs e) {
+        BaseMenuEntry sender = (BaseMenuEntry) o!;
         this.IsChecked = sender.IsCheckedFunction != null && sender.IsCheckedFunction(sender);
     }
 
-    private void OnCanExecuteChanged(BaseMenuEntry baseMenuEntry) {
+    private void OnCanExecuteChanged(object? sender, EventArgs e) {
         this.UpdateCanExecute();
 
         if (!this.IsVisibilityChanging) {
@@ -228,7 +231,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         }
 
         if (this.Entry != null)
-            this.OnIsCheckedChanged(this.Entry);
+            this.OnIsCheckedChanged(this.Entry, EventArgs.Empty);
 
         this.UpdateIsEnabled();
         (ToolTipEx.GetTip(this) as ToolTips.ContextMenuToolTip)?.OnCanExecuteChanged();
@@ -276,12 +279,12 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         AdvancedMenuHelper.OnLogicalItemReplaced(this, index, oldItem, newItem);
     }
 
-    private void OnAnyEntryIconChanged(BaseMenuEntry sender, Icon? oldIcon, Icon? newIcon) {
+    private void OnAnyEntryIconChanged(object? o, ValueChangedEventArgs<Icon?> valueChangedEventArgs) {
         this.UpdateIcon();
     }
 
-    private void OnEntryDisplayNameChanged(BaseMenuEntry sender) {
-        this.UpdateHeader(sender);
+    private void OnEntryDisplayNameChanged(object? o, EventArgs e) {
+        this.UpdateHeader((BaseMenuEntry) o!);
     }
 
     protected override bool NeedsContainerOverride(object? item, int index, out object? recycleKey) {

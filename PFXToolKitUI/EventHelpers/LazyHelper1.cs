@@ -17,7 +17,9 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils;
+
+namespace PFXToolKitUI.EventHelpers;
 
 public delegate void LazyHelper1EventHandler<in T>(T value, bool hasValue);
 
@@ -27,17 +29,15 @@ public delegate void LazyHelper1EventHandler<in T>(T value, bool hasValue);
 /// </summary>
 /// <typeparam name="T">The value type</typeparam>
 public class LazyHelper1<T>(LazyHelper1EventHandler<T> onValuesChanged) {
-    private Optional<T> value1;
-
     public Optional<T> Value1 {
-        get => this.value1;
+        get => field;
         set {
-            Optional<T> oldValue = this.value1;
+            Optional<T> oldValue = field;
             if (!oldValue.Equals(value)) {
                 if (oldValue.HasValue)
                     onValuesChanged(oldValue.Value, false);
 
-                this.value1 = value;
+                field = value;
                 if (value.HasValue)
                     onValuesChanged(value.Value, true);
             }

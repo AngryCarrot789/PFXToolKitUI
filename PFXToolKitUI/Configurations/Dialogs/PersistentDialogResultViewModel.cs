@@ -55,11 +55,13 @@ public class PersistentDialogResultViewModel : INotifyPropertyChanged {
         this.PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
     }
 
-    private void OnIsPersistentOnlyUntilAppClosesChanged(PersistentDialogResult sender) {
+    private void OnIsPersistentOnlyUntilAppClosesChanged(object? o, EventArgs e) {
+        PersistentDialogResult sender = (PersistentDialogResult) o!;
         this.IsPersistentOnlyUntilAppCloses = sender.IsPersistentOnlyUntilAppCloses;
     }
     
-    private void OnButtonChanged(PersistentDialogResult sender) {
+    private void OnButtonChanged(object? o, EventArgs e) {
+        PersistentDialogResult sender = (PersistentDialogResult) o!;
         this.Button = sender.Button;
         this.OnPropertyChanged(nameof(this.Button));
     }

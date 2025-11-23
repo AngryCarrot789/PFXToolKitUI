@@ -18,12 +18,9 @@
 // 
 
 using Avalonia.Controls;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
-
-public delegate void BinderEventHandler<TModel>(IBinder<TModel> sender) where TModel : class;
-public delegate void BinderModelChangedEventHandler<TModel>(IBinder<TModel> sender, TModel? oldModel, TModel? newModel) where TModel : class;
-public delegate void BinderControlChangedEventHandler<TModel>(IBinder<TModel> sender, Control? oldControl, Control? newControl) where TModel : class;
 
 /// <summary>
 /// A non-generic interface for a binder
@@ -90,28 +87,28 @@ public interface IBinder<TModel> : IBinder where TModel : class {
     /// null and a control is still attached
     /// </para>
     /// </summary>
-    event BinderEventHandler<TModel> UpdateControlWithoutModel;
+    event EventHandler? UpdateControlWithoutModel;
 
     /// <summary>
     /// Invoked when <see cref="IBinder.UpdateControl"/> is invoked when fully attached
     /// </summary>
-    event BinderEventHandler<TModel> ControlUpdated;
+    event EventHandler? ControlUpdated;
     
     /// <summary>
     /// Invoked when <see cref="IBinder.UpdateModel"/> is invoked when fully attached
     /// </summary>
-    event BinderEventHandler<TModel> ModelUpdated;
+    event EventHandler? ModelUpdated;
     
     /// <summary>
     /// Invoked when <see cref="Model"/> changes. Both values are non-null when already
     /// attached and <see cref="SwitchModel"/> is passed a non-null model
     /// </summary>
-    event BinderModelChangedEventHandler<TModel> ModelChanged;
+    event EventHandler<ValueChangedEventArgs<TModel?>>? ModelChanged;
     
     /// <summary>
     /// Invoked when <see cref="Control"/> changes.
     /// </summary>
-    event BinderControlChangedEventHandler<TModel> ControlChanged;
+    event EventHandler<ValueChangedEventArgs<Control?>>? ControlChanged;
     
     /// <summary>
     /// Attaches both the control and the model to this binder. This is equivalent to

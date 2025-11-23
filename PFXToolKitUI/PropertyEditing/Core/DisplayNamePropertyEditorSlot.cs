@@ -31,7 +31,7 @@ public class DisplayNamePropertyEditorSlot : PropertyEditorSlot {
 
     public override bool IsSelectable => true;
 
-    public event PropertyEditorSlotEventHandler? DisplayNameChanged;
+    public event EventHandler? DisplayNameChanged;
     private bool isProcessingValueChange;
 
     public DisplayNamePropertyEditorSlot() : base(typeof(IDisplayName)) {
@@ -46,7 +46,7 @@ public class DisplayNamePropertyEditorSlot : PropertyEditorSlot {
             clip.DisplayName = value;
         }
 
-        this.DisplayNameChanged?.Invoke(this);
+        this.DisplayNameChanged?.Invoke(this, EventArgs.Empty);
         this.isProcessingValueChange = false;
     }
 
@@ -68,15 +68,16 @@ public class DisplayNamePropertyEditorSlot : PropertyEditorSlot {
 
     public void RequeryOpacityFromHandlers() {
         this.DisplayName = CollectionUtils.GetEqualValue(this.Handlers, x => ((IDisplayName) x).DisplayName, out string? d) ? d : "<different values>";
-        this.DisplayNameChanged?.Invoke(this);
+        this.DisplayNameChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void OnDisplayNameChanged(IDisplayName sender, string? oldName, string? newName) {
+    private void OnDisplayNameChanged(object? o, EventArgs eventArgs) {
         if (this.isProcessingValueChange)
             return;
-        if (this.DisplayName != sender.DisplayName) {
-            this.DisplayName = sender.DisplayName;
-            this.DisplayNameChanged?.Invoke(this);
+        
+        if (this.DisplayName != ((IDisplayName) o!).DisplayName) {
+            this.DisplayName = ((IDisplayName) o!).DisplayName;
+            this.DisplayNameChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 }

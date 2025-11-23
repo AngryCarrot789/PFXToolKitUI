@@ -17,30 +17,9 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils.Events;
+
 namespace PFXToolKitUI.Interactivity;
-
-public delegate void SelectionChangedEventHandler<T>(ISelectionManager<T> sender, IList<T>? oldItems, IList<T>? newItems);
-
-public delegate void SelectionClearedEventHandler<T>(ISelectionManager<T> sender);
-
-public delegate void LightSelectionChangedEventHandler<T>(ILightSelectionManager<T> sender);
-
-public static class BaseSelectionManagerExtensions {
-    /// <summary>
-    /// A helper method to flip the selected state
-    /// </summary>
-    /// <param name="manager"></param>
-    /// <param name="item"></param>
-    /// <typeparam name="T"></typeparam>
-    public static void ToggleSelected<T>(this IBaseSelectionManager<T> manager, T item) {
-        if (manager.IsSelected(item)) {
-            manager.Unselect(item);
-        }
-        else {
-            manager.Select(item);
-        }
-    }
-}
 
 /// <summary>
 /// A base interface for general selection managers providing get/set/add/remove/clear/is support.
@@ -131,12 +110,12 @@ public interface ISelectionManager<T> : IBaseSelectionManagerEx<T> {
     /// <summary>
     /// An event fired when the selection changes (item added or removed)
     /// </summary>
-    public event SelectionChangedEventHandler<T>? SelectionChanged;
+    public event EventHandler<ValueChangedEventArgs<IList<T>?>>? SelectionChanged;
 
     /// <summary>
     /// An event fired when the selection is cleared
     /// </summary>
-    public event SelectionClearedEventHandler<T>? SelectionCleared;
+    public event EventHandler? SelectionCleared;
 }
 
 /// <summary>
@@ -148,7 +127,7 @@ public interface ILightSelectionManager<T> : IBaseSelectionManagerEx<T> {
     /// An event fired when the selection changes. This does not contain what changes, it just marks a change
     /// happening (it could be selection cleared, item added, maybe multiple items being added or removed, etc.)
     /// </summary>
-    event LightSelectionChangedEventHandler<T> LightSelectionChanged;
+    event EventHandler LightSelectionChanged;
 }
 
 public interface IBaseListSelectionManager<T> : IBaseSelectionManagerEx<T> {

@@ -43,7 +43,7 @@ public class AvaloniaPropertyToDataParameterBinder<TModel> : AvaloniaPropertyBin
         this.Parameter.RemoveValueChangedHandler(this.Model, this.OnParameterChanged);
     }
 
-    private void OnParameterChanged(DataParameter parameter, ITransferableData owner) {
+    private void OnParameterChanged(object? sender, DataParameterValueChangedEventArgs e) {
         this.UpdateControl();
     }
 }

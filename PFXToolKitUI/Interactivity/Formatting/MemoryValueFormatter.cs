@@ -25,8 +25,6 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Interactivity.Formatting;
 
-public delegate void MemoryFormatFormatterEventHandler(MemoryValueFormatter sender);
-
 /// <summary>
 /// A value formatter that formats memory (e.g. bits, bytes, kbits, etc.) into another format
 /// </summary>
@@ -90,7 +88,7 @@ public class MemoryValueFormatter : BaseSimpleValueFormatter {
 
             ValidateMemoryFormat(value);
             this.sourceFormat = value;
-            this.SourceFormatChanged?.Invoke(this);
+            this.SourceFormatChanged?.Invoke(this, EventArgs.Empty);
             this.OnInvalidateFormat();
         }
     }
@@ -106,15 +104,15 @@ public class MemoryValueFormatter : BaseSimpleValueFormatter {
 
             ValidateMemoryFormat(value);
             this.targetFormat = value;
-            this.TargetFormatChanged?.Invoke(this);
+            this.TargetFormatChanged?.Invoke(this, EventArgs.Empty);
             this.OnInvalidateFormat();
         }
     }
 
     public ImmutableHashSet<MemoryFormatType>? AllowedFormats { get; set; }
 
-    public event MemoryFormatFormatterEventHandler? SourceFormatChanged;
-    public event MemoryFormatFormatterEventHandler? TargetFormatChanged;
+    public event EventHandler? SourceFormatChanged;
+    public event EventHandler? TargetFormatChanged;
 
     public MemoryValueFormatter(int nonEditingRoundedPlaces = 2, int editingRoundedPlaces = 6) {
         this.NonEditingRoundedPlaces = nonEditingRoundedPlaces;

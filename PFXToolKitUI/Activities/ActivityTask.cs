@@ -21,12 +21,9 @@ using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using PFXToolKitUI.Activities.Pausable;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Activities;
-
-public delegate void ActivityTaskEventHandler(ActivityTask sender);
-
-public delegate void ActivityTaskPausableTaskChangedEventHandler(ActivityTask sender, AdvancedPausableTask? oldPausableTask, AdvancedPausableTask? newPausableTask);
 
 /// <summary>
 /// Represents a task that can be run by a <see cref="ActivityManager"/> on a background thread
@@ -106,13 +103,7 @@ public class ActivityTask {
     /// </summary>
     public AdvancedPausableTask? PausableTask {
         get => this.myPausableTask;
-        internal set {
-            AdvancedPausableTask? oldPausableTask = this.myPausableTask;
-            if (oldPausableTask != value) {
-                this.myPausableTask = value;
-                this.PausableTaskChanged?.Invoke(this, oldPausableTask, value);
-            }
-        }
+        internal set => PropertyHelper.SetAndRaiseINE(ref this.myPausableTask, value, this, this.PausableTaskChanged);
     }
 
     /// <summary>
@@ -124,17 +115,17 @@ public class ActivityTask {
     /// An event fired when <see cref="PausableTask"/> changes. This event is fired from a task thread,
     /// so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/> if they need to
     /// </summary>
-    public event ActivityTaskPausableTaskChangedEventHandler? PausableTaskChanged;
+    public event EventHandler<ValueChangedEventArgs<AdvancedPausableTask?>>? PausableTaskChanged;
 
     /// <summary>
     /// An event fired when <see cref="IsCompleted"/> changes. This event is fired on the application main thread.
     /// </summary>
-    public event ActivityTaskEventHandler? IsCompletedChanged;
+    public event EventHandler? IsCompletedChanged;
 
     /// <summary>
     /// An event fired when <see cref="IsPresentInDialog"/> changes. This event is fired on the application main thread.
     /// </summary>
-    public event ActivityTaskEventHandler? IsPresentInDialogChanged;
+    public event EventHandler? IsPresentInDialogChanged;
 
     protected ActivityTask(ActivityManager activityManager, Func<Task> action, IActivityProgress activityProgress, CancellationTokenSource? cancellation, bool ownsCts) {
         this.activityManager = activityManager ?? throw new ArgumentNullException(nameof(activityManager));
@@ -249,7 +240,7 @@ public class ActivityTask {
 
     internal static void InternalPreComplete(ActivityTask task, EnumRunState state) => task.myState = state;
 
-    internal static void InternalPostCompleted(ActivityTask task) => task.IsCompletedChanged?.Invoke(task);
+    internal static void InternalPostCompleted(ActivityTask task) => task.IsCompletedChanged?.Invoke(task, EventArgs.Empty);
     
     internal static void InternalOnPresentInDialogChanged(ActivityTask task, bool isPresent) {
         Debug.Assert(isPresent ? (task.myDialogPresence >= 0) : (task.myDialogPresence > 0), "Excessive calls to " + nameof(InternalOnPresentInDialogChanged));
@@ -258,7 +249,7 @@ public class ActivityTask {
         int oldValue = task.myDialogPresence;
         task.myDialogPresence += (isPresent ? 1 : -1);
         if (oldValue == (isPresent ? 0 : 1)) {
-            task.IsPresentInDialogChanged?.Invoke(task);
+            task.IsPresentInDialogChanged?.Invoke(task, EventArgs.Empty);
             ActivityManager.InternalOnIsPresentInDialogChanged(task.activityManager, task);
         }
     }

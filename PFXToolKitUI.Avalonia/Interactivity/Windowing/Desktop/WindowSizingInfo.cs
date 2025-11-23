@@ -20,15 +20,9 @@
 using Avalonia.Controls;
 using Avalonia.Layout;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
-
-public delegate void WindowSizingInfoChangedEventHandler(WindowSizingInfo sender);
-
-public delegate void WindowSizeInfoDoubleValueChangedEventHandler(WindowSizingInfo sender, string propertyName);
-
-public delegate void WindowSizingInfoSizeToContentChangedEventHandler(WindowSizingInfo sender, SizeToContent oldSizeToContent, SizeToContent newSizeToContent);
 
 /// <summary>
 /// Specifies how a window should be sized. Note - windows do not update the properties of this class, it is one-way
@@ -82,7 +76,7 @@ public sealed class WindowSizingInfo {
     /// </summary>
     public bool CanResize {
         get => this.canResize;
-        set => PropertyHelper.SetAndRaiseINE(ref this.canResize, value, this, static t => t.CanResizeChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.canResize, value, this, this.CanResizeChanged);
     }
 
     /// <summary>
@@ -91,12 +85,12 @@ public sealed class WindowSizingInfo {
     /// </summary>
     public SizeToContent SizeToContent {
         get => this.sizeToContent;
-        set => PropertyHelper.SetAndRaiseINE(ref this.sizeToContent, value, this, static (t, o, n) => t.SizeToContentChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINE(ref this.sizeToContent, value, this, this.SizeToContentChanged);
     }
 
-    public event WindowSizeInfoDoubleValueChangedEventHandler? DoubleValueChanged;
-    public event WindowSizingInfoChangedEventHandler? CanResizeChanged;
-    public event WindowSizingInfoSizeToContentChangedEventHandler? SizeToContentChanged;
+    public event EventHandler<string>? DoubleValueChanged;
+    public event EventHandler? CanResizeChanged;
+    public event EventHandler<ValueChangedEventArgs<SizeToContent>>? SizeToContentChanged;
 
     /// <summary>
     /// Gets the window that owns this window size info object

@@ -30,6 +30,7 @@ using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Configurations.UI;
+using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Themes.Contexts;
@@ -129,7 +130,7 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
         }
     }
 
-    private void OnTargetThemeChanged(ThemeConfigurationPage sender, Theme? oldTheme, Theme? newTheme) {
+    private void OnTargetThemeChanged(object? o, ValueChangedEventArgs<Theme?> valueChangedEventArgs) {
         this.UpdateGroupBoxAndWarningMessage();
         this.UpdateCanResetValue();
     }
@@ -174,7 +175,7 @@ public class ThemeConfigurationPageControl : BaseConfigurationPageControl {
         }
     }
 
-    private void OnInheritedFromKeyChanged(ThemeConfigEntry sender) {
+    private void OnInheritedFromKeyChanged(object? o, EventArgs eventArgs) {
         this.UpdateCanSetInheritedKeyButton();
     }
 

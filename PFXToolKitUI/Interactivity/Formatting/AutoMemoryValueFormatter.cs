@@ -22,8 +22,6 @@ using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Interactivity.Formatting;
 
-public delegate void AutoMemoryFormatFormatterEventHandler(AutoMemoryValueFormatter sender);
-
 /// <summary>
 /// A value formatter that formats memory (e.g. bits, bytes, kbits, etc.) automatically
 /// into an appropriate format based on the actual numerical value (e.g. 1000 bits into 1kbit)
@@ -40,7 +38,7 @@ public class AutoMemoryValueFormatter : BaseSimpleValueFormatter {
             if (this.sourceFormat != value) {
                 MemoryValueFormatter.ValidateMemoryFormat(value);
                 this.sourceFormat = value;
-                this.SourceFormatChanged?.Invoke(this);
+                this.SourceFormatChanged?.Invoke(this, EventArgs.Empty);
                 this.OnInvalidateFormat();
             }
         }
@@ -48,7 +46,7 @@ public class AutoMemoryValueFormatter : BaseSimpleValueFormatter {
 
     public ImmutableHashSet<MemoryFormatType>? AllowedFormats { get; set; }
 
-    public event AutoMemoryFormatFormatterEventHandler? SourceFormatChanged;
+    public event EventHandler? SourceFormatChanged;
 
     public AutoMemoryValueFormatter(int nonEditingRoundedPlaces = 2, int editingRoundedPlaces = 6) {
         this.NonEditingRoundedPlaces = nonEditingRoundedPlaces;

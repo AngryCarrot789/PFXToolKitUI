@@ -17,19 +17,15 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils.Events;
+
 namespace PFXToolKitUI.Utils;
 
-public delegate void FlipFlopTimerEventHandler(FlipFlopTimer sender);
-
-public delegate void FlipFlopTimerStateChangedEventHandler(FlipFlopTimer sender, bool isHigh);
-
 public class FlipFlopTimer {
-    private TimeSpan interval;
     private int levelChangesToStop;
     private int highState = -1;
     private long totalChangesSinceStart;
-    private bool isEnabled, isDisabledForLevelChangeLimit;
-    private bool startHigh;
+    private bool isDisabledForLevelChangeLimit;
     private IDispatcherTimer? timer;
 
     /// <summary>
@@ -37,7 +33,7 @@ public class FlipFlopTimer {
     /// </summary>
     /// <exception cref="ArgumentOutOfRangeException">Interval is invalid</exception>
     public TimeSpan Interval {
-        get => this.interval;
+        get => field;
         set {
             double totalMs = value.TotalMilliseconds;
             if (totalMs < 1.0)
@@ -45,7 +41,7 @@ public class FlipFlopTimer {
             if (totalMs > int.MaxValue)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Total milliseconds too large");
 
-            PropertyHelper.SetAndRaiseINE(ref this.interval, value, this, static t => t.IntervalChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IntervalChanged);
 
             if (this.timer != null)
                 this.timer.Interval = value;
@@ -66,7 +62,7 @@ public class FlipFlopTimer {
         set {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Must cannot be negative");
-            PropertyHelper.SetAndRaiseINE(ref this.levelChangesToStop, value, this, static t => t.IntervalToAutoStopChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref this.levelChangesToStop, value, this, this.IntervalToAutoStopChanged);
 
             if (this.IsEnabled) {
                 if (this.totalChangesSinceStart >= value && value != 0) {
@@ -85,11 +81,11 @@ public class FlipFlopTimer {
     /// started, and we start switching between brushes which fires <see cref="IsHighChanged"/>
     /// </summary>
     public bool IsEnabled {
-        get => this.isEnabled;
+        get => field;
         set {
-            if (this.isEnabled != value) {
-                this.isEnabled = value;
-                this.IsEnabledChanged?.Invoke(this);
+            if (field != value) {
+                field = value;
+                this.IsEnabledChanged?.Invoke(this, EventArgs.Empty);
                 this.OnIsEnabledChanged(value);
             }
         }
@@ -103,28 +99,28 @@ public class FlipFlopTimer {
     /// </para>
     /// </summary>
     public bool StartHigh {
-        get => this.startHigh;
-        set => PropertyHelper.SetAndRaiseINE(ref this.startHigh, value, this, static t => t.StartHighChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.StartHighChanged);
     }
-    
+
     public bool IsHigh => this.highState > 0;
 
-    public event FlipFlopTimerEventHandler? IntervalChanged;
-    public event FlipFlopTimerEventHandler? IntervalToAutoStopChanged;
-    public event FlipFlopTimerEventHandler? IsEnabledChanged;
-    public event FlipFlopTimerEventHandler? StartHighChanged;
+    public event EventHandler? IntervalChanged;
+    public event EventHandler? IntervalToAutoStopChanged;
+    public event EventHandler? IsEnabledChanged;
+    public event EventHandler? StartHighChanged;
 
     /// <summary>
     /// Fired when the high state changes.
     /// </summary>
-    public event FlipFlopTimerStateChangedEventHandler? IsHighChanged;
+    public event EventHandler? IsHighChanged;
 
     public FlipFlopTimer(TimeSpan interval) {
         this.Interval = interval;
     }
 
     protected virtual void OnIsHighChanged(bool isHigh) {
-        this.IsHighChanged?.Invoke(this, isHigh);
+        this.IsHighChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void OnIsEnabledChanged(bool value) {

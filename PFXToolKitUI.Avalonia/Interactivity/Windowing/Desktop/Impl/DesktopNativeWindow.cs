@@ -54,11 +54,7 @@ public sealed class DesktopNativeWindow : Window {
     private WindowCloseReason closingReason;
     private bool isClosingFromCode;
     internal bool doNotModifySizeToContent, isFullyOpened;
-    private Icon? titleBarIcon;
-    private bool showTitleBarIcon;
-    private bool isTitleBarVisible = true;
-    private bool isToolWindow;
-    
+
     internal bool Builder_CanMinimize;
     internal bool Builder_CanMaximize;
 
@@ -80,37 +76,37 @@ public sealed class DesktopNativeWindow : Window {
     }
 
     public Icon? TitleBarIcon {
-        get => this.titleBarIcon;
+        get => field;
         set {
-            if (!Equals(this.titleBarIcon, value)) {
-                this.titleBarIcon = value;
+            if (!Equals(field, value)) {
+                field = value;
                 this.OnIconStateChanged(true, false);
             }
         }
     }
 
     public bool IsTitleBarVisible {
-        get => this.isTitleBarVisible;
+        get => field;
         set {
-            this.isTitleBarVisible = value;
+            field = value;
             this.UpdateTitleBarAndWindowChrome();
         }
-    }
+    } = true;
 
     public bool ShowTitleBarIcon {
-        get => this.showTitleBarIcon;
+        get => field;
         set {
-            if (this.showTitleBarIcon != value) {
-                this.showTitleBarIcon = value;
+            if (field != value) {
+                field = value;
                 this.OnIconStateChanged(false, false);
             }
         }
     }
 
     public bool IsToolWindow {
-        get => this.isToolWindow;
+        get => field;
         set {
-            this.isToolWindow = value;
+            field = value;
             this.UpdateTitleBarAndWindowChrome();
         }
     }
@@ -129,6 +125,8 @@ public sealed class DesktopNativeWindow : Window {
         this.AddHandler(WindowOpenedEvent, this.OnOpening, RoutingStrategies.Direct, handledEventsToo: true);
 
         this.UpdateChromeState();
+
+        this.ClosingBehavior = WindowClosingBehavior.OwnerWindowOnly;
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
@@ -234,24 +232,14 @@ public sealed class DesktopNativeWindow : Window {
 
     protected override void OnClosing(WindowClosingEventArgs e) {
         base.OnClosing(e);
-        if (this.Window.internalIsProcessingClose || this.Window.OpenState == OpenState.Closed) {
-            if (e.CloseReason != WindowCloseReason.ApplicationShutdown && e.CloseReason != WindowCloseReason.OSShutdown) {
-                throw new InvalidOperationException("Reentrancy of " + nameof(this.OnClosing));
+        if (this.Window.OpenState.IsOpenOrTryingToClose()) {
+            WindowCancelCloseEventArgs args = this.Window.OnNativeWindowClosing(this.closingReason = e.CloseReason, this.isClosingFromCode = e.IsProgrammatic);
+            if (e.Cancel && !args.IsCancelled) {
+                Debug.Fail("!!! someone used the raw window's Closing event");
             }
-            
-            // When main window closes, it will close all other windows. But there's some
-            // ordering issues that might cause reentrancy or a window, still opened by Avalonia's
-            // tracking but closed for IWindowManager, to be closed. So, only ignore if app or os is
-            // shutting down. Otherwise, we throw above to try and track the issue
-            return;
-        }
-        
-        WindowCancelCloseEventArgs args = this.Window.OnNativeWindowClosing(this.closingReason = e.CloseReason, this.isClosingFromCode = e.IsProgrammatic);
-        if (e.Cancel && !args.IsCancelled) {
-            Debug.Fail("!!! someone used the raw window's Closing event");
-        }
 
-        e.Cancel = args.IsCancelled;
+            e.Cancel = args.IsCancelled;
+        }
     }
 
     protected override void OnClosed(EventArgs e) {

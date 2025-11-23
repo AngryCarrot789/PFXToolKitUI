@@ -1,7 +1,7 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Design.PreviewWith>
-        <Grid Background="DimGray">
+        <Grid>
             <CheckBox Content="Ello"/>
         </Grid>
     </Design.PreviewWith>
@@ -17,8 +17,8 @@
             <ControlTemplate>
                 <Grid ColumnDefinitions="Auto,*" Background="{TemplateBinding Background}">
                     <Border x:Name="border"
-                            Width="13"
-                            Height="13"
+                            Width="14"
+                            Height="14"
                             VerticalAlignment="Center"
                             Background="{DynamicResource CheckBox.Static.Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"

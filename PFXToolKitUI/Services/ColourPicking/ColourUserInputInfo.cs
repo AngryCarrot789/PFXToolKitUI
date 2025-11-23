@@ -18,22 +18,18 @@
 // 
 
 using PFXToolKitUI.Services.UserInputs;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Services.ColourPicking;
 
-public delegate void ColourUserInputInfoEventHandler(ColourUserInputInfo sender);
-
 public class ColourUserInputInfo : UserInputInfo {
-    private SKColor colour = SKColor.Empty;
-
     public SKColor Colour {
-        get => this.colour;
-        set => PropertyHelper.SetAndRaiseINE(ref this.colour, value, this, static t => t.ColourChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ColourChanged);
+    } = SKColor.Empty;
 
-    public event ColourUserInputInfoEventHandler? ColourChanged;
+    public event EventHandler? ColourChanged;
 
     public ColourUserInputInfo() {
     }

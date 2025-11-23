@@ -31,6 +31,7 @@ using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees;
 
@@ -115,7 +116,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         }
         else if (this.Entry is ShortcutEntry shortcut) {
             shortcut.ShortcutChanged += this.OnEntryShortcutChanged;
-            this.OnEntryShortcutChanged(shortcut, null!, shortcut.Shortcut);
+            this.OnEntryShortcutChanged(shortcut, new ValueChangedEventArgs<IShortcut>(null!, shortcut.Shortcut));
         }
 
         // rawName should not be <root> because the root object should never be visible technically.
@@ -124,8 +125,8 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         ToolTipEx.SetTipType(this, typeof(ShotcutTreeViewItemToolTip));
     }
 
-    private void OnEntryShortcutChanged(ShortcutEntry sender, IShortcut oldShortcut, IShortcut newShortcut) {
-        this.shortcutStrokesBinder.SwitchModel(newShortcut);
+    private void OnEntryShortcutChanged(object? o, ValueChangedEventArgs<IShortcut> e) {
+        this.shortcutStrokesBinder.SwitchModel(e.NewValue);
     }
 
     public virtual void OnRemoving() {

@@ -19,7 +19,7 @@
 
 using System.Diagnostics;
 
-namespace PFXToolKitUI.Utils.Events;
+namespace PFXToolKitUI.EventHelpers;
 
 public class AutoValueHelper<T> where T : class {
     private readonly Action<T> update;

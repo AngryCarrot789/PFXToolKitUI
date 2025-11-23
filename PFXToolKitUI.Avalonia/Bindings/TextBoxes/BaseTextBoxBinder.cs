@@ -32,13 +32,8 @@ namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
 /// </summary>
 /// <typeparam name="TModel">The type of model</typeparam>
 public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TModel : class {
-    public delegate void ValueCancelledEventHandler(BaseTextBoxBinder<TModel> sender, ValueCancelledEventArgs e);
-
-    public delegate void ValueConfirmedEventHandler(BaseTextBoxBinder<TModel> sender, ValueConfirmedEventArgs e);
-
     private readonly Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate;
     private bool isChangingModel, isResettingTextToModel;
-    private bool hasUserModifiedValueSinceUpdate;
     private EventHandler<RoutedEventArgs>? onLostFocus;
     private EventHandler<KeyEventArgs>? onKeyDown;
     private EventHandler<TextChangedEventArgs>? onTextChanged;
@@ -63,9 +58,9 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     public bool CanMoveFocusUpwardsOnEscape { get; set; } = true;
 
     protected bool HasUserModifiedValueSinceUpdate {
-        get => this.hasUserModifiedValueSinceUpdate;
+        get => field;
         set {
-            this.hasUserModifiedValueSinceUpdate = value;
+            field = value;
             if (this.myControl != null)
                 AttachedTextBoxBinding.SetIsValueDifferent((TextBox) this.myControl, value);
         }
@@ -74,12 +69,12 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     /// <summary>
     /// Fired when the user presses the escape button or the text box loses focus when <see cref="CanApplyValueOnLostFocus"/> is false.
     /// </summary>
-    public event ValueCancelledEventHandler? ValueCancelled;
+    public event EventHandler<ValueCancelledEventArgs>? ValueCancelled;
 
     /// <summary>
     /// Fired when the user confirms their value, either by pressing ENTER or when the text box loses focus when <see cref="CanApplyValueOnLostFocus"/> is true.
     /// </summary>
-    public event ValueConfirmedEventHandler? ValueConfirmed;
+    public event EventHandler<ValueConfirmedEventArgs>? ValueConfirmed;
 
     /// <summary>
     /// Initialises the <see cref="TextBoxToEventPropertyBinder{TModel}"/> object

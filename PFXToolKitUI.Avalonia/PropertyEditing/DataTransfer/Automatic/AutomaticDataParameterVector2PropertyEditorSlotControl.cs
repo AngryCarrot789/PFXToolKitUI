@@ -147,7 +147,7 @@ public class AutomaticDataParameterVector2PropertyEditorSlotControl : BaseDataPa
         }
     }
 
-    private void OnIsAutomaticChanged(DataParameter parameter, ITransferableData owner) {
+    private void OnIsAutomaticChanged(object? sender, DataParameterValueChangedEventArgs e) {
         this.UpdateTextPreview();
     }
 
@@ -160,7 +160,7 @@ public class AutomaticDataParameterVector2PropertyEditorSlotControl : BaseDataPa
         }
     }
 
-    private void OnHasMultipleValuesChanged(DataParameterPropertyEditorSlot sender) {
+    private void OnHasMultipleValuesChanged(object? o, EventArgs eventArgs) {
         this.UpdateDraggerMultiValueState();
     }
 

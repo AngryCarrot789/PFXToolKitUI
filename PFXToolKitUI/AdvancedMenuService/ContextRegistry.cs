@@ -18,13 +18,9 @@
 // 
 
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.AdvancedMenuService;
-
-public delegate void ContextRegistryEventHandler(ContextRegistry registry);
-
-public delegate void ContextRegistryContextEventHandler(ContextRegistry registry, IContextData context);
 
 /// <summary>
 /// A class which stores a menu entry hierarchy for use in context menus.
@@ -36,8 +32,6 @@ public delegate void ContextRegistryContextEventHandler(ContextRegistry registry
 /// </summary>
 public class ContextRegistry {
     private readonly SortedList<int, Dictionary<string, IWeightedMenuEntryGroup>> groups;
-    private string? caption;
-    private string? objectName;
 
     /// <summary>
     /// Gets the groups in our registry
@@ -48,8 +42,8 @@ public class ContextRegistry {
     /// Gets or sets this registry's caption
     /// </summary>
     public string? Caption {
-        get => this.caption;
-        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CaptionChanged);
     }
 
     /// <summary>
@@ -57,21 +51,21 @@ public class ContextRegistry {
     /// and is shown in less obvious text (i.e. darker foreground brush with a dark themes)
     /// </summary>
     public string? ObjectName {
-        get => this.objectName;
-        set => PropertyHelper.SetAndRaiseINE(ref this.objectName, value, this, static t => t.ObjectNameChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ObjectNameChanged);
     }
-    
+
     public bool IsOpened { get; private set; }
 
-    public event ContextRegistryEventHandler? CaptionChanged;
-    public event ContextRegistryEventHandler? ObjectNameChanged;
-    public event ContextRegistryContextEventHandler? Opened;
-    public event ContextRegistryEventHandler? Closed;
+    public event EventHandler? CaptionChanged;
+    public event EventHandler? ObjectNameChanged;
+    public event EventHandler<IContextData>? Opened;
+    public event EventHandler? Closed;
     
     /// <summary>
     /// Notifies the handler to try to close the context menu
     /// </summary>
-    public event ContextRegistryEventHandler? RequestClose;
+    public event EventHandler? RequestClose;
 
     public ContextRegistry(string caption) {
         this.groups = new SortedList<int, Dictionary<string, IWeightedMenuEntryGroup>>();
@@ -83,7 +77,7 @@ public class ContextRegistry {
     /// </summary>
     public void RaiseRequestClose() {
         if (this.IsOpened)
-            this.RequestClose?.Invoke(this);
+            this.RequestClose?.Invoke(this, EventArgs.Empty);
     }
 
     public void OnOpened(IContextData context) {
@@ -100,7 +94,7 @@ public class ContextRegistry {
             throw new InvalidOperationException("Not opened");
 
         this.IsOpened = false;
-        this.Closed?.Invoke(this);
+        this.Closed?.Invoke(this, EventArgs.Empty);
     }
 
     public FixedWeightedMenuEntryGroup GetFixedGroup(string name, int weight = 0) {

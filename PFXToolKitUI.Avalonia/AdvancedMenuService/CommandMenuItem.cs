@@ -37,7 +37,6 @@ public class CommandMenuItem : MenuItem {
     public static readonly StyledProperty<string?> CommandIdProperty = AvaloniaProperty.Register<CommandMenuItem, string?>("CommandId");
 
     private IContextData? loadedContextData;
-    private bool canExecute;
     private bool generateChildren;
     private TextBlock? InputGestureTextBlock;
 
@@ -51,9 +50,9 @@ public class CommandMenuItem : MenuItem {
     }
 
     protected bool CanExecute {
-        get => this.canExecute;
+        get => field;
         set {
-            this.canExecute = value;
+            field = value;
 
             // Causes IsEnableCore to be fetched, which returns false if we are executing something or
             // we have no valid command, causing this menu item to be "disabled"

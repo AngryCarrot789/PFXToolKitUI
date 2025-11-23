@@ -18,13 +18,9 @@
 // 
 
 using PFXToolKitUI.Icons;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Services.Messaging;
-
-public delegate void MessageBoxInfoEventHandler(MessageBoxInfo sender);
-
-public delegate void MessageBoxInfoIconChangedEventHandler(MessageBoxInfo sender, Icon? oldIcon, Icon? newIcon);
 
 /// <summary>
 /// A class for a basic message box class with a maximum of 3 buttons; Yes/OK, No and Cancel
@@ -38,23 +34,14 @@ public class MessageBoxInfo {
     private string? caption = DefaultCaption;
     private string? header;
     private string? message;
-    private string? extraDetails;
-    private string? yesOkText;
-    private string? noText;
-    private string? cancelText;
-    private string? showDetailsText = DefaultShowDetailsText, hideDetailsText = DefaultHideDetailsText;
-    private string? alwaysUseThisResultText = DefaultAlwaysUseThisResultText;
-    private bool alwaysUseThisResult;
-    private bool alwaysUseThisResultUntilAppCloses = true;
     private MessageBoxButtons buttons;
-    private Icon? icon;
 
     /// <summary>
     /// Gets or sets the message caption, aka window title
     /// </summary>
     public string? Caption {
         get => this.caption;
-        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, static t => t.CaptionChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.caption, value, this, this.CaptionChanged);
     }
 
     /// <summary>
@@ -62,7 +49,7 @@ public class MessageBoxInfo {
     /// </summary>
     public string? Header {
         get => this.header;
-        set => PropertyHelper.SetAndRaiseINE(ref this.header, value, this, static t => t.HeaderChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.header, value, this, this.HeaderChanged);
     }
 
     /// <summary>
@@ -70,7 +57,7 @@ public class MessageBoxInfo {
     /// </summary>
     public string? Message {
         get => this.message;
-        set => PropertyHelper.SetAndRaiseINE(ref this.message, value, this, static t => t.MessageChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.message, value, this, this.MessageChanged);
     }
 
     /// <summary>
@@ -81,8 +68,8 @@ public class MessageBoxInfo {
     /// </para>
     /// </summary>
     public string? ExtraDetails {
-        get => this.extraDetails;
-        set => PropertyHelper.SetAndRaiseINE(ref this.extraDetails, value, this, static t => t.ExtraDetailsChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ExtraDetailsChanged);
     }
 
     /// <summary>
@@ -90,15 +77,15 @@ public class MessageBoxInfo {
     /// </summary>
     public MessageBoxButtons Buttons {
         get => this.buttons;
-        set => PropertyHelper.SetAndRaiseINE(ref this.buttons, value, this, static t => t.ButtonsChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.buttons, value, this, this.ButtonsChanged);
     }
 
     /// <summary>
     /// Gets or sets the icon displayed in either the header area (if the header has text) or the message body area 
     /// </summary>
     public Icon? Icon {
-        get => this.icon;
-        set => PropertyHelper.SetAndRaiseINE(ref this.icon, value, this, static (t, o, n) => t.IconChanged?.Invoke(t, o, n));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IconChanged);
     }
 
     #region Buttons Text
@@ -108,8 +95,8 @@ public class MessageBoxInfo {
     /// Default is null, meaning <see cref="ActualYesOkText"/> will return a default value based on <see cref="Buttons"/>.
     /// </summary>
     public string? YesOkText {
-        get => this.yesOkText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.yesOkText, value, this, static t => t.YesOkTextChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.YesOkTextChanged);
     }
 
     /// <summary>
@@ -117,8 +104,8 @@ public class MessageBoxInfo {
     /// Default is null, meaning <see cref="ActualNoText"/> will return a default value based on <see cref="Buttons"/>.
     /// </summary>
     public string? NoText {
-        get => this.noText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.noText, value, this, static t => t.NoTextChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.NoTextChanged);
     }
 
     /// <summary>
@@ -126,25 +113,25 @@ public class MessageBoxInfo {
     /// Default is null, meaning <see cref="ActualCancelText"/> will return a default value based on <see cref="Buttons"/>.
     /// </summary>
     public string? CancelText {
-        get => this.cancelText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.cancelText, value, this, static t => t.CancelTextChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CancelTextChanged);
     }
 
     /// <summary>
     /// Gets or sets the text displayed in the toggle button when the extra details are not visible
     /// </summary>
     public string? ShowDetailsText {
-        get => this.showDetailsText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.showDetailsText, value, this, static t => t.ShowDetailsTextChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ShowDetailsTextChanged);
+    } = DefaultShowDetailsText;
 
     /// <summary>
     /// Gets or sets the text displayed in the toggle button when the extra details are visible
     /// </summary>
     public string? HideDetailsText {
-        get => this.hideDetailsText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.hideDetailsText, value, this, static t => t.HideDetailsTextChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.HideDetailsTextChanged);
+    } = DefaultHideDetailsText;
 
     /// <summary>
     /// Gets the value of <see cref="YesOkText"/> if it has any non-whitespace chars, otherwise, returns a string based on <see cref="Buttons"/>
@@ -178,25 +165,25 @@ public class MessageBoxInfo {
     /// Gets or sets the option for persistently using the user's result. Only used when <see cref="PersistentDialogName"/> is valid
     /// </summary>
     public bool AlwaysUseThisResult {
-        get => this.alwaysUseThisResult;
-        set => PropertyHelper.SetAndRaiseINE(ref this.alwaysUseThisResult, value, this, static t => t.AlwaysUseThisResultChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.AlwaysUseThisResultChanged);
     }
 
     /// <summary>
     /// Gets or sets the option for if <see cref="AlwaysUseThisResult"/> applies only until the app closes
     /// </summary>
     public bool AlwaysUseThisResultUntilAppCloses {
-        get => this.alwaysUseThisResultUntilAppCloses;
-        set => PropertyHelper.SetAndRaiseINE(ref this.alwaysUseThisResultUntilAppCloses, value, this, static t => t.AlwaysUseThisResultUntilAppClosesChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.AlwaysUseThisResultUntilAppClosesChanged);
+    } = true;
 
     /// <summary>
     /// Gets or sets the text in the check box that toggles <see cref="AlwaysUseThisResult"/>
     /// </summary>
     public string? AlwaysUseThisResultText {
-        get => this.alwaysUseThisResultText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.alwaysUseThisResultText, value, this, static t => t.AlwaysUseThisResultTextChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.AlwaysUseThisResultTextChanged);
+    } = DefaultAlwaysUseThisResultText;
 
     #endregion
 
@@ -211,20 +198,20 @@ public class MessageBoxInfo {
     /// </summary>
     public CancellationToken DialogCancellation { get; init; }
 
-    public event MessageBoxInfoEventHandler? CaptionChanged;
-    public event MessageBoxInfoEventHandler? HeaderChanged;
-    public event MessageBoxInfoEventHandler? MessageChanged;
-    public event MessageBoxInfoEventHandler? ExtraDetailsChanged;
-    public event MessageBoxInfoEventHandler? YesOkTextChanged;
-    public event MessageBoxInfoEventHandler? NoTextChanged;
-    public event MessageBoxInfoEventHandler? CancelTextChanged;
-    public event MessageBoxInfoEventHandler? ShowDetailsTextChanged;
-    public event MessageBoxInfoEventHandler? HideDetailsTextChanged;
-    public event MessageBoxInfoEventHandler? ButtonsChanged;
-    public event MessageBoxInfoIconChangedEventHandler? IconChanged;
-    public event MessageBoxInfoEventHandler? AlwaysUseThisResultTextChanged;
-    public event MessageBoxInfoEventHandler? AlwaysUseThisResultChanged;
-    public event MessageBoxInfoEventHandler? AlwaysUseThisResultUntilAppClosesChanged;
+    public event EventHandler? CaptionChanged;
+    public event EventHandler? HeaderChanged;
+    public event EventHandler? MessageChanged;
+    public event EventHandler? ExtraDetailsChanged;
+    public event EventHandler? YesOkTextChanged;
+    public event EventHandler? NoTextChanged;
+    public event EventHandler? CancelTextChanged;
+    public event EventHandler? ShowDetailsTextChanged;
+    public event EventHandler? HideDetailsTextChanged;
+    public event EventHandler? ButtonsChanged;
+    public event EventHandler? IconChanged;
+    public event EventHandler? AlwaysUseThisResultTextChanged;
+    public event EventHandler? AlwaysUseThisResultChanged;
+    public event EventHandler? AlwaysUseThisResultUntilAppClosesChanged;
 
     public MessageBoxInfo() {
     }

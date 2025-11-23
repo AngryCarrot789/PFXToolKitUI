@@ -89,7 +89,7 @@ public abstract class AbstractAvaloniaButtonElement : AbstractAvaloniaToolBarEle
 
     public override Control Control => this.myButton;
 
-    public event ButtonContextInvalidatedEventHandler? ContextInvalidated;
+    public event EventHandler? ContextInvalidated;
 
     public AbstractAvaloniaButtonElement(Button Button) {
         this.myButton = Button;
@@ -101,7 +101,7 @@ public abstract class AbstractAvaloniaButtonElement : AbstractAvaloniaToolBarEle
         this.isAttachedToVisualTree = true;
         DataManager.AddInheritedContextChangedHandler(this.Button, this.OnInheritedContextChangedImmediately);
 
-        this.ContextInvalidated?.Invoke(this);
+        this.ContextInvalidated?.Invoke(this, EventArgs.Empty);
 
         if (this.myIcon != null && this.Button is IIconButton btn) {
             btn.Icon = this.myIcon;
@@ -112,7 +112,7 @@ public abstract class AbstractAvaloniaButtonElement : AbstractAvaloniaToolBarEle
         this.isAttachedToVisualTree = false;
         DataManager.RemoveInheritedContextChangedHandler(this.Button, this.OnInheritedContextChangedImmediately);
 
-        this.ContextInvalidated?.Invoke(this);
+        this.ContextInvalidated?.Invoke(this, EventArgs.Empty);
 
         // Because icons may use dynamic resources allocated by the icon manager,
         // we need to tell the icon control to dereference it to prevent
@@ -124,7 +124,7 @@ public abstract class AbstractAvaloniaButtonElement : AbstractAvaloniaToolBarEle
     }
 
     private void OnInheritedContextChangedImmediately(object? sender, RoutedEventArgs e) {
-        this.ContextInvalidated?.Invoke(this);
+        this.ContextInvalidated?.Invoke(this, EventArgs.Empty);
     }
 }
 

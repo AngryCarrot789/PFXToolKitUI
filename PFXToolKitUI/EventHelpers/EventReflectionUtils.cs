@@ -20,7 +20,7 @@
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace PFXToolKitUI.Utils.Events;
+namespace PFXToolKitUI.EventHelpers;
 
 public static class EventReflectionUtils {
     internal static MethodInfo? InvokeActionMethod;

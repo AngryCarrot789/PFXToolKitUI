@@ -27,18 +27,15 @@ namespace PFXToolKitUI.Activities;
 /// </summary>
 public class DispatcherActivityProgress : IActivityProgress {
     private readonly Lock dataLock = new Lock(); // only really used as a memory barrier
-    private bool isIndeterminate;
-    private string? headerText;
-    private string? descriptionText;
     private volatile bool isTextClean = true;
 
     public bool IsIndeterminate {
-        get => this.isIndeterminate;
+        get => field;
         set {
             lock (this.dataLock) {
-                if (this.isIndeterminate == value)
+                if (field == value)
                     return;
-                this.isIndeterminate = value;
+                field = value;
             }
 
             this.updateIsIndeterminateRda.InvokeAsync();
@@ -46,12 +43,12 @@ public class DispatcherActivityProgress : IActivityProgress {
     }
 
     public string? Caption {
-        get => this.headerText;
+        get => field;
         set {
             lock (this.dataLock) {
-                if (this.headerText == value)
+                if (field == value)
                     return;
-                this.headerText = value;
+                field = value;
             }
 
             this.updateCaptionRda.InvokeAsync();
@@ -59,12 +56,12 @@ public class DispatcherActivityProgress : IActivityProgress {
     }
 
     public string? Text {
-        get => this.descriptionText;
+        get => field;
         set {
             lock (this.dataLock) {
-                if (this.descriptionText == value)
+                if (field == value)
                     return;
-                this.descriptionText = value;
+                field = value;
                 this.isTextClean = false;
             }
 
@@ -77,9 +74,9 @@ public class DispatcherActivityProgress : IActivityProgress {
     /// </summary>
     public bool IsTextClean => this.isTextClean;
 
-    public event ActivityProgressEventHandler? IsIndeterminateChanged;
-    public event ActivityProgressEventHandler? CaptionChanged;
-    public event ActivityProgressEventHandler? TextChanged;
+    public event EventHandler? IsIndeterminateChanged;
+    public event EventHandler? CaptionChanged;
+    public event EventHandler? TextChanged;
 
     private readonly RapidDispatchActionEx updateIsIndeterminateRda;
     private readonly RapidDispatchActionEx updateCaptionRda;
@@ -93,11 +90,11 @@ public class DispatcherActivityProgress : IActivityProgress {
 
     public DispatcherActivityProgress(DispatchPriority eventDispatchPriority) {
         this.eventDispatchPriority = eventDispatchPriority;
-        this.updateIsIndeterminateRda = RapidDispatchActionEx.ForSync(() => this.IsIndeterminateChanged?.Invoke(this), eventDispatchPriority);
-        this.updateCaptionRda = RapidDispatchActionEx.ForSync(() => this.CaptionChanged?.Invoke(this), eventDispatchPriority);
+        this.updateIsIndeterminateRda = RapidDispatchActionEx.ForSync(() => this.IsIndeterminateChanged?.Invoke(this, EventArgs.Empty), eventDispatchPriority);
+        this.updateCaptionRda = RapidDispatchActionEx.ForSync(() => this.CaptionChanged?.Invoke(this, EventArgs.Empty), eventDispatchPriority);
         this.updateTextRda = RapidDispatchActionEx.ForSync(() => {
             this.isTextClean = true;
-            this.TextChanged?.Invoke(this);
+            this.TextChanged?.Invoke(this, EventArgs.Empty);
         }, eventDispatchPriority);
         this.CompletionState = new ConcurrentCompletionState(eventDispatchPriority);
     }

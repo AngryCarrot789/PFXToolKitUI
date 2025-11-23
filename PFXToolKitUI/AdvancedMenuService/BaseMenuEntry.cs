@@ -21,15 +21,9 @@ using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.AdvancedMenuService;
-
-public delegate void BaseContextEntryEventHandler(BaseMenuEntry sender);
-
-public delegate void BaseContextEntryIconChangedEventHandler(BaseMenuEntry sender, Icon? oldIcon, Icon? newIcon);
-
-public delegate void BaseContextEntryCapturedContextChangedEventHandler(BaseMenuEntry sender, IContextData? oldCapturedContext, IContextData? newCapturedContext);
 
 public delegate DisabledHintInfo? BaseContextEntryProvideDisabledHint(IContextData context, ContextRegistry? sourceContextMenu);
 
@@ -48,54 +42,38 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     /// </summary>
     public static readonly DataKey<BaseMenuEntry> DataKey = DataKeys.Create<BaseMenuEntry>(nameof(BaseMenuEntry));
 
-    private string? displayName, description;
-    private Icon? icon, disabledIcon;
     private bool isInUse;
-    private IContextData? capturedContext;
-    private Func<BaseMenuEntry, bool>? isCheckedFunction;
 
     /// <summary>
     /// Gets or sets the header of the menu item
     /// </summary>
     public string? DisplayName {
-        get => this.displayName;
-        set => PropertyHelper.SetAndRaiseINE(ref this.displayName, value, this, static t => t.DisplayNameChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.DisplayNameChanged);
     }
 
     /// <summary>
     /// Gets or sets the tooltip
     /// </summary>
     public string? Description {
-        get => this.description;
-        set => PropertyHelper.SetAndRaiseINE(ref this.description, value, this, static t => t.DescriptionChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.DescriptionChanged);
     }
 
     /// <summary>
     /// Gets or sets the icon presented in the menu gutter (left side), specifically when this entry is 
     /// </summary>
     public Icon? Icon {
-        get => this.icon;
-        set {
-            Icon? oldIcon = this.icon;
-            if (!ReferenceEquals(oldIcon, value)) {
-                this.icon = value;
-                this.IconChanged?.Invoke(this, oldIcon, value);
-            }
-        }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, ReferenceEquals, this, this.IconChanged);
     }
-    
+
     /// <summary>
     /// Gets or sets the icon presented in the menu gutter (left side) when this menu entry is disabled
     /// </summary>
     public Icon? DisabledIcon {
-        get => this.disabledIcon;
-        set {
-            Icon? oldIcon = this.disabledIcon;
-            if (!ReferenceEquals(oldIcon, value)) {
-                this.disabledIcon = value;
-                this.DisabledIconChanged?.Invoke(this, oldIcon, value);
-            }
-        }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, ReferenceEquals, this, this.DisabledIconChanged);
     }
 
     /// <summary>
@@ -106,8 +84,8 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     /// </para>
     /// </summary>
     public IContextData? CapturedContext {
-        get => this.capturedContext;
-        private set => PropertyHelper.SetAndRaiseINE(ref this.capturedContext, value, this, static (t, o, n) => t.CapturedContextChanged?.Invoke(t, o, n));
+        get => field;
+        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CapturedContextChanged);
     }
 
     /// <summary>
@@ -117,16 +95,16 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     /// </para>
     /// </summary>
     public Func<BaseMenuEntry, bool>? IsCheckedFunction {
-        get => this.isCheckedFunction;
+        get => field;
         set {
-            if (this.isCheckedFunction != value) {
-                this.isCheckedFunction = value;
-                this.IsCheckedFunctionChanged?.Invoke(this);
+            if (field != value) {
+                field = value;
+                this.IsCheckedFunctionChanged?.Invoke(this, EventArgs.Empty);
                 this.RaiseIsCheckedChanged();
             }
         }
     }
-    
+
     /// <summary>
     /// Gets or sets the disabled hint info provider for this group
     /// </summary>
@@ -138,36 +116,36 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     /// </summary>
     public IMutableContextData UserContext { get; } = new ContextData();
 
-    public event BaseContextEntryEventHandler? DisplayNameChanged;
-    public event BaseContextEntryEventHandler? DescriptionChanged;
-    public event BaseContextEntryIconChangedEventHandler? IconChanged, DisabledIconChanged;
-    public event BaseContextEntryCapturedContextChangedEventHandler? CapturedContextChanged;
-    public event BaseContextEntryEventHandler? IsCheckedFunctionChanged;
-    public event BaseContextEntryEventHandler? IsCheckedChanged;
+    public event EventHandler? DisplayNameChanged;
+    public event EventHandler? DescriptionChanged;
+    public event EventHandler<ValueChangedEventArgs<Icon?>>? IconChanged, DisabledIconChanged;
+    public event EventHandler<ValueChangedEventArgs<IContextData?>>? CapturedContextChanged;
+    public event EventHandler? IsCheckedFunctionChanged;
+    public event EventHandler? IsCheckedChanged;
 
     /// <summary>
     /// Fired when the executability of this entry as a command has changed. This
     /// is listened to by the UI to update the enabled and visibility states
     /// </summary>
-    public event BaseContextEntryEventHandler? CanExecuteChanged;
+    public event EventHandler? CanExecuteChanged;
 
     public BaseMenuEntry() {
     }
 
     public BaseMenuEntry(string displayName, string? description = null, Icon? icon = null) {
         ArgumentException.ThrowIfNullOrWhiteSpace(displayName);
-        this.displayName = displayName;
-        this.description = description;
-        this.icon = icon;
+        this.DisplayName = displayName;
+        this.Description = description;
+        this.Icon = icon;
     }
 
     /// <summary>
     /// Raises the <see cref="CanExecuteChanged"/> event 
     /// </summary>
-    public void RaiseCanExecuteChanged() => this.CanExecuteChanged?.Invoke(this);
+    public void RaiseCanExecuteChanged() => this.CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
     public void RaiseIsCheckedChanged() {
-        this.IsCheckedChanged?.Invoke(this);
+        this.IsCheckedChanged?.Invoke(this, EventArgs.Empty);
     }
     
     DisabledHintInfo? IDisabledHintProvider.ProvideDisabledHint(IContextData context, ContextRegistry? sourceContextMenu) {

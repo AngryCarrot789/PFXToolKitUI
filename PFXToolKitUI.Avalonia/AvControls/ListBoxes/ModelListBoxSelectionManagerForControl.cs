@@ -22,6 +22,7 @@ using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using Avalonia.Collections;
 using PFXToolKitUI.Interactivity;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
@@ -37,9 +38,9 @@ public class ModelListBoxSelectionManagerForControl<TModel, TControl> : IListSel
     private List<TControl>? batchResources_old;
     private List<TControl>? batchResources_new;
 
-    public event SelectionChangedEventHandler<TControl>? SelectionChanged;
-    public event SelectionClearedEventHandler<TControl>? SelectionCleared;
-    public event LightSelectionChangedEventHandler<TControl>? LightSelectionChanged;
+    public event EventHandler<ValueChangedEventArgs<IList<TControl>?>>? SelectionChanged;
+    public event EventHandler? SelectionCleared;
+    public event EventHandler? LightSelectionChanged;
 
     public ModelListBoxSelectionManagerForControl(ModelBasedListBox<TModel> listBox) {
         this.selectedControls = new AvaloniaList<object>();
@@ -172,13 +173,13 @@ public class ModelListBoxSelectionManagerForControl<TModel, TControl> : IListSel
             return;
         }
 
-        this.SelectionChanged?.Invoke(this, oldList, newList);
-        this.LightSelectionChanged?.Invoke(this);
+        this.SelectionChanged?.Invoke(this, new ValueChangedEventArgs<IList<TControl>?>(oldList, newList));
+        this.LightSelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void RaiseSelectionCleared() {
-        this.SelectionCleared?.Invoke(this);
-        this.LightSelectionChanged?.Invoke(this);
+        this.SelectionCleared?.Invoke(this, EventArgs.Empty);
+        this.LightSelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private static ReadOnlyCollection<TControl>? GetList(List<TControl>? list) => list == null || list.Count < 1 ? null : list.AsReadOnly();

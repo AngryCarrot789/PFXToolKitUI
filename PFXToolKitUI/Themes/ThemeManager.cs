@@ -19,10 +19,9 @@
 
 using PFXToolKitUI.Themes.Configurations;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Themes;
-
-public delegate void ThemeManagerActiveThemeChangedEventHandler(ThemeManager manager, Theme oldTheme, Theme newTheme);
 
 public abstract class ThemeManager {
     public static ThemeManager Instance => ApplicationPFX.GetComponent<ThemeManager>();
@@ -43,7 +42,7 @@ public abstract class ThemeManager {
     /// An event fired when the active theme changes. This is not fired when the initial
     /// active theme is set up, which happens after application startup
     /// </summary>
-    public event ThemeManagerActiveThemeChangedEventHandler? ActiveThemeChanged;
+    public event EventHandler<ValueChangedEventArgs<Theme>>? ActiveThemeChanged;
 
     protected ThemeManager() {
         ThemeConfigurationPage p = this.ThemeConfigurationPage = new ThemeConfigurationPage();
@@ -179,6 +178,6 @@ public abstract class ThemeManager {
     protected void RaiseActiveThemeChanged(Theme oldTheme, Theme newTheme) {
         ArgumentNullException.ThrowIfNull(oldTheme);
         ArgumentNullException.ThrowIfNull(newTheme);
-        this.ActiveThemeChanged?.Invoke(this, oldTheme, newTheme);
+        this.ActiveThemeChanged?.Invoke(this, new ValueChangedEventArgs<Theme>(oldTheme, newTheme));
     } 
 }

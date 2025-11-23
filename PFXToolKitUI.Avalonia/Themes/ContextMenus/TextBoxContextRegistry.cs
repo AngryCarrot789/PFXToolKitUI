@@ -21,6 +21,7 @@ using Avalonia;
 using Avalonia.Controls;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Themes.ContextMenus;
 
@@ -54,8 +55,8 @@ public class TextBoxMenuEntry : CustomMenuEntry {
         this.CapturedContextChanged += this.OnCapturedContextChanged;
     }
 
-    private void OnCapturedContextChanged(BaseMenuEntry sender, IContextData? oldCtx, IContextData? newCtx) {
-        if (newCtx != null && TextBoxContextRegistry.TextBoxDataKey.TryGetContext(newCtx, out var newTextBox)) {
+    private void OnCapturedContextChanged(object? o, ValueChangedEventArgs<IContextData?> e) {
+        if (e.NewValue != null && TextBoxContextRegistry.TextBoxDataKey.TryGetContext(e.NewValue, out var newTextBox)) {
             if (!ReferenceEquals(this.currTb, newTextBox)) {
                 this.OnTextBoxChanged(this.currTb, newTextBox);
                 this.currTb = newTextBox;

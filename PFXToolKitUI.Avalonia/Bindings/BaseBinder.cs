@@ -19,6 +19,7 @@
 
 using System.Diagnostics;
 using Avalonia.Controls;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 
@@ -63,11 +64,11 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     /// </summary>
     public string? DebugName { get; set; }
 
-    public event BinderEventHandler<TModel>? UpdateControlWithoutModel;
-    public event BinderEventHandler<TModel>? ControlUpdated;
-    public event BinderEventHandler<TModel>? ModelUpdated;
-    public event BinderModelChangedEventHandler<TModel>? ModelChanged;
-    public event BinderControlChangedEventHandler<TModel>? ControlChanged;
+    public event EventHandler? UpdateControlWithoutModel;
+    public event EventHandler? ControlUpdated;
+    public event EventHandler? ModelUpdated;
+    public event EventHandler<ValueChangedEventArgs<TModel?>>? ModelChanged;
+    public event EventHandler<ValueChangedEventArgs<Control?>>? ControlChanged;
 
     protected BaseBinder() {
     }
@@ -77,7 +78,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
             this.UpdateControlInternal(false);
         }
         else if (this.myControl != null) {
-            this.UpdateControlWithoutModel?.Invoke(this);
+            this.UpdateControlWithoutModel?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -88,7 +89,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
             this.reentrancyUpdateControl++;
             this.UpdateControlOverride(isFirstUpdateControl);
-            this.ControlUpdated?.Invoke(this);
+            this.ControlUpdated?.Invoke(this, EventArgs.Empty);
         }
         finally {
             this.reentrancyUpdateControl--;
@@ -98,7 +99,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
     public void UpdateModel() {
         if (!this.IsUpdatingControl && this.IsFullyAttached) {
             this.UpdateModelOverride();
-            this.ModelUpdated?.Invoke(this);
+            this.ModelUpdated?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -127,10 +128,10 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         this.CheckAttachModel(model);
 
         this.myModel = model;
-        this.ModelChanged?.Invoke(this, null, model);
+        this.ModelChanged?.Invoke(this, new ValueChangedEventArgs<TModel?>(null, model));
 
         this.myControl = control;
-        this.ControlChanged?.Invoke(this, null, control);
+        this.ControlChanged?.Invoke(this, new ValueChangedEventArgs<Control?>(null, control));
 
         this.AttachInternal();
     }
@@ -145,12 +146,12 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         this.CheckAttachControl(control);
 
         this.myControl = control;
-        this.ControlChanged?.Invoke(this, null, control);
+        this.ControlChanged?.Invoke(this, new ValueChangedEventArgs<Control?>(null, control));
         if (this.myModel != null) {
             this.AttachInternal();
         }
         else {
-            this.UpdateControlWithoutModel?.Invoke(this);
+            this.UpdateControlWithoutModel?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -164,7 +165,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         this.CheckAttachModel(model);
 
         this.myModel = model;
-        this.ModelChanged?.Invoke(this, null, model);
+        this.ModelChanged?.Invoke(this, new ValueChangedEventArgs<TModel?>(null, model));
         
         if (this.myControl != null) {
             this.AttachInternal();
@@ -183,10 +184,10 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         this.OnDetached();
 
         this.myModel = null;
-        this.ModelChanged?.Invoke(this, oldModel, null);
+        this.ModelChanged?.Invoke(this, new ValueChangedEventArgs<TModel?>(oldModel, null));
 
         this.myControl = null;
-        this.ControlChanged?.Invoke(this, oldControl, null);
+        this.ControlChanged?.Invoke(this, new ValueChangedEventArgs<Control?>(oldControl, null));
     }
 
     public void DetachControl() {
@@ -196,7 +197,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
         this.TryDetachInternal();
         this.myControl = null;
-        this.ControlChanged?.Invoke(this, oldControl, null);
+        this.ControlChanged?.Invoke(this, new ValueChangedEventArgs<Control?>(oldControl, null));
     }
 
     public void DetachModel() {
@@ -205,7 +206,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
 
         this.DetachModelInternal();
         if (this.myControl != null) {
-            this.UpdateControlWithoutModel?.Invoke(this);
+            this.UpdateControlWithoutModel?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -215,7 +216,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
         Debug.Assert(oldModel != null);
         
         this.myModel = null;
-        this.ModelChanged?.Invoke(this, oldModel, null);
+        this.ModelChanged?.Invoke(this, new ValueChangedEventArgs<TModel?>(oldModel, null));
     }
 
     public void SwitchControl(Control? newControl) {
@@ -234,7 +235,7 @@ public abstract class BaseBinder<TModel> : IBinder<TModel> where TModel : class 
             this.AttachModel(newModel);
         }
         else if (this.myControl != null) {
-            this.UpdateControlWithoutModel?.Invoke(this);
+            this.UpdateControlWithoutModel?.Invoke(this, EventArgs.Empty);
         }
     }
 

@@ -28,7 +28,6 @@ using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
-using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.Messaging;
 
@@ -127,11 +126,11 @@ public partial class MessageBoxView : UserControl {
         MessageBoxDataProperty.Changed.AddClassHandler<MessageBoxView, MessageBoxInfo?>((o, e) => o.OnMessageBoxDataChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
     
-    private void OnHeaderChanged(MessageBoxInfo messageBoxInfo) {
+    private void OnHeaderChanged(object? sender, EventArgs eventArgs) {
         this.UpdateHeaderPanelAndIconPlacement();
     }
 
-    private void OnIconChanged(MessageBoxInfo messageBoxInfo, Icon? oldIcon, Icon? newIcon) {
+    private void OnIconChanged(object? sender, EventArgs eventArgs) {
         this.UpdateHeaderPanelAndIconPlacement();
     }
 
@@ -232,7 +231,7 @@ public partial class MessageBoxView : UserControl {
             newData.ButtonsChanged += this.OnActiveButtonsChanged;
             newData.AlwaysUseThisResultChanged += this.UpdateAlwaysUseThisResultUntilAppCloses;
             newData.ExtraDetailsChanged += this.OnExtraDetailsChanged;
-            this.OnExtraDetailsChanged(newData);
+            this.OnExtraDetailsChanged(newData, EventArgs.Empty);
         }
 
         // Create this first just in case there's a problem with no registrations
@@ -249,7 +248,7 @@ public partial class MessageBoxView : UserControl {
         this.autrUntilCloseBinder.SwitchModel(newData);
 
         if (newData != null)
-            this.UpdateAlwaysUseThisResultUntilAppCloses(newData);
+            this.UpdateAlwaysUseThisResultUntilAppCloses(newData, EventArgs.Empty);
 
         // Set visible when data is null, for debugging
         this.PART_AUTRPanel.IsVisible = newData == null || !string.IsNullOrWhiteSpace(newData.PersistentDialogName);
@@ -261,8 +260,8 @@ public partial class MessageBoxView : UserControl {
         }
     }
 
-    private void OnExtraDetailsChanged(MessageBoxInfo sender) {
-        if (string.IsNullOrWhiteSpace(sender.ExtraDetails)) {
+    private void OnExtraDetailsChanged(object? o, EventArgs eventArgs) {
+        if (string.IsNullOrWhiteSpace(((MessageBoxInfo) o!).ExtraDetails)) {
             this.PART_Expander.IsExpanded = false;
             Dispatcher.UIThread.Post(() => {
                 this.PART_Expander.IsVisible = false;
@@ -271,15 +270,15 @@ public partial class MessageBoxView : UserControl {
         }
         else {
             this.PART_Expander.IsVisible = true;
-            this.PART_ExtraDetailsTextEditor.Text = sender.ExtraDetails;
+            this.PART_ExtraDetailsTextEditor.Text = ((MessageBoxInfo) o!).ExtraDetails;
         }
     }
 
-    private void UpdateAlwaysUseThisResultUntilAppCloses(MessageBoxInfo sender) {
-        this.PART_AUTR_UntilAppCloses.IsEnabled = sender.AlwaysUseThisResult;
+    private void UpdateAlwaysUseThisResultUntilAppCloses(object? o, EventArgs eventArgs) {
+        this.PART_AUTR_UntilAppCloses.IsEnabled = ((MessageBoxInfo) o!).AlwaysUseThisResult;
     }
 
-    private void OnActiveButtonsChanged(MessageBoxInfo sender) {
+    private void OnActiveButtonsChanged(object? o, EventArgs eventArgs) {
         this.UpdateVisibleButtons();
     }
 

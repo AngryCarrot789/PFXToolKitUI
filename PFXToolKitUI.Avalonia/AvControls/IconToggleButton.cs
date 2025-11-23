@@ -30,8 +30,6 @@ public class IconToggleButton : ToggleButton, IIconButton {
     public static readonly StyledProperty<Icon?> IconProperty = AvaloniaProperty.Register<IconToggleButton, Icon?>(nameof(Icon));
     public static readonly StyledProperty<StretchMode> StretchProperty = AvaloniaProperty.Register<IconToggleButton, StretchMode>(nameof(Stretch), StretchMode.UniformNoUpscale);
 
-    private double? iconW, iconH;
-
     public Icon? Icon {
         get => this.GetValue(IconProperty);
         set => this.SetValue(IconProperty, value);
@@ -43,17 +41,17 @@ public class IconToggleButton : ToggleButton, IIconButton {
     }
 
     public double? IconMaxWidth {
-        get => this.iconW;
+        get => field;
         set {
-            this.iconW = value;
+            field = value;
             IconButtonHelper.SetMaxWidth(this.PART_IconControl, value);
         }
     }
 
     public double? IconMaxHeight {
-        get => this.iconH;
+        get => field;
         set {
-            this.iconH = value;
+            field = value;
             IconButtonHelper.SetMaxHeight(this.PART_IconControl, value);
         }
     }

@@ -19,8 +19,6 @@
 
 namespace PFXToolKitUI.PropertyEditing;
 
-public delegate void PropertyEditorObjectEventHandler(BasePropertyEditorObject sender);
-
 /// <summary>
 /// A base class for all items in a property editor hierarchy, such as slots, groups, separators, etc.
 /// </summary>

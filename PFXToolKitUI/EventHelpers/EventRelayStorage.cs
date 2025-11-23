@@ -21,8 +21,9 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using PFXToolKitUI.Utils;
 
-namespace PFXToolKitUI.Utils.Events;
+namespace PFXToolKitUI.EventHelpers;
 
 /// <summary>
 /// Used as storage space for cached event relays and manages all object instances that may cause event to be fired.

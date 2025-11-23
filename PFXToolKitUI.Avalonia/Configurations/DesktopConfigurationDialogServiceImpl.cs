@@ -45,11 +45,11 @@ public class DesktopConfigurationDialogServiceImpl : IConfigurationDialogService
         });
 
         window.Control.AddHandler(InputElement.KeyDownEvent, OnWindowKeyDown);
-        window.Opened += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = s;
-        window.Closed += static (s, e) => ((ConfigurationDialogView) s.Content!).Window = null;
+        window.Opened += static (s, e) => ((ConfigurationDialogView) ((IDesktopWindow) s!).Content!).Window = (IDesktopWindow) s!;
+        window.Closed += static (s, e) => ((ConfigurationDialogView) ((IDesktopWindow) s!).Content!).Window = null;
 
-        window.ClosingAsync += static (sender, args) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
-            ConfigurationDialogView view = (ConfigurationDialogView) sender.Content!;
+        window.ClosingAsync += static (s, args) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+            ConfigurationDialogView view = (ConfigurationDialogView) ((IDesktopWindow) s!).Content!;
             await view.configManager.RevertLiveChangesInHierarchyAsync(null);
             view.PART_EditorPanel.ConfigurationManager = null;
         }).Unwrap();

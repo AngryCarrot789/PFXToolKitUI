@@ -100,6 +100,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
                                 win.RequestClose();
                             }
                         }, t);
+                        
                     }, new WeakReference(window));
 
                     MessageBoxResult result = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
@@ -153,9 +154,9 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             }
         });
 
-        window.Opening += (s, e) => view.OnWindowOpening(s);
-        window.Opened += (s, e) => view.OnWindowOpened(s);
-        window.Closed += (s, e) => view.OnWindowClosed(s);
+        window.Opening += (s, _) => view.OnWindowOpening((IDesktopWindow) s!);
+        window.Opened += (s, _) => view.OnWindowOpened((IDesktopWindow) s!);
+        window.Closed += (s, _) => view.OnWindowClosed((IDesktopWindow) s!);
         return window;
     }
 
@@ -185,9 +186,9 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             }
         });
 
-        window.Opening += (s, e) => view.OnWindowOpening(s);
-        window.Opened += (s, e) => view.OnWindowOpened(s);
-        window.Closed += (s, e) => view.OnWindowClosed(s);
+        window.Opening += static (s, e) => ((MessageBoxView) ((IOverlayWindow) s!).Content!).OnWindowOpening((IOverlayWindow) s);
+        window.Opened += static (s, e) => ((MessageBoxView) ((IOverlayWindow) s!).Content!).OnWindowOpened((IOverlayWindow) s);
+        window.Closed += static (s, e) => ((MessageBoxView) ((IOverlayWindow) s!).Content!).OnWindowClosed((IOverlayWindow) s);
         return window;
     }
 }

@@ -17,21 +17,17 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
-public delegate void BaseTextUserInputInfoEventHandler(BaseTextUserInputInfo sender);
-
 public abstract class BaseTextUserInputInfo : UserInputInfo {
-    private string? footer;
-
     public string? Footer {
-        get => this.footer;
-        set => PropertyHelper.SetAndRaiseINE(ref this.footer, value, this, static t => t.FooterChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.FooterChanged);
     }
 
-    public event BaseTextUserInputInfoEventHandler? FooterChanged;
+    public event EventHandler? FooterChanged;
 
     protected BaseTextUserInputInfo() {
     }

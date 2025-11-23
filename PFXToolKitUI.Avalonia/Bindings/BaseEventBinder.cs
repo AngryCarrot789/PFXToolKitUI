@@ -18,7 +18,7 @@
 // 
 
 using System.Diagnostics;
-using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.Avalonia.Bindings;

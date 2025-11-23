@@ -18,19 +18,17 @@
 // 
 
 using Avalonia.Controls;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes.Virtualizing;
 
 public abstract class VirtualizingModelListBoxItem : ListBoxItem {
-    private object? model;
-
     /// <summary>
     /// Gets the model currently assigned to this list box item
     /// </summary>
     public object? Model {
-        get => this.model;
-        internal set => PropertyHelper.SetAndRaiseINE(ref this.model, value, this, static (t, o, n) => t.OnModelChanged(o, n));
+        get => field;
+        internal set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static (t, o, n) => t.OnModelChanged(o, n));
     }
 
     protected VirtualizingModelListBoxItem() {

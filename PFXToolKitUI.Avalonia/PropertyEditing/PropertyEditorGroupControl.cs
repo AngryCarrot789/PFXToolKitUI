@@ -126,16 +126,16 @@ public class PropertyEditorGroupControl : TemplatedControl {
         this.Model = null;
     }
 
-    private void ModelOnItemAdded(BasePropertyEditorGroup group, BasePropertyEditorObject item, int index) {
-        this.Panel!.InsertItem(item, index);
+    private void ModelOnItemAdded(object? sender, PropertyEditorObjectIndexEventArgs e) {
+        this.Panel!.InsertItem(e.Item, e.Index);
     }
 
-    private void ModelOnItemRemoved(BasePropertyEditorGroup group, BasePropertyEditorObject item, int index) {
-        this.Panel!.RemoveItem(index);
+    private void ModelOnItemRemoved(object? sender, PropertyEditorObjectIndexEventArgs e) {
+        this.Panel!.RemoveItem(e.Index);
     }
 
-    private void ModelOnItemMoved(BasePropertyEditorGroup group, BasePropertyEditorObject item, int oldindex, int newindex) {
-        this.Panel!.MoveItem(oldindex, newindex);
+    private void ModelOnItemMoved(object? sender, PropertyEditorObjectMovedEventArgs e) {
+        this.Panel!.MoveItem(e.OldIndex, e.NewIndex);
     }
 
     private static void UpdateControlDisplayName(IBinder<BasePropertyEditorGroup> obj) {

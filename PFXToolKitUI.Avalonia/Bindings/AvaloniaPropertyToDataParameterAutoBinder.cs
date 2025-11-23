@@ -62,7 +62,7 @@ public class AvaloniaPropertyToDataParameterAutoBinder<TModel> : BaseAvaloniaPro
         }
     }
 
-    private void OnDataParameterValueChanged(DataParameter parameter, ITransferableData owner) => this.UpdateControl();
+    private void OnDataParameterValueChanged(object? sender, DataParameterValueChangedEventArgs e) => this.UpdateControl();
 
     protected override void OnAttached() {
         base.OnAttached();

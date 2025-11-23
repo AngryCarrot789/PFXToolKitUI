@@ -29,16 +29,15 @@ public class SetterDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaPro
 
     private readonly Func<TValue?, object?> ParamToPropForGetter;
     private readonly SetterFunction Setter;
-    private bool hasError;
 
     /// <summary>
     /// Gets if the error condition is set, meaning, the control has entered a value that cannot be parsed and therefore the parameter value could not be updated
     /// </summary>
     public bool HasError {
-        get => this.hasError;
+        get => field;
         private set {
-            if (this.hasError != value) {
-                this.hasError = value;
+            if (field != value) {
+                field = value;
                 this.HasErrorChanged?.Invoke(this, EventArgs.Empty);
             }
         }
@@ -73,7 +72,7 @@ public class SetterDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaPro
         }
     }
 
-    private void OnDataParameterValueChanged(DataParameter parameter, ITransferableData owner) => this.UpdateControl();
+    private void OnDataParameterValueChanged(object? sender, DataParameterValueChangedEventArgs e) => this.UpdateControl();
 
     protected override void OnAttached() {
         base.OnAttached();

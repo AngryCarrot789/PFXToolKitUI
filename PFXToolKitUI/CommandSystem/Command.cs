@@ -22,8 +22,6 @@ using PFXToolKitUI.Services.Messaging;
 
 namespace PFXToolKitUI.CommandSystem;
 
-public delegate void CommandEventHandler(Command command, CommandEventArgs e);
-
 /// <summary>
 /// A class that represents something that can be executed. Commands are given contextual information
 /// (see <see cref="CommandEventArgs.ContextData"/>) to do work. Commands do their work in the

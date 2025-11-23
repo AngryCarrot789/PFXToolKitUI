@@ -17,7 +17,10 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
+
+namespace PFXToolKitUI.EventHelpers;
 
 /// <summary>
 /// A helper class used to wrap a value that is lazily created at some point, and provides a callback for
@@ -25,10 +28,6 @@ namespace PFXToolKitUI.Utils.Events;
 /// </summary>
 /// <typeparam name="T">The type of value to wrap</typeparam>
 public class LazyStateHelper<T> where T : class {
-    public delegate void StateAutoHelperValueChangedEventHandler(LazyStateHelper<T> sender, Optional<T> oldValueA, Optional<T> newValueA);
-
-    public delegate void StateAutoHelperIsEnabledChangedEventHandler(LazyStateHelper<T> sender);
-
     private readonly Action<T, bool> onIsEnabledChanged;
     private Optional<T> value;
     private bool isEnabled;
@@ -42,7 +41,7 @@ public class LazyStateHelper<T> where T : class {
                     this.onIsEnabledChanged(oldValue.Value, false);
 
                 this.value = value;
-                this.ValueChanged?.Invoke(this, oldValue, value);
+                this.ValueChanged?.Invoke(this, new ValueChangedEventArgs<Optional<T>>(oldValue, value));
 
                 if (value.HasValue && this.isEnabled)
                     this.onIsEnabledChanged(value.Value, true);
@@ -55,7 +54,7 @@ public class LazyStateHelper<T> where T : class {
         set {
             if (this.isEnabled != value) {
                 this.isEnabled = value;
-                this.IsEnabledChanged?.Invoke(this);
+                this.IsEnabledChanged?.Invoke(this, EventArgs.Empty);
 
                 if (this.value.HasValue) {
                     this.onIsEnabledChanged(this.value.Value, value);
@@ -64,8 +63,8 @@ public class LazyStateHelper<T> where T : class {
         }
     }
 
-    public event StateAutoHelperValueChangedEventHandler? ValueChanged;
-    public event StateAutoHelperIsEnabledChangedEventHandler? IsEnabledChanged;
+    public event EventHandler<ValueChangedEventArgs<Optional<T>>>? ValueChanged;
+    public event EventHandler? IsEnabledChanged;
 
     public LazyStateHelper(Action<T, bool> onIsEnabledChanged) {
         this.onIsEnabledChanged = onIsEnabledChanged;

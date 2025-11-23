@@ -8,53 +8,53 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\ILMath\ILMath\ILMath.csproj" />
-      <ProjectReference Include="..\PFXToolKitUI\PFXToolKitUI.csproj" />
+        <ProjectReference Include="..\ILMath\ILMath\ILMath.csproj"/>
+        <ProjectReference Include="..\PFXToolKitUI\PFXToolKitUI.csproj"/>
     </ItemGroup>
 
     <ItemGroup>
-      <PackageReference Include="Avalonia" Version="11.3.4" />
-      <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0" />
-      <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.4" />
-      <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.4" />
+        <PackageReference Include="Avalonia" Version="11.3.4"/>
+        <PackageReference Include="Avalonia.AvaloniaEdit" Version="11.3.0"/>
+        <PackageReference Include="Avalonia.Controls.ColorPicker" Version="11.3.4"/>
+        <PackageReference Include="Avalonia.Controls.DataGrid" Version="11.3.4"/>
         <!--Condition below is needed to remove Avalonia.Diagnostics package from build output in Release configuration.-->
-        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.4">
+        <PackageReference Include="Avalonia.Diagnostics" Version="11.3.4" Condition="'$(Configuration)' == 'Debug'">
             <IncludeAssets Condition="'$(Configuration)' != 'Debug'">None</IncludeAssets>
             <PrivateAssets Condition="'$(Configuration)' != 'Debug'">All</PrivateAssets>
         </PackageReference>
-      <PackageReference Include="Avalonia.Skia" Version="11.3.4" />
-      <PackageReference Include="Avalonia.Win32" Version="11.3.4" />
-      <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.2.25163.2" />
+        <PackageReference Include="Avalonia.Skia" Version="11.3.4"/>
+        <PackageReference Include="Avalonia.Win32" Version="11.3.4"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0-preview.2.25163.2"/>
     </ItemGroup>
 
     <ItemGroup>
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-Bold.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Bold.ttf" />
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-ExtraBold.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-ExtraBold.ttf" />
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-ExtraLight.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-ExtraLight.ttf" />
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-Light.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Light.ttf" />
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-Medium.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Medium.ttf" />
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-Regular.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Regular.ttf" />
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-SemiBold.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-SemiBold.ttf" />
-      <None Remove="Resources\Fonts\Oxanium\Oxanium-VariableFont_wght.ttf" />
-      <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-VariableFont_wght.ttf" />
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-Bold.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Bold.ttf"/>
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-ExtraBold.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-ExtraBold.ttf"/>
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-ExtraLight.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-ExtraLight.ttf"/>
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-Light.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Light.ttf"/>
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-Medium.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Medium.ttf"/>
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-Regular.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-Regular.ttf"/>
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-SemiBold.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-SemiBold.ttf"/>
+        <None Remove="Resources\Fonts\Oxanium\Oxanium-VariableFont_wght.ttf"/>
+        <AvaloniaResource Include="Resources\Fonts\Oxanium\Oxanium-VariableFont_wght.ttf"/>
     </ItemGroup>
 
     <ItemGroup>
-      <AdditionalFiles Include="Interactivity\Windowing\Overlays\Impl\OverlayWindowStyles.axaml" />
+        <AdditionalFiles Include="Interactivity\Windowing\Overlays\Impl\OverlayWindowStyles.axaml"/>
     </ItemGroup>
 
     <ItemGroup>
-      <Compile Update="AdvancedMenuService\ToolTips\ContextMenuToolTip.axaml.cs">
-        <DependentUpon>ContextMenuToolTip.axaml</DependentUpon>
-        <SubType>Code</SubType>
-      </Compile>
+        <Compile Update="AdvancedMenuService\ToolTips\ContextMenuToolTip.axaml.cs">
+            <DependentUpon>ContextMenuToolTip.axaml</DependentUpon>
+            <SubType>Code</SubType>
+        </Compile>
     </ItemGroup>
 
 </Project>

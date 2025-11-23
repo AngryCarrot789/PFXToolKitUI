@@ -17,7 +17,9 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils;
+
+namespace PFXToolKitUI.EventHelpers;
 
 public delegate void LazyHelper2EventHandler<in T1, in T2>(T1 value1, T2 value2, bool hasBoth);
 

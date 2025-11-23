@@ -17,7 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-namespace PFXToolKitUI.Utils.Events;
+namespace PFXToolKitUI.EventHelpers;
 
 public readonly struct EventInfoKey(Type ownerType, string eventName) : IEquatable<EventInfoKey> {
     public readonly Type OwnerType = ownerType;

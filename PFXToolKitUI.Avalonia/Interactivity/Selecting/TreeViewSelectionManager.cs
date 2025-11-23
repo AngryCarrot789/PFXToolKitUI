@@ -23,6 +23,7 @@ using System.Collections.ObjectModel;
 using Avalonia.Collections;
 using Avalonia.Controls;
 using PFXToolKitUI.Interactivity;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Selecting;
 
@@ -87,9 +88,9 @@ public class TreeViewSelectionManager<T> : IListSelectionManager<T> where T : cl
 
     public IList<T> SelectedItemList => this.castingSelectionList ?? ReadOnlyCollection<T>.Empty;
 
-    public event SelectionChangedEventHandler<T>? SelectionChanged;
-    public event SelectionClearedEventHandler<T>? SelectionCleared;
-    public event LightSelectionChangedEventHandler<T>? LightSelectionChanged;
+    public event EventHandler<ValueChangedEventArgs<IList<T>?>>? SelectionChanged;
+    public event EventHandler? SelectionCleared;
+    public event EventHandler? LightSelectionChanged;
 
     private IList<T>? castingSelectionList;
     private TreeView? myTree;
@@ -119,8 +120,8 @@ public class TreeViewSelectionManager<T> : IListSelectionManager<T> where T : cl
             return;
         }
 
-        this.SelectionChanged?.Invoke(this, oldList, newList);
-        this.LightSelectionChanged?.Invoke(this);
+        this.SelectionChanged?.Invoke(this, new ValueChangedEventArgs<IList<T>?>(oldList, newList));
+        this.LightSelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public bool IsSelected(T item) {
@@ -130,8 +131,8 @@ public class TreeViewSelectionManager<T> : IListSelectionManager<T> where T : cl
     }
 
     private void OnSelectionCleared() {
-        this.SelectionCleared?.Invoke(this);
-        this.LightSelectionChanged?.Invoke(this);
+        this.SelectionCleared?.Invoke(this, EventArgs.Empty);
+        this.LightSelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void SetSelection(T item) {

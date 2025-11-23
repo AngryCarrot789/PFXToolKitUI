@@ -17,13 +17,10 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils.Events;
 using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.Configurations;
-
-public delegate void ConfigurationContextActivePageChangedEventHandler(ConfigurationContext context, ConfigurationPage? oldPage, ConfigurationPage? newPage);
-
-public delegate void ConfigurationContextEventHandler(ConfigurationContext context);
 
 /// <summary>
 /// Stores information about the user's current changes to many different pages.
@@ -46,8 +43,8 @@ public class ConfigurationContext {
     /// </summary>
     public IEnumerable<ConfigurationPage> ModifiedPages => this.modifiedPages ?? Enumerable.Empty<ConfigurationPage>();
 
-    public event ConfigurationContextActivePageChangedEventHandler? ActivePageChanged;
-    public event ConfigurationContextEventHandler? ModifiedPagesUpdated;
+    public event EventHandler<ValueChangedEventArgs<ConfigurationPage?>>? ActivePageChanged;
+    public event EventHandler? ModifiedPagesUpdated;
 
     private int modificationLevelForModifiedPages, lastModificationLevelForNotification;
     private readonly RateLimitedDispatchAction updateIsModifiedAction;
@@ -56,7 +53,7 @@ public class ConfigurationContext {
         this.updateIsModifiedAction = RateLimitedDispatchActionBase.ForDispatcherSync(() => {
             if (this.lastModificationLevelForNotification != this.modificationLevelForModifiedPages) {
                 this.lastModificationLevelForNotification = this.modificationLevelForModifiedPages;
-                this.ModifiedPagesUpdated?.Invoke(this);
+                this.ModifiedPagesUpdated?.Invoke(this, EventArgs.Empty);
             }
         }, TimeSpan.FromMilliseconds(250), DispatchPriority.Background);
     }
@@ -88,10 +85,11 @@ public class ConfigurationContext {
             ConfigurationPage.InternalSetContext(newPage, this);
         }
 
-        this.ActivePageChanged?.Invoke(this, oldPage, newPage);
+        this.ActivePageChanged?.Invoke(this, new ValueChangedEventArgs<ConfigurationPage?>(oldPage, newPage));
     }
 
-    private void OnPageIsModifiedChanged(ConfigurationPage sender) {
+    private void OnPageIsModifiedChanged(object? o, EventArgs e) {
+        ConfigurationPage sender = (ConfigurationPage) o!;
         this.OnIsModifiedChanged(sender, sender.IsModified);
     }
 

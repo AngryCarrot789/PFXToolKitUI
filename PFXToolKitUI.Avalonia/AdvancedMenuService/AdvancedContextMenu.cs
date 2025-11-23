@@ -74,7 +74,7 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         };
     }
 
-    private void ContextRegistryOnRequestClose(ContextRegistry registry) {
+    private void ContextRegistryOnRequestClose(object? sender, EventArgs e) {
         this.Close();
     }
 

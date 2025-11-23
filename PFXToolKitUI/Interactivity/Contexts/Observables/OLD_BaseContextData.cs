@@ -38,7 +38,7 @@ namespace PFXToolKitUI.Interactivity.Contexts.Observables;
 //     /// </summary>
 //     protected abstract IDictionary<string, object> InternalDictionary { get; }
 //
-//     public event ContextChangedEventHandler? ContextChanged;
+//     public event EventHandler? ContextChanged;
 //
 //     protected OLD_BaseContextData() {
 //     }

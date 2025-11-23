@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils.Events;
 using PFXToolKitUI.Utils.RDA;
@@ -34,7 +35,7 @@ public static class ContextEntryExtensions {
     /// <typeparam name="T">The type of value to pass to the context change callback</typeparam>
     /// <returns>The entry, for chained calling</returns>
     public static BaseMenuEntry AddSimpleContextUpdate<T>(this BaseMenuEntry entry, DataKey<T> key, Action<BaseMenuEntry, T?> update) where T : class {
-        entry.CapturedContextChanged += (sender, oldCtx, newCtx) => update(sender, newCtx != null && key.TryGetContext(newCtx, out T? value) ? value : null);
+        entry.CapturedContextChanged += (sender, e) => update((BaseMenuEntry) sender!, e.NewValue != null && key.TryGetContext(e.NewValue, out T? value) ? value : null);
         return entry;
     }
 
@@ -44,11 +45,11 @@ public static class ContextEntryExtensions {
     /// </summary>
     /// <returns>The entry</returns>
     public static BaseMenuEntry AddSimpleContextUpdate<T1, T2>(this BaseMenuEntry entry, DataKey<T1> key1, DataKey<T2> key2, Action<BaseMenuEntry, T1?, T2?> update) where T1 : class where T2 : class {
-        entry.CapturedContextChanged += (sender, oldCtx, newCtx) => {
-            if (newCtx != null && key1.TryGetContext(newCtx, out T1? val1) && key2.TryGetContext(newCtx, out T2? val2))
-                update(sender, val1, val2);
+        entry.CapturedContextChanged += (sender, e) => {
+            if (e.NewValue != null && key1.TryGetContext(e.NewValue, out T1? val1) && key2.TryGetContext(e.NewValue, out T2? val2))
+                update((BaseMenuEntry) sender!, val1, val2);
             else
-                update(sender, null, null);
+                update((BaseMenuEntry) sender!, null, null);
         };
         return entry;
     }
@@ -59,11 +60,11 @@ public static class ContextEntryExtensions {
     /// </summary>
     /// <returns>The entry</returns>
     public static BaseMenuEntry AddSimpleContextUpdate<T1, T2, T3>(this BaseMenuEntry entry, DataKey<T1> key1, DataKey<T2> key2, DataKey<T3> key3, Action<BaseMenuEntry, T1?, T2?, T3?> update) where T1 : class where T2 : class where T3 : class {
-        entry.CapturedContextChanged += (sender, oldCtx, newCtx) => {
-            if (newCtx != null && key1.TryGetContext(newCtx, out T1? val1) && key2.TryGetContext(newCtx, out T2? val2) && key3.TryGetContext(newCtx, out T3? val3))
-                update(sender, val1, val2, val3);
+        entry.CapturedContextChanged += (sender, e) => {
+            if (e.NewValue != null && key1.TryGetContext(e.NewValue, out T1? val1) && key2.TryGetContext(e.NewValue, out T2? val2) && key3.TryGetContext(e.NewValue, out T3? val3))
+                update((BaseMenuEntry) sender!, val1, val2, val3);
             else
-                update(sender, null, null, null);
+                update((BaseMenuEntry) sender!, null, null, null);
         };
         return entry;
     }
@@ -78,15 +79,15 @@ public static class ContextEntryExtensions {
     /// <returns>The entry, for chained calling</returns>
     public static BaseMenuEntry AddContextChangeHandler<T>(this BaseMenuEntry entry, DataKey<T> key, Action<BaseMenuEntry, T?, T?> onDataChanged) where T : class {
         T? field_CurrentValue = null;
-        entry.CapturedContextChanged += (sender, oldCtx, newCtx) => {
-            if (newCtx == null || !key.TryGetContext(newCtx, out T? newValue)) {
+        entry.CapturedContextChanged += (sender, e) => {
+            if (e.NewValue == null || !key.TryGetContext(e.NewValue, out T? newValue)) {
                 if (field_CurrentValue != null) {
-                    onDataChanged(sender, field_CurrentValue, null);
+                    onDataChanged((BaseMenuEntry) sender!, field_CurrentValue, null);
                     field_CurrentValue = null;
                 }
             }
             else if (!Equals(field_CurrentValue, newValue)) {
-                onDataChanged(sender, field_CurrentValue, newValue);
+                onDataChanged((BaseMenuEntry) sender!, field_CurrentValue, newValue);
                 field_CurrentValue = newValue;
             }
         };
@@ -139,9 +140,9 @@ public static class ContextEntryExtensions {
             this.eventNames = eventNames;
         }
 
-        internal void OnCapturedContextChanged(BaseMenuEntry sender, IContextData? oldCtx, IContextData? newCtx) {
-            Debug.Assert(this.Entry == sender);
-            if (newCtx == null || !this.key.TryGetContext(newCtx, out T? newValue)) {
+        internal void OnCapturedContextChanged(object? o, ValueChangedEventArgs<IContextData?> e) {
+            Debug.Assert(this.Entry == o);
+            if (e.NewValue == null || !this.key.TryGetContext(e.NewValue, out T? newValue)) {
                 if (this.currentValue != null) {
                     foreach (SenderEventRelay relay in this.relays!)
                         EventRelayStorage.UIStorage.RemoveHandler(this.currentValue, this, relay);

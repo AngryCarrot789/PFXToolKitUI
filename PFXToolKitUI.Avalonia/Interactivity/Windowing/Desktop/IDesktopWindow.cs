@@ -24,28 +24,9 @@ using Avalonia.Media;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Themes;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
-
-public delegate void WindowEventHandler(IDesktopWindow sender, EventArgs e);
-
-public delegate void WindowEventHandler<in TEventArgs>(IDesktopWindow sender, TEventArgs e) where TEventArgs : EventArgs;
-
-public delegate Task AsyncWindowEventHandler(IDesktopWindow sender, EventArgs e);
-
-public delegate Task AsyncWindowEventHandler<in TEventArgs>(IDesktopWindow sender, TEventArgs e) where TEventArgs : EventArgs;
-
-public delegate void WindowIconChangedEventHandler(IDesktopWindow window, WindowIcon? oldValue, WindowIcon? newValue);
-
-public delegate void WindowTitleBarIconChangedEventHandler(IDesktopWindow window, Icon? oldValue, Icon? newValue);
-
-public delegate void WindowTitleBarCaptionChangedEventHandler(IDesktopWindow window, string? oldValue, string? newValue);
-
-public delegate void WindowTitleBarBrushChangedEventHandler(IDesktopWindow window, IColourBrush? oldValue, IColourBrush? newValue);
-
-public delegate void WindowBorderBrushChangedEventHandler(IDesktopWindow window, IColourBrush? oldValue, IColourBrush? newValue);
-
-public delegate void WindowTitleBarTextAlignmentChangedEventHandler(IDesktopWindow window, TextAlignment oldValue, TextAlignment newValue);
 
 /// <summary>
 /// A window that can be positioned and sized and dragged around by the user.
@@ -143,12 +124,12 @@ public interface IDesktopWindow : IWindowBase {
     /// <summary>
     /// An event fired when the window is in the process of opening but has not been shown on screen yet.
     /// </summary>
-    event WindowEventHandler? Opening;
+    event EventHandler? Opening;
 
     /// <summary>
     /// An event fired when the window is fully opening.
     /// </summary>
-    event WindowEventHandler? Opened;
+    event EventHandler? Opened;
 
     /// <summary>
     /// An event fired when the window is requested to close.
@@ -156,7 +137,7 @@ public interface IDesktopWindow : IWindowBase {
     /// This and <see cref="TryCloseAsync"/> are the only times that cancelling window closure is possible
     /// </para>
     /// </summary>
-    event WindowEventHandler<WindowCancelCloseEventArgs>? TryClose;
+    event EventHandler<WindowCancelCloseEventArgs>? TryClose;
 
     /// <summary>
     /// An asynchronous event fired when the window is requested to close. The handlers are invoked
@@ -165,19 +146,19 @@ public interface IDesktopWindow : IWindowBase {
     /// This and <see cref="TryClose"/> are the only times that cancelling window closure is possible
     /// </para>
     /// </summary>
-    event AsyncWindowEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
+    event AsyncEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
 
     /// <summary>
     /// An event fired when the window is actually about to close.
     /// </summary>
-    event WindowEventHandler<WindowCloseEventArgs>? Closing;
+    event EventHandler<WindowCloseEventArgs>? Closing;
 
     /// <summary>
     /// An event fired when the window is actually about to close.
     /// The handlers are invoked in their own tasks once all handlers
     /// of <see cref="Closing"/> are invoked.
     /// </summary>
-    event AsyncWindowEventHandler<WindowCloseEventArgs>? ClosingAsync;
+    event AsyncEventHandler<WindowCloseEventArgs>? ClosingAsync;
 
     /// <summary>
     /// An event fired when the window is fully closed.
@@ -185,15 +166,15 @@ public interface IDesktopWindow : IWindowBase {
     /// This is fired before the task returned by <see cref="RequestCloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
     /// </para>
     /// </summary>
-    event WindowEventHandler<WindowCloseEventArgs>? Closed;
+    event EventHandler<WindowCloseEventArgs>? Closed;
 
-    event WindowIconChangedEventHandler? IconChanged;
-    event WindowTitleBarIconChangedEventHandler? TitleBarIconChanged;
-    event WindowEventHandler? IsTitleBarVisibleChanged;
-    event WindowTitleBarCaptionChangedEventHandler? TitleChanged;
-    event WindowTitleBarBrushChangedEventHandler? TitleBarBrushChanged;
-    event WindowBorderBrushChangedEventHandler? BorderBrushChanged;
-    event WindowTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
+    event EventHandler<ValueChangedEventArgs<WindowIcon?>>? IconChanged;
+    event EventHandler<ValueChangedEventArgs<Icon?>>? TitleBarIconChanged;
+    event EventHandler? IsTitleBarVisibleChanged;
+    event EventHandler<ValueChangedEventArgs<string?>>? TitleChanged;
+    event EventHandler<ValueChangedEventArgs<IColourBrush?>>? TitleBarBrushChanged;
+    event EventHandler<ValueChangedEventArgs<IColourBrush?>>? BorderBrushChanged;
+    event EventHandler<ValueChangedEventArgs<TextAlignment>>? TitleBarTextAlignmentChanged;
 
     /// <summary>
     /// Force-activates this window, making <see cref="IsActivated"/> and it becomes the focused control

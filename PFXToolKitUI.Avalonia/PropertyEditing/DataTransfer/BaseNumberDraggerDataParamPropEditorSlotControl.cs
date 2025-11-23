@@ -137,11 +137,11 @@ public abstract class BaseNumberDraggerDataParamPropEditorSlotControl : BaseData
         this.SlotModel!.HasProcessedMultipleValuesChanged -= this.OnHasProcessedMultipleValuesChanged;
     }
 
-    protected virtual void OnHasMultipleValuesChanged(DataParameterPropertyEditorSlot sender) {
+    protected virtual void OnHasMultipleValuesChanged(object? o, EventArgs eventArgs) {
         this.UpdateDraggerMultiValueState();
     }
 
-    protected virtual void OnHasProcessedMultipleValuesChanged(DataParameterPropertyEditorSlot sender) {
+    protected virtual void OnHasProcessedMultipleValuesChanged(object? o, EventArgs eventArgs) {
         this.UpdateDraggerMultiValueState();
     }
 }

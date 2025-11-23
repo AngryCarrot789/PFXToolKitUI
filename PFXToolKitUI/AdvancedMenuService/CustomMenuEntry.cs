@@ -19,24 +19,20 @@
 
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.AdvancedMenuService;
-
-public delegate void CustomContextEntryEventHandler(CustomMenuEntry sender);
 
 /// <summary>
 /// A menu entry that has a <see cref="CanExecute"/> and <see cref="OnExecute"/> method
 /// </summary>
 public abstract class CustomMenuEntry : BaseMenuEntry {
-    private string? inputGestureText;
-
     public string? InputGestureText {
-        get => this.inputGestureText;
-        set => PropertyHelper.SetAndRaiseINE(ref this.inputGestureText, value, this, static t => t.InputGestureTextChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.InputGestureTextChanged);
     }
 
-    public event CustomContextEntryEventHandler? InputGestureTextChanged;
+    public event EventHandler? InputGestureTextChanged;
 
     protected CustomMenuEntry() {
     }

@@ -19,8 +19,6 @@
 
 namespace PFXToolKitUI.Interactivity;
 
-public delegate void DisplayNameChangedEventHandler(IDisplayName sender, string? oldName, string? newName);
-
 /// <summary>
 /// An generic interface for models with a display name
 /// </summary>
@@ -33,5 +31,5 @@ public interface IDisplayName {
     /// <summary>
     /// Fired when our display name property changes
     /// </summary>
-    event DisplayNameChangedEventHandler DisplayNameChanged;
+    event EventHandler DisplayNameChanged;
 }

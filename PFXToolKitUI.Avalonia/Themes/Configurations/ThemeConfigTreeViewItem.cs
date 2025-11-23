@@ -193,7 +193,7 @@ public class ThemeConfigTreeViewItem : TreeViewItemEx, IThemeConfigEntryTreeOrNo
         DataManager.GetContextData(this).Set(ThemeContextRegistry.ThemeTreeEntryKey, this.Entry!);
     }
 
-    private void OnInheritedFromKeyChanged(ThemeConfigEntry sender) {
+    private void OnInheritedFromKeyChanged(object? o, EventArgs eventArgs) {
         this.UpdateIsInheritedIndicator();
     }
 

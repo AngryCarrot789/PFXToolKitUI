@@ -29,11 +29,11 @@ namespace PFXToolKitUI.DataTransfer;
 public sealed class TransferableData {
     private class ParameterData {
         public bool isValueChanging;
-        public event DataParameterValueChangedEventHandler? ValueChanged;
+        public event EventHandler<DataParameterValueChangedEventArgs>? ValueChanged;
         public object? storageValue; // only used when no value accessor is used
 
         public void RaiseValueChanged(DataParameter parameter, ITransferableData owner) {
-            this.ValueChanged?.Invoke(parameter, owner);
+            this.ValueChanged?.Invoke(parameter, new DataParameterValueChangedEventArgs(parameter, owner));
         }
     }
 
@@ -44,17 +44,17 @@ public sealed class TransferableData {
     /// <summary>
     /// An event fired when any parameter's value changes relative to our owner
     /// </summary>
-    public event DataParameterValueChangedEventHandler? ValueChanged;
+    public event EventHandler<DataParameterValueChangedEventArgs>? ValueChanged;
 
     public TransferableData(ITransferableData owner) {
         this.Owner = owner ?? throw new ArgumentNullException(nameof(owner));
     }
 
-    internal static void InternalAddHandler(DataParameter parameter, TransferableData owner, DataParameterValueChangedEventHandler handler) {
+    internal static void InternalAddHandler(DataParameter parameter, TransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
         owner.GetOrCreateParamData(parameter).ValueChanged += handler;
     }
 
-    internal static void InternalRemoveHandler(DataParameter parameter, TransferableData owner, DataParameterValueChangedEventHandler handler) {
+    internal static void InternalRemoveHandler(DataParameter parameter, TransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
         if (owner.TryGetParameterData(parameter, out ParameterData? data)) {
             data.ValueChanged -= handler;
         }
@@ -121,7 +121,7 @@ public sealed class TransferableData {
         try {
             DataParameter.InternalOnParameterValueChanged(parameter, owner, true);
             internalData.RaiseValueChanged(parameter, owner);
-            data.ValueChanged?.Invoke(parameter, owner);
+            data.ValueChanged?.Invoke(parameter, new DataParameterValueChangedEventArgs(parameter, owner));
             DataParameter.InternalOnParameterValueChanged(parameter, owner, false);
         }
         finally {
@@ -129,6 +129,6 @@ public sealed class TransferableData {
         }
     }
 
-    public void AddValueChangedHandler(DataParameter parameter, DataParameterValueChangedEventHandler handler) => parameter.AddValueChangedHandler(this.Owner, handler);
-    public void RemoveValueChangedHandler(DataParameter parameter, DataParameterValueChangedEventHandler handler) => parameter.RemoveValueChangedHandler(this.Owner, handler);
+    public void AddValueChangedHandler(DataParameter parameter, EventHandler<DataParameterValueChangedEventArgs> handler) => parameter.AddValueChangedHandler(this.Owner, handler);
+    public void RemoveValueChangedHandler(DataParameter parameter, EventHandler<DataParameterValueChangedEventArgs> handler) => parameter.RemoveValueChangedHandler(this.Owner, handler);
 }

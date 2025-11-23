@@ -17,8 +17,6 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Runtime.ExceptionServices;
-
 namespace PFXToolKitUI;
 
 // TODO: when adding support for mobile, we need to add this as an extension component to IDispatcher
@@ -54,17 +52,17 @@ public interface IDispatcherFrameManager {
     /// </para>
     /// </summary>
     /// <param name="task">The task to wait for completion</param>
-    /// <exception cref="AggregateException">The task was faulted and <see cref="Task.Exception"/> was non-null</exception>
+    /// <exception cref="ArgumentNullException">The task parameter is null</exception>
+    /// <exception cref="Exception">The task was faulted</exception>
+    /// <exception cref="OperationCanceledException">The task was cancelled</exception>
     void AwaitForCompletion(Task task) {
+        ArgumentNullException.ThrowIfNull(task);
         if (!task.IsCompleted) {
             using CancellationTokenSource cts = new CancellationTokenSource();
             task.ContinueWith((t, theCts) => ((CancellationTokenSource) theCts!).Cancel(), cts, TaskContinuationOptions.ExecuteSynchronously);
             this.PushFrame(cts.Token);
         }
-
-        AggregateException? exception = task.Exception;
-        if (exception != null) {
-            ExceptionDispatchInfo.Throw(exception);
-        }
+        
+        task.GetAwaiter().GetResult();
     }
 }

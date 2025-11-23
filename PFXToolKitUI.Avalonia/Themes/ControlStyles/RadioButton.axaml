@@ -14,24 +14,24 @@
             <ControlTemplate>
                 <Grid Background="{TemplateBinding Background}" ColumnDefinitions="Auto,*">
                     <Ellipse Grid.Column="0" x:Name="PART_Ellipse"
-                             Width="13" Height="13"
+                             Width="15" Height="15"
                              VerticalAlignment="Center"
                              Fill="{DynamicResource CheckBox.Static.Background}"
                              Stroke="{TemplateBinding BorderBrush}"
                              StrokeThickness="1"/>
                     <Ellipse Grid.Column="0" x:Name="checkMark"
-                             Width="8" Height="8"
+                             Width="7" Height="7"
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center"
                              Stretch="Uniform"
-                             UseLayoutRounding="False"/>
+                             UseLayoutRounding="True"/>
                     <Ellipse Grid.Column="0" x:Name="indeterminateMark"
-                             Width="8" Height="8"
+                             Width="7" Height="7"
                              HorizontalAlignment="Center"
                              VerticalAlignment="Center"
                              Fill="{DynamicResource ThemeAccentBrush}"
                              Stretch="Uniform"
-                             UseLayoutRounding="False"/>
+                             UseLayoutRounding="True"/>
                     <ContentPresenter x:Name="PART_ContentPresenter"
                                       Grid.Column="1"
                                       Margin="4,0,0,0"

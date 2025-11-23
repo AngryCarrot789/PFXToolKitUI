@@ -24,6 +24,7 @@ using PFXToolKitUI.Avalonia.AvControls;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Notifications;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Notifications;
 
@@ -45,13 +46,13 @@ internal class NotificationContent_TextNotification : TemplatedControl, INotific
         this.SetIcon();
     }
 
-    private void OnTextChanged(Notification sender) {
-        Debug.Assert(this.notification == sender);
+    private void OnTextChanged(object? o, EventArgs e) {
+        Debug.Assert(this.notification == o);
         this.SetText();
     }
 
-    private void OnIconChanged(TextNotification sender, Icon? oldIcon, Icon? newIcon) {
-        Debug.Assert(this.notification == sender);
+    private void OnIconChanged(object? o, ValueChangedEventArgs<Icon?> e) {
+        Debug.Assert(this.notification == o);
         this.SetIcon();
     }
 

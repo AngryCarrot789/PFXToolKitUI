@@ -19,7 +19,7 @@
 
 using System.Reflection;
 
-namespace PFXToolKitUI.Utils.Events;
+namespace PFXToolKitUI.EventHelpers;
 
 /// <summary>
 /// An event relay that is similar to <see cref="SimpleEventRelay"/> but treats a parameter as the sender

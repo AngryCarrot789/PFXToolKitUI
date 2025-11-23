@@ -39,6 +39,7 @@ using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
 
@@ -65,37 +66,37 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
     public WindowIcon? Icon {
         get => this.myNativeWindow.WindowIcon;
-        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.WindowIcon, (x, y) => x.WindowIcon = y, value, this, (t, o, n) => t.IconChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.WindowIcon, (x, y) => x.WindowIcon = y, value, this, this.IconChanged);
     }
 
     public Icon? TitleBarIcon {
         get => this.myNativeWindow.TitleBarIcon;
-        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.TitleBarIcon, (x, y) => x.TitleBarIcon = y, value, this, (t, o, n) => t.TitleBarIconChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.TitleBarIcon, (x, y) => x.TitleBarIcon = y, value, this, this.TitleBarIconChanged);
     }
 
     public bool IsTitleBarVisible {
         get => this.myNativeWindow.IsTitleBarVisible;
-        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.IsTitleBarVisible, (x, y) => x.IsTitleBarVisible = y, value, this, t => t.IsTitleBarVisibleChanged?.Invoke(t, EventArgs.Empty));
+        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.IsTitleBarVisible, (x, y) => x.IsTitleBarVisible = y, value, this, this.IsTitleBarVisibleChanged);
     }
 
     public string? Title {
         get => this.myNativeWindow.Title;
-        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.Title, (x, y) => x.Title = y, value, this, (t, o, n) => t.TitleChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.Title, (x, y) => x.Title = y, value, this, this.TitleChanged);
     }
 
     public IColourBrush? TitleBarBrush {
         get => this.titleBarBrushHandler.Brush;
-        set => PropertyHelper.SetAndRaiseINEEx(this.titleBarBrushHandler, x => x.Brush, (x, y) => x.Brush = y, value, this, (t, o, n) => t.TitleBarBrushChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINEEx(this.titleBarBrushHandler, x => x.Brush, (x, y) => x.Brush = y, value, this, this.TitleBarBrushChanged);
     }
 
     public IColourBrush? BorderBrush {
         get => this.borderBrushHandler.Brush;
-        set => PropertyHelper.SetAndRaiseINEEx(this.borderBrushHandler, x => x.Brush, (x, y) => x.Brush = y, value, this, (t, o, n) => t.BorderBrushChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINEEx(this.borderBrushHandler, x => x.Brush, (x, y) => x.Brush = y, value, this, this.BorderBrushChanged);
     }
 
     public TextAlignment TitleBarTextAlignment {
         get => this.myNativeWindow.TitleBarTextAlignment;
-        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.TitleBarTextAlignment, (x, y) => x.TitleBarTextAlignment = y, value, this, (t, o, n) => t.TitleBarTextAlignmentChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINEEx(this.myNativeWindow, x => x.TitleBarTextAlignment, (x, y) => x.TitleBarTextAlignment = y, value, this, this.TitleBarTextAlignmentChanged);
     }
 
     public object? Content {
@@ -114,20 +115,20 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         set => this.myNativeWindow.Position = value;
     }
 
-    public event WindowEventHandler? Opening;
-    public event WindowEventHandler? Opened;
-    public event WindowEventHandler<WindowCancelCloseEventArgs>? TryClose;
-    public event AsyncWindowEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
-    public event WindowEventHandler<WindowCloseEventArgs>? Closing;
-    public event AsyncWindowEventHandler<WindowCloseEventArgs>? ClosingAsync;
-    public event WindowEventHandler<WindowCloseEventArgs>? Closed;
-    public event WindowIconChangedEventHandler? IconChanged;
-    public event WindowTitleBarIconChangedEventHandler? TitleBarIconChanged;
-    public event WindowEventHandler? IsTitleBarVisibleChanged;
-    public event WindowTitleBarCaptionChangedEventHandler? TitleChanged;
-    public event WindowTitleBarBrushChangedEventHandler? TitleBarBrushChanged;
-    public event WindowBorderBrushChangedEventHandler? BorderBrushChanged;
-    public event WindowTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
+    public event EventHandler? Opening;
+    public event EventHandler? Opened;
+    public event EventHandler<WindowCancelCloseEventArgs>? TryClose;
+    public event AsyncEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
+    public event EventHandler<WindowCloseEventArgs>? Closing;
+    public event AsyncEventHandler<WindowCloseEventArgs>? ClosingAsync;
+    public event EventHandler<WindowCloseEventArgs>? Closed;
+    public event EventHandler<ValueChangedEventArgs<WindowIcon?>>? IconChanged;
+    public event EventHandler<ValueChangedEventArgs<Icon?>>? TitleBarIconChanged;
+    public event EventHandler? IsTitleBarVisibleChanged;
+    public event EventHandler<ValueChangedEventArgs<string?>>? TitleChanged;
+    public event EventHandler<ValueChangedEventArgs<IColourBrush?>>? TitleBarBrushChanged;
+    public event EventHandler<ValueChangedEventArgs<IColourBrush?>>? BorderBrushChanged;
+    public event EventHandler<ValueChangedEventArgs<TextAlignment>>? TitleBarTextAlignmentChanged;
 
     // owner+owned tracking
     internal readonly DesktopNativeWindow myNativeWindow;
@@ -157,11 +158,11 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         this.IsMainWindow = builder.MainWindow;
         this.SizingInfo = new WindowSizingInfo(this, builder);
         this.SizingInfo.DoubleValueChanged += OnSizingInfoPropertyChanged;
-        this.SizingInfo.CanResizeChanged += static info => ((DesktopWindowImpl) info.Window).myNativeWindow.CanResize = info.CanResize;
-        this.SizingInfo.SizeToContentChanged += static (info, _, nv) => {
-            DesktopWindowImpl window = (DesktopWindowImpl) info.Window;
+        this.SizingInfo.CanResizeChanged += static (s, _) => ((DesktopWindowImpl) ((WindowSizingInfo) s!).Window).myNativeWindow.CanResize = ((WindowSizingInfo) s!).CanResize;
+        this.SizingInfo.SizeToContentChanged += static (s, e) => {
+            DesktopWindowImpl window = (DesktopWindowImpl) ((WindowSizingInfo) s!).Window;
             if (!window.myNativeWindow.doNotModifySizeToContent) {
-                window.myNativeWindow.SizeToContent = nv;
+                window.myNativeWindow.SizeToContent = e.NewValue;
             }
         };
 
@@ -211,7 +212,8 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             this.myNativeWindow.Height = d6;
     }
 
-    private static void OnSizingInfoPropertyChanged(WindowSizingInfo sender, string propertyName) {
+    private static void OnSizingInfoPropertyChanged(object? o, string propertyName) {
+        WindowSizingInfo sender = (WindowSizingInfo) o!;
         DesktopNativeWindow window = ((DesktopWindowImpl) sender.Window).myNativeWindow;
         switch (propertyName) {
             case nameof(WindowSizingInfo.MinWidth):  window.SetValue(Layoutable.MinWidthProperty, sender.MinWidth ?? AvaloniaProperty.UnsetValue); break;
@@ -248,8 +250,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
     internal WindowCancelCloseEventArgs OnNativeWindowClosing(WindowCloseReason reason, bool isFromCode) {
         if (this.internalIsProcessingClose)
-            throw new InvalidOperationException("Reentry of " + nameof(this.OnNativeWindowClosing));
-
+            throw new InvalidOperationException("Reentry");
         if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             throw new InvalidOperationException("Window is not in its normal open state");
 
@@ -257,24 +258,29 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             this.internalIsProcessingClose = true;
             this.OpenState = OpenState.TryingToClose;
             WindowCancelCloseEventArgs cancelCloseArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode);
-            this.TryClose?.Invoke(this, cancelCloseArgs);
+            foreach (DesktopWindowImpl window in this.myVisibleChildWindows.ToList()) {
+                window.myNativeWindow.Close();
+            }
 
-            Delegate[]? tryCloseAsyncHandlers = this.TryCloseAsync?.GetInvocationList();
-            if (tryCloseAsyncHandlers != null && tryCloseAsyncHandlers.Length > 0) {
-                List<Task> tasks = new List<Task>();
-                foreach (Delegate handler in tryCloseAsyncHandlers) {
-                    tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCancelCloseEventArgs>) handler)(this, cancelCloseArgs)));
+            if (this.myVisibleChildWindows.Count > 0) {
+                cancelCloseArgs.SetCancelled();
+            }
+            else {
+                this.TryClose?.Invoke(this, cancelCloseArgs);
+
+                try {
+                    this.myManager.myFrameManager.AwaitForCompletion(AsyncEventUtils.InvokeAsync(this.TryCloseAsync, this, cancelCloseArgs, ignoreCancelled: true));
                 }
-
-                // Shouldn't throw because Task.WhenAll always receives non-null tasks 
-                this.myManager.myFrameManager.AwaitForCompletion(Task.WhenAll(tasks));
-                Debug.Assert(tasks.All(x => x.IsCompleted));
-
-                List<Exception> errors = tasks.SelectMany(x => x.Exception?.InnerExceptions ?? s_EmptyEL).Where(x => !(x is OperationCanceledException)).ToList();
-                if (errors.Count == 1)
-                    throw new Exception("Exception invoking async TryClose handler", errors[0]);
-                if (errors.Count > 0)
-                    throw new AggregateException("Exception invoking multiple async TryClose handler", errors);
+                catch (AggregateException e) {
+                    List<Exception> errors = e.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
+                    if (errors.Count > 0) {
+                        Debugger.Break();
+                        AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.TryCloseAsync));
+                        foreach (Exception ex in errors) {
+                            AppLogger.Instance.WriteLine(ex.GetToString());
+                        }
+                    }
+                }
             }
 
             if (cancelCloseArgs.IsCancelled) {
@@ -285,22 +291,16 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             this.OpenState = OpenState.Closing;
             WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode);
             this.Closing?.Invoke(this, closingArgs);
-            Delegate[]? closingAsyncHandlers = this.ClosingAsync?.GetInvocationList();
-            if (closingAsyncHandlers != null && closingAsyncHandlers.Length > 0) {
-                List<Task> tasks = new List<Task>();
-                foreach (Delegate handler in closingAsyncHandlers) {
-                    tasks.Add(Task.Run(() => ((AsyncWindowEventHandler<WindowCloseEventArgs>) handler)(this, closingArgs)));
+
+            try {
+                this.myManager.myFrameManager.AwaitForCompletion(AsyncEventUtils.InvokeAsync(this.ClosingAsync, this, closingArgs, ignoreCancelled: true));
+            }
+            catch (AggregateException e) {
+                Debugger.Break();
+                AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.TryCloseAsync));
+                foreach (Exception ex in e.InnerExceptions) {
+                    AppLogger.Instance.WriteLine(ex.GetToString());
                 }
-
-                // Shouldn't throw because Task.WhenAll always receives non-null tasks 
-                this.myManager.myFrameManager.AwaitForCompletion(Task.WhenAll(tasks));
-                Debug.Assert(tasks.All(x => x.IsCompleted));
-
-                List<Exception> errors = tasks.SelectMany(x => x.Exception?.InnerExceptions ?? s_EmptyEL).Where(x => !(x is OperationCanceledException)).ToList();
-                if (errors.Count == 1)
-                    throw new Exception("Exception invoking async Closing handler", errors[0]);
-                if (errors.Count > 0)
-                    throw new AggregateException("Exception invoking multiple async Closing handler", errors);
             }
 
             return cancelCloseArgs;
@@ -348,8 +348,8 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         this.borderBrushHandler.SetTarget(null);
     }
 
-    private void OnBorderBrushChanged(ColourBrushHandler sender, IColourBrush? oldbrush, IColourBrush? newbrush) {
-        this.myNativeWindow.BorderThickness = newbrush == null ? default : new Thickness(1);
+    private void OnBorderBrushChanged(object? o, ValueChangedEventArgs<IColourBrush?> e) {
+        this.myNativeWindow.BorderThickness = e.NewValue == null ? default : new Thickness(1);
     }
 
     public bool TryGetTopLevel([NotNullWhen(true)] out TopLevel? topLevel) {

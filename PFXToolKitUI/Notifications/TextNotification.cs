@@ -18,37 +18,32 @@
 // 
 
 using PFXToolKitUI.Icons;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Notifications;
-
-public delegate void TextNotificationIconChangedEventHandler(TextNotification sender, Icon? oldIcon, Icon? newIcon);
 
 /// <summary>
 /// A notification that displays text in the body of the notification
 /// </summary>
 public class TextNotification : Notification {
-    private string? text;
-    private Icon? icon;
-
     /// <summary>
     /// Gets or sets the main body text for this notification
     /// </summary>
     public string? Text {
-        get => this.text;
-        set => PropertyHelper.SetAndRaiseINE(ref this.text, value, this, static t => t.TextChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.TextChanged);
     }
 
     /// <summary>
     /// Gets or sets the icon to display in this notification. This will be on the left side of the notification, just like a message box.
     /// </summary>
     public Icon? Icon {
-        get => this.icon;
-        set => PropertyHelper.SetAndRaiseINE(ref this.icon, value, this, static (t, o, n) => t.IconChanged?.Invoke(t, o, n));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IconChanged);
     }
 
-    public event NotificationEventHandler? TextChanged;
-    public event TextNotificationIconChangedEventHandler? IconChanged;
+    public event EventHandler? TextChanged;
+    public event EventHandler<ValueChangedEventArgs<Icon?>>? IconChanged;
 
     public TextNotification() {
     }

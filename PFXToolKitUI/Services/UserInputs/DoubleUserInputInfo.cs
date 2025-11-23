@@ -18,24 +18,18 @@
 // 
 
 using System.Collections.ObjectModel;
-using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Debouncing;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Services.UserInputs;
-
-public delegate void DoubleUserInputDataEventHandler(DoubleUserInputInfo sender);
 
 public class DoubleUserInputInfo : BaseTextUserInputInfo {
     private static readonly SendOrPostCallback s_UpdateTextErrorsAForced = static x => ((DoubleUserInputInfo) x!).UpdateTextAError(true);
     private static readonly SendOrPostCallback s_UpdateTextErrorsBForced = static x => ((DoubleUserInputInfo) x!).UpdateTextBError(true);
     
     private string textA = "", textB = "";
-    private string? labelA, labelB;
-    private int lineCountHintA = 1, lineCountHintB = 1;
-    private ReadOnlyCollection<string>? textErrorsA, textErrorsB;
     private bool isUpdatingErrorA, isUpdatingErrorB;
     private bool doUpdateBAfterA, doUpdateAAfterB;
-    private int debounceErrorsDelayA, debounceErrorsDelayB;
     private TimerDispatcherDebouncer? errorDebouncerA, errorDebouncerB;
 
     /// <summary>
@@ -47,7 +41,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             value = SingleUserInputInfo.CanonicalizeTextForLineCount(value, this.LineCountHintA);
             PropertyHelper.SetAndRaiseINE(ref this.textA, value, this, static t => {
                 SingleUserInputInfo.HandleTextChanged(s_UpdateTextErrorsAForced, t, t.DebounceErrorsDelayA, ref t.errorDebouncerA, t.ValidateA);
-                t.TextAChanged?.Invoke(t);
+                t.TextAChanged?.Invoke(t, EventArgs.Empty);
             });
         }
     }
@@ -61,7 +55,7 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             value = SingleUserInputInfo.CanonicalizeTextForLineCount(value, this.LineCountHintB);
             PropertyHelper.SetAndRaiseINE(ref this.textB, value, this, static t => {
                 SingleUserInputInfo.HandleTextChanged(s_UpdateTextErrorsBForced, t, t.DebounceErrorsDelayB, ref t.errorDebouncerB, t.ValidateB);
-                t.TextBChanged?.Invoke(t);
+                t.TextBChanged?.Invoke(t, EventArgs.Empty);
             });
         }
     }
@@ -70,43 +64,43 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// Gets or sets the text displayed above the <see cref="TextA"/> text field
     /// </summary>
     public string? LabelA {
-        get => this.labelA;
-        set => PropertyHelper.SetAndRaiseINE(ref this.labelA, value, this, static t => t.LabelAChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.LabelAChanged);
     }
 
     /// <summary>
     /// Gets or sets the text displayed above the <see cref="TextB"/> text field
     /// </summary>
     public string? LabelB {
-        get => this.labelB;
-        set => PropertyHelper.SetAndRaiseINE(ref this.labelB, value, this, static t => t.LabelBChanged?.Invoke(t));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.LabelBChanged);
     }
-    
+
     /// <summary>
     /// Gets or sets a hint for the amount of visual lines the text input A should display. 
     /// Default is 1. A value greater than 1 disables auto-close when pressing return
     /// </summary>
     public int LineCountHintA {
-        get => this.lineCountHintA;
+        get => field;
         set {
-            if (value < 1) 
+            if (value < 1)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
-            PropertyHelper.SetAndRaiseINE(ref this.lineCountHintA, value, this, static t => t.LineCountHintAChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref field, value, this, this.LineCountHintAChanged);
         }
-    }
-    
+    } = 1;
+
     /// <summary>
     /// Gets or sets a hint for the amount of visual lines the text input B should display. 
     /// Default is 1. A value greater than 1 disables auto-close when pressing return
     /// </summary>
     public int LineCountHintB {
-        get => this.lineCountHintB;
+        get => field;
         set {
             if (value < 1)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be less than 1");
-            PropertyHelper.SetAndRaiseINE(ref this.lineCountHintB, value, this, static t => t.LineCountHintBChanged?.Invoke(t));
+            PropertyHelper.SetAndRaiseINE(ref field, value, this, this.LineCountHintBChanged);
         }
-    }
+    } = 1;
 
     /// <summary>
     /// A validation callback for <see cref="TextA"/>
@@ -123,15 +117,15 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// when <see cref="ValidateA"/> is non-null and actually produces errors
     /// </summary>
     public ReadOnlyCollection<string>? TextErrorsA {
-        get => this.textErrorsA;
+        get => field;
         private set {
             if (value?.Count < 1) {
                 value = null; // set empty to null for simplified usage of the property
             }
 
-            if (!ReferenceEquals(this.textErrorsA, value)) {
-                this.textErrorsA = value;
-                this.TextErrorsAChanged?.Invoke(this);
+            if (!ReferenceEquals(field, value)) {
+                field = value;
+                this.TextErrorsAChanged?.Invoke(this, EventArgs.Empty);
                 this.RaiseHasErrorsChanged();
             }
         }
@@ -142,15 +136,15 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// when <see cref="ValidateB"/> is non-null and actually produces errors
     /// </summary>
     public ReadOnlyCollection<string>? TextErrorsB {
-        get => this.textErrorsB;
+        get => field;
         private set {
             if (value?.Count < 1) {
                 value = null; // set empty to null for simplified usage of the property
             }
 
-            if (!ReferenceEquals(this.textErrorsB, value)) {
-                this.textErrorsB = value;
-                this.TextErrorsBChanged?.Invoke(this);
+            if (!ReferenceEquals(field, value)) {
+                field = value;
+                this.TextErrorsBChanged?.Invoke(this, EventArgs.Empty);
                 this.RaiseHasErrorsChanged();
             }
         }
@@ -160,16 +154,16 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// Gets or sets the amount of milliseconds to wait before actually querying <see cref="ValidateA"/>. Default is 0, meaning do not wait.
     /// </summary>
     public int DebounceErrorsDelayA {
-        get => this.debounceErrorsDelayA;
+        get => field;
         set {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative");
-            if (this.debounceErrorsDelayA == value)
+            if (field == value)
                 return;
 
             SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsAForced, this, value, ref this.errorDebouncerA);
-            this.debounceErrorsDelayA = value;
-            this.DebounceErrorsDelayAChanged?.Invoke(this);
+            field = value;
+            this.DebounceErrorsDelayAChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
@@ -178,23 +172,23 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     /// Gets or sets the amount of milliseconds to wait before actually querying <see cref="ValidateB"/>. Default is 0, meaning do not wait.
     /// </summary>
     public int DebounceErrorsDelayB {
-        get => this.debounceErrorsDelayB;
+        get => field;
         set {
             if (value < 0)
                 throw new ArgumentOutOfRangeException(nameof(value), value, "Value cannot be negative");
-            if (this.debounceErrorsDelayB == value)
+            if (field == value)
                 return;
 
             SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsBForced, this, value, ref this.errorDebouncerB);
-            this.debounceErrorsDelayB = value;
-            this.DebounceErrorsDelayBChanged?.Invoke(this);
+            field = value;
+            this.DebounceErrorsDelayBChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
-    public event DoubleUserInputDataEventHandler? TextAChanged, TextBChanged, LabelAChanged, LabelBChanged;
-    public event DoubleUserInputDataEventHandler? LineCountHintAChanged, LineCountHintBChanged;
-    public event DoubleUserInputDataEventHandler? TextErrorsAChanged, TextErrorsBChanged;
-    public event DoubleUserInputDataEventHandler? DebounceErrorsDelayAChanged, DebounceErrorsDelayBChanged;
+    public event EventHandler? TextAChanged, TextBChanged, LabelAChanged, LabelBChanged;
+    public event EventHandler? LineCountHintAChanged, LineCountHintBChanged;
+    public event EventHandler? TextErrorsAChanged, TextErrorsBChanged;
+    public event EventHandler? DebounceErrorsDelayAChanged, DebounceErrorsDelayBChanged;
 
     public DoubleUserInputInfo() {
     }

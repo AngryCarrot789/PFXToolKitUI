@@ -38,7 +38,6 @@ namespace PFXToolKitUI.PropertyEditing.DataTransfer.Automatic;
 /// <typeparam name="T">The parameter value type</typeparam>
 public class AutomaticNumericDataParameterPropertyEditorSlot<T> : DataParameterFormattablePropertyEditorSlot where T : unmanaged, INumberBase<T>, IMinMaxValue<T>, IComparable<T> {
     private static readonly T TWO = T.CreateChecked(2);
-    private DragStepProfile stepProfile = DragStepProfile.Percentage;
     protected T myLocalValue;
 
     /// <summary>
@@ -71,14 +70,14 @@ public class AutomaticNumericDataParameterPropertyEditorSlot<T> : DataParameterF
     public new DataParameterNumber<T> Parameter => Unsafe.As<DataParameterNumber<T>>(base.Parameter);
 
     public DragStepProfile StepProfile {
-        get => this.stepProfile;
+        get => field;
         set {
-            this.stepProfile = value;
-            this.StepProfileChanged?.Invoke(this);
+            field = value;
+            this.StepProfileChanged?.Invoke(this, EventArgs.Empty);
         }
-    }
+    } = DragStepProfile.Percentage;
 
-    public event DataParameterPropertyEditorSlotEventHandler? StepProfileChanged;
+    public event EventHandler? StepProfileChanged;
     
     public AutomaticNumericDataParameterPropertyEditorSlot(DataParameter<T> parameter, DataParameterBool isAutomaticParameter, Type applicableType, string displayName, DragStepProfile stepProfile) : base(parameter, applicableType, displayName) {
         this.StepProfile = stepProfile;

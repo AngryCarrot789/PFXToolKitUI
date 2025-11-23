@@ -56,8 +56,8 @@ public sealed class SingletonWindow {
         }
     }
 
-    private void OnWindowClosed(IDesktopWindow sender, EventArgs e) {
-        sender.Closed -= this.OnWindowClosed;
+    private void OnWindowClosed(object? s, WindowCloseEventArgs args) {
+        ((IDesktopWindow) s!).Closed -= this.OnWindowClosed;
         this.Current = null;
     }
 }

@@ -34,6 +34,7 @@ using PFXToolKitUI.Interactivity.Windowing;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 
@@ -52,8 +53,9 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
 
     public IColourBrush? BorderBrush {
         get => this.borderBrushHandler.Brush;
-        set => PropertyHelper.SetAndRaiseINEEx(this.borderBrushHandler, x => x.Brush, (x, y) => x.Brush = y, value, this, (t, o, n) => t.BorderBrushChanged?.Invoke(t, o, n));
+        set => PropertyHelper.SetAndRaiseINEEx(this.borderBrushHandler, x => x.Brush, (x, y) => x.Brush = y, value, this, this.BorderBrushChanged);
     }
+
 
     public object? Content {
         get => this.myControl.Content;
@@ -64,14 +66,14 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
 
     public OpenState OpenState { get; private set; }
 
-    public event OverlayWindowEventHandler? Opening;
-    public event OverlayWindowEventHandler? Opened;
-    public event OverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>? TryClose;
-    public event AsyncOverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>? TryCloseAsync;
-    public event OverlayWindowEventHandler<OverlayWindowCloseEventArgs>? Closing;
-    public event AsyncOverlayWindowEventHandler<OverlayWindowCloseEventArgs>? ClosingAsync;
-    public event OverlayWindowEventHandler<OverlayWindowCloseEventArgs>? Closed;
-    public event OverlayWindowBorderBrushChangedEventHandler? BorderBrushChanged;
+    public event EventHandler? Opening;
+    public event EventHandler? Opened;
+    public event EventHandler<OverlayWindowCancelCloseEventArgs>? TryClose;
+    public event AsyncEventHandler<OverlayWindowCancelCloseEventArgs>? TryCloseAsync;
+    public event EventHandler<OverlayWindowCloseEventArgs>? Closing;
+    public event AsyncEventHandler<OverlayWindowCloseEventArgs>? ClosingAsync;
+    public event EventHandler<OverlayWindowCloseEventArgs>? Closed;
+    public event EventHandler<ValueChangedEventArgs<IColourBrush?>>? BorderBrushChanged;
 
     internal readonly OverlayWindowManagerImpl myManager;
     internal readonly OverlayControl myControl;
@@ -133,19 +135,19 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
 
     public Task ShowAsync() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-        
+
         if (this.OpenState != OpenState.NotOpened)
             throw new InvalidOperationException("Popup has already started to open");
-        
+
         return ApplicationPFX.Instance.Dispatcher.InvokeAsync(this.ShowImpl);
     }
 
     public async Task<object?> ShowDialogAsync() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
-        
+
         if (this.OpenState != OpenState.NotOpened)
             throw new InvalidOperationException("Popup has already started to open");
-        
+
         await ApplicationPFX.Instance.Dispatcher.InvokeAsync(this.ShowImpl);
 
         await this.WaitForClosedAsync(CancellationToken.None);
@@ -268,23 +270,14 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
                 AppLogger.Instance.WriteLine(e.GetToString());
             }
 
-            Delegate[]? beforeClosingAsyncHandlers = this.TryCloseAsync?.GetInvocationList();
-            if (beforeClosingAsyncHandlers != null && beforeClosingAsyncHandlers.Length > 0) {
-                List<Task> tasks = new List<Task>();
-                foreach (Delegate handler in beforeClosingAsyncHandlers) {
-                    tasks.Add(Task.Run(() => ((AsyncOverlayWindowEventHandler<OverlayWindowCancelCloseEventArgs>) handler)(this, beforeClosingArgs)));
-                }
-
-                await Task.WhenAll(tasks);
-
-                // Get all task exceptions that are not primarily OCE
-                List<Exception> errors = tasks.Select(x => x.Exception).NonNull().SelectMany(x => x.InnerExceptions.Where(y => !(y is OperationCanceledException))).ToList();
-                if (errors.Count > 0) {
-                    Debugger.Break();
-                    AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.TryCloseAsync));
-                    foreach (Exception e in errors) {
-                        AppLogger.Instance.WriteLine(e.GetToString());
-                    }
+            try {
+                await AsyncEventUtils.InvokeAsync(this.TryCloseAsync, this, beforeClosingArgs);
+            }
+            catch (AggregateException e) {
+                Debugger.Break();
+                AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.TryCloseAsync));
+                foreach (Exception ex in e.InnerExceptions) {
+                    AppLogger.Instance.WriteLine(ex.GetToString());
                 }
             }
 
@@ -308,23 +301,14 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
             AppLogger.Instance.WriteLine(e.GetToString());
         }
 
-        Delegate[]? closingAsyncHandlers = this.ClosingAsync?.GetInvocationList();
-        if (closingAsyncHandlers != null && closingAsyncHandlers.Length > 0) {
-            List<Task> tasks = new List<Task>();
-            foreach (Delegate handler in closingAsyncHandlers) {
-                tasks.Add(Task.Run(() => ((AsyncOverlayWindowEventHandler<OverlayWindowCloseEventArgs>) handler)(this, closingArgs)));
-            }
-
-            await Task.WhenAll(tasks);
-
-            // Get all task exceptions that are not primarily OCE
-            List<Exception> errors = tasks.Select(x => x.Exception).NonNull().SelectMany(x => x.InnerExceptions.Where(y => !(y is OperationCanceledException))).ToList();
-            if (errors.Count > 0) {
-                Debugger.Break();
-                AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.ClosingAsync));
-                foreach (Exception e in errors) {
-                    AppLogger.Instance.WriteLine(e.GetToString());
-                }
+        try {
+            await AsyncEventUtils.InvokeAsync(this.ClosingAsync, this, closingArgs);
+        }
+        catch (AggregateException e) {
+            Debugger.Break();
+            AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.ClosingAsync));
+            foreach (Exception ex in e.InnerExceptions) {
+                AppLogger.Instance.WriteLine(ex.GetToString());
             }
         }
 
@@ -358,7 +342,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         this.borderBrushHandler.SetTarget(null);
     }
 
-    private void OnBorderBrushChanged(ColourBrushHandler sender, IBrush? oldCurrentBrush, IBrush? newCurrentBrush) {
-        this.myControl.BorderThickness = newCurrentBrush == null ? default : new Thickness(1);
+    private void OnBorderBrushChanged(object? o, ValueChangedEventArgs<IBrush?> e) {
+        this.myControl.BorderThickness = e.NewValue == null ? default : new Thickness(1);
     }
 }

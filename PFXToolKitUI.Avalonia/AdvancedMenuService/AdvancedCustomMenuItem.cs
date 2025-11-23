@@ -32,7 +32,6 @@ using PFXToolKitUI.Utils;
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
 public class AdvancedCustomMenuItem : AdvancedMenuItem {
-    private bool canExecute;
     private TextBlock? InputGestureTextBlock;
     private readonly IBinder<CustomMenuEntry> gestureBinder = new EventUpdateBinder<CustomMenuEntry>(nameof(CustomMenuEntry.InputGestureTextChanged), b => b.Control.SetValue(TextBlock.TextProperty, !string.IsNullOrWhiteSpace(b.Model.InputGestureText) ? b.Model.InputGestureText : null));
 
@@ -41,9 +40,9 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
     public bool IsExecuting { get; private set; }
 
     protected bool CanExecute {
-        get => this.canExecute;
+        get => field;
         set {
-            this.canExecute = value;
+            field = value;
 
             // Causes IsEnableCore to be fetched, which returns false if we are executing something or
             // we have no valid command, causing this menu item to be "disabled"

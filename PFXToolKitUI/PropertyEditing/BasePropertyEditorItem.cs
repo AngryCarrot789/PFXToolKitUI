@@ -17,11 +17,9 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.PropertyEditing;
-
-public delegate void BasePropertyEditorItemEventHandler(BasePropertyEditorItem sender);
 
 /// <summary>
 /// A base class for natural items in a property editor, such as a slot or group
@@ -34,7 +32,7 @@ public abstract class BasePropertyEditorItem : BasePropertyEditorObject {
     /// </summary>
     public bool IsCurrentlyApplicable {
         get => this.isCurrentlyApplicable;
-        protected set => PropertyHelper.SetAndRaiseINE(ref this.isCurrentlyApplicable, value, this, static t => t.IsCurrentlyApplicableChanged?.Invoke(t));
+        protected set => PropertyHelper.SetAndRaiseINE(ref this.isCurrentlyApplicable, value, this, this.IsCurrentlyApplicableChanged);
     }
 
     /// <summary>
@@ -53,7 +51,7 @@ public abstract class BasePropertyEditorItem : BasePropertyEditorObject {
     /// </summary>
     public virtual HandlerCountMode HandlerCountMode => HandlerCountMode.Any;
 
-    public event BasePropertyEditorItemEventHandler? IsCurrentlyApplicableChanged;
+    public event EventHandler? IsCurrentlyApplicableChanged;
 
     protected BasePropertyEditorItem(Type applicableType) {
         this.ApplicableType = applicableType ?? throw new ArgumentNullException(nameof(applicableType));

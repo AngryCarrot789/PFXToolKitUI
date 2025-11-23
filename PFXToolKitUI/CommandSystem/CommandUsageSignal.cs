@@ -21,8 +21,6 @@ using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.CommandSystem;
 
-public delegate void CommandSignalEventHandler(CommandUsageSignal sender);
-
 /// <summary>
 /// A mechanism used to communicate with UI usages of commands.
 /// <para>
@@ -44,7 +42,7 @@ public sealed class CommandUsageSignal {
     /// <summary>
     /// An event fired when the return value of <see cref="Command.CanExecute"/> may be different since it was last evaluated
     /// </summary>
-    public event CommandSignalEventHandler? CanExecuteChanged;
+    public event EventHandler? CanExecuteChanged;
 
     public CommandUsageSignal() {
     }
@@ -52,7 +50,7 @@ public sealed class CommandUsageSignal {
     /// <summary>
     /// Raises the <see cref="CanExecuteChanged"/> event
     /// </summary>
-    public void RaiseCanExecuteChanged() => this.CanExecuteChanged?.Invoke(this);
+    public void RaiseCanExecuteChanged() => this.CanExecuteChanged?.Invoke(this, EventArgs.Empty);
 
     /// <summary>
     /// Gets or creates a signal for the given context data

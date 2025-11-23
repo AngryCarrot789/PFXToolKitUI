@@ -19,8 +19,6 @@
 
 namespace PFXToolKitUI.Themes;
 
-public delegate void DynamicColourBrushChangedEventHandler(IDynamicColourBrush brush);
-
 /// <summary>
 /// A brush whose underlying brush updates dynamically when modifying via the theme in the application preferences, or by the theme changing
 /// </summary>
@@ -43,5 +41,5 @@ public interface IDynamicColourBrush : IColourBrush {
     /// since listening to resource changes is expensive
     /// </para>
     /// </summary>
-    event DynamicColourBrushChangedEventHandler? BrushChanged;
+    event EventHandler? BrushChanged;
 }

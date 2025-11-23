@@ -97,7 +97,7 @@ public static class DialogOperations {
             window.Closing += this.WindowOnClosing;
         }
 
-        private void WindowOnClosing(IDesktopWindow sender, WindowCloseEventArgs e) {
+        private void WindowOnClosing(object? o, WindowCloseEventArgs e) {
             if (!this.IsCompleted)
                 this.SetCancelled();
         }
@@ -112,7 +112,7 @@ public static class DialogOperations {
             window.Closing += this.WindowOnClosing;
         }
 
-        private void WindowOnClosing(IOverlayWindow sender, OverlayWindowCloseEventArgs e) {
+        private void WindowOnClosing(object? o, OverlayWindowCloseEventArgs e) {
             if (!this.IsCompleted)
                 this.SetCancelled();
         }

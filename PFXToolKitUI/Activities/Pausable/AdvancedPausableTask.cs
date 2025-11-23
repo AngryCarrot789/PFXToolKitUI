@@ -20,12 +20,9 @@
 using System.Diagnostics;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Activities.Pausable;
-
-public delegate void AdvancedPausableTaskEventHandler(AdvancedPausableTask task);
-
-public delegate Task AdvancedPausableTaskAsyncEventHandler(AdvancedPausableTask task);
 
 /// <summary>
 /// The base class for an advanced pausable task. An advanced pausable task provides
@@ -122,7 +119,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     /// a task thread, so handlers must jump onto main thread via <see cref="ApplicationPFX.Dispatcher"/>
     /// if they need to
     /// </summary>
-    public event AdvancedPausableTaskAsyncEventHandler? PausedStateChanged;
+    public event AsyncEventHandler? PausedStateChanged;
 
     /// <summary>
     /// Constructor for <see cref="AdvancedPausableTask"/>
@@ -222,16 +219,11 @@ public abstract class AdvancedPausableTask : BasePausableTask {
     }
 
     private async Task RaiseOnPausedChanged() {
-        Delegate[]? handler = this.PausedStateChanged?.GetInvocationList();
-        if (handler != null) {
-            foreach (Delegate t in handler) {
-                try {
-                    await ((AdvancedPausableTaskAsyncEventHandler) t)(this);
-                }
-                catch (Exception e) {
-                    AppLogger.Instance.WriteLine($"[Pausable Task] handler ({t}) threw: {e.GetToString()}");
-                }
-            }
+        try {
+            await AsyncEventUtils.InvokeAsync(this.PausedStateChanged, this, EventArgs.Empty);
+        }
+        catch (AggregateException e) {
+            AppLogger.Instance.WriteLine($"[Pausable Task] one or more handlers threw: {e.GetToString()}");
         }
     }
 
@@ -306,14 +298,14 @@ public abstract class AdvancedPausableTask : BasePausableTask {
                 isAlreadyRunning = false;
                 return;
             }
-            
+
             isAlreadyCompleted = false;
             isAlreadyRunning = false;
             if (this.reqToPauseCount == 0) {
                 return; // excessive calls
             }
 
-            Interlocked.Decrement(ref this.reqToPauseCount); 
+            Interlocked.Decrement(ref this.reqToPauseCount);
             Interlocked.Increment(ref this.reqToUnpauseCount);
             _ = this.PauseOrResumeWaitInternal(false);
         }

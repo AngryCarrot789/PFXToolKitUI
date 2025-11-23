@@ -38,9 +38,9 @@ public class LogViewServiceImpl : ILogViewService {
                     Width = 900, Height = 700
                 });
 
-                this.currentWindow.Opened += static (sender, args) => ((LogsView) sender.Content!).OnWindowOpened();
-                this.currentWindow.Closed += (sender, args) => {
-                    ((LogsView) sender.Content!).OnWindowClosed();
+                this.currentWindow.Opened += static (s, args) => ((LogsView) ((IDesktopWindow) s!).Content!).OnWindowOpened();
+                this.currentWindow.Closed += (s, args) => {
+                    ((LogsView) ((IDesktopWindow) s!).Content!).OnWindowClosed();
                     this.currentWindow = null;
                 };
                 

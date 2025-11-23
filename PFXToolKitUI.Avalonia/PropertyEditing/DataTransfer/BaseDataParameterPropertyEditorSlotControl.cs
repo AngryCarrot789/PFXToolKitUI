@@ -23,7 +23,6 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.DataTransfer;
-using PFXToolKitUI.PropertyEditing;
 using PFXToolKitUI.PropertyEditing.DataTransfer;
 
 namespace PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer;
@@ -103,7 +102,7 @@ public abstract class BaseDataParameterPropertyEditorSlotControl : BasePropertyE
         this.OnHandlerListChanged(false);
     }
 
-    private void SlotOnIsEditableChanged(DataParameterPropertyEditorSlot slot) {
+    private void SlotOnIsEditableChanged(object? sender, EventArgs eventArgs) {
         this.UpdateCanEdit();
     }
 
@@ -119,13 +118,13 @@ public abstract class BaseDataParameterPropertyEditorSlotControl : BasePropertyE
 
     protected abstract void OnCanEditValueChanged(bool canEdit);
 
-    private void OnSlotValueChanged(DataParameterPropertyEditorSlot slot) {
+    private void OnSlotValueChanged(object? sender, EventArgs eventArgs) {
         this.OnModelValueChanged();
     }
 
-    private void OnSlotDisplayNameChanged(DataParameterPropertyEditorSlot slot) {
+    private void OnSlotDisplayNameChanged(object? sender, EventArgs eventArgs) {
         if (this.displayNameCheckBox != null)
-            this.displayNameCheckBox.Content = slot.DisplayName;
+            this.displayNameCheckBox.Content = this.SlotModel!.DisplayName;
     }
 
     private void OnHandlerListChanged(bool connect) {
@@ -149,7 +148,7 @@ public abstract class BaseDataParameterPropertyEditorSlotControl : BasePropertyE
             this.OnModelValueChanged();
     }
 
-    private void OnHandlersChanged(PropertyEditorSlot sender) {
-        this.OnHandlerListChanged(sender.IsCurrentlyApplicable);
+    private void OnHandlersChanged(object? o, EventArgs eventArgs) {
+        this.OnHandlerListChanged(this.SlotModel!.IsCurrentlyApplicable);
     }
 }

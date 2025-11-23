@@ -22,6 +22,7 @@ using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Notifications;
 
@@ -33,10 +34,10 @@ public class CommandNotificationAction : NotificationAction {
 
     public string? CommandId {
         get => this.commandId;
-        set => PropertyHelper.SetAndRaiseINE(ref this.commandId, value, this, static t => t.CommandIdChanged?.Invoke(t));
+        set => PropertyHelper.SetAndRaiseINE(ref this.commandId, value, this, this.CommandIdChanged);
     }
 
-    public event NotificationActionEventHandler? CommandIdChanged;
+    public event EventHandler? CommandIdChanged;
 
     public CommandNotificationAction() {
     }

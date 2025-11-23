@@ -24,6 +24,7 @@ using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Utils.Events;
 using PFXToolKitUI.Utils.RDA;
 
 namespace PFXToolKitUI.Avalonia.CommandUsages;
@@ -41,7 +42,6 @@ public abstract class CommandUsage : ICommandUsage {
     // Since its invoke method is only called from the main thread,
     // there's no need for the extended version
     private RapidDispatchActionEx? delayedContextUpdate;
-    private Icon? icon;
 
     public string CommandId { get; }
 
@@ -50,23 +50,17 @@ public abstract class CommandUsage : ICommandUsage {
     public AvaloniaObject? Control { get; private set; }
 
     public Icon? Icon {
-        get => this.icon;
-        set {
-            Icon? oldIcon = this.icon;
-            if (!ReferenceEquals(oldIcon, value)) {
-                this.icon = value;
-                this.OnIconChanged(oldIcon, value);
-            }
-        }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, ReferenceEquals, this, static (s, o, n) => s.OnIconChanged(o, n));
     }
-
+    
     /// <summary>
     /// Gets whether this usage is currently connected to a control. When disconnecting, this is set
     /// to false while <see cref="Control"/> remains non-null, until <see cref="OnDisconnected"/> has returned
     /// </summary>
     public bool IsConnected { get; private set; }
 
-    public event CommandUsageIconChangedEventHandler? IconChanged;
+    public event EventHandler<ValueChangedEventArgs<Icon?>>? IconChanged;
 
     protected CommandUsage(string commandId) {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
@@ -74,7 +68,7 @@ public abstract class CommandUsage : ICommandUsage {
     }
 
     protected virtual void OnIconChanged(Icon? oldIcon, Icon? newIcon) {
-        this.IconChanged?.Invoke(this, oldIcon, newIcon);
+        this.IconChanged?.Invoke(this, new ValueChangedEventArgs<Icon?>(oldIcon, newIcon));
     }
 
     /// <summary>

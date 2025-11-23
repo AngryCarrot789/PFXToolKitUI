@@ -17,9 +17,12 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+#nullable enable
+using System;
 using System.Diagnostics.CodeAnalysis;
 using JetBrains.Annotations;
 using PFXToolKitUI.AdvancedMenuService;
+using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Utils.Events;
 using Xunit;
 
@@ -28,16 +31,32 @@ namespace PFXToolKitUI.UtilTests.Utils.Events;
 [TestSubject(typeof(SenderEventRelay))]
 public class SenderEventRelayTest {
     private const string TestTextAsCustomParameter = "mr sexy!";
-    
+
     private int handleCount;
-    private CommandMenuEntry entry;
+    private CommandMenuEntry? entry;
+    private TestObject? testObj;
 
     [Fact]
     [SuppressMessage("Usage", "CA2263:Prefer generic overload when type is known")]
     public void TestOrder() {
-        SenderEventRelay relay1 = SenderEventRelay.Create<CommandMenuEntry>(nameof(CommandMenuEntry.DescriptionChanged), this.Handler1);
-        SenderEventRelay relay2 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), this.Handler2);
-        SenderEventRelay relay3 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), this.Handler3, TestTextAsCustomParameter);
+        SenderEventRelay relay1 = SenderEventRelay.Create<CommandMenuEntry>(nameof(CommandMenuEntry.DescriptionChanged), obj => {
+            Assert.Equal(this.entry, obj);
+            Assert.Equal(0, this.handleCount);
+            this.handleCount++;
+        });
+        
+        SenderEventRelay relay2 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), obj => {
+            Assert.Equal(this.entry, obj);
+            Assert.Equal(1, this.handleCount);
+            this.handleCount++;
+        });
+        
+        SenderEventRelay relay3 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), (arg1, arg2) => {
+            Assert.Equal(this.entry, arg1);
+            Assert.Equal(TestTextAsCustomParameter, arg2);
+            Assert.Equal(2, this.handleCount);
+            this.handleCount++;
+        }, TestTextAsCustomParameter);
 
         this.entry = new CommandMenuEntry("entry");
         relay1.AddEventHandler(this.entry);
@@ -45,23 +64,50 @@ public class SenderEventRelayTest {
         relay3.AddEventHandler(this.entry);
 
         this.entry.Description = "some new text";
-        
+
         Assert.Equal(3, this.handleCount);
     }
 
-    private void Handler1(CommandMenuEntry obj) {
-        Assert.Equal(this.entry, obj);
-        this.handleCount++;
+    private class TestObject {
+        public string? Prop1 {
+            get => field;
+            set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static t => t.Prop1Changed?.Invoke(t, EventArgs.Empty));
+        }
+        
+        public string? Prop2 {
+            get => field;
+            set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static (t, o, n) => t.Prop2Changed?.Invoke(t, new Prop2ChangedEventArgs(o, n)));
+        }
+
+        public event EventHandler? Prop1Changed;
+        public event EventHandler<Prop2ChangedEventArgs>? Prop2Changed;
     }
 
-    private void Handler2(object obj) {
-        Assert.Equal(this.entry, obj);
-        this.handleCount++;
+    private readonly struct Prop2ChangedEventArgs(string? oldValue, string? newValue) {
+        public string? OldValue { get; } = oldValue;
+        public string? NewValue { get; } = newValue;
     }
-    
-    private void Handler3(object arg1, object arg2) {
-        Assert.Equal(this.entry, arg1);
-        Assert.Equal(TestTextAsCustomParameter, arg2);
-        this.handleCount++;
+
+    [Fact]
+    public void TestGenericUsage() {
+        SenderEventRelay relay1 = SenderEventRelay.Create<TestObject>(nameof(TestObject.Prop1Changed), obj => {
+            Assert.Equal(this.testObj, obj);
+            this.handleCount++;
+        });
+        
+        SenderEventRelay relay2 = SenderEventRelay.Create<TestObject>(nameof(TestObject.Prop2Changed), obj => {
+            Assert.Equal(this.testObj, obj);
+            this.handleCount++;
+        });
+
+        this.testObj = new TestObject();
+        relay1.AddEventHandler(this.testObj);
+        relay2.AddEventHandler(this.testObj);
+
+        Assert.Equal(0, this.handleCount);
+        this.testObj.Prop1 = "some new text";
+        Assert.Equal(1, this.handleCount);
+        this.testObj.Prop2 = "some new text";
+        Assert.Equal(2, this.handleCount);
     }
 }

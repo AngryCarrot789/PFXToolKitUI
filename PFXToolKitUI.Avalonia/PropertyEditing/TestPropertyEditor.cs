@@ -45,6 +45,6 @@ public static class TestPropertyEditor {
     public class TestObject : IDisplayName {
         public string? DisplayName { get; set; }
 
-        public event DisplayNameChangedEventHandler? DisplayNameChanged;
+        public event EventHandler? DisplayNameChanged;
     }
 }

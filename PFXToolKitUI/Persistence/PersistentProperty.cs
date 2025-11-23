@@ -406,8 +406,6 @@ public abstract class PersistentProperty {
     }
 }
 
-public delegate void PersistentPropertyValueChangeEventHandler<T>(PersistentProperty<T> property, T oldValue, T newValue);
-
 public delegate void PersistentPropertyInstanceValueChangeEventHandler<T>(PersistentConfiguration config, PersistentProperty<T> property, T oldValue, T newValue);
 
 /// <summary>

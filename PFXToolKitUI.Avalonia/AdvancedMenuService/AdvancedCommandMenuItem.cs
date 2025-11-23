@@ -32,15 +32,14 @@ using PFXToolKitUI.Utils;
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
 public class AdvancedCommandMenuItem : AdvancedMenuItem {
-    private bool canExecute;
     private TextBlock? InputGestureTextBlock;
 
     public bool IsExecuting { get; private set; }
 
     protected bool CanExecute {
-        get => this.canExecute;
+        get => field;
         set {
-            this.canExecute = value;
+            field = value;
 
             // Causes IsEnableCore to be fetched, which returns false if we are executing something or
             // we have no valid command, causing this menu item to be "disabled"

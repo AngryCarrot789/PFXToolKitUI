@@ -19,8 +19,6 @@
 
 namespace PFXToolKitUI.Interactivity.Contexts.Observables;
 
-public delegate void ContextChangedEventHandler(IMutableContextData sender);
-
 /// <summary>
 /// An interface for a mutable instance of <see cref="IContextData"/>
 /// </summary>
@@ -29,5 +27,5 @@ public interface IObservableMutableContextData : IMutableContextData {
     /// Fired when one or more values are added to and/or removed from this mutable context
     /// data object. If data is being batched, this event is fired once the batch counter reaches zero.
     /// </summary>
-    event ContextChangedEventHandler ContextChanged;
+    event EventHandler ContextChanged;
 }

@@ -30,9 +30,9 @@ public class EmptyActivityProgress : IActivityProgress {
     string? IActivityProgress.Text { get => null; set { } }
     CompletionState IActivityProgress.CompletionState { get; } = new EmptyCompletionState();
 
-    event ActivityProgressEventHandler IActivityProgress.IsIndeterminateChanged { add { } remove { } }
-    event ActivityProgressEventHandler IActivityProgress.CaptionChanged { add { } remove { } }
-    event ActivityProgressEventHandler IActivityProgress.TextChanged { add { } remove { } }
+    event EventHandler IActivityProgress.IsIndeterminateChanged { add { } remove { } }
+    event EventHandler IActivityProgress.CaptionChanged { add { } remove { } }
+    event EventHandler IActivityProgress.TextChanged { add { } remove { } }
 
     public EmptyActivityProgress() { }
 }

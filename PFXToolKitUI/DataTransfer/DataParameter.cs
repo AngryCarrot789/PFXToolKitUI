@@ -22,8 +22,6 @@ using PFXToolKitUI.Utils.Accessing;
 
 namespace PFXToolKitUI.DataTransfer;
 
-public delegate void DataParameterValueChangedEventHandler(DataParameter parameter, ITransferableData owner);
-
 /// <summary>
 /// The core base class for all data parameters. A data parameter is used to simplify the data transfer between
 /// objects and the UI, such as property editor slots.
@@ -73,12 +71,12 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// Fired when the value of this parameter changes for any <see cref="ITransferableData"/> instance.
     /// This is fired before instance value change handlers are called, hence it's the critical handler
     /// </summary>
-    public event DataParameterValueChangedEventHandler? PriorityValueChanged;
+    public event EventHandler<DataParameterValueChangedEventArgs>? PriorityValueChanged;
 
     /// <summary>
     /// Fired when the value of this parameter changes for any <see cref="ITransferableData"/> instance
     /// </summary>
-    public event DataParameterValueChangedEventHandler? ValueChanged;
+    public event EventHandler<DataParameterValueChangedEventArgs>? ValueChanged;
 
     protected DataParameter(Type ownerType, string name) {
         ArgumentNullException.ThrowIfNull(ownerType);
@@ -97,7 +95,7 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// </summary>
     /// <param name="handler">The handler to add</param>
     /// <param name="parameters">The parameters to add the event handler to</param>
-    public static void AddMultipleHandlers(DataParameterValueChangedEventHandler handler, params DataParameter[] parameters) {
+    public static void AddMultipleHandlers(EventHandler<DataParameterValueChangedEventArgs> handler, params DataParameter[] parameters) {
         foreach (DataParameter parameter in parameters) {
             parameter.ValueChanged += handler;
         }
@@ -108,7 +106,7 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// </summary>
     /// <param name="handler">The handler to remove</param>
     /// <param name="parameters">The parameters to remove the event handler from</param>
-    public static void RemoveMultipleHandlers(DataParameterValueChangedEventHandler handler, params DataParameter[] parameters) {
+    public static void RemoveMultipleHandlers(EventHandler<DataParameterValueChangedEventArgs> handler, params DataParameter[] parameters) {
         foreach (DataParameter parameter in parameters) {
             parameter.ValueChanged -= handler;
         }
@@ -158,14 +156,14 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// <summary>
     /// Adds a value changed event handler for this parameter on the given owner
     /// </summary>
-    public void AddValueChangedHandler(ITransferableData owner, DataParameterValueChangedEventHandler handler) {
+    public void AddValueChangedHandler(ITransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
         TransferableData.InternalAddHandler(this, owner.TransferableData, handler);
     }
 
     /// <summary>
     /// Removes a value changed handler for this parameter on the given owner
     /// </summary>
-    public void RemoveValueChangedHandler(ITransferableData owner, DataParameterValueChangedEventHandler handler) {
+    public void RemoveValueChangedHandler(ITransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
         TransferableData.InternalRemoveHandler(this, owner.TransferableData, handler);
     }
 
@@ -306,7 +304,7 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     }
 
     internal static void InternalOnParameterValueChanged(DataParameter parameter, ITransferableData owner, bool isPriority) {
-        (isPriority ? parameter.PriorityValueChanged : parameter.ValueChanged)?.Invoke(parameter, owner);
+        (isPriority ? parameter.PriorityValueChanged : parameter.ValueChanged)?.Invoke(parameter, new DataParameterValueChangedEventArgs(parameter, owner));
     }
 
     /// <summary>
@@ -484,4 +482,10 @@ public class DataParameter<T> : DataParameter {
     public virtual void Reset(ITransferableData owner) {
         this.SetValue(owner, this.GetDefaultValue(owner));
     }
+}
+
+public readonly struct DataParameterValueChangedEventArgs(DataParameter dataParameter, ITransferableData owner) {
+    public DataParameter DataParameter { get; } = dataParameter;
+
+    public ITransferableData Owner { get; } = owner;
 }

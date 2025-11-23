@@ -19,10 +19,9 @@
 
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Configurations;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Themes.Configurations;
-
-public delegate void ThemeConfigurationPageTargetThemeChangedEventHandler(ThemeConfigurationPage sender, Theme? oldTargetTheme, Theme? newTargetTheme);
 
 public delegate void ThemeConfigurationPageEntryModifiedEventHandler(ThemeConfigurationPage sender, string themeKey, bool isAdded);
 
@@ -60,12 +59,12 @@ public class ThemeConfigurationPage : ConfigurationPage {
                 throw new InvalidOperationException("un-applied changes");
 
             this.targetTheme = value;
-            this.TargetThemeChanged?.Invoke(this, oldTargetTheme, value);
+            this.TargetThemeChanged?.Invoke(this, new ValueChangedEventArgs<Theme?>(oldTargetTheme, value));
             this.UpdateInheritedKeys();
         }
     }
 
-    public event ThemeConfigurationPageTargetThemeChangedEventHandler? TargetThemeChanged;
+    public event EventHandler<ValueChangedEventArgs<Theme?>>? TargetThemeChanged;
 
     /// <summary>
     /// An event fired when a theme entry is added to our internal set of modified entries

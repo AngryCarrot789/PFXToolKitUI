@@ -17,17 +17,14 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Services.Messaging.Configurations;
 
-public delegate void PersistentDialogResultEventHandler(PersistentDialogResult sender);
+public delegate void PersistentDialogResultEventHandler(PersistentDialogResult instance);
 
 public class PersistentDialogResult {
     private static readonly Dictionary<string, PersistentDialogResult> registry = new Dictionary<string, PersistentDialogResult>();
-
-    private MessageBoxResult? button;
-    private bool isPersistentOnlyUntilAppCloses = true;
 
     /// <summary>
     /// Gets the unique name for this persistent message box result
@@ -38,8 +35,8 @@ public class PersistentDialogResult {
     /// Gets or sets the button 
     /// </summary>
     public MessageBoxResult? Button {
-        get => this.button;
-        private set => PropertyHelper.SetAndRaiseINE(ref this.button, value, this, static t => t.ButtonChanged?.Invoke(t));
+        get => field;
+        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.ButtonChanged);
     }
 
     /// <summary>
@@ -47,12 +44,12 @@ public class PersistentDialogResult {
     /// value resets next app startup. True by default, meaning the button is not saved to the config files
     /// </summary>
     public bool IsPersistentOnlyUntilAppCloses {
-        get => this.isPersistentOnlyUntilAppCloses;
-        set => PropertyHelper.SetAndRaiseINE(ref this.isPersistentOnlyUntilAppCloses, value, this, static t => t.IsPersistentOnlyUntilAppClosesChanged?.Invoke(t));
-    }
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IsPersistentOnlyUntilAppClosesChanged);
+    } = true;
 
-    public event PersistentDialogResultEventHandler? ButtonChanged;
-    public event PersistentDialogResultEventHandler? IsPersistentOnlyUntilAppClosesChanged;
+    public event EventHandler? ButtonChanged;
+    public event EventHandler? IsPersistentOnlyUntilAppClosesChanged;
 
     public static event PersistentDialogResultEventHandler? InstanceCreated;
 

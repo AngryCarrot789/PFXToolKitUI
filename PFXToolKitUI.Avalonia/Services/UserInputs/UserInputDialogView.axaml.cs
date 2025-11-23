@@ -174,8 +174,8 @@ public partial class UserInputDialogView : UserControl {
         }, DispatchPriority.Loaded);
     }
 
-    private void UpdateConfirmButton(UserInputInfo info) {
-        this.PART_ConfirmButton.IsEnabled = !info.HasErrors();
+    private void UpdateConfirmButton(object? sender, EventArgs eventArgs) {
+        this.PART_ConfirmButton.IsEnabled = !this.UserInputInfo!.HasErrors();
     }
 
     /// <summary>
@@ -266,13 +266,13 @@ public partial class UserInputDialogView : UserControl {
         view.UserInputInfo = null; // unhook models' event handlers
         return result;
 
-        void WindowOnWindowOpening(IDesktopWindow s, EventArgs e) {
-            s.SizingInfo.SizeToContent = SizeToContent.Manual;
-            view.OnWindowOpening(s);
+        void WindowOnWindowOpening(object? s, EventArgs e) {
+            ((IDesktopWindow) s!).SizingInfo.SizeToContent = SizeToContent.Manual;
+            view.OnWindowOpening((IDesktopWindow) s!);
         }
 
-        void WindowOnWindowOpened(IDesktopWindow s, EventArgs e) => view.OnWindowOpened(s);
-        void WindowOnWindowClosed(IDesktopWindow s, WindowCloseEventArgs e) => view.OnWindowClosed(s);
+        void WindowOnWindowOpened(object? s, EventArgs e) => view.OnWindowOpened((IDesktopWindow) s!);
+        void WindowOnWindowClosed(object? s, WindowCloseEventArgs e) => view.OnWindowClosed((IDesktopWindow) s!);
 
         void WindowOnKeyDown(object? s, KeyEventArgs e) {
             if (!e.Handled && e.Key == Key.Escape && view.OwnerWindow != null) {
@@ -309,16 +309,16 @@ public partial class UserInputDialogView : UserControl {
         view.UserInputInfo = null; // unhook models' event handlers
         return result;
 
-        void WindowOnWindowOpening(IOverlayWindow s, EventArgs e) {
-            view.OnWindowOpening(s);
+        static void WindowOnWindowOpening(object? s, EventArgs e) {
+            ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OnWindowOpening((IOverlayWindow) s!);
         }
 
-        void WindowOnWindowOpened(IOverlayWindow s, EventArgs e) => view.OnWindowOpened(s);
-        void WindowOnWindowClosed(IOverlayWindow s, OverlayWindowCloseEventArgs popupCloseEventArgs) => view.OnWindowClosed(s);
+        static void WindowOnWindowOpened(object? s, EventArgs e) => ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OnWindowOpened((IOverlayWindow) s!);
+        static void WindowOnWindowClosed(object? s, OverlayWindowCloseEventArgs popupCloseEventArgs) => ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OnWindowClosed((IOverlayWindow) s!);
 
-        void WindowOnKeyDown(object? s, KeyEventArgs e) {
-            if (!e.Handled && e.Key == Key.Escape && view.OwnerWindow != null) {
-                view.RequestClose(false);
+        static void WindowOnKeyDown(object? s, KeyEventArgs e) {
+            if (!e.Handled && e.Key == Key.Escape && ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OwnerWindow != null) {
+                ((UserInputDialogView) ((IOverlayWindow) s!).Content!).RequestClose(false);
             }
         }
     }

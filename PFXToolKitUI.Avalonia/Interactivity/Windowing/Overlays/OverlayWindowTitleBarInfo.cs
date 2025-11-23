@@ -20,84 +20,68 @@
 using Avalonia.Media;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Themes;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
-
-public delegate void PopupTitleBarInfoTitleChangedEventHandler(OverlayWindowTitleBarInfo sender, string? oldValue, string? newValue);
-
-public delegate void PopupTitleBarInfoIconChangedEventHandler(OverlayWindowTitleBarInfo sender, Icon? oldValue, Icon? newValue);
-
-public delegate void PopupTitleBarInfoIconPlacementChangedEventHandler(OverlayWindowTitleBarInfo sender, TitleBarIconPlacement oldValue, TitleBarIconPlacement newValue);
-
-public delegate void PopupTitleBarInfoTitleBarBrushChangedEventHandler(OverlayWindowTitleBarInfo sender, IColourBrush? oldValue, IColourBrush? newValue);
-
-public delegate void PopupTitleBarInfoTitleBarTextAlignmentChangedEventHandler(OverlayWindowTitleBarInfo sender, TextAlignment? oldValue, TextAlignment? newValue);
 
 /// <summary>
 /// A builder object for creating a simple title bar for a <see cref="OverlayWindowBuilder"/>
 /// </summary>
 public sealed class OverlayWindowTitleBarInfo {
-    private string? title;
-    private Icon? icon;
-    private TitleBarIconPlacement iconPlacement;
-    private IColourBrush? titleBarBrush;
-    private TextAlignment? titleBarTextAlignment;
-
     /// <summary>
     /// Gets or sets the title bar text (aka caption)
     /// </summary>
     public string? Title {
-        get => this.title;
-        set => PropertyHelper.SetAndRaiseINE(ref this.title, value, this, static (t, o, n) => t.TitleChanged?.Invoke(t, o, n));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.TitleChanged);
     }
 
     /// <summary>
     /// Gets or sets the title bar's icon
     /// </summary>
     public Icon? Icon {
-        get => this.icon;
-        set => PropertyHelper.SetAndRaiseINE(ref this.icon, value, this, static (t, o, n) => t.IconChanged?.Invoke(t, o, n));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IconChanged);
     }
 
     /// <summary>
     /// Gets or sets the placement of the icon
     /// </summary>
     public TitleBarIconPlacement IconPlacement {
-        get => this.iconPlacement;
-        set => PropertyHelper.SetAndRaiseINE(ref this.iconPlacement, value, this, static (t, o, n) => t.IconPlacementChanged?.Invoke(t, o, n));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IconPlacementChanged);
     }
 
     /// <summary>
     /// Gets or sets the title bar background brush
     /// </summary>
     public IColourBrush? TitleBarBrush {
-        get => this.titleBarBrush;
-        set => PropertyHelper.SetAndRaiseINE(ref this.titleBarBrush, value, this, static (t, o, n) => t.TitleBarBrushChanged?.Invoke(t, o, n));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.TitleBarBrushChanged);
     }
 
     /// <summary>
     /// Gets or sets the text alignment for the title bar text
     /// </summary>
     public TextAlignment? TitleBarTextAlignment {
-        get => this.titleBarTextAlignment;
-        set => PropertyHelper.SetAndRaiseINE(ref this.titleBarTextAlignment, value, this, static (t, o, n) => t.TitleBarTextAlignmentChanged?.Invoke(t, o, n));
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.TitleBarTextAlignmentChanged);
     }
 
-    public event PopupTitleBarInfoTitleChangedEventHandler? TitleChanged;
-    public event PopupTitleBarInfoIconChangedEventHandler? IconChanged;
-    public event PopupTitleBarInfoIconPlacementChangedEventHandler? IconPlacementChanged;
-    public event PopupTitleBarInfoTitleBarBrushChangedEventHandler? TitleBarBrushChanged;
-    public event PopupTitleBarInfoTitleBarTextAlignmentChangedEventHandler? TitleBarTextAlignmentChanged;
+    public event EventHandler<ValueChangedEventArgs<string?>>? TitleChanged;
+    public event EventHandler<ValueChangedEventArgs<Icon?>>? IconChanged;
+    public event EventHandler<ValueChangedEventArgs<TitleBarIconPlacement>>? IconPlacementChanged;
+    public event EventHandler<ValueChangedEventArgs<IColourBrush?>>? TitleBarBrushChanged;
+    public event EventHandler<ValueChangedEventArgs<TextAlignment?>>? TitleBarTextAlignmentChanged;
 
     public OverlayWindowTitleBarInfo() {
     }
 
     public OverlayWindowTitleBarInfo(string? title, Icon? icon = null, TitleBarIconPlacement iconPlacement = TitleBarIconPlacement.Left, IColourBrush? titleBarBrush = null) {
-        this.title = title;
-        this.icon = icon;
-        this.iconPlacement = iconPlacement;
-        this.titleBarBrush = titleBarBrush;
+        this.Title = title;
+        this.Icon = icon;
+        this.IconPlacement = iconPlacement;
+        this.TitleBarBrush = titleBarBrush;
     }
 }
 

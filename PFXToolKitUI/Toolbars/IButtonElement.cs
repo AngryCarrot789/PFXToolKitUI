@@ -23,8 +23,6 @@ using PFXToolKitUI.Utils.Commands;
 
 namespace PFXToolKitUI.Toolbars;
 
-public delegate void ButtonContextInvalidatedEventHandler(IButtonElement button);
-
 /// <summary>
 /// A UI button. Do not implement this class directly, that is the front end's job
 /// </summary>
@@ -67,5 +65,5 @@ public interface IButtonElement {
     /// <summary>
     /// An event fired when the effective context data of this button changes
     /// </summary>
-    event ButtonContextInvalidatedEventHandler? ContextInvalidated;
+    event EventHandler? ContextInvalidated;
 }
