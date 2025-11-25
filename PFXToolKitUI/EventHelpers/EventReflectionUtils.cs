@@ -37,6 +37,7 @@ public static class EventReflectionUtils {
     }
 
     public static Delegate CreateDelegateToInvokeActionFromEvent(Type eventHandlerType, Delegate actionToInvokeWithParameter, Type typeOfParameter, object? extraParameterCall = null) {
+        ArgumentNullException.ThrowIfNull(actionToInvokeWithParameter);
         MethodInfo invoke = actionToInvokeWithParameter.GetType().GetMethod("Invoke") ?? throw new Exception("Missing Invoke method on action");
         ParameterInfo[] invokeParams = invoke.GetParameters();
         if (extraParameterCall != null) {
@@ -92,5 +93,16 @@ public static class EventReflectionUtils {
         }
 
         return paramArray;
+    }
+
+    public static EventInfo GetEventInfoForName(Type type, string eventName) {
+        ArgumentNullException.ThrowIfNull(type);
+        ArgumentException.ThrowIfNullOrEmpty(eventName);
+        
+        EventInfo? info = type.GetEvent(eventName, BindingFlags.Public | BindingFlags.Instance);
+        if (ReferenceEquals(info, null))
+            throw new Exception("Could not find public event: " + type.Name + "." + eventName);
+
+        return info;
     }
 }

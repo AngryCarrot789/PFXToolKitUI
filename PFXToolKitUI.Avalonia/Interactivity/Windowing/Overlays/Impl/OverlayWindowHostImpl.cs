@@ -25,14 +25,14 @@ namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 public sealed class OverlayWindowHostImpl : IOverlayWindowHost {
     internal readonly OverlayContentHostRoot control;
 
-    public ComponentStorage ComponentStorage { get; }
+    public ComponentStorage ComponentStorage => field ??= new ComponentStorage(this);
+    
     public IMutableContextData LocalContextData => DataManager.GetContextData(this.control);
     
     public IOverlayWindowManager OverlayManager => this.control.Manager;
 
     public OverlayWindowHostImpl(OverlayContentHostRoot control) {
         this.control = control;
-        this.ComponentStorage = new ComponentStorage(this);
     }
 
     public void AddPopupToVisualTree(OverlayWindowImpl overlayWindow) {

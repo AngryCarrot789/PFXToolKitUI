@@ -26,9 +26,7 @@ namespace PFXToolKitUI.Notifications;
 /// Manages a collection of notifications
 /// </summary>
 public class NotificationManager : IComponentManager {
-    private readonly ComponentStorage myComponentStorage;
-
-    ComponentStorage IComponentManager.ComponentStorage => this.myComponentStorage;
+    ComponentStorage IComponentManager.ComponentStorage => field ??= new ComponentStorage(this);
     
     /// <summary>
     /// Gets the list of visible toast notifications shown in the UI
@@ -36,7 +34,6 @@ public class NotificationManager : IComponentManager {
     public ObservableList<Notification> Toasts { get; }
 
     public NotificationManager() {
-        this.myComponentStorage = new ComponentStorage(this);
         this.Toasts = new ObservableList<Notification>();
         this.Toasts.ValidateAdd += (list, index, items) => {
             foreach (Notification toast in items) {

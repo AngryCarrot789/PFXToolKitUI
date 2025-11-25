@@ -147,7 +147,7 @@ public class AutomaticDataParameterVector2PropertyEditorSlotControl : BaseDataPa
         }
     }
 
-    private void OnIsAutomaticChanged(object? sender, DataParameterValueChangedEventArgs e) {
+    private void OnIsAutomaticChanged(DataParameter sender, DataParameterValueChangedEventArgs e) {
         this.UpdateTextPreview();
     }
 

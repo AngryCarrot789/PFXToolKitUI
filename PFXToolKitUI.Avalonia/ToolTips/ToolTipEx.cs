@@ -104,15 +104,20 @@ public static class ToolTipEx {
 
     private static void OnTipChanged(Control control, object? oldTip, object? newTip) {
         if (newTip != null) {
-            ToolTipControlEx tip = new ToolTipControlEx(newTip);
-            bool isOpen = ToolTip.GetIsOpen(control);
-            if (isOpen)
-                ToolTip.SetIsOpen(control, false);
+            if (ToolTip.GetTip(control) is ToolTipControlEx tip) {
+                tip.Content = newTip;
+            }
+            else {
+                bool isOpen = ToolTip.GetIsOpen(control);
+                if (isOpen)
+                    ToolTip.SetIsOpen(control, false);
+                
+                tip = new ToolTipControlEx(newTip);
+                ToolTip.SetTip(control, tip);
 
-            ToolTip.SetTip(control, tip);
-
-            if (isOpen)
-                ToolTip.SetIsOpen(control, true);
+                if (isOpen)
+                    ToolTip.SetIsOpen(control, true);
+            }
         }
         else {
             if (ToolTip.GetIsOpen(control)) {
@@ -135,11 +140,19 @@ public static class ToolTipEx {
 
         public ToolTipControlEx(object content) {
             this.Content = content;
-
             Style style = new Style((x) => x.OfType<TextBlock>()) {
                 Setters = { new Setter(TextBlock.TextWrappingProperty, TextWrapping.Wrap) }
             };
+            
             this.Styles.Add(style);
+        }
+
+        protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
+            base.OnPropertyChanged(change);
+            if (change.Property == ContentProperty) {
+                this.EnsureOnClosedInvoked();
+                this.TryOpen();
+            }
         }
 
         public void OnOpening(Control sender, CancelRoutedEventArgs e) {
@@ -151,22 +164,26 @@ public static class ToolTipEx {
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
             base.OnAttachedToVisualTree(e);
             this.EnsureOnClosedInvoked();
-
-            Debug.Assert(currentShownToolTip == null);
-            currentShownToolTip = this;
-
-            Control? adorned = this.AdornedControl;
-            if (adorned != null) {
-                this.CurrentlyAdornedControl = adorned;
-                if (this.Content is IToolTipControl tipControl) {
-                    tipControl.OnOpened(adorned, DataManager.GetFullContextData(adorned));
-                }
-            }
+            this.TryOpen();
 
             // ApplicationPFX.Instance.Dispatcher.Post(() => {
             //     if (this.Parent is Popup popup)
             //         UpdatePositionMethod.Invoke(popup, []);
             // }, DispatchPriority.ApplicationIdle);
+        }
+
+        private void TryOpen() {
+            Debug.Assert(currentShownToolTip == null);
+
+            Control? adorned = this.AdornedControl;
+            if (adorned != null) {
+                currentShownToolTip = this;
+                
+                this.CurrentlyAdornedControl = adorned;
+                if (this.Content is IToolTipControl tipControl) {
+                    tipControl.OnOpened(adorned, DataManager.GetFullContextData(adorned));
+                }
+            }
         }
 
         public void UpdatePosition() {

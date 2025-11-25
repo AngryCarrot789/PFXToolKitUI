@@ -75,7 +75,7 @@ public class ErroringDataParameterPropertyBinder<TModel, TValue> : BaseAvaloniaP
         }
     }
 
-    private void OnDataParameterValueChanged(object? sender, DataParameterValueChangedEventArgs e) => this.UpdateControl();
+    private void OnDataParameterValueChanged(DataParameter sender, DataParameterValueChangedEventArgs e) => this.UpdateControl();
 
     protected override void OnAttached() {
         base.OnAttached();

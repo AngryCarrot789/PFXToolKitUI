@@ -41,7 +41,7 @@ public class DataParameterEnumBinder<TEnum> : BaseEnumBinder<TEnum> where TEnum 
         this.Parameter = parameter ?? throw new ArgumentNullException(nameof(parameter));
     }
 
-    private void OnDataParameterChanged(object? sender, DataParameterValueChangedEventArgs e) {
+    private void OnDataParameterChanged(DataParameter sender, DataParameterValueChangedEventArgs e) {
         if (this.Model == null)
             throw new Exception("Fatal application bug");
         this.UpdateControls(this.GetValue());

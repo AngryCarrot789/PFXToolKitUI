@@ -130,7 +130,7 @@ public abstract class DataParameterPropertyEditorSlot : PropertyEditorSlot {
             this.Parameter.RemoveValueChangedHandler(this.SingleHandler, this.OnValueForSingleHandlerChanged);
     }
 
-    private void OnValueForSingleHandlerChanged(object? sender, DataParameterValueChangedEventArgs e) {
+    private void OnValueForSingleHandlerChanged(DataParameter sender, DataParameterValueChangedEventArgs e) {
         this.QueryValueFromHandlers();
         this.lastQueryHasMultipleValues = this.HasMultipleValues;
         this.OnValueChanged();

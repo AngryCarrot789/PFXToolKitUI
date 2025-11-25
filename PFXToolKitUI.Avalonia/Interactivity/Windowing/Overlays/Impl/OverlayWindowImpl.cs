@@ -39,7 +39,7 @@ using PFXToolKitUI.Utils.Events;
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 
 public sealed class OverlayWindowImpl : IOverlayWindow {
-    public ComponentStorage ComponentStorage { get; }
+    public ComponentStorage ComponentStorage => field ??= new ComponentStorage(this);
 
     public IMutableContextData LocalContextData => DataManager.GetContextData(this.myControl);
 
@@ -95,7 +95,6 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
     public OverlayWindowImpl(OverlayWindowManagerImpl overlayManager, OverlayWindowImpl? parent, OverlayWindowBuilder builder) {
         this.myManager = overlayManager;
         this.myParent = parent;
-        this.ComponentStorage = new ComponentStorage(this);
         this.myOwnedPopups = new List<OverlayWindowImpl>();
         this.listTcsWaitForClosed = new List<CancellableTaskCompletionSource>();
         this.myControl = new OverlayControl(this);
@@ -124,8 +123,8 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         if (this.TryGetTopLevel(out TopLevel? topLevel)) {
             IClipboard? clipboard = topLevel.Clipboard;
             if (clipboard != null)
-                this.ComponentStorage.AddComponent<IClipboardService>(new DesktopWindowImpl.ClipboardServiceImpl(clipboard));
-            this.ComponentStorage.AddComponent<IWebLauncher>(new DesktopWindowImpl.WebLauncherImpl(topLevel.Launcher));
+                this.ComponentStorage!.AddComponent<IClipboardService>(new DesktopWindowImpl.ClipboardServiceImpl(clipboard));
+            this.ComponentStorage!.AddComponent<IWebLauncher>(new DesktopWindowImpl.WebLauncherImpl(topLevel.Launcher));
         }
     }
 

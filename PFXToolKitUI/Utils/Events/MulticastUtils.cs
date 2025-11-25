@@ -20,34 +20,43 @@
 namespace PFXToolKitUI.Utils.Events;
 
 public static class MulticastUtils {
-    public static void AddProxy<TDelegate, TState>(ref int count, ref TDelegate? backingEvent, TDelegate handler, TState state, Action<TState> attachProxy) where TDelegate : Delegate? {
-        if (Interlocked.Increment(ref count) == 1) {
-            attachProxy(state);
-        }
+    /// <summary>
+    /// NOT THREAD SAFE
+    /// </summary>
+    public static void AddWithProxy<TDelegate, TState>(ref TDelegate? handlerList, TDelegate handler, TState state, Action<TState> attachProxy) where TDelegate : Delegate? where TState : class {
+        if (handler == null)
+            return;
+        if (handlerList == null)
+            attachProxy(state); // Add() will cause handlerList to become non-null
 
-        Add(ref backingEvent, handler);
+        Add(ref handlerList, handler);
     }
 
-    public static void RemoveProxy<TDelegate, TState>(ref int count, ref TDelegate? backingEvent, TDelegate handler, TState state, Action<TState> detachProxy) where TDelegate : Delegate? {
-        Remove(ref backingEvent, handler);
-        if (Interlocked.Decrement(ref count) == 0) {
-            detachProxy(state);
-        }
+    /// <summary>
+    /// NOT THREAD SAFE
+    /// </summary>
+    public static void RemoveWithProxy<TDelegate, TState>(ref TDelegate? handlerList, TDelegate handler, TState state, Action<TState> detachProxy) where TDelegate : Delegate? where TState : class {
+        if (handlerList == null || handler == null)
+            return;
+        if (handlerList.HasSingleTarget)
+            detachProxy(state); // Remove() will cause handlerList to become null
+        
+        Remove(ref handlerList, handler);
     }
 
-    public static void Add<TDelegate>(ref TDelegate? src, TDelegate value) where TDelegate : Delegate? {
-        TDelegate? a = src, b;
+    public static void Add<TDelegate>(ref TDelegate? x, TDelegate handler) where TDelegate : Delegate? {
+        TDelegate? curr = x, prev;
         do {
-            b = a;
-            a = Interlocked.CompareExchange(ref src, (TDelegate?) Delegate.Combine(b, value), b);
-        } while (a != b);
+            prev = curr;
+            curr = Interlocked.CompareExchange(ref x, (TDelegate?) Delegate.Combine(prev, handler), prev);
+        } while (curr != prev);
     }
 
-    public static void Remove<TDelegate>(ref TDelegate? src, TDelegate value) where TDelegate : Delegate? {
-        TDelegate? a = src, b;
+    public static void Remove<TDelegate>(ref TDelegate? x, TDelegate handler) where TDelegate : Delegate? {
+        TDelegate? curr = x, prev;
         do {
-            b = a;
-            a = Interlocked.CompareExchange(ref src, (TDelegate?) Delegate.Remove(b, value), b);
-        } while (a != b);
+            prev = curr;
+            curr = Interlocked.CompareExchange(ref x, (TDelegate?) Delegate.Remove(prev, handler), prev);
+        } while (curr != prev);
     }
 }

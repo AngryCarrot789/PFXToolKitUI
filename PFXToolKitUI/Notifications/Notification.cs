@@ -32,13 +32,12 @@ namespace PFXToolKitUI.Notifications;
 /// </para>
 /// </summary>
 public abstract class Notification : IComponentManager {
-    private readonly ComponentStorage myComponentStorage;
     private bool isAutoHideActive;
     private bool flagRestartAutoHide;
     private CancellationTokenSource? ctsAutoHide;
     private TimeSpan autoHideDelay = TimeSpan.FromSeconds(5);
 
-    ComponentStorage IComponentManager.ComponentStorage => this.myComponentStorage;
+    ComponentStorage IComponentManager.ComponentStorage => field ??= new ComponentStorage(this);
 
     /// <summary>
     /// Gets or sets the text displayed in the notification's header
@@ -159,7 +158,6 @@ public abstract class Notification : IComponentManager {
     public event EventHandler? AlertModeChanged;
 
     protected Notification() {
-        this.myComponentStorage = new ComponentStorage(this);
         this.Actions = new ObservableList<NotificationAction>();
         this.Actions.ValidateAdd += (list, index, items) => {
             foreach (NotificationAction item in items) {

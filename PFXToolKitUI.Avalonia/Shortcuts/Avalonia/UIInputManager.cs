@@ -34,8 +34,6 @@ using PFXToolKitUI.Utils.Collections;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
-public delegate void FocusedPathChangedEventHandler(string? oldPath, string? newPath, bool isCausedByFocusPathPropertyChanging);
-
 /// <summary>
 /// A class which manages the WPF inputs and global focus scopes. This class also dispatches input events to the shortcut system
 /// </summary>
@@ -90,7 +88,7 @@ public class UIInputManager {
     /// <summary>
     /// An event fired when <see cref="FocusedPath"/> changed
     /// </summary>
-    public static event FocusedPathChangedEventHandler? FocusedPathChanged;
+    public static event EventHandler<FocusPathChangedEventArgs>? FocusedPathChanged;
 
     private UIInputManager() {
         if (Instance != null)
@@ -309,7 +307,7 @@ public class UIInputManager {
 
         if (oldFocusPath != newFocusPath) {
             Instance.FocusedPath = newFocusPath;
-            FocusedPathChanged?.Invoke(oldFocusPath, newFocusPath, false);
+            FocusedPathChanged?.Invoke(null, new FocusPathChangedEventArgs(oldFocusPath, newFocusPath, false));
             UpdateCurrentlyFocusedObject(element, newFocusPath);
         }
     }
@@ -352,7 +350,7 @@ public class UIInputManager {
         TopLevel? topLevel = obj as TopLevel ?? (obj as Visual)?.GetVisualRoot() as TopLevel;
         if (topLevel != null && GetCurrentFocusedElement(topLevel) == obj) {
             Instance.FocusedPath = newPath;
-            FocusedPathChanged?.Invoke(oldPath, newPath, false);
+            FocusedPathChanged?.Invoke(null, new FocusPathChangedEventArgs(oldPath, newPath, false));
             UpdateCurrentlyFocusedObject(obj, newPath);
             Debug.WriteLine($"Focus Path swapped for '{obj.GetType().Name}'");
         }
@@ -397,3 +395,5 @@ public class UIInputManager {
 
     #endregion
 }
+
+public readonly record struct FocusPathChangedEventArgs(string? OldPath, string? NewPath, bool IsCausedByFocusPathPropertyChanging);

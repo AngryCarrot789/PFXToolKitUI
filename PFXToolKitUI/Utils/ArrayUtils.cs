@@ -140,9 +140,9 @@ public static class ArrayUtils {
 
     public static int IndexOf_RefType<T>(T[] array, T value) where T : class {
         for (int i = 0; i < array.Length; i++) {
-            T val = array[i];
-            if (ReferenceEquals(val, value) || Equals(val, value))
+            if (Equals(value, array[i])) {
                 return i;
+            }
         }
 
         return -1;

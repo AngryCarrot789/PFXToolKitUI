@@ -51,7 +51,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
     public IMutableContextData LocalContextData => DataManager.GetContextData(this.myNativeWindow);
 
-    public ComponentStorage ComponentStorage { get; }
+    public ComponentStorage ComponentStorage => field ??= new ComponentStorage(this);
 
     public IWindowManager WindowManager => this.myManager;
 
@@ -154,7 +154,6 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         this.myNativeWindow = new DesktopNativeWindow(this);
         this.myVisibleChildWindows = new List<DesktopWindowImpl>();
         this.listTcsWaitForClosed = new List<CancellableTaskCompletionSource>();
-        this.ComponentStorage = new ComponentStorage(this);
         this.IsMainWindow = builder.MainWindow;
         this.SizingInfo = new WindowSizingInfo(this, builder);
         this.SizingInfo.DoubleValueChanged += OnSizingInfoPropertyChanged;
@@ -171,10 +170,10 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
         IClipboard? clip = this.myNativeWindow.Clipboard;
         if (clip != null) {
-            this.ComponentStorage.AddComponent<IClipboardService>(new ClipboardServiceImpl(clip));
+            this.ComponentStorage!.AddComponent<IClipboardService>(new ClipboardServiceImpl(clip));
         }
 
-        this.ComponentStorage.AddComponent<IWebLauncher>(new WebLauncherImpl(this.myNativeWindow.Launcher));
+        this.ComponentStorage!.AddComponent<IWebLauncher>(new WebLauncherImpl(this.myNativeWindow.Launcher));
 
         this.myNativeWindow.IsToolWindow = builder.IsToolWindow;
         this.myNativeWindow.ShowTitleBarIcon = builder.ShowTitleBarIcon;

@@ -28,15 +28,12 @@ namespace PFXToolKitUI.Persistence;
 /// The base class for a persistent property registration. These properties are used to define a serialisable property
 /// </summary>
 public abstract class PersistentProperty {
+    private static readonly ReaderWriterLockSlim RegistryLock = new ReaderWriterLockSlim();
     private static readonly Dictionary<string, PersistentProperty> RegistryMap = new Dictionary<string, PersistentProperty>();
     private static readonly Dictionary<Type, List<PersistentProperty>> TypeToParametersMap = new Dictionary<Type, List<PersistentProperty>>();
-
-    // Just in case properties are not registered on the main thread for some reason,
-    // this is used to provide protection against two parameters having the same GlobalIndex
-    private static volatile int RegistrationFlag;
     private static int NextGlobalIndex = 1;
 
-    private int globalIndex;
+    private int runtimeId;
     private Type ownerType;
     private string name;
     private string globalKey;
@@ -57,7 +54,7 @@ public abstract class PersistentProperty {
     /// comparison between parameters for speed purposes. There is a chance this value will not remain constant
     /// as the application is developed, due to the order in which properties are registered
     /// </summary>
-    public int GlobalIndex => this.globalIndex;
+    public int RuntimeId => this.runtimeId;
 
     /// <summary>
     /// Returns a string that is a concatenation of our owner type's simple name and our key, joined by '::'.
@@ -148,7 +145,7 @@ public abstract class PersistentProperty {
     public static PersistentProperty<bool> RegisterBool<TOwner>(string name, bool defaultValue, Func<TOwner, bool> getValue, Action<TOwner, bool> setValue, bool canSaveDefault) where TOwner : PersistentConfiguration {
         return RegisterParsable(name, defaultValue, getValue, setValue, canSaveDefault);
     }
-    
+
     public static PersistentProperty<string[]> RegisterStringArray<TOwner>(string name, string[]? defaultValue, Func<TOwner, string[]> getValue, Action<TOwner, string[]> setValue, bool canSaveDefault) where TOwner : PersistentConfiguration {
         PersistentPropertyStringArray property = new PersistentPropertyStringArray(defaultValue ?? Array.Empty<string>(), (x) => getValue((TOwner) x), (x, y) => setValue((TOwner) x, y), canSaveDefault);
         RegisterCore(property, name, typeof(TOwner));
@@ -173,15 +170,14 @@ public abstract class PersistentProperty {
     }
 
     private static void RegisterCore(PersistentProperty property, string name, Type ownerType) {
-        if (property.globalIndex != 0) {
-            throw new InvalidOperationException($"Property '{property.globalKey}' was already registered with a global index of " + property.globalIndex);
+        if (property.runtimeId != 0) {
+            throw new InvalidOperationException($"Property '{property.globalKey}' was already registered with a global index of " + property.runtimeId);
         }
 
-        string path = ownerType.Name + "::" + name;
-        while (Interlocked.CompareExchange(ref RegistrationFlag, 1, 0) != 0)
-            Thread.SpinWait(32);
+        RegistryLock.EnterWriteLock();
 
         try {
+            string path = ownerType.Name + "::" + name;
             if (RegistryMap.TryGetValue(path, out PersistentProperty? existingProperty)) {
                 throw new Exception($"Key already exists with the ID '{path}': {existingProperty}");
             }
@@ -191,13 +187,13 @@ public abstract class PersistentProperty {
                 TypeToParametersMap[ownerType] = list = new List<PersistentProperty>();
 
             list.Add(property);
-            property.globalIndex = NextGlobalIndex++;
+            property.runtimeId = NextGlobalIndex++;
             property.name = name;
             property.ownerType = ownerType;
             property.globalKey = path;
         }
         finally {
-            RegistrationFlag = 0;
+            RegistryLock.ExitWriteLock();
         }
     }
 
@@ -264,7 +260,7 @@ public abstract class PersistentProperty {
 
     private class PersistentPropertyStringArray : PersistentProperty<string[]> {
         private static readonly string[] empty = Array.Empty<string>();
-        
+
         private readonly string[] defaultValue;
         private readonly bool canSaveDefault;
 
@@ -278,13 +274,13 @@ public abstract class PersistentProperty {
             if (value.Length < 1 || (!this.canSaveDefault && value.SequenceEqual(this.defaultValue))) {
                 return false;
             }
-            
+
             foreach (string element in value) {
                 XmlElement elem = document.CreateElement("str");
                 elem.InnerText = element;
                 propertyElement.AppendChild(elem);
             }
-            
+
             return true;
         }
 
@@ -347,7 +343,7 @@ public abstract class PersistentProperty {
                         throw new Exception("Missing signed 'enum_number' value: " + text);
                     value = EnumInfo<T>.FromSignedValue(value_sl);
                 }
-                
+
                 if (!EnumInfo<T>.IsValid(value))
                     throw new Exception("Invalid enum value: " + text);
             }
@@ -355,7 +351,7 @@ public abstract class PersistentProperty {
                 if (!(propertyElement.GetAttribute("enum_name") is string text)) {
                     throw new Exception("Missing 'enum_name' attribute");
                 }
-                
+
                 if (!Enum.TryParse(text, out value)) {
                     throw new Exception("Enum value does not exist: " + text);
                 }
@@ -367,23 +363,22 @@ public abstract class PersistentProperty {
 
     public static List<PersistentProperty> GetProperties(Type type, bool baseTypes) {
         List<PersistentProperty> props = new List<PersistentProperty>();
-        for (Type? theType = type; theType != null && theType != typeof(PersistentConfiguration); theType = theType.BaseType) {
-            while (Interlocked.CompareExchange(ref RegistrationFlag, 1, 0) != 0) {
-                Thread.SpinWait(32);
-            }
-
-            try {
+        
+        RegistryLock.EnterReadLock();
+        
+        try {
+            for (Type? theType = type; theType != null && theType != typeof(PersistentConfiguration); theType = theType.BaseType) {
                 if (TypeToParametersMap.TryGetValue(theType, out List<PersistentProperty>? properties)) {
                     props.AddRange(properties);
                 }
-            }
-            finally {
-                RegistrationFlag = 0;
-            }
 
-            if (!baseTypes) {
-                break;
+                if (!baseTypes) {
+                    break;
+                }
             }
+        }
+        finally {
+            RegistryLock.ExitReadLock();
         }
 
         return props;
@@ -401,7 +396,7 @@ public abstract class PersistentProperty {
     }
 
     public void CheckIsValid() {
-        if (this.globalIndex == 0 || string.IsNullOrWhiteSpace(this.name) || this.ownerType == null)
+        if (this.runtimeId == 0 || string.IsNullOrWhiteSpace(this.name) || this.ownerType == null)
             throw new InvalidOperationException("This property has been unsafely created and is invalid");
     }
 }

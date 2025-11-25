@@ -35,13 +35,10 @@ namespace PFXToolKitUI.DataTransfer;
 /// </list>
 /// </summary>
 public abstract class DataParameter : IEquatable<DataParameter>, IComparable<DataParameter> {
+    private static readonly ReaderWriterLockSlim RegistryLock = new ReaderWriterLockSlim();
     private static readonly Dictionary<string, DataParameter> RegistryMap;
     private static readonly Dictionary<Type, List<DataParameter>> TypeToParametersMap;
-
-    // Just in case parameters are not registered on the main thread for some reason,
-    // this is used to provide protection against two parameters having the same GlobalIndex
-    private static volatile int RegistrationFlag;
-    private static int NextGlobalIndex = 1;
+    private static int NextGlobalIndex;
 
     /// <summary>
     /// Gets the class type that owns this parameter. This is usually always the class that
@@ -59,7 +56,7 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// comparison between parameters for speed purposes. The global index should not be serialised because it
     /// may not be the same as more parameters are registered, even if <see cref="Name"/> remains the same
     /// </summary>
-    public int GlobalIndex { get; private set; }
+    public int RuntimeId { get; private set; }
 
     /// <summary>
     /// Returns a string that is a concatenation of our owner type's simple name and our key, joined by '::'.
@@ -71,12 +68,12 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// Fired when the value of this parameter changes for any <see cref="ITransferableData"/> instance.
     /// This is fired before instance value change handlers are called, hence it's the critical handler
     /// </summary>
-    public event EventHandler<DataParameterValueChangedEventArgs>? PriorityValueChanged;
+    public event EventHandler<DataParameter, DataParameterValueChangedEventArgs>? PriorityValueChanged;
 
     /// <summary>
     /// Fired when the value of this parameter changes for any <see cref="ITransferableData"/> instance
     /// </summary>
-    public event EventHandler<DataParameterValueChangedEventArgs>? ValueChanged;
+    public event EventHandler<DataParameter, DataParameterValueChangedEventArgs>? ValueChanged;
 
     protected DataParameter(Type ownerType, string name) {
         ArgumentNullException.ThrowIfNull(ownerType);
@@ -95,7 +92,7 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// </summary>
     /// <param name="handler">The handler to add</param>
     /// <param name="parameters">The parameters to add the event handler to</param>
-    public static void AddMultipleHandlers(EventHandler<DataParameterValueChangedEventArgs> handler, params DataParameter[] parameters) {
+    public static void AddMultipleHandlers(EventHandler<DataParameter, DataParameterValueChangedEventArgs> handler, params DataParameter[] parameters) {
         foreach (DataParameter parameter in parameters) {
             parameter.ValueChanged += handler;
         }
@@ -106,7 +103,7 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// </summary>
     /// <param name="handler">The handler to remove</param>
     /// <param name="parameters">The parameters to remove the event handler from</param>
-    public static void RemoveMultipleHandlers(EventHandler<DataParameterValueChangedEventArgs> handler, params DataParameter[] parameters) {
+    public static void RemoveMultipleHandlers(EventHandler<DataParameter, DataParameterValueChangedEventArgs> handler, params DataParameter[] parameters) {
         foreach (DataParameter parameter in parameters) {
             parameter.ValueChanged -= handler;
         }
@@ -125,15 +122,14 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     }
 
     private static void RegisterCore(DataParameter parameter) {
-        if (parameter.GlobalIndex != 0) {
-            throw new InvalidOperationException("Data parameter was already registered with a global index of " + parameter.GlobalIndex);
+        if (parameter.RuntimeId != 0) {
+            throw new InvalidOperationException("Data parameter was already registered with a global index of " + parameter.RuntimeId);
         }
 
-        string path = parameter.GlobalKey;
-        while (Interlocked.CompareExchange(ref RegistrationFlag, 1, 0) != 0)
-            Thread.SpinWait(32);
+        RegistryLock.EnterWriteLock();
 
         try {
+            string path = parameter.GlobalKey;
             if (RegistryMap.TryGetValue(path, out DataParameter? existingParameter)) {
                 throw new Exception($"Key already exists with the ID '{path}': {existingParameter}");
             }
@@ -142,10 +138,10 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
             if (!TypeToParametersMap.TryGetValue(parameter.OwnerType, out List<DataParameter>? list))
                 TypeToParametersMap[parameter.OwnerType] = list = new List<DataParameter>();
             list.Add(parameter);
-            parameter.GlobalIndex = NextGlobalIndex++;
+            parameter.RuntimeId = ++NextGlobalIndex;
         }
         finally {
-            RegistrationFlag = 0;
+            RegistryLock.ExitWriteLock();
         }
     }
 
@@ -156,14 +152,14 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// <summary>
     /// Adds a value changed event handler for this parameter on the given owner
     /// </summary>
-    public void AddValueChangedHandler(ITransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
+    public void AddValueChangedHandler(ITransferableData owner, EventHandler<DataParameter, DataParameterValueChangedEventArgs> handler) {
         TransferableData.InternalAddHandler(this, owner.TransferableData, handler);
     }
 
     /// <summary>
     /// Removes a value changed handler for this parameter on the given owner
     /// </summary>
-    public void RemoveValueChangedHandler(ITransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
+    public void RemoveValueChangedHandler(ITransferableData owner, EventHandler<DataParameter, DataParameterValueChangedEventArgs> handler) {
         TransferableData.InternalRemoveHandler(this, owner.TransferableData, handler);
     }
 
@@ -226,35 +222,33 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
             return false;
         }
 
-        while (Interlocked.CompareExchange(ref RegistrationFlag, 2, 0) != 0)
-            Thread.Sleep(1);
-
+        RegistryLock.EnterReadLock();
         try {
             return RegistryMap.TryGetValue(key, out parameter);
         }
         finally {
-            RegistrationFlag = 0;
+            RegistryLock.ExitReadLock();
         }
     }
 
     public bool Equals(DataParameter? other) {
-        return !ReferenceEquals(other, null) && this.GlobalIndex == other.GlobalIndex;
+        return !ReferenceEquals(other, null) && this.RuntimeId == other.RuntimeId;
     }
 
     public override bool Equals(object? obj) {
-        return obj is DataParameter parameter && this.GlobalIndex == parameter.GlobalIndex;
+        return obj is DataParameter parameter && this.RuntimeId == parameter.RuntimeId;
     }
 
     // GlobalIndex is only set once in RegisterInternal, therefore this code is fine
     // ReSharper disable once NonReadonlyMemberInGetHashCode
-    public override int GetHashCode() => this.GlobalIndex;
+    public override int GetHashCode() => this.RuntimeId;
 
     public int CompareTo(DataParameter? other) {
         if (ReferenceEquals(this, other))
             return 0;
         if (ReferenceEquals(null, other))
             return 1;
-        return this.GlobalIndex.CompareTo(other.GlobalIndex);
+        return this.RuntimeId.CompareTo(other.RuntimeId);
     }
 
     public override string ToString() {
@@ -287,24 +281,31 @@ public abstract class DataParameter : IEquatable<DataParameter>, IComparable<Dat
     /// it just gets the parameters for the exact given type (parameters whose owner types match)</param>
     /// <returns>An enumerable of parameters</returns>
     public static List<DataParameter> GetApplicableParameters(Type targetType, bool inHierarchy = true) {
-        List<DataParameter> parameters = new List<DataParameter>();
-        if (TypeToParametersMap.TryGetValue(targetType, out List<DataParameter>? list)) {
-            parameters.AddRange(list);
-        }
+        RegistryLock.EnterReadLock();
 
-        if (inHierarchy) {
-            for (Type? bType = targetType.BaseType; bType != null; bType = bType.BaseType) {
-                if (TypeToParametersMap.TryGetValue(bType, out list)) {
-                    parameters.AddRange(list);
+        try {
+            List<DataParameter> parameters = new List<DataParameter>();
+            if (TypeToParametersMap.TryGetValue(targetType, out List<DataParameter>? list)) {
+                parameters.AddRange(list);
+            }
+
+            if (inHierarchy) {
+                for (Type? bType = targetType.BaseType; bType != null; bType = bType.BaseType) {
+                    if (TypeToParametersMap.TryGetValue(bType, out list)) {
+                        parameters.AddRange(list);
+                    }
                 }
             }
-        }
 
-        return parameters;
+            return parameters;
+        }
+        finally {
+            RegistryLock.ExitReadLock();
+        }
     }
 
     internal static void InternalOnParameterValueChanged(DataParameter parameter, ITransferableData owner, bool isPriority) {
-        (isPriority ? parameter.PriorityValueChanged : parameter.ValueChanged)?.Invoke(parameter, new DataParameterValueChangedEventArgs(parameter, owner));
+        (isPriority ? parameter.PriorityValueChanged : parameter.ValueChanged)?.Invoke(parameter, new DataParameterValueChangedEventArgs(owner));
     }
 
     /// <summary>
@@ -370,8 +371,8 @@ public class DataParameter<T> : DataParameter {
             ((ITransferableData) owner).TransferableData.InternalSetStorageValue(this.parameter, value);
         }
     }
-    
-    public DataParameter(Type ownerType, string name, T defaultValue, ValueAccessor<T>? accessor) : base(ownerType, name)  {
+
+    public DataParameter(Type ownerType, string name, T defaultValue, ValueAccessor<T>? accessor) : base(ownerType, name) {
         this.DefaultValue = defaultValue;
         this.accessor = accessor ?? new DataParameterValueAccessor(this);
         this.isObjectAccessPreferred = accessor == null || accessor.IsObjectPreferred;
@@ -484,8 +485,12 @@ public class DataParameter<T> : DataParameter {
     }
 }
 
-public readonly struct DataParameterValueChangedEventArgs(DataParameter dataParameter, ITransferableData owner) {
-    public DataParameter DataParameter { get; } = dataParameter;
-
+/// <summary>
+/// Arguments passed by <see cref="DataParameter.ValueChanged"/> and <see cref="DataParameter.PriorityValueChanged"/>
+/// </summary>
+public readonly struct DataParameterValueChangedEventArgs(ITransferableData owner) {
+    /// <summary>
+    /// The instance whose parameter value changed
+    /// </summary>
     public ITransferableData Owner { get; } = owner;
 }

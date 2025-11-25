@@ -56,7 +56,7 @@ public abstract class ConfigurationPage : ITransferableData {
         this.TransferableData = new TransferableData(this);
     }
 
-    private static void MarkModifiedOnDataParameterChanged(object? sender, DataParameterValueChangedEventArgs e) {
+    private static void MarkModifiedOnDataParameterChanged(DataParameter sender, DataParameterValueChangedEventArgs e) {
         if (!((ConfigurationPage) e.Owner).ignoreDataParamChange)
             ((ConfigurationPage) e.Owner).IsModified = true;
     }

@@ -112,10 +112,9 @@ public abstract class ApplicationPFX : IComponentManager {
         }
     }
 
-    public ComponentStorage ComponentStorage { get; }
+    public ComponentStorage ComponentStorage => field ??= new ComponentStorage(this);
 
     protected ApplicationPFX() {
-        this.ComponentStorage = new ComponentStorage(this);
         this.PluginLoader = new PluginLoader();
     }
 

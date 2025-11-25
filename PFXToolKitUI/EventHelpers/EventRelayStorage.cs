@@ -21,26 +21,49 @@ using System.Collections;
 using System.Collections.Concurrent;
 using System.Collections.Specialized;
 using System.Diagnostics;
+using System.Reflection;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.EventHelpers;
 
 /// <summary>
 /// Used as storage space for cached event relays and manages all object instances that may cause event to be fired.
-/// The default is <see cref="UIStorage"/>. Whether a new instance is needed is completely empirical
+/// The default is <see cref="UIStorage"/>. Whether a new instance is needed is completely empirical.
+/// <para>
+/// This class is thread safe.
+/// </para>
 /// </summary>
 public sealed class EventRelayStorage {
-    private static readonly Func<EventInfoKey, EventRelayStorage, Lazy<SenderEventRelay>> s_CreateLazyRelay = CreateLazyRelay;
-
     /// <summary>
     /// A shared instance for UI related relays
     /// </summary>
     public static readonly EventRelayStorage UIStorage = new EventRelayStorage();
 
-    private readonly ConcurrentDictionary<EventInfoKey, Lazy<SenderEventRelay>> eventInfoToRelayMap;
+    #region Relay Caching
+
+    // We use a lock instead of concurrent dictionary, because GetEventRelay will potentially
+    // mutate eventInfoToRelayMap and maybe cachedDelegateHandlers, and that method needs to
+    // be thread safe. Locking is the safer, and probably faster (based on current usage) option
+    private readonly Lock eventInfoMapLock = new Lock();
+    private readonly Dictionary<EventInfoKey, SenderEventRelay> eventInfoToRelayMap;
+
+    // A cache of delegates that invoke OnEventRaised. The key is the event name passed to OnEventRaised.
+    // This is used because, although it's not common, sometimes there's events of type EventHandler
+    // with the same name but with different defining types (e.g. MyObject.NameChanged and MyOtherObject.NameChanged).
+    // So, with the current impl, we can reuse the same delegate and same some memory.
+    private readonly Dictionary<string, Delegate> cachedHandlerForEventHandlerType = new Dictionary<string, Delegate>();
+
+    #endregion
+
+    #region Attachment Map
 
     // IDictionary<object, IDictionary<string, IRelayEventHandler[]>>
+    // Not yet benchmarked but ConcurrentDictionary here may provide a performance advantage
+    // because events could be fired from any thread, 
     private readonly ConcurrentDictionary<object, HybridDictionary> attachedInstanceMap;
+    
+    // We cache our instance handler to prevent (potentially) creating a
+    // new delegate for each new relay created by GetEventRelay()
     private readonly Action<object, object> cachedModeEventFired;
 
 #if DEBUG
@@ -49,8 +72,10 @@ public sealed class EventRelayStorage {
     }
 #endif
 
+    #endregion
+
     public EventRelayStorage() {
-        this.eventInfoToRelayMap = new ConcurrentDictionary<EventInfoKey, Lazy<SenderEventRelay>>();
+        this.eventInfoToRelayMap = new Dictionary<EventInfoKey, SenderEventRelay>();
         this.attachedInstanceMap = new ConcurrentDictionary<object, HybridDictionary>(ReferenceEqualityComparer.Instance);
         this.cachedModeEventFired = this.OnEventRaised;
     }
@@ -96,13 +121,36 @@ public sealed class EventRelayStorage {
     }
 
     public SenderEventRelay GetEventRelay(Type modelType, string eventName) {
-        return this.eventInfoToRelayMap.GetOrAdd(new EventInfoKey(modelType, eventName), s_CreateLazyRelay, this).Value;
+        EventInfoKey key = new EventInfoKey(modelType, eventName);
+
+        lock (this.eventInfoMapLock) {
+            if (!this.eventInfoToRelayMap.TryGetValue(key, out SenderEventRelay relay)) {
+                EventInfo info = EventReflectionUtils.GetEventInfoForName(modelType, eventName);
+                Type handlerType = info.EventHandlerType ?? throw new Exception("Missing event handler type");
+                Delegate eventHandler = this.GetOrCreateEventHandler(handlerType, eventName);
+                this.eventInfoToRelayMap[key] = relay = SenderEventRelay.CreateUnsafe(info, eventHandler);
+            }
+
+            return relay;
+        }
     }
 
-    private static Lazy<SenderEventRelay> CreateLazyRelay(EventInfoKey key, EventRelayStorage t) {
-        // Lazy is required because we really don't want to create multiple instances of
-        // SenderEventRelay for the exact same event, because it's expensive and wasteful.
-        return new Lazy<SenderEventRelay>(() => SenderEventRelay.Create(key.EventName, key.OwnerType, t.cachedModeEventFired, key.EventName));
+    private Delegate GetOrCreateEventHandler(Type handlerType, string eventName) {
+        bool isEventHandlerType = handlerType == typeof(EventHandler);
+        
+        // Try to get an existing delegate for the event name, otherwise, create and cache one
+        if (isEventHandlerType && this.cachedHandlerForEventHandlerType.TryGetValue(eventName, out Delegate? handler)) {
+            return handler;
+        }
+        
+        // Most likely case is that EventHandlerType is EventHandler
+        handler = EventReflectionUtils.CreateDelegateToInvokeActionFromEvent(handlerType, this.cachedModeEventFired, typeof(object), eventName);
+        if (isEventHandlerType) {
+            // Only cache EventHandler types
+            this.cachedHandlerForEventHandlerType[eventName] = handler;
+        }
+
+        return handler;
     }
 
     // Note: this can be invoked from any thread

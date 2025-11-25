@@ -85,7 +85,7 @@ public abstract class AutomaticDataParameterNumberPropertyEditorSlotControl<T> :
         }
     }
 
-    private void OnIsAutomaticChanged(object? sender, DataParameterValueChangedEventArgs e) {
+    private void OnIsAutomaticChanged(DataParameter sender, DataParameterValueChangedEventArgs e) {
         this.UpdateTextPreview();
     }
 

@@ -29,11 +29,11 @@ namespace PFXToolKitUI.DataTransfer;
 public sealed class TransferableData {
     private class ParameterData {
         public bool isValueChanging;
-        public event EventHandler<DataParameterValueChangedEventArgs>? ValueChanged;
+        public event EventHandler<DataParameter, DataParameterValueChangedEventArgs>? ValueChanged;
         public object? storageValue; // only used when no value accessor is used
 
         public void RaiseValueChanged(DataParameter parameter, ITransferableData owner) {
-            this.ValueChanged?.Invoke(parameter, new DataParameterValueChangedEventArgs(parameter, owner));
+            this.ValueChanged?.Invoke(parameter, new DataParameterValueChangedEventArgs(owner));
         }
     }
 
@@ -44,17 +44,17 @@ public sealed class TransferableData {
     /// <summary>
     /// An event fired when any parameter's value changes relative to our owner
     /// </summary>
-    public event EventHandler<DataParameterValueChangedEventArgs>? ValueChanged;
+    public event EventHandler<DataParameter, DataParameterValueChangedEventArgs>? ValueChanged;
 
     public TransferableData(ITransferableData owner) {
         this.Owner = owner ?? throw new ArgumentNullException(nameof(owner));
     }
 
-    internal static void InternalAddHandler(DataParameter parameter, TransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
+    internal static void InternalAddHandler(DataParameter parameter, TransferableData owner, EventHandler<DataParameter, DataParameterValueChangedEventArgs> handler) {
         owner.GetOrCreateParamData(parameter).ValueChanged += handler;
     }
 
-    internal static void InternalRemoveHandler(DataParameter parameter, TransferableData owner, EventHandler<DataParameterValueChangedEventArgs> handler) {
+    internal static void InternalRemoveHandler(DataParameter parameter, TransferableData owner, EventHandler<DataParameter, DataParameterValueChangedEventArgs> handler) {
         if (owner.TryGetParameterData(parameter, out ParameterData? data)) {
             data.ValueChanged -= handler;
         }
@@ -85,7 +85,7 @@ public sealed class TransferableData {
     private bool TryGetParameterData(DataParameter parameter, [NotNullWhen(true)] out ParameterData? data) {
         if (parameter == null)
             throw new ArgumentNullException(nameof(parameter), "Parameter cannot be null");
-        if (this.paramData != null && this.paramData.TryGetValue(parameter.GlobalIndex, out data))
+        if (this.paramData != null && this.paramData.TryGetValue(parameter.RuntimeId, out data))
             return true;
         this.ValidateParameter(parameter);
         data = null;
@@ -99,10 +99,10 @@ public sealed class TransferableData {
         ParameterData? data;
         if (this.paramData == null)
             this.paramData = new Dictionary<int, ParameterData>();
-        else if (this.paramData.TryGetValue(parameter.GlobalIndex, out data))
+        else if (this.paramData.TryGetValue(parameter.RuntimeId, out data))
             return data;
         this.ValidateParameter(parameter);
-        this.paramData[parameter.GlobalIndex] = data = new ParameterData();
+        this.paramData[parameter.RuntimeId] = data = new ParameterData();
         return data;
     }
 
@@ -121,14 +121,11 @@ public sealed class TransferableData {
         try {
             DataParameter.InternalOnParameterValueChanged(parameter, owner, true);
             internalData.RaiseValueChanged(parameter, owner);
-            data.ValueChanged?.Invoke(parameter, new DataParameterValueChangedEventArgs(parameter, owner));
+            data.ValueChanged?.Invoke(parameter, new DataParameterValueChangedEventArgs(owner));
             DataParameter.InternalOnParameterValueChanged(parameter, owner, false);
         }
         finally {
             internalData.isValueChanging = false;
         }
     }
-
-    public void AddValueChangedHandler(DataParameter parameter, EventHandler<DataParameterValueChangedEventArgs> handler) => parameter.AddValueChangedHandler(this.Owner, handler);
-    public void RemoveValueChangedHandler(DataParameter parameter, EventHandler<DataParameterValueChangedEventArgs> handler) => parameter.RemoveValueChangedHandler(this.Owner, handler);
 }

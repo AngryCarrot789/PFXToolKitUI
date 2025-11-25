@@ -81,7 +81,7 @@ public class TextBoxToDataParameterBinder<TModel, T> : BaseTextBoxBinder<TModel>
         }
     }
 
-    private void OnDataParameterValueChanged(object? sender, DataParameterValueChangedEventArgs e) => this.UpdateControl();
+    private void OnDataParameterValueChanged(DataParameter sender, DataParameterValueChangedEventArgs e) => this.UpdateControl();
 
     protected override void OnAttached() {
         base.OnAttached();

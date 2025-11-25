@@ -108,20 +108,15 @@ public class AdvancedCustomMenuItem : AdvancedMenuItem {
         // disable execution while executing command
         this.CanExecute = false;
         base.OnClick(e);
-        if (!this.DispatchCommand(entry)) {
+
+        IContextData context = this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance;
+        if (!entry.CanExecute(context)) {
             this.IsExecuting = false;
             this.CanExecute = true;
         }
-    }
-
-    private bool DispatchCommand(CustomMenuEntry entry) {
-        IContextData context = this.OwnerMenu?.CapturedContext ?? EmptyContext.Instance;
-        if (!entry.CanExecute(context)) {
-            return false;
-        }
 
         ApplicationPFX.Instance.Dispatcher.Post(ExecuteContextEntry, DispatchPriority.Render);
-        return true;
+        return;
 
         async void ExecuteContextEntry() {
             try {

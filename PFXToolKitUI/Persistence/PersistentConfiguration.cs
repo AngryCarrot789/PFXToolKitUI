@@ -141,7 +141,7 @@ public abstract class PersistentConfiguration {
 
     private bool TryGetPropertyData<T>(PersistentProperty<T> property, [NotNullWhen(true)] out PropertyData<T>? data) {
         ArgumentNullException.ThrowIfNull(property);
-        if (this.paramData != null && this.paramData.TryGetValue(property.GlobalIndex, out PropertyData? theData)) {
+        if (this.paramData != null && this.paramData.TryGetValue(property.RuntimeId, out PropertyData? theData)) {
             Debug.Assert(theData is PropertyData<T>, "PropertyData should have been the correct generic type because GlobalIndex should never change");
             data = (PropertyData<T>) theData;
             return true;
@@ -158,7 +158,7 @@ public abstract class PersistentConfiguration {
         if (this.paramData == null) {
             this.paramData = new Dictionary<int, PropertyData>();
         }
-        else if (this.paramData.TryGetValue(property.GlobalIndex, out PropertyData? theData)) {
+        else if (this.paramData.TryGetValue(property.RuntimeId, out PropertyData? theData)) {
             Debug.Assert(theData is PropertyData<T>, "PropertyData should have been the correct generic type because GlobalIndex should never change");
             return (PropertyData<T>) theData;
         }
@@ -166,7 +166,7 @@ public abstract class PersistentConfiguration {
         property.CheckIsValid();
         property.ValidateIsValidForConfiguration(this);
         PropertyData<T> data = new PropertyData<T>();
-        this.paramData[property.GlobalIndex] = data;
+        this.paramData[property.RuntimeId] = data;
         return data;
     }
 
