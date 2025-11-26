@@ -17,9 +17,10 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Collections;
 using System.Collections.ObjectModel;
-using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Ranges;
 
@@ -30,247 +31,216 @@ namespace PFXToolKitUI.Interactivity.Selections;
 /// </summary>
 /// <typeparam name="T">The type of item that is selectable</typeparam>
 public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
-    private readonly IntegerSet<int> selectedIndices;
+    private static readonly IList<T> EmptyList = ReadOnlyCollection<T>.Empty;
+    private readonly HashSet<T> selectedItems;
+
+    public int Count => this.selectedItems.Count;
 
     public ObservableList<T> SourceList { get; }
 
-    /// <summary>
-    /// An event fired when this list's indices change
-    /// </summary>
-    public event EventHandler<ListSelectionModelChangedEventArgs>? SelectionChanged;
+    public IReadOnlySet<T> SelectedItems => this.selectedItems;
 
-    /// <summary>
-    /// Returns the number of selected items
-    /// </summary>
-    public int Count => this.selectedIndices.GrandTotal;
-
-    /// <summary>
-    /// Enumerates the selected items
-    /// </summary>
-    public IReadOnlyList<T> SelectedItems { get; }
-
-    public IEnumerable<KeyValuePair<int, T>> SelectedEntries {
+    public T First {
         get {
-            foreach (IntegerRange<int> range in this.selectedIndices) {
-                for (int i = range.Start; i < range.End; i++) {
-                    yield return new KeyValuePair<int, T>(i, this.SourceList[i]);
-                }
-            }
+            if (this.Count < 1)
+                ThrowForEmptySelectionModel();
+            return this.SourceList[SelectionUtils.GetIndexOfFirstSelectedItem(this.selectedItems, this.SourceList)];
         }
     }
 
-    /// <summary>
-    /// Enumerates the selected indices
-    /// </summary>
-    public IEnumerable<IntegerRange<int>> SelectedIndices => this.selectedIndices;
-
-    public T this[int index] {
+    public T Last {
         get {
-            if (index < 0)
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Index must be non-negative");
-            if (index >= this.Count)
-                throw new ArgumentOutOfRangeException(nameof(index), index, "Index out of range: beyond indexable selected item");
-
-            int skip = 0, length;
-            foreach (IntegerRange<int> range in this.selectedIndices) {
-                if (index < skip + (length = range.Length))
-                    return this.SourceList[range.Start + (index - skip)];
-                skip += length;
-            }
-
-            throw new InvalidOperationException("Internal error: selection index not resolved");
+            if (this.Count < 1)
+                ThrowForEmptySelectionModel();
+            return this.SourceList[SelectionUtils.GetIndexOfLastSelectedItem(this.selectedItems, this.SourceList)];
         }
     }
+
+    public T this[int index] => this.SourceList[this.GetRealIndex(index)];
+
+    public event EventHandler<ListSelectionModelChangedEventArgs<T>>? SelectionChanged;
 
     public ListSelectionModel(ObservableList<T> sourceList) {
         this.SourceList = sourceList ?? throw new ArgumentNullException(nameof(sourceList));
-        this.selectedIndices = new IntegerSet<int>();
-        this.SelectedItems = new ReadOnlyListDelegate(this);
+        this.selectedItems = new HashSet<T>();
+
+        // To ensure the selection model never contains non-existent items, we hook into the pre-remove
+        // and pre-replace events, and deselect the item being removed or replaced
         this.SourceList.ValidateRemove += this.SourceListValidateRemove;
         this.SourceList.ValidateReplace += this.SourceListValidateReplaced;
-        this.SourceList.ItemMoved += this.SourceListOnItemMoved;
     }
-    
-    private void SourceListValidateRemove(IObservableList<T> list, int index, int count) {
-        this.DeselectRange(index, count);
-    }
-
-    private void SourceListValidateReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
-        this.Deselect(index);
-    }
-
-    private void SourceListOnItemMoved(IObservableList<T> list, int oldindex, int newindex, T item) {
-        if (this.IsSelected(oldindex)) {
-            try {
-                Debug.Fail("Move operations require special care when moving items; " +
-                           "the item must be deselected first, then reselected after the move has completed");
-            }
-            catch {
-                // ignored
-            }
-            
-            this.Deselect(oldindex);
-        }
-    }
-
-    public void Select(int index) => this.SelectRange(index, 1);
 
     public void SelectItem(T item) {
-        int index = this.SourceList.IndexOf(item);
-        if (index != -1) {
-            this.Select(index);
+        if (this.selectedItems.Add(item)) {
+            this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs<T>([item], EmptyList));
         }
     }
 
-    public void SelectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, true);
-    public void SelectRange(int index, int count) => this.SetSelection(index, count, true);
-    public void SelectRanges(IntegerSet<int> union) => this.SetSelectionForRanges(union, true);
-    public void Deselect(int index) => this.DeselectRange(index, 1);
+    public void SelectItems(IEnumerable<T> items) {
+        EventHandler<ListSelectionModelChangedEventArgs<T>>? handlers = this.SelectionChanged;
+        if (handlers != null) {
+            List<T> added = this.selectedItems.UnionAddEx(items);
+            if (added.Count > 0) {
+                handlers(this, new ListSelectionModelChangedEventArgs<T>(added.AsReadOnly(), EmptyList));
+            }
+        }
+        else {
+            // Optimized path with no SelectionChanged handlers (i.e. initial setup)
+            foreach (T item in items) {
+                this.selectedItems.Add(item);
+            }
+        }
+    }
+
+    public void SelectItems(IList<T> items, int index, int count) {
+        EventHandler<ListSelectionModelChangedEventArgs<T>>? handlers = this.SelectionChanged;
+        if (handlers != null) {
+            List<T> added = new List<T>(count);
+            for (int i = 0; i < count; i++) {
+                T item = items[index + i];
+                if (this.selectedItems.Add(item)) {
+                    added.Add(item);
+                }
+            }
+
+            if (added.Count > 0) {
+                handlers(this, new ListSelectionModelChangedEventArgs<T>(added.AsReadOnly(), EmptyList));
+            }
+        }
+        else {
+            // Optimized path with no SelectionChanged handlers (i.e. initial setup)
+            for (int i = 0; i < count; i++) {
+                this.selectedItems.Add(items[index + i]);
+            }
+        }
+    }
 
     public void DeselectItem(T item) {
-        int index = this.SourceList.IndexOf(item);
-        if (index != -1) {
-            this.Deselect(index);
+        if (this.selectedItems.Remove(item)) {
+            this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs<T>(EmptyList, [item]));
         }
     }
 
-    public void DeselectRange(int index, int count) => this.SetSelection(index, count, false);
-
-    public void DeselectRanges(IntegerSet<int> union) => this.SetSelectionForRanges(union, false);
-
-    public void DeselectItems(IEnumerable<T> items) => this.SelectSelectionForItems(items, false);
-
-    public bool IsSelected(int index) => this.selectedIndices.Contains(index);
-
-    public bool? IsItemSelected(T item) {
-        int index = this.SourceList.IndexOf(item);
-        return index == -1 ? null : this.IsSelected(index);
-    }
-
-    public void SelectAll() => this.SelectRange(0, this.SourceList.Count);
-
-    public void SetSelection(int index) {
-        this.Clear();
-        this.Select(index);
-    }
-
-    public void SetSelection(IntegerRange<int> range) {
-        this.Clear();
-        this.SelectRange(range.Start, range.Length);
-    }
-
-    public void SetSelection(IntegerSet<int> ranges) {
-        this.Clear();
-        this.SetSelectionForRanges(ranges, true);
-    }
-
-    public void Clear() {
-        if (this.SelectionChanged != null) {
-            IList<IntegerRange<int>> changedList = this.selectedIndices.ToList();
-            this.selectedIndices.Clear();
-            this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(ReadOnlyCollection<IntegerRange<int>>.Empty, changedList));
-        }
-        else {
-            this.selectedIndices.Clear();
-        }
-    }
-
-    public IntegerSet<int> ToIntegerRangeUnion() {
-        return new IntegerSet<int>(this.selectedIndices);
-    }
-
-    private void SetSelection(int index, int count, bool select) {
-        if (index < 0)
-            throw new ArgumentOutOfRangeException(nameof(index), index, "Index must be non-negative");
-        if (count < 0)
-            throw new ArgumentOutOfRangeException(nameof(count), count, "Count must be non-negative");
-        if ((index + count) < index)
-            throw new ArgumentException("Index+Count overflow");
-        if ((index + count) > this.SourceList.Count)
-            throw new ArgumentException("Index+Count exceeds maximum index within the source list");
-
-        IntegerRange<int> range = IntegerRange.FromStartAndLength(index, count);
-        if (this.SelectionChanged == null) {
-            if (select) {
-                this.selectedIndices.Add(range);
-            }
-            else {
-                this.selectedIndices.Remove(range);
+    public void DeselectItems(IEnumerable<T> items) {
+        EventHandler<ListSelectionModelChangedEventArgs<T>>? handlers = this.SelectionChanged;
+        if (handlers != null) {
+            List<T> removed = this.selectedItems.UnionRemoveEx(items);
+            if (removed.Count > 0) {
+                handlers(this, new ListSelectionModelChangedEventArgs<T>(EmptyList, removed.AsReadOnly()));
             }
         }
         else {
-            IntegerSet<int> changedIndices = this.selectedIndices.GetPresenceUnion(range, !select);
-            if (select) {
-                this.selectedIndices.Add(range);
-            }
-            else {
-                this.selectedIndices.Remove(range);
-            }
-
-            if (changedIndices.Ranges.Count > 0) {
-                IList<IntegerRange<int>> empty = ReadOnlyCollection<IntegerRange<int>>.Empty;
-                this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
+            // Optimized path with no SelectionChanged handlers (i.e. initial setup)
+            foreach (T item in items) {
+                this.selectedItems.Remove(item);
             }
         }
     }
 
-    private void SelectSelectionForItems(IEnumerable<T> items, bool select) {
-        IntegerSet<int> indices = new IntegerSet<int>();
-        foreach (T item in items) {
+    public IntegerSet<int> GetSelectedIndices() {
+        IntegerSet<int> set = new IntegerSet<int>();
+        foreach (T item in this.selectedItems) {
             int index = this.SourceList.IndexOf(item);
             if (index != -1) {
-                indices.Add(index);
+                set.Add(index);
             }
         }
 
-        this.SetSelectionForRanges(indices, select);
+        return set;
     }
 
-    private void SetSelectionForRanges(IntegerSet<int> ranges, bool select) {
-        IntegerSet<int> changedIndices = new IntegerSet<int>();
-        if (this.SelectionChanged != null) {
-            foreach (IntegerRange<int> range in ranges) {
-                this.selectedIndices.GetPresenceUnion(changedIndices, range, !select);
-                if (select) {
-                    this.selectedIndices.Add(range);
-                }
-                else {
-                    this.selectedIndices.Remove(range);
+    public List<KeyValuePair<int, T>> GetSelectedEntries() {
+        IntegerSet<int> indices = this.GetSelectedIndices();
+        List<KeyValuePair<int, T>> entries = new List<KeyValuePair<int, T>>(this.selectedItems.Count);
+        foreach (IntegerRange<int> range in indices) {
+            for (int i = range.Start; i < range.End; i++) {
+                entries.Add(new KeyValuePair<int, T>(i, this.SourceList[i]));
+            }
+        }
+
+        return entries;
+    }
+
+    public void DeselectItems(IList<T> items, int index, int count) {
+        EventHandler<ListSelectionModelChangedEventArgs<T>>? handlers = this.SelectionChanged;
+        if (handlers != null) {
+            List<T> removed = new List<T>(count);
+            for (int i = 0; i < count; i++) {
+                T item = items[index + i];
+                if (this.selectedItems.Remove(item)) {
+                    removed.Add(item);
                 }
             }
 
-            if (changedIndices.Ranges.Count > 0) {
-                IList<IntegerRange<int>> empty = ReadOnlyCollection<IntegerRange<int>>.Empty;
-                this.SelectionChanged?.Invoke(this, new ListSelectionModelChangedEventArgs(select ? changedIndices.ToList() : empty, select ? empty : changedIndices.ToList()));
+            if (removed.Count > 0) {
+                handlers(this, new ListSelectionModelChangedEventArgs<T>(EmptyList, removed.AsReadOnly()));
             }
         }
         else {
-            foreach (IntegerRange<int> range in ranges) {
-                if (select) {
-                    this.selectedIndices.Add(range);
-                }
-                else {
-                    this.selectedIndices.Remove(range);
-                }
+            // Optimized path with no SelectionChanged handlers (i.e. initial setup)
+            for (int i = 0; i < count; i++) {
+                this.selectedItems.Remove(items[index + i]);
             }
         }
     }
 
-    private sealed class ReadOnlyListDelegate(ListSelectionModel<T> selection) : IReadOnlyList<T> {
-        public int Count => selection.Count;
+    public bool IsSelected(T item) => this.selectedItems.Contains(item);
 
-        public T this[int index] => selection[index];
+    public void SelectAll() => this.SelectItems(this.SourceList, 0, this.SourceList.Count);
 
-        public IEnumerator<T> GetEnumerator() {
-            foreach (IntegerRange<int> range in selection.selectedIndices) {
-                for (int i = range.Start; i < range.End; i++) {
-                    yield return selection.SourceList[i];
-                }
+    public void DeselectAll() {
+        if (this.selectedItems.Count > 0) {
+            EventHandler<ListSelectionModelChangedEventArgs<T>>? handlers = this.SelectionChanged;
+            if (handlers != null) {
+                List<T> changedList = this.selectedItems.ToList();
+                this.selectedItems.Clear();
+                handlers(this, new ListSelectionModelChangedEventArgs<T>(EmptyList, changedList.AsReadOnly()));
+            }
+            else {
+                this.selectedItems.Clear();
             }
         }
+    }
 
-        IEnumerator IEnumerable.GetEnumerator() {
-            return this.GetEnumerator();
+    public void SetSelection(T item) {
+        this.DeselectAll();
+        this.SelectItem(item);
+    }
+
+    public void SetSelection(IEnumerable<T> items) {
+        this.DeselectAll();
+        this.SelectItems(items);
+    }
+
+    /// <summary>
+    /// Gets an index within <see cref="SourceList"/> from the given nth selected index
+    /// </summary>
+    /// <param name="index">The nth selected item index</param>
+    /// <returns>The real index</returns>
+    public int GetRealIndex(int index) {
+        int count = this.Count;
+        if (count == 0)
+            ThrowForEmptySelectionModel();
+        
+        ArgumentOutOfRangeException.ThrowIfNegative(index);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(index, count);
+        return SelectionUtils.GetIndexOfNthSelectedItem(index, this.selectedItems, this.SourceList);
+    }
+
+    private void SourceListValidateRemove(IObservableList<T> list, int index, int count) {
+        if (count == 1) {
+            this.DeselectItem(list[index]);
+        }
+        else {
+            this.DeselectItems(list, index, count);
         }
     }
+
+    private void SourceListValidateReplaced(IObservableList<T> list, int index, T oldItem, T newItem) {
+        this.DeselectItem(oldItem);
+    }
+    
+    [DoesNotReturn]
+    [MethodImpl(MethodImplOptions.NoInlining)]
+    private static void ThrowForEmptySelectionModel() => throw new InvalidOperationException("Selection model is empty");
 }

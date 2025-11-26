@@ -17,10 +17,10 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Controls.Selection;
 using PFXToolKitUI.Interactivity.Selections;
+using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx2;
@@ -36,61 +36,93 @@ public sealed class SelectionModelBinder<T> {
         this.SelectionModel = selectionModel;
         this.Selection = selection;
 
-        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToIntegerRangeUnion().ToList(), ReadOnlyCollection<IntegerRange<int>>.Empty));
+        this.TrySetInitialSelection();
         selectionModel.SelectionChanged += this.OnSelectionModelSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
 
-    private void OnModelSelectionChanged(object? o, ListSelectionModelChangedEventArgs e) {
-        if (this.isUpdatingModel)
-            return;
-
+    private void TrySetInitialSelection() {
         Debug.Assert(!this.isUpdatingControl);
         this.isUpdatingControl = true;
 
         this.SelectionModel.BeginBatchUpdate();
-        
-        foreach (IntegerRange<int> range in e.RemovedIndices) {
-            Debug.Assert(range.Length > 0);
-            this.SelectionModel.DeselectRange(range.Start, range.End - 1);
+        this.SelectionModel.Clear();
+
+        if (this.Selection.Count > 0) {
+            IntegerSet<int> addedIndices = this.Selection.GetSelectedIndices();
+            foreach (IntegerRange<int> range in addedIndices) {
+                this.SelectionModel.SelectRange(range.Start, range.End - 1);
+            }
         }
 
-        foreach (IntegerRange<int> range in e.AddedIndices) {
-            Debug.Assert(range.Length > 0);
-            this.SelectionModel.SelectRange(range.Start, range.End - 1);
-        }
-        
         this.SelectionModel.EndBatchUpdate();
-
         this.isUpdatingControl = false;
     }
 
+    private void OnModelSelectionChanged(object? o, ListSelectionModelChangedEventArgs<T> e) {
+        if (!this.isUpdatingModel) {
+            Debug.Assert(!this.isUpdatingControl);
+            this.isUpdatingControl = true;
+
+            this.SelectionModel.BeginBatchUpdate();
+
+            ObservableList<T> srcList = this.Selection.SourceList;
+            IntegerSet<int> removedIndices = new IntegerSet<int>();
+            foreach (T item in e.RemovedItems) {
+                int index = srcList.IndexOf(item);
+                if (index != -1) {
+                    removedIndices.Add(index);
+                }
+            }
+
+            foreach (IntegerRange<int> range in removedIndices) {
+                this.SelectionModel.DeselectRange(range.Start, range.End - 1);
+            }
+
+            IntegerSet<int> addedIndices = new IntegerSet<int>();
+            foreach (T item in e.AddedItems) {
+                int index = srcList.IndexOf(item);
+                if (index != -1) {
+                    addedIndices.Add(index);
+                }
+            }
+
+            foreach (IntegerRange<int> range in addedIndices) {
+                this.SelectionModel.SelectRange(range.Start, range.End - 1);
+            }
+
+            this.SelectionModel.EndBatchUpdate();
+
+            this.isUpdatingControl = false;
+        }
+    }
+
     private void OnSelectionModelSelectionChanged(object? sender, SelectionModelSelectionChangedEventArgs e) {
-        if (this.isUpdatingControl)
-            return;
+        if (!this.isUpdatingControl) {
+            Debug.Assert(!this.isUpdatingModel);
+            this.isUpdatingModel = true;
 
-        Debug.Assert(!this.isUpdatingModel);
-        this.isUpdatingModel = true;
+            ObservableList<T> srcList = this.Selection.SourceList;
+            if (e.DeselectedIndexes.Count > 0) {
+                List<T> items = new List<T>(e.DeselectedIndexes.Count);
+                foreach (int i in e.DeselectedIndexes) {
+                    items.Add(srcList[i]);
+                }
 
-        if (e.DeselectedIndexes.Count > 0) {
-            IntegerSet<int> union = new IntegerSet<int>();
-            foreach (int i in e.DeselectedIndexes) {
-                union.Add(i);
+                this.Selection.DeselectItems(items);
             }
 
-            this.Selection.DeselectRanges(union);
-        }
-        
-        if (e.SelectedIndexes.Count > 0) {
-            IntegerSet<int> union = new IntegerSet<int>();
-            foreach (int i in e.SelectedIndexes) {
-                union.Add(i);
+            if (e.SelectedIndexes.Count > 0) {
+                List<T> items = new List<T>(e.SelectedIndexes.Count);
+                foreach (int i in e.SelectedIndexes) {
+                    items.Add(srcList[i]);
+                }
+
+                this.Selection.SelectItems(items);
             }
 
-            this.Selection.SelectRanges(union);
+            this.isUpdatingModel = false;
         }
-
-        this.isUpdatingModel = false;
     }
 
     public void Dispose() {

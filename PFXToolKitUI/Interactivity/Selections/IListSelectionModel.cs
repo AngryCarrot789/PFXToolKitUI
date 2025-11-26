@@ -32,99 +32,14 @@ public interface IListSelectionModel {
     int Count { get; }
 
     /// <summary>
-    /// Enumerates the selected indices
-    /// </summary>
-    IEnumerable<IntegerRange<int>> SelectedIndices { get; }
-
-    /// <summary>
-    /// An event fired when the selection state changes
-    /// </summary>
-    public event EventHandler<ListSelectionModelChangedEventArgs>? SelectionChanged;
-
-    /// <summary>
-    /// Select a single item
-    /// </summary>
-    /// <param name="index"></param>
-    void Select(int index);
-
-    /// <summary>
-    /// Select a range of items
-    /// </summary>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    void SelectRange(int index, int count);
-
-    /// <summary>
-    /// Select a list of ranges of items
-    /// </summary>
-    /// <param name="union"></param>
-    void SelectRanges(IntegerSet<int> union);
-
-    /// <summary>
-    /// Deselect a single item
-    /// </summary>
-    /// <param name="index"></param>
-    void Deselect(int index);
-
-    /// <summary>
-    /// Deselect a range of items
-    /// </summary>
-    /// <param name="index"></param>
-    /// <param name="count"></param>
-    void DeselectRange(int index, int count);
-
-    /// <summary>
-    /// Deselect a list of ranges of items
-    /// </summary>
-    /// <param name="union"></param>
-    void DeselectRanges(IntegerSet<int> union);
-
-    /// <summary>
-    /// Check if the item at the index is selected
-    /// </summary>
-    /// <param name="index"></param>
-    /// <returns></returns>
-    bool IsSelected(int index);
-
-    /// <summary>
     /// Selects all items
     /// </summary>
     void SelectAll();
 
     /// <summary>
-    /// Replaces the current selection with the new selected index, deselecting everything else
-    /// </summary>
-    /// <param name="index">The index to make selected. Anything else will become deselected</param>
-    void SetSelection(int index) => this.SetSelection([IntegerRange.FromStartAndLength(index, 1)]);
-    
-    /// <summary>
-    /// Replaces the current selection with the new selection, deselecting everything else
-    /// </summary>
-    /// <param name="range">The range to make selected. Anything else will become deselected</param>
-    void SetSelection(IntegerRange<int> range) => this.SetSelection([range]);
-    
-    /// <summary>
-    /// Replaces the current selection with the provided selection, deselecting everything else
-    /// </summary>
-    /// <param name="indices">The indices to make selected. Anything else will become deselected</param>
-    void SetSelection(IEnumerable<int> indices) => this.SetSelection(new IntegerSet<int>(indices.Select(t => IntegerRange.FromStartAndLength(t, 1))));
-
-    /// <summary>
-    /// Replaces the current selection with the provided selection, deselecting everything else
-    /// </summary>
-    /// <param name="ranges">The ranges to make selected. Anything outside the ranges will become deselected</param>
-    void SetSelection(IntegerSet<int> ranges);
-
-    /// <summary>
     /// Deselects all items
     /// </summary>
-    void Clear();
-
-    /// <summary>
-    /// Returns a new <see cref="IntegerSet{T}"/> containing the selected indices
-    /// </summary>
-    /// <returns>The selected indices</returns>
-    IntegerSet<int> ToIntegerRangeUnion();
+    void DeselectAll();
 }
 
 /// <summary>
@@ -137,87 +52,99 @@ public interface IListSelectionModel {
 /// <typeparam name="T"></typeparam>
 public interface IListSelectionModel<T> : IListSelectionModel {
     /// <summary>
-    /// Gets the nth selected item
-    /// </summary>
-    /// <param name="index">The nth selected index</param>
-    T this[int index] { get; }
-
-    /// <summary>
-    /// Enumerates the selected items
-    /// </summary>
-    IReadOnlyList<T> SelectedItems { get; }
-
-    /// <summary>
-    /// Enumerates the selected indices and pairs them with the item itself
-    /// </summary>
-    IEnumerable<KeyValuePair<int, T>> SelectedEntries { get; }
-
-    /// <summary>
-    /// Gets the observable list that stores the items of a mode that may be selectable.
+    /// Gets the observable list that stores the items that are selectable.
     /// This list is not the selected items list, instead, use <see cref="SelectedItems"/> to enumerate the items.
     /// </summary>
     ObservableList<T> SourceList { get; }
-
-    /// <summary>
-    /// Selects an item
-    /// </summary>
-    /// <param name="item"></param>
-    void SelectItem(T item);
-
-    /// <summary>
-    /// Selects multiple items
-    /// </summary>
-    /// <param name="items"></param>
-    void SelectItems(IEnumerable<T> items);
     
     /// <summary>
-    /// Deselects an item
+    /// Gets a read-only list of the selected items
     /// </summary>
-    /// <param name="item"></param>
-    void DeselectItem(T item);
+    IReadOnlySet<T> SelectedItems { get; }
 
     /// <summary>
-    /// Deselects multiple items
+    /// Gets the first selected item, which is the selected item whose index within <see cref="SourceList"/> is the smallest of all selected items. 
+    /// Note, this method is is between O(n) and O(n^2)
     /// </summary>
-    /// <param name="items"></param>
-    void DeselectItems(IEnumerable<T> items);
+    T First { get; }
+    
+    /// <summary>
+    /// Gets the last selected item, which is the selected item whose index within <see cref="SourceList"/> is the largest of all selected items. 
+    /// Note, this method is is between O(n) and O(n^2)
+    /// </summary>
+    T Last { get; }
+
+    /// <summary>
+    /// Gets the nth selected item, as if indexing into <see cref="GetSelectedIndices"/> but for items.
+    /// Note, this method is is between O(n) and O(n^2)
+    /// </summary>
+    /// <param name="index">The index</param>
+    /// <exception cref="ArgumentOutOfRangeException">The index is not within the bounds of the selected range</exception>
+    T this[int index] { get; }
+
+    /// <summary>
+    /// An event fired when the selection state changes
+    /// </summary>
+    public event EventHandler<ListSelectionModelChangedEventArgs<T>>? SelectionChanged;
 
     /// <summary>
     /// Checks if an item is selected
     /// </summary>
     /// <param name="item">The item</param>
     /// <returns>Null if the item does not exist in <see cref="SourceList"/>, otherwise the result of <see cref="IListSelectionModel.IsSelected"/></returns>
-    bool? IsItemSelected(T item);
+    bool IsSelected(T item);
+    
+    /// <summary>
+    /// Selects an item
+    /// </summary>
+    /// <param name="item">The item to select</param>
+    void SelectItem(T item);
+
+    /// <summary>
+    /// Selects multiple items
+    /// </summary>
+    /// <param name="items">The items to select</param>
+    void SelectItems(IEnumerable<T> items);
+    
+    /// <summary>
+    /// Deselects an item
+    /// </summary>
+    /// <param name="item">The item to deselect</param>
+    void DeselectItem(T item);
+
+    /// <summary>
+    /// Deselects multiple items
+    /// </summary>
+    /// <param name="items">The items to deselect</param>
+    void DeselectItems(IEnumerable<T> items);
+    
+    /// <summary>
+    /// Gets a list of the selected items' indices, ordered from smallest to largest
+    /// </summary>
+    /// <returns>A new list</returns>
+    IntegerSet<int> GetSelectedIndices();
+    
+    /// <summary>
+    /// Gets an <see cref="IEnumerable{T}"/> of selected entries, ordered from smallest index to largest
+    /// </summary>
+    /// <returns></returns>
+    List<KeyValuePair<int, T>> GetSelectedEntries();
 }
 
-public readonly struct ListSelectionModelChangedEventArgs(IList<IntegerRange<int>> addedIndices, IList<IntegerRange<int>> removedIndices) {
+public readonly struct ListSelectionModelChangedEventArgs<T>(IList<T> addedItems, IList<T> removedItems) {
     /// <summary>
-    /// The ranges containing indices that are now selected
+    /// Gets the list containing items that are now selected
     /// </summary>
-    public IList<IntegerRange<int>> AddedIndices { get; } = addedIndices;
+    public IList<T> AddedItems { get; } = addedItems;
 
     /// <summary>
-    /// The ranges containing indices that are no longer selected
+    /// Gets the list containing items that are no longer selected
     /// </summary>
-    public IList<IntegerRange<int>> RemovedIndices { get; } = removedIndices;
+    public IList<T> RemovedItems { get; } = removedItems;
 }
 
 public static class ListSelectionModelExtensions {
-    /// <summary>
-    /// Moves an item in the source list and updates the selection accordingly
-    /// </summary>
-    /// <param name="selectionModel">The selection model</param>
-    /// <param name="oldIndex">Old index</param>
-    /// <param name="newIndex">New index</param>
-    /// <typeparam name="T">Type of value</typeparam>
     public static void MoveItemHelper<T>(this IListSelectionModel<T> selectionModel, int oldIndex, int newIndex) {
-        bool isSelected = selectionModel.IsSelected(oldIndex);
-        if (isSelected)
-            selectionModel.Deselect(oldIndex);
-        
         selectionModel.SourceList.Move(oldIndex, newIndex);
-        
-        if (isSelected)
-            selectionModel.Select(newIndex);
     }
 }

@@ -249,7 +249,8 @@ public static class CollectionUtils {
     /// <typeparam name="T">Type of element</typeparam>
     /// <returns>The items that were actually added</returns>
     public static List<T> UnionAddEx<T>(this ISet<T> set, IEnumerable<T> itemsToAdd) {
-        List<T> addedItems = new List<T>();
+        int initialCapacity = itemsToAdd is IReadOnlyCollection<T> c ? c.Count : 16;
+        List<T> addedItems = new List<T>(initialCapacity);
         foreach (T item in itemsToAdd) {
             if (set.Add(item)) {
                 addedItems.Add(item);
@@ -267,7 +268,8 @@ public static class CollectionUtils {
     /// <typeparam name="T">Type of element</typeparam>
     /// <returns>The items that were actually removed</returns>
     public static List<T> UnionRemoveEx<T>(this ISet<T> set, IEnumerable<T> itemsToRemove) {
-        List<T> removedItems = new List<T>();
+        int initialCapacity = itemsToRemove is IReadOnlyCollection<T> c ? c.Count : 16;
+        List<T> removedItems = new List<T>(initialCapacity);
         foreach (T item in itemsToRemove) {
             if (set.Remove(item)) {
                 removedItems.Add(item);

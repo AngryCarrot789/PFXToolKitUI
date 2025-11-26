@@ -46,11 +46,7 @@ public static class LogExceptionHelper {
             AppLogger.Instance.WriteLine(exceptionText);
         }
 
-        string msgBody = message;
-        if (printToLogger)
-            msgBody += Environment.NewLine + Environment.NewLine + "See logs for more info";
-        
-        await service.ShowMessage(new MessageBoxInfo(caption, msgBody) {
+        await service.ShowMessage(new MessageBoxInfo(caption, message) {
             Buttons = MessageBoxButtons.OK,
             Icon = MessageBoxIcons.ErrorIcon,
             ExtraDetails = exceptionText

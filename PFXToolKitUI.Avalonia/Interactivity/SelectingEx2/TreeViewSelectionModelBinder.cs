@@ -47,21 +47,43 @@ public sealed class TreeViewSelectionModelBinder<T> where T : class {
         this.modelToTvi = modelToTvi ?? throw new ArgumentNullException(nameof(modelToTvi));
         this.TreeView = treeView ?? throw new ArgumentNullException(nameof(treeView));
         this.Selection = selection ?? throw new ArgumentNullException(nameof(selection));
-        
+
         if (!(treeView.SelectedItems is INotifyCollectionChanged ncc)) {
             throw new InvalidOperationException($"TreeView's selected items list does not inherit from {nameof(INotifyCollectionChanged)}");
         }
 
-        treeView.UnselectAll();
-        if (selection.Count > 0) {
-            this.OnModelSelectionChanged(selection, new TreeSelectionModel<T>.ChangedEventArgs(selection.SelectedItems.ToList(), ReadOnlyCollection<T>.Empty));
-        }
-
+        this.TrySetInitialSelection();
         this.myNcc = ncc;
         this.myNcc.CollectionChanged += this.OnTreeViewSelectedItemsChanged;
 
         treeView.SelectionChanged += this.OnTreeViewSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
+    }
+
+    private void TrySetInitialSelection() {
+        Debug.Assert(!this.isUpdatingControl);
+        this.isUpdatingControl = true;
+
+        this.TreeView.UnselectAll();
+        if (this.Selection.Count > 0) {
+            List<TreeViewItem> toAdd = this.Selection.SelectedItems.Select(this.modelToTvi).ToList();
+            if (this.TreeView.SelectedItems is AvaloniaList<object> avList) {
+                foreach (TreeViewItem tvi in toAdd) {
+                    ExpandParents(tvi);
+                }
+
+                avList.AddRange(toAdd);
+            }
+            else {
+                IList list = this.TreeView.SelectedItems;
+                foreach (TreeViewItem tvi in toAdd) {
+                    ExpandParents(tvi);
+                    list.Add(tvi);
+                }
+            }
+        }
+
+        this.isUpdatingControl = false;
     }
 
     private void OnModelSelectionChanged(object? o, TreeSelectionModel<T>.ChangedEventArgs e) {
@@ -77,7 +99,7 @@ public sealed class TreeViewSelectionModelBinder<T> where T : class {
                 foreach (TreeViewItem tvi in addedList) {
                     ExpandParents(tvi);
                 }
-                
+
                 avList.AddRange(addedList);
             }
             else {

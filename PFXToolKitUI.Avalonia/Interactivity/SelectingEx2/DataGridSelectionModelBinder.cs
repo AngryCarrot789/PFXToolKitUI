@@ -18,12 +18,9 @@
 // 
 
 using System.Collections;
-using System.Collections.ObjectModel;
 using System.Diagnostics;
 using Avalonia.Controls;
 using PFXToolKitUI.Interactivity.Selections;
-using PFXToolKitUI.Utils.Collections.Observable;
-using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx2;
 
@@ -31,37 +28,49 @@ public sealed class DataGridSelectionModelBinder<T> {
     private bool isUpdatingModel, isUpdatingControl;
 
     public DataGrid DataGrid { get; }
-    
+
     public ListSelectionModel<T> Selection { get; }
 
     public DataGridSelectionModelBinder(DataGrid dataGrid, ListSelectionModel<T> selection) {
         this.DataGrid = dataGrid;
         this.Selection = selection;
 
-        this.OnModelSelectionChanged(selection, new ListSelectionModelChangedEventArgs(selection.ToIntegerRangeUnion().ToList(), ReadOnlyCollection<IntegerRange<int>>.Empty));
+        this.TrySetInitialSelection();
         dataGrid.SelectionChanged += this.OnDataGridSelectionChanged;
         selection.SelectionChanged += this.OnModelSelectionChanged;
     }
 
-    private void OnModelSelectionChanged(object? o, ListSelectionModelChangedEventArgs e) {
+    private void TrySetInitialSelection() {
+        Debug.Assert(!this.isUpdatingControl);
+        this.isUpdatingControl = true;
+
+        IList list = this.DataGrid.SelectedItems;
+        list.Clear();
+
+        if (this.Selection.Count > 0) {
+            List<T> toAdd = this.Selection.SelectedItems.ToList();
+            foreach (T item in toAdd) {
+                list.Add(item);
+            }
+        }
+
+        this.isUpdatingControl = false;
+    }
+
+    private void OnModelSelectionChanged(object? o, ListSelectionModelChangedEventArgs<T> e) {
         if (this.isUpdatingModel)
             return;
 
         Debug.Assert(!this.isUpdatingControl);
         this.isUpdatingControl = true;
 
-        ObservableList<T> srcList = this.Selection.SourceList;
-        IList? list = this.DataGrid.SelectedItems;
-        foreach (IntegerRange<int> range in e.RemovedIndices) {
-            for (int i = range.Start; i < range.End; i++) {
-                list.Remove(srcList[i]);
-            }
+        IList list = this.DataGrid.SelectedItems;
+        foreach (T item in e.RemovedItems) {
+            list.Remove(item);
         }
 
-        foreach (IntegerRange<int> range in e.AddedIndices) {
-            for (int i = range.Start; i < range.End; i++) {
-                list.Add(srcList[i]);
-            }
+        foreach (T item in e.AddedItems) {
+            list.Add(item);
         }
 
         this.isUpdatingControl = false;
