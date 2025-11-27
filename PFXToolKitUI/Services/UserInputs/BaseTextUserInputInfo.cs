@@ -18,10 +18,13 @@
 // 
 
 using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils.Reactive;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
 public abstract class BaseTextUserInputInfo : UserInputInfo {
+    public static IEventObservable<SingleUserInputInfo> FooterObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.FooterChanged += e, (s, e) => s.FooterChanged -= e);
+    
     public string? Footer {
         get => field;
         set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.FooterChanged);

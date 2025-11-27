@@ -28,7 +28,7 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
 public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventHandler where TModel : class {
-    private readonly SenderEventRelay eventRelay;
+    private readonly SenderEventRelay[] eventRelays;
     private readonly IDispatcher dispatcher;
     private volatile RapidDispatchActionEx? rdaUpdateControl;
     private volatile int rdaLock;
@@ -48,7 +48,16 @@ public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventH
     public DispatchPriority DispatchPriority { get; init; } = DispatchPriority.Normal;
 
     protected BaseEventBinder(string eventName) {
-        this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName);
+        this.eventRelays = [EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName)];
+        this.dispatcher = ApplicationPFX.Instance.Dispatcher;
+    }
+    
+    protected BaseEventBinder(string[] eventNames) {
+        this.eventRelays = new SenderEventRelay[eventNames.Length];
+        for (int i = 0; i < eventNames.Length; i++) {
+            this.eventRelays[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]);
+        }
+
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
 
@@ -85,10 +94,12 @@ public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventH
     }
 
     protected override void OnAttached() {
-        EventRelayStorage.UIStorage.AddHandler(this.Model, this, this.eventRelay);
+        foreach (SenderEventRelay aeh in this.eventRelays)
+            EventRelayStorage.UIStorage.AddHandler(this.Model, this, aeh);
     }
 
     protected override void OnDetached() {
-        EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, this.eventRelay);
+        foreach (SenderEventRelay aeh in this.eventRelays)
+            EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, aeh);
     }
 }

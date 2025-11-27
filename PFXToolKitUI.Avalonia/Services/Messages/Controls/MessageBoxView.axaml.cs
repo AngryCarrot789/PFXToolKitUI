@@ -68,7 +68,7 @@ public partial class MessageBoxView : UserControl {
 
     private readonly IBinder<MessageBoxInfo> headerBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.HeaderChanged), (b) => ((TextBlock) b.Control).Text = b.Model.Header);
     private readonly IBinder<MessageBoxInfo> messageBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.MessageChanged), (b) => ((TextEditor) b.Control).Text = b.Model.Message);
-    private readonly IBinder<MessageBoxInfo> yesOkTextBinder = new MultiEventUpdateBinder<MessageBoxInfo>([nameof(MessageBoxInfo.YesOkTextChanged), nameof(MessageBoxInfo.ButtonsChanged)], (b) => ((Button) b.Control).Content = b.Model.ActualYesOkText);
+    private readonly IBinder<MessageBoxInfo> yesOkTextBinder = new EventUpdateBinder<MessageBoxInfo>([nameof(MessageBoxInfo.YesOkTextChanged), nameof(MessageBoxInfo.ButtonsChanged)], (b) => ((Button) b.Control).Content = b.Model.ActualYesOkText);
     private readonly IBinder<MessageBoxInfo> noTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.NoTextChanged), (b) => ((Button) b.Control).Content = b.Model.ActualNoText);
     private readonly IBinder<MessageBoxInfo> cancelTextBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CancelTextChanged), (b) => ((Button) b.Control).Content = b.Model.ActualCancelText);
     private readonly IBinder<MessageBoxInfo> showDetailsTextBinder = new AvaloniaPropertyToEventPropertyBinder<MessageBoxInfo>(ShowDetailsTextProperty, nameof(MessageBoxInfo.ShowDetailsTextChanged), (b) => b.Control.SetValue(ShowDetailsTextProperty, b.Model.ShowDetailsText), null);

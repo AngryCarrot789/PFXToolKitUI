@@ -35,6 +35,11 @@ public sealed class EventUpdateBinder<TModel> : BaseEventBinder<TModel> where TM
         this.DoUpdateControl = updateControl;
         this.DoUpdateModel = updateModel;
     }
+    
+    public EventUpdateBinder(string[] eventNames, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel = null) : base(eventNames) {
+        this.DoUpdateControl = updateControl;
+        this.DoUpdateModel = updateModel;
+    }
 
     protected override void UpdateModelOverride() => this.DoUpdateModel?.Invoke(this);
 

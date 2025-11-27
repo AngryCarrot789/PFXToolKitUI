@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils.Reactive;
+
 namespace PFXToolKitUI.Avalonia.Bindings;
 
 /// <summary>
@@ -27,11 +29,16 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// </para>
 /// </summary>
 /// <typeparam name="TModel">Model type</typeparam>
-public class MultiEventUpdateBinder<TModel> : BaseMultiEventPropertyBinder<TModel> where TModel : class {
+public sealed class ObservableUpdateBinder<TModel> : BaseObservableBinder<TModel> where TModel : class {
     public event Action<IBinder<TModel>>? DoUpdateControl;
     public event Action<IBinder<TModel>>? DoUpdateModel;
 
-    public MultiEventUpdateBinder(string[] eventNames, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel = null) : base(eventNames) {
+    public ObservableUpdateBinder(IEventObservable<TModel> observable, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel = null) : base(observable) {
+        this.DoUpdateControl = updateControl;
+        this.DoUpdateModel = updateModel;
+    }
+    
+    public ObservableUpdateBinder(IEventObservable<TModel>[] observables, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel = null) : base(observables) {
         this.DoUpdateControl = updateControl;
         this.DoUpdateModel = updateModel;
     }

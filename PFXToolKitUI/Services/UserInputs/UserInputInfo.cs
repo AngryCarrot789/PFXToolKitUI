@@ -19,6 +19,7 @@
 
 using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils.Reactive;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
@@ -27,6 +28,12 @@ namespace PFXToolKitUI.Services.UserInputs;
 /// properties suitable across any type of two-buttoned titlebar and message dialog
 /// </summary>
 public abstract class UserInputInfo : ITransferableData {
+    public static IEventObservable<UserInputInfo> CaptionObservable => field ??= Observable.ForEvent<UserInputInfo>((s, e) => s.CaptionChanged += e, (s, e) => s.CaptionChanged -= e);
+    public static IEventObservable<UserInputInfo> MessageObservable => field ??= Observable.ForEvent<UserInputInfo>((s, e) => s.MessageChanged += e, (s, e) => s.MessageChanged -= e);
+    public static IEventObservable<UserInputInfo> ConfirmTextObservable => field ??= Observable.ForEvent<UserInputInfo>((s, e) => s.ConfirmTextChanged += e, (s, e) => s.ConfirmTextChanged -= e);
+    public static IEventObservable<UserInputInfo> CancelTextObservable => field ??= Observable.ForEvent<UserInputInfo>((s, e) => s.CancelTextChanged += e, (s, e) => s.CancelTextChanged -= e);
+    public static IEventObservable<UserInputInfo> HasErrorsObservable => field ??= Observable.ForEvent<UserInputInfo>((s, e) => s.HasErrorsChanged += e, (s, e) => s.HasErrorsChanged -= e);
+    
     private string? caption, message;
 
     public TransferableData TransferableData { get; }
@@ -70,13 +77,14 @@ public abstract class UserInputInfo : ITransferableData {
     /// </summary>
     public ButtonType DefaultButton { get; init; }
     
+    public event EventHandler? CaptionChanged, MessageChanged;
+    public event EventHandler? ConfirmTextChanged, CancelTextChanged;
+    
     /// <summary>
     /// Fired when one or more errors change in this user input info. This is listened to by
     /// the GUI to invoke <see cref="HasErrors"/> and update the confirm button
     /// </summary>
     public event EventHandler? HasErrorsChanged;
-    public event EventHandler? CaptionChanged, MessageChanged;
-    public event EventHandler? ConfirmTextChanged, CancelTextChanged;
 
     protected UserInputInfo() {
         this.TransferableData = new TransferableData(this);

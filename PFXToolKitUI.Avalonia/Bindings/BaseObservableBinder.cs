@@ -18,8 +18,8 @@
 // 
 
 using System.Diagnostics;
-using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Utils.RDA;
+using PFXToolKitUI.Utils.Reactive;
 
 namespace PFXToolKitUI.Avalonia.Bindings;
 
@@ -27,11 +27,13 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// A base binder class which implements an event handler for the model which fires the <see cref="IBinder.UpdateControl"/> method
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
-public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>, IRelayEventHandler where TModel : class {
-    private readonly SenderEventRelay[] autoEventHelpers;
+public abstract class BaseObservableBinder<TModel> : BaseBinder<TModel> where TModel : class {
     private readonly IDispatcher dispatcher;
     private volatile RapidDispatchActionEx? rdaUpdateControl;
     private volatile int rdaLock;
+    private readonly IEventObservable<TModel>[] observables;
+    private readonly IDisposable?[] subscriptions;
+    private Action<TModel>? m_OnEvent;
 
     /// <summary>
     /// Gets or sets (init only) if the event can be fired from any thread. Default is true
@@ -47,21 +49,22 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
     /// </summary>
     public DispatchPriority DispatchPriority { get; init; } = DispatchPriority.Normal;
 
-    protected BaseMultiEventPropertyBinder(params string[] eventNames) {
-        this.autoEventHelpers = new SenderEventRelay[eventNames.Length];
-        for (int i = 0; i < eventNames.Length; i++) {
-            this.autoEventHelpers[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]);
-        }
-
+    protected BaseObservableBinder(IEventObservable<TModel> observable) {
+        this.observables = [observable];
+        this.subscriptions = new IDisposable[1];
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
-    
-    void IRelayEventHandler.OnEvent(object sender) => this.OnAnyEventFired();
+
+    protected BaseObservableBinder(IEventObservable<TModel>[] observables) {
+        this.observables = observables;
+        this.subscriptions = new IDisposable[observables.Length];
+        this.dispatcher = ApplicationPFX.Instance.Dispatcher;
+    }
 
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
     /// </summary>
-    protected virtual void OnAnyEventFired() {
+    protected virtual void OnModelValueChanged() {
         if (!this.dispatcher.CheckAccess()) {
             if (this.AllowEventFiredOnAnyThread) {
                 if (this.rdaUpdateControl == null) {
@@ -70,7 +73,7 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
 
                     try {
                         if (this.rdaUpdateControl == null)
-                            this.rdaUpdateControl = RapidDispatchActionEx.ForSync(this.UpdateControl, this.dispatcher, this.DispatchPriority, "BaseMultiEventPropertyBinder");
+                            this.rdaUpdateControl = RapidDispatchActionEx.ForSync(this.UpdateControl, this.dispatcher, this.DispatchPriority, "BaseEventPropertyBinder");
                     }
                     finally {
                         this.rdaLock = 0;
@@ -89,12 +92,18 @@ public abstract class BaseMultiEventPropertyBinder<TModel> : BaseBinder<TModel>,
     }
 
     protected override void OnAttached() {
-        foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayStorage.UIStorage.AddHandler(this.Model, this, aeh);
+        Action<TModel> handler = this.m_OnEvent ??= this.OnEvent;
+        for (int i = 0; i < this.observables.Length; i++) {
+            this.subscriptions[i] = this.observables[i].Subscribe(this.Model, handler, invokeImmediately: false /* BaseBinder calls UpdateControl after OnAttached */);
+        }
     }
 
     protected override void OnDetached() {
-        foreach (SenderEventRelay aeh in this.autoEventHelpers)
-            EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, aeh);
+        for (int i = 0; i < this.subscriptions.Length; i++) {
+            this.subscriptions[i]!.Dispose();
+            this.subscriptions[i] = null;
+        }
     }
+
+    private void OnEvent(TModel sender) => this.OnModelValueChanged();
 }

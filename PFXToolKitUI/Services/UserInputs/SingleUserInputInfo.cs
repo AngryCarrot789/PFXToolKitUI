@@ -20,15 +20,24 @@
 using System.Collections.ObjectModel;
 using PFXToolKitUI.Utils.Debouncing;
 using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils.Reactive;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
 public class SingleUserInputInfo : BaseTextUserInputInfo {
     private static readonly SendOrPostCallback s_UpdateTextErrors = static x => ((SingleUserInputInfo) x!).UpdateTextError();
-    
+
+    public static IEventObservable<SingleUserInputInfo> TextObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.TextChanged += e, (s, e) => s.TextChanged -= e);
+    public static IEventObservable<SingleUserInputInfo> LabelObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.LabelChanged += e, (s, e) => s.LabelChanged -= e);
+    public static IEventObservable<SingleUserInputInfo> TextErrorsObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.TextErrorsChanged += e, (s, e) => s.TextErrorsChanged -= e);
+    public static IEventObservable<SingleUserInputInfo> LineCountHintObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.LineCountHintChanged += e, (s, e) => s.LineCountHintChanged -= e);
+    public static IEventObservable<SingleUserInputInfo> MinimumDialogWidthHintObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.MinimumDialogWidthHintChanged += e, (s, e) => s.MinimumDialogWidthHintChanged -= e);
+    public static IEventObservable<SingleUserInputInfo> DebounceErrorsDelayObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.DebounceErrorsDelayChanged += e, (s, e) => s.DebounceErrorsDelayChanged -= e);
+
     private string text;
     private string? label;
     private TimerDispatcherDebouncer? errorDebouncer;
+    private static string[]? s_IndexOfAny;
 
     /// <summary>
     /// Gets the value the user have typed into the text field
@@ -157,7 +166,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         validate(new ValidationArgs(text, list, hasError));
         return list.Count > 0 ? list : null;
     }
-    
+
     public static void HandleTextChanged(SendOrPostCallback updateErrors, object state, int debounceDelay, ref TimerDispatcherDebouncer? debouncer, Action<ValidationArgs>? validate) {
         if (debouncer == null && debounceDelay > 0 && validate != null)
             debouncer = new TimerDispatcherDebouncer(TimeSpan.FromMilliseconds(debounceDelay), updateErrors, state);
@@ -172,13 +181,13 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
             updateErrors(state);
         }
     }
-    
+
     public static void HandleDebounceDelayChanged(SendOrPostCallback updateErrors, object state, int newValue, ref TimerDispatcherDebouncer? debouncer) {
         if (debouncer != null) {
             if (newValue == 0) {
                 if (debouncer.IsWaiting)
                     ApplicationPFX.Instance.Dispatcher.Post(updateErrors, state);
-                        
+
                 debouncer.Reset();
                 debouncer = null;
             }
@@ -187,15 +196,20 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
             }
         }
     }
-    
+
     public static string CanonicalizeTextForLineCount(string value, int lineCount) {
         if (lineCount == 1) {
-            int index = value.AsSpan().IndexOfAny("\r\n");
-            if (index >= 0) {
-                value = value.Substring(0, index);
+            int idx = value.IndexOf("\r\n");
+            if (idx == -1) {
+                idx = value.IndexOf('\n');
+                if (idx == -1)
+                    idx = value.IndexOf('\r');
             }
+            
+            if (idx >= 0)
+                value = value.Substring(0, idx);
         }
-
+        
         return value;
     }
 }

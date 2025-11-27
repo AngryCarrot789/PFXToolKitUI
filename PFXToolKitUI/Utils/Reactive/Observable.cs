@@ -17,25 +17,37 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics;
-
 namespace PFXToolKitUI.Utils.Reactive;
 
 public static class Observable {
-    public static IDisposable ForEvent<T>(T owner, Action<T> callback, Action<T, EventHandler> addHandler, Action<T, EventHandler> removeHandler, bool initialCallback = true) where T : class {
-        return new SimpleEventObserver<T>(owner, callback, addHandler, removeHandler, initialCallback);
-    }
-
-    public static IEventObservable<T> FromEvent<T>(Action<T, EventHandler> addHandler, Action<T, EventHandler> removeHandler) where T : class {
+    /// <summary>
+    /// Creates an observable object that can add and remove event handlers
+    /// </summary>
+    /// <param name="addHandler">Callback to add an event handler</param>
+    /// <param name="removeHandler">Callback to remove an event handler</param>
+    /// <typeparam name="T">The type of sender object</typeparam>
+    /// <returns>The observable</returns>
+    public static IEventObservable<T> ForEvent<T>(Action<T, EventHandler> addHandler, Action<T, EventHandler> removeHandler) where T : class {
         return new EventObservableImpl<T>(addHandler, removeHandler);
+    }
+    
+    /// <summary>
+    /// Creates an observable object that can add and remove event handlers
+    /// </summary>
+    /// <param name="addHandler">Callback to add an event handler</param>
+    /// <param name="removeHandler">Callback to remove an event handler</param>
+    /// <typeparam name="T">The type of sender object</typeparam>
+    /// <returns>The observable</returns>
+    public static IEventObservable<T> ForEvent<T, TEventArgs>(Action<T, EventHandler<TEventArgs>> addHandler, Action<T, EventHandler<TEventArgs>> removeHandler) where T : class where TEventArgs : allows ref struct {
+        return new EventObservableWithArgsImpl<T, TEventArgs>(addHandler, removeHandler);
     }
 
     private sealed class EventObservableImpl<T>(Action<T, EventHandler> addHandler, Action<T, EventHandler> removeHandler) : IEventObservable<T> {
         private readonly Action<T, EventHandler> addHandler = addHandler;
         private readonly Action<T, EventHandler> removeHandler = removeHandler;
 
-        public IDisposable Subscribe(T owner, Action<T> callback, bool initialCallback = true) {
-            return new Subscriber(this, owner, callback, initialCallback);
+        public IDisposable Subscribe(T owner, Action<T> callback, bool invokeImmediately = true) {
+            return new Subscriber(this, owner, callback, invokeImmediately);
         }
 
         private sealed class Subscriber : IDisposable {
@@ -62,30 +74,37 @@ public static class Observable {
             }
         }
     }
+    
+    private sealed class EventObservableWithArgsImpl<T, TEventArgs>(Action<T, EventHandler<TEventArgs>> addHandler, Action<T, EventHandler<TEventArgs>> removeHandler) : IEventObservable<T> where TEventArgs : allows ref struct where T : class {
+        private readonly Action<T, EventHandler<TEventArgs>> addHandler = addHandler;
+        private readonly Action<T, EventHandler<TEventArgs>> removeHandler = removeHandler;
 
-    private sealed class SimpleEventObserver<T> : IDisposable where T : class {
-        private readonly T owner;
-        private readonly Action<T> callback;
-        private readonly Action<T, EventHandler> removeHandler;
-        private readonly EventHandler myHandler;
-
-        public SimpleEventObserver(T owner, Action<T> callback, Action<T, EventHandler> addHandler, Action<T, EventHandler> removeHandler, bool doInitialEvent) {
-            this.owner = owner;
-            this.callback = callback;
-            this.removeHandler = removeHandler;
-            this.myHandler = this.OnEvent;
-            addHandler(owner, this.myHandler);
-            if (doInitialEvent)
-                this.OnEvent(owner, EventArgs.Empty);
+        public IDisposable Subscribe(T owner, Action<T> callback, bool invokeImmediately = true) {
+            return new Subscriber(this, owner, callback, invokeImmediately);
         }
 
-        private void OnEvent(object? theSender, EventArgs _) {
-            Debug.Assert(theSender == this.owner);
-            this.callback(this.owner);
-        }
+        private sealed class Subscriber : IDisposable {
+            private readonly EventObservableWithArgsImpl<T, TEventArgs> impl;
+            private readonly T owner;
+            private readonly Action<T> callback;
+            private readonly EventHandler<TEventArgs> myHandler;
 
-        public void Dispose() {
-            this.removeHandler(this.owner, this.myHandler);
+            public Subscriber(EventObservableWithArgsImpl<T, TEventArgs> impl, T owner, Action<T> callback, bool initialCallback) {
+                this.impl = impl;
+                this.owner = owner;
+                this.callback = callback;
+                this.impl.addHandler(this.owner, this.myHandler = this.OnEvent);
+                if (initialCallback)
+                    this.callback(this.owner);
+            }
+
+            private void OnEvent(object? sender, TEventArgs eventArgs) {
+                this.callback(this.owner);
+            }
+
+            public void Dispose() {
+                this.impl.removeHandler(this.owner, this.myHandler);
+            }
         }
     }
 }

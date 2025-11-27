@@ -20,10 +20,22 @@
 using System.Collections.ObjectModel;
 using PFXToolKitUI.Utils.Debouncing;
 using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Utils.Reactive;
 
 namespace PFXToolKitUI.Services.UserInputs;
 
 public class DoubleUserInputInfo : BaseTextUserInputInfo {
+    public static IEventObservable<DoubleUserInputInfo> TextAObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.TextAChanged += e, (s, e) => s.TextAChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> TextBObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.TextBChanged += e, (s, e) => s.TextBChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> LabelAObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.LabelAChanged += e, (s, e) => s.LabelAChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> LabelBObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.LabelBChanged += e, (s, e) => s.LabelBChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> LineCountHintAObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.LineCountHintAChanged += e, (s, e) => s.LineCountHintAChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> LineCountHintBObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.LineCountHintBChanged += e, (s, e) => s.LineCountHintBChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> TextErrorsAObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.TextErrorsAChanged += e, (s, e) => s.TextErrorsAChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> TextErrorsBObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.TextErrorsBChanged += e, (s, e) => s.TextErrorsBChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> DebounceErrorsDelayAObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.DebounceErrorsDelayAChanged += e, (s, e) => s.DebounceErrorsDelayAChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> DebounceErrorsDelayBObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.DebounceErrorsDelayBChanged += e, (s, e) => s.DebounceErrorsDelayBChanged -= e);
+    
     private static readonly SendOrPostCallback s_UpdateTextErrorsAForced = static x => ((DoubleUserInputInfo) x!).UpdateTextAError(true);
     private static readonly SendOrPostCallback s_UpdateTextErrorsBForced = static x => ((DoubleUserInputInfo) x!).UpdateTextBError(true);
     
