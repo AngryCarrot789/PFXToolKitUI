@@ -262,7 +262,7 @@ public abstract class ApplicationPFX : IComponentManager {
         Instance.ComponentStorage.GetComponent<PostStartupManager>().OnPostStartup();
     }
 
-    // The methods from RegisterServices to OnExiting are ordered based
+    // The methods from RegisterComponents to OnExiting are ordered based
     // on the order they're invoked during application lifetime.
 
     protected virtual void RegisterComponents(ComponentStorage manager) {
@@ -270,6 +270,10 @@ public abstract class ApplicationPFX : IComponentManager {
         manager.AddComponent(ApplicationConfigurationManager.Instance);
         manager.AddComponent(new ActivityManager());
         manager.AddComponent(new CommandManager());
+
+        if (OperatingSystem.IsWindows()) {
+            // manager.AddComponent<ApplicationRecoveryService>(new Win32ApplicationRecoveryServiceImpl());
+        }
     }
 
     protected virtual void RegisterCommands(CommandManager manager) {
