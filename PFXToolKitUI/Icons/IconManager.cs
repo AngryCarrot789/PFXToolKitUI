@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Themes;
 using SkiaSharp;
 
 namespace PFXToolKitUI.Icons;
@@ -77,9 +78,20 @@ public abstract class IconManager {
     /// <returns></returns>
     public abstract Icon RegisterIconByUri(string name, Uri uri, bool lazilyLoad = true);
 
+    /// <summary>
+    /// Registers an icon that draws the given bitmap data
+    /// </summary>
     public abstract Icon RegisterIconUsingBitmap(string name, SKBitmap bitmap);
 
+    /// <summary>
+    /// Registers an icon that uses one or more SVG path elements to compose a final shape
+    /// </summary>
     public abstract Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry);
+    
+    /// <summary>
+    /// Registers an icon that draws an ellipse shape
+    /// </summary>
+    public abstract Icon RegisterEllipseIcon(string name, IColourBrush? fill, IColourBrush? stroke, double radiusX, double radiusY, double strokeThickness = 0.0);
     
     /// <summary>
     /// Adds the icon key, with the given name. Throws if the name is

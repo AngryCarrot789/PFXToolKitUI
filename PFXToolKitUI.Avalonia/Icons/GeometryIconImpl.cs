@@ -48,56 +48,40 @@ public class GeometryIconImpl : AbstractAvaloniaIcon, IGeometryIcon {
     }
 
     public override void Render(DrawingContext context, Rect bounds, StretchMode stretch) {
-        // {
-        //     using DrawingContext.PushedState? state = transform != SKMatrix.Identity ? context.PushTransform(transform.ToAvMatrix()) : null;
-        //
-        //     foreach (GeometryEntryRef geo in this.GeometryEntryRefs) {
-        //         if (geo.geometry != null) {
-        //             if (geo.myPen == null && geo.myPenBrush != null) {
-        //                 geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
-        //             }
-        //
-        //             context.DrawGeometry(geo.myFillBrush, geo.myPen, geo.geometry);
-        //         }
-        //     }
-        // }
+        GeometryEntryWrapper[] entries = this.GeometryEntryRefs;
+        if (entries.Length < 1) {
+            return;
+        }
 
-        {
-            GeometryEntryWrapper[] entries = this.GeometryEntryRefs;
-            if (entries.Length < 1) {
-                return;
-            }
+        Rect fakeBounds = new Rect(bounds.Size);
+        Rect combinedBounds = this.GetBounds();
+        if (combinedBounds.Width <= 0 || combinedBounds.Height <= 0) {
+            return;
+        }
 
-            Rect fakeBounds = new Rect(bounds.Size);
-            Rect combinedBounds = this.GetBounds();
-            if (combinedBounds.Width <= 0 || combinedBounds.Height <= 0) {
-                return;
-            }
+        double scaleX = fakeBounds.Width / combinedBounds.Width;
+        double scaleY = fakeBounds.Height / combinedBounds.Height;
 
-            double scaleX = fakeBounds.Width / combinedBounds.Width;
-            double scaleY = fakeBounds.Height / combinedBounds.Height;
+        double scale = stretch switch {
+            StretchMode.Fill => Math.Max(scaleX, scaleY),
+            StretchMode.Uniform => Math.Min(scaleX, scaleY),
+            StretchMode.UniformNoUpscale => Math.Min(Math.Min(scaleX, scaleY), 1.0),
+            StretchMode.UniformToFill => Math.Max(scaleX, scaleY),
+            StretchMode.None => 1.0,
+            _ => 1.0
+        };
 
-            double scale = stretch switch {
-                StretchMode.Fill => Math.Max(scaleX, scaleY),
-                StretchMode.Uniform => Math.Min(scaleX, scaleY),
-                StretchMode.UniformNoUpscale => Math.Min(Math.Min(scaleX, scaleY), 1.0),
-                StretchMode.UniformToFill => Math.Max(scaleX, scaleY),
-                StretchMode.None => 1.0,
-                _ => 1.0
-            };
+        Point offset = fakeBounds.Center - combinedBounds.Center * scale;
+        Matrix transform = Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(offset.X, offset.Y);
 
-            Point offset = fakeBounds.Center - combinedBounds.Center * scale;
-            Matrix transform = Matrix.CreateScale(scale, scale) * Matrix.CreateTranslation(offset.X, offset.Y);
-
-            using (context.PushTransform(transform)) {
-                foreach (GeometryEntryWrapper geo in entries) {
-                    if (geo.geometry != null) {
-                        if (geo.myPen == null && geo.myPenBrush != null) {
-                            geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
-                        }
-
-                        context.DrawGeometry(geo.myFillBrush, geo.myPen, geo.geometry);
+        using (context.PushTransform(transform)) {
+            foreach (GeometryEntryWrapper geo in entries) {
+                if (geo.geometry != null) {
+                    if (geo.myPen == null && geo.myPenBrush != null) {
+                        geo.myPen = new Pen(geo.myPenBrush, geo.entry.StrokeThickness);
                     }
+
+                    context.DrawGeometry(geo.myFillBrush, geo.myPen, geo.geometry);
                 }
             }
         }

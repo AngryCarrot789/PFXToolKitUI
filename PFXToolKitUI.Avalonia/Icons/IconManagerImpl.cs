@@ -23,6 +23,7 @@ using Avalonia.Platform;
 using Avalonia.Skia;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Logging;
+using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 using SkiaSharp;
 
@@ -115,5 +116,10 @@ public class IconManagerImpl : IconManager {
     public override Icon RegisterGeometryIcon(string name, GeometryEntry[] geometry) {
         this.ValidateName(name);
         return this.RegisterHelper(new GeometryIconImpl(name, geometry));
+    }
+
+    public override Icon RegisterEllipseIcon(string name, IColourBrush? fill, IColourBrush? stroke, double radiusX, double radiusY, double strokeThickness = 0) {
+        this.ValidateName(name);
+        return this.RegisterHelper(new EllipseIconImpl(name, fill, stroke, radiusX, radiusY, strokeThickness));
     }
 }
