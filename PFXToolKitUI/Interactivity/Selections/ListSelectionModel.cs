@@ -36,7 +36,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public int Count => this.selectedItems.Count;
 
-    public ObservableList<T> SourceList { get; }
+    public IObservableList<T> SourceList { get; }
 
     public IReadOnlySet<T> SelectedItems => this.selectedItems;
 
@@ -60,7 +60,7 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
 
     public event EventHandler<ListSelectionModelChangedEventArgs<T>>? SelectionChanged;
 
-    public ListSelectionModel(ObservableList<T> sourceList) {
+    public ListSelectionModel(IObservableList<T> sourceList) {
         this.SourceList = sourceList ?? throw new ArgumentNullException(nameof(sourceList));
         this.selectedItems = new HashSet<T>();
 

@@ -55,7 +55,7 @@ public interface IListSelectionModel<T> : IListSelectionModel {
     /// Gets the observable list that stores the items that are selectable.
     /// This list is not the selected items list, instead, use <see cref="SelectedItems"/> to enumerate the items.
     /// </summary>
-    ObservableList<T> SourceList { get; }
+    IObservableList<T> SourceList { get; }
     
     /// <summary>
     /// Gets a read-only list of the selected items
@@ -141,10 +141,4 @@ public readonly struct ListSelectionModelChangedEventArgs<T>(IList<T> addedItems
     /// Gets the list containing items that are no longer selected
     /// </summary>
     public IList<T> RemovedItems { get; } = removedItems;
-}
-
-public static class ListSelectionModelExtensions {
-    public static void MoveItemHelper<T>(this IListSelectionModel<T> selectionModel, int oldIndex, int newIndex) {
-        selectionModel.SourceList.Move(oldIndex, newIndex);
-    }
 }

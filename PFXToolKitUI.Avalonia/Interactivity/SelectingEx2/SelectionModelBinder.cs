@@ -66,7 +66,7 @@ public sealed class SelectionModelBinder<T> {
 
             this.SelectionModel.BeginBatchUpdate();
 
-            ObservableList<T> srcList = this.Selection.SourceList;
+            IObservableList<T> srcList = this.Selection.SourceList;
             IntegerSet<int> removedIndices = new IntegerSet<int>();
             foreach (T item in e.RemovedItems) {
                 int index = srcList.IndexOf(item);
@@ -102,7 +102,7 @@ public sealed class SelectionModelBinder<T> {
             Debug.Assert(!this.isUpdatingModel);
             this.isUpdatingModel = true;
 
-            ObservableList<T> srcList = this.Selection.SourceList;
+            IObservableList<T> srcList = this.Selection.SourceList;
             if (e.DeselectedIndexes.Count > 0) {
                 List<T> items = new List<T>(e.DeselectedIndexes.Count);
                 foreach (int i in e.DeselectedIndexes) {
