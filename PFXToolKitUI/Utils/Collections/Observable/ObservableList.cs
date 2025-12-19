@@ -76,13 +76,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
                 OldIndex = -1, OldItems = null
                 NewIndex = -1, NewItems = null,
      */
-
-    /// <summary>
-    /// Fired when items are added to or removed from this list, or an item is replaced or moved.
-    /// <para>
-    /// When this list is cleared, this is fired with <see cref="NotifyCollectionChangedAction.Reset"/>
-    /// </para>
-    /// </summary>
+    
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
 
     public ResetBehavior ClearBehavior { get; }
@@ -111,7 +105,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
         this.ClearBehavior = clearBehavior;
     }
-
+    
     protected override void InsertItem(int index, T item) {
         this.CheckReentrancy();
         if (index < 0)

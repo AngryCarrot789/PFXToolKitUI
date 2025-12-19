@@ -135,16 +135,6 @@ public abstract class ApplicationPFX : IComponentManager {
     }
 
     /// <summary>
-    /// Initializes the application by calling <see cref="InitializeApplicationAsync"/> and blocks until completion using a dispatcher frame
-    /// </summary>
-    public static void InitializeApplication(IApplicationStartupProgress progress, string[] envArgs) {
-        Task task = InitializeApplicationAsync(progress, envArgs);
-        if (!task.IsCompleted && Instance.Dispatcher.TryGetFrameManager(out IDispatcherFrameManager? frameManager)) {
-            frameManager.AwaitForCompletion(task);
-        }
-    }
-
-    /// <summary>
     /// Actually initialize the application. This includes loading services, plugins, persistent configurations and more.
     /// </summary>
     public static async Task InitializeApplicationAsync(IApplicationStartupProgress progress, string[] envArgs) {
@@ -344,12 +334,13 @@ public abstract class ApplicationPFX : IComponentManager {
     /// </summary>
     /// <param name="progress">Progress manager</param>
     /// <param name="envArgs">Command line arguments, typically passed to the startup manager</param>
-    protected virtual Task OnApplicationRunning(IApplicationStartupProgress progress, string[] envArgs) {
+    protected virtual async Task OnApplicationRunning(IApplicationStartupProgress progress, string[] envArgs) {
         if (Instance.ComponentStorage.TryGetComponent(out IStartupManager? service)) {
-            return service.OnApplicationStartupWithArgs(progress, envArgs.Length > 1 ? envArgs.Skip(1).ToArray() : Array.Empty<string>());
+            await service.OnApplicationStartupWithArgs(progress, envArgs.Length > 1 ? envArgs.Skip(1).ToArray() : Array.Empty<string>());
         }
         else {
-            return IMessageDialogService.Instance.ShowMessage("Information", "Hey! No IStartupManager service registered. Define and Register one to do stuff!");
+            await IMessageDialogService.Instance.ShowMessage("Information", "Hey! No IStartupManager service registered. Define and Register one to do stuff!");
+            this.Dispatcher.Post(this.Shutdown);
         }
     }
 

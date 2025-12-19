@@ -58,6 +58,8 @@ public partial class MessageBoxView : UserControl {
     /// </summary>
     public IWindowBase? OwnerWindow { get; private set; }
 
+    public MessageBoxResult DialogResult { get; private set; }
+    
     private readonly IBinder<MessageBoxInfo> captionBinder = new EventUpdateBinder<MessageBoxInfo>(nameof(MessageBoxInfo.CaptionChanged), (b) => {
         IWindowBase window = ((MessageBoxView) b.Control).OwnerWindow!;
         if (window is IDesktopWindow desktop)
@@ -350,6 +352,7 @@ public partial class MessageBoxView : UserControl {
             return;
         }
 
+        this.DialogResult = result;
         this.OwnerWindow.RequestClose(result);
     }
 

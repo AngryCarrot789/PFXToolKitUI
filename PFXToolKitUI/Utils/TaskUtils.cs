@@ -32,8 +32,7 @@ public static class TaskUtils {
     public static CancellationTokenSource CreateCompletionSource(Task task, CancellationToken cancellationToken = default) {
         CancellationTokenSource cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         if (!task.IsCompleted) {
-            // Add continuation that cancels the CTS. The continuation will also get removed if the caller
-            // cancels it directly, which will prevent ObjectDisposedException being thrown
+            // We pass cts.Token so that the continuation is removed when cancelled, to prevent leaking cts
             _ = task.ContinueWith(static (_, state) => {
                 try {
                     ((CancellationTokenSource) state!).Cancel();

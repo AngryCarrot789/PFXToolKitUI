@@ -64,7 +64,7 @@ public sealed class EventRelayStorage {
     
     // We cache our instance handler to prevent (potentially) creating a
     // new delegate for each new relay created by GetEventRelay()
-    private readonly Action<object, object> cachedModeEventFired;
+    private readonly Action<object, object> m_OnEventRaised;
 
 #if DEBUG
     public IEnumerable<KeyValuePair<object, IEnumerable<KeyValuePair<string, IRelayEventHandler[]>>>> DEBUG_AttachmentMap {
@@ -77,7 +77,7 @@ public sealed class EventRelayStorage {
     public EventRelayStorage() {
         this.eventInfoToRelayMap = new Dictionary<EventInfoKey, SenderEventRelay>();
         this.attachedInstanceMap = new ConcurrentDictionary<object, HybridDictionary>(ReferenceEqualityComparer.Instance);
-        this.cachedModeEventFired = this.OnEventRaised;
+        this.m_OnEventRaised = this.OnEventRaised;
     }
 
     public void AddHandler(object instance, IRelayEventHandler handler, SenderEventRelay relay) {
@@ -144,7 +144,7 @@ public sealed class EventRelayStorage {
         }
         
         // Most likely case is that EventHandlerType is EventHandler
-        handler = EventReflectionUtils.CreateDelegateToInvokeActionFromEvent(handlerType, this.cachedModeEventFired, typeof(object), eventName);
+        handler = EventReflectionUtils.CreateDelegateToInvokeActionFromEvent(handlerType, this.m_OnEventRaised, typeof(object), eventName);
         if (isEventHandlerType) {
             // Only cache EventHandler types
             this.cachedHandlerForEventHandlerType[eventName] = handler;

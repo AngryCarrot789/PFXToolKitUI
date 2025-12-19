@@ -18,6 +18,8 @@
 // 
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using PFXToolKitUI.EventHelpers;
 using PFXToolKitUI.Utils.RDA;
 
@@ -51,7 +53,7 @@ public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventH
         this.eventRelays = [EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName)];
         this.dispatcher = ApplicationPFX.Instance.Dispatcher;
     }
-    
+
     protected BaseEventBinder(string[] eventNames) {
         this.eventRelays = new SenderEventRelay[eventNames.Length];
         for (int i = 0; i < eventNames.Length; i++) {
@@ -62,35 +64,48 @@ public abstract class BaseEventBinder<TModel> : BaseBinder<TModel>, IRelayEventH
     }
 
     void IRelayEventHandler.OnEvent(object sender) => this.OnModelValueChanged();
-    
+
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
     /// </summary>
     protected virtual void OnModelValueChanged() {
-        if (!this.dispatcher.CheckAccess()) {
-            if (this.AllowEventFiredOnAnyThread) {
-                if (this.rdaUpdateControl == null) {
-                    while (Interlocked.CompareExchange(ref this.rdaLock, 1, 0) != 0)
-                        Thread.Yield();
+        if (this.dispatcher.CheckAccess()) {
+            this.UpdateControl();
+        }
+        else {
+            this.OnModelValueChangedOffMainThread();
+        }
+    }
 
-                    try {
-                        if (this.rdaUpdateControl == null)
-                            this.rdaUpdateControl = RapidDispatchActionEx.ForSync(this.UpdateControl, this.dispatcher, this.DispatchPriority, "BaseEventPropertyBinder");
-                    }
-                    finally {
-                        this.rdaLock = 0;
-                    }
+    private void OnModelValueChangedOffMainThread() {
+        if (this.AllowEventFiredOnAnyThread) {
+            RapidDispatchActionEx? rda = this.rdaUpdateControl;
+            if (rda == null) {
+                while (Interlocked.CompareExchange(ref this.rdaLock, 1, 0) != 0)
+                    Thread.Yield();
+
+                try {
+                    if ((rda = this.rdaUpdateControl) == null)
+                        this.rdaUpdateControl = rda = RapidDispatchActionEx.ForSync(this.UpdateControl, this.dispatcher, this.DispatchPriority, "BaseEventPropertyBinder");
                 }
-
-                this.rdaUpdateControl!.InvokeAsync();
-                return;
+                finally {
+                    this.rdaLock = 0;
+                }
             }
 
-            Debugger.Break();
-            throw new InvalidOperationException("This property binder requires the event be fired on the main thread");
+            rda.InvokeAsync();
+            return;
         }
 
-        this.UpdateControl();
+        Debugger.Break();
+        ThrowInvalidOperationException();
+        return;
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowInvalidOperationException() {
+            throw new InvalidOperationException("This property binder requires the event be fired on the main thread");
+        }
     }
 
     protected override void OnAttached() {

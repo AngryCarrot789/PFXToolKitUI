@@ -88,7 +88,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             }
 
             if (parentTopLevel != null) {
-                IWindowBase? window = WindowContextUtils.CreateWindow(parentTopLevel, (w) => ShowMessageBoxInWindow(info, w), (m, w) => ShowMessageBoxInOverlay(info, m, w));
+                IWindowBase? window = WindowContextUtils.CreateWindow(parentTopLevel, (w) => CreateMessageBoxWindow(info, w.WindowManager, w), (m, w) => CreateMessageBoxOverlay(info, m, w));
                 if (window != null) {
                     MessageBoxView view = (MessageBoxView) window.Content!;
 
@@ -100,9 +100,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
                                 win.RequestClose();
                             }
                         }, t);
-                        
                     }, new WeakReference(window));
-
                     MessageBoxResult result = await window.ShowDialogAsync() as MessageBoxResult? ?? MessageBoxResult.None;
                     view.MessageBoxData = null; // unhook models' event handlers
 
@@ -115,6 +113,32 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             }
         }
 
+        if (IWindowManager.TryGetInstance(out IWindowManager? instance)) {
+            IWindowBase window = CreateMessageBoxWindow(info, instance, null);
+            MessageBoxView view = (MessageBoxView) window.Content!;
+
+            // Register cancellation to force-close dialog even if myTask is not completed
+            await using CancellationTokenRegistration register = info.DialogCancellation.Register(static t => {
+                ApplicationPFX.Instance.Dispatcher.Post(static void (winRef) => {
+                    IWindowBase? win = (IWindowBase?) ((WeakReference) winRef!).Target;
+                    if (win != null && win.OpenState == OpenState.Open) {
+                        win.RequestClose();
+                    }
+                }, t);
+            }, new WeakReference(window));
+            
+            await window.ShowAsync();
+            await window.WaitForClosedAsync();
+            MessageBoxResult result = view.DialogResult;
+            view.MessageBoxData = null; // unhook models' event handlers
+
+            if (!string.IsNullOrWhiteSpace(info.PersistentDialogName) && info.AlwaysUseThisResult && result != MessageBoxResult.None) {
+                PersistentDialogResult.GetInstance(info.PersistentDialogName).SetButton(result, info.AlwaysUseThisResultUntilAppCloses);
+            }
+
+            return result;
+        }
+
         AppLogger.Instance.WriteLine(parentTopLevel == null
             ? "Could not find top level to show message dialog in"
             : $"Unsupported top level '{parentTopLevel.GetType()}' type for message box");
@@ -124,16 +148,16 @@ public class MessageDialogServiceImpl : IMessageDialogService {
             Console.WriteLine("--- (extra details) ---");
             Console.WriteLine(info.ExtraDetails);
         }
-        
+
         return MessageBoxResult.None;
     }
 
-    private static IDesktopWindow ShowMessageBoxInWindow(MessageBoxInfo info, IDesktopWindow parentWindow) {
+    private static IDesktopWindow CreateMessageBoxWindow(MessageBoxInfo info, IWindowManager manager, IDesktopWindow? parentWindow) {
         MessageBoxView view = new MessageBoxView() {
             MessageBoxData = info
         };
 
-        IDesktopWindow window = parentWindow.WindowManager.CreateWindow(new WindowBuilder() {
+        IDesktopWindow window = manager.CreateWindow(new WindowBuilder() {
             Title = info.Caption,
             Parent = parentWindow,
             Content = view,
@@ -148,7 +172,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
         window.Control.AddHandler(InputElement.KeyDownEvent, (s, e) => {
             if (!e.Handled && e.Key == Key.Escape) {
-                if (view.OwnerWindow != null) {
+                if (view.OwnerWindow != null && view.OwnerWindow.OpenState == OpenState.Open) {
                     view.RequestClose(MessageBoxResult.None);
                 }
             }
@@ -160,7 +184,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
         return window;
     }
 
-    private static IOverlayWindow ShowMessageBoxInOverlay(MessageBoxInfo info, IOverlayWindowManager manager, IOverlayWindow? parentWindow) {
+    private static IOverlayWindow CreateMessageBoxOverlay(MessageBoxInfo info, IOverlayWindowManager manager, IOverlayWindow? parentWindow) {
         MessageBoxView view = new MessageBoxView() {
             MessageBoxData = info
         };
@@ -180,7 +204,7 @@ public class MessageDialogServiceImpl : IMessageDialogService {
 
         window.Control.AddHandler(InputElement.KeyDownEvent, (s, e) => {
             if (!e.Handled && e.Key == Key.Escape) {
-                if (view.OwnerWindow != null) {
+                if (view.OwnerWindow != null && view.OwnerWindow.OpenState == OpenState.Open) {
                     view.RequestClose(MessageBoxResult.None);
                 }
             }
