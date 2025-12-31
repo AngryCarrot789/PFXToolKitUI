@@ -34,7 +34,7 @@ public static class ContextEntryExtensions {
     public readonly struct UpdateEventArgs<T1, T2>(T1 value1, T2 value2) {
         /// <summary>Gets the current value of type 1</summary>
         public T1 Value1 { get; } = value1;
-        
+
         /// <summary>Gets the current value of type 2</summary>
         public T2 Value2 { get; } = value2;
     }
@@ -45,7 +45,7 @@ public static class ContextEntryExtensions {
 
         /// <summary>Gets the current value of type 2</summary>
         public T2 Value2 { get; } = value2;
-        
+
         /// <summary>Gets the current value of type 3</summary>
         public T3 Value3 { get; } = value3;
     }
@@ -129,34 +129,35 @@ public static class ContextEntryExtensions {
     }
 
     public static BaseMenuEntry AddCanExecuteChangeUpdaterForEvent<T>(this BaseMenuEntry entry, DataKey<T> key, string eventName) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateCanExecute<T>(entry, key, [eventName]).OnCapturedContextChanged;
+        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, [eventName], static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
         return entry;
     }
 
     public static BaseMenuEntry AddCanExecuteChangeUpdaterForEvents<T>(this BaseMenuEntry entry, DataKey<T> key, string[] eventNames) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateCanExecute<T>(entry, key, eventNames).OnCapturedContextChanged;
+        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, eventNames, static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
         return entry;
     }
 
     public static BaseMenuEntry AddIsCheckedChangeUpdaterForEvent<T>(this BaseMenuEntry entry, DataKey<T> key, string eventName) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateIsChecked<T>(entry, key, [eventName]).OnCapturedContextChanged;
+        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, [eventName], static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
         return entry;
     }
 
     public static BaseMenuEntry AddIsCheckedChangeUpdaterForEvents<T>(this BaseMenuEntry entry, DataKey<T> key, string[] eventNames) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_UpdateIsChecked<T>(entry, key, eventNames).OnCapturedContextChanged;
+        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, eventNames, static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
         return entry;
     }
 
     private abstract class BaseSpecializedChangeHandler<T> : IRelayEventHandler where T : class {
-        protected readonly BaseMenuEntry Entry;
         private readonly DataKey<T> key;
         private readonly string[] eventNames;
-        private SenderEventRelay[]? relays;
+        private EventWrapper[]? relays;
         private RapidDispatchActionEx? rda;
-        
-        protected T? CurrentValue { get; private set; }
 
+        public T? CurrentValue { get; private set; }
+
+        public BaseMenuEntry Entry { get; }
+        
         protected BaseSpecializedChangeHandler(BaseMenuEntry entry, DataKey<T> key, string[] eventNames) {
             this.Entry = entry;
             this.key = key;
@@ -167,7 +168,7 @@ public static class ContextEntryExtensions {
             Debug.Assert(this.Entry == o);
             if (e.NewValue == null || !this.key.TryGetContext(e.NewValue, out T? newValue)) {
                 if (this.CurrentValue != null) {
-                    foreach (SenderEventRelay relay in this.relays!)
+                    foreach (EventWrapper relay in this.relays!)
                         EventRelayStorage.UIStorage.RemoveHandler(this.CurrentValue, this, relay);
                     this.CurrentValue = null;
                     this.Update();
@@ -175,12 +176,12 @@ public static class ContextEntryExtensions {
             }
             else if (!Equals(this.CurrentValue, newValue)) {
                 if (this.relays != null && this.CurrentValue != null) {
-                    foreach (SenderEventRelay relay in this.relays!)
+                    foreach (EventWrapper relay in this.relays!)
                         EventRelayStorage.UIStorage.RemoveHandler(this.CurrentValue, this, relay);
                 }
 
                 if (this.relays == null) {
-                    this.relays = new SenderEventRelay[this.eventNames.Length];
+                    this.relays = new EventWrapper[this.eventNames.Length];
                     for (int i = 0; i < this.eventNames.Length; i++) {
                         this.relays[i] = EventRelayStorage.UIStorage.GetEventRelay(this.key.DataType, this.eventNames[i]);
                     }
@@ -188,7 +189,7 @@ public static class ContextEntryExtensions {
 
                 this.CurrentValue = newValue;
                 this.Update();
-                foreach (SenderEventRelay relay in this.relays!)
+                foreach (EventWrapper relay in this.relays!)
                     EventRelayStorage.UIStorage.AddHandler(newValue, this, relay);
             }
         }
@@ -200,7 +201,7 @@ public static class ContextEntryExtensions {
             else {
                 if (this.rda == null)
                     Interlocked.Exchange(ref this.rda, RapidDispatchActionEx.ForSync(this.Update, "SpecializedChangeHandler"));
-                
+
                 this.rda.InvokeAsync();
             }
         }
@@ -208,27 +209,7 @@ public static class ContextEntryExtensions {
         protected abstract void Update();
     }
 
-    private class SpecializedChangeHandler_Callback<T> : BaseSpecializedChangeHandler<T> where T : class {
-        private readonly EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate;
-
-        public SpecializedChangeHandler_Callback(BaseMenuEntry entry, DataKey<T> key, string[] eventNames, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) : base(entry, key, eventNames) {
-            this.onUpdate = onUpdate;
-        }
-
-        protected override void Update() => this.onUpdate(this.Entry, new UpdateEventArgs<T?>(this.CurrentValue));
-    }
-
-    private class SpecializedChangeHandler_UpdateCanExecute<T> : BaseSpecializedChangeHandler<T> where T : class {
-        public SpecializedChangeHandler_UpdateCanExecute(BaseMenuEntry entry, DataKey<T> key, string[] eventNames) : base(entry, key, eventNames) {
-        }
-
-        protected override void Update() => this.Entry.RaiseCanExecuteChanged();
-    }
-
-    private class SpecializedChangeHandler_UpdateIsChecked<T> : BaseSpecializedChangeHandler<T> where T : class {
-        public SpecializedChangeHandler_UpdateIsChecked(BaseMenuEntry entry, DataKey<T> key, string[] eventNames) : base(entry, key, eventNames) {
-        }
-
-        protected override void Update() => this.Entry.RaiseIsCheckedChanged();
+    private class SpecializedChangeHandler_Callback<T>(BaseMenuEntry entry, DataKey<T> key, string[] eventNames, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) : BaseSpecializedChangeHandler<T>(entry, key, eventNames) where T : class {
+        protected override void Update() => onUpdate(this.Entry, new UpdateEventArgs<T?>(this.CurrentValue));
     }
 }

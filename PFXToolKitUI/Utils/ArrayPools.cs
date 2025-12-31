@@ -21,8 +21,8 @@ using System.Buffers;
 
 namespace PFXToolKitUI.Utils;
 
-public static class RentHelper {
-    public static Token<T> RentArray<T>(int minimumLength, out T[] array, ArrayPool<T>? pool = null) {
+public static class ArrayPools {
+    public static Token<T> Rent<T>(int minimumLength, out T[] array, ArrayPool<T>? pool = null) {
         array = (pool ??= ArrayPool<T>.Shared).Rent(minimumLength);
         return new Token<T>(pool, array);
     }

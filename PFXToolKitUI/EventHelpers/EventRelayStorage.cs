@@ -45,7 +45,7 @@ public sealed class EventRelayStorage {
     // mutate eventInfoToRelayMap and maybe cachedDelegateHandlers, and that method needs to
     // be thread safe. Locking is the safer, and probably faster (based on current usage) option
     private readonly Lock eventInfoMapLock = new Lock();
-    private readonly Dictionary<EventInfoKey, SenderEventRelay> eventInfoToRelayMap;
+    private readonly Dictionary<EventInfoKey, EventWrapper> eventInfoToRelayMap;
 
     // A cache of delegates that invoke OnEventRaised. The key is the event name passed to OnEventRaised.
     // This is used because, although it's not common, sometimes there's events of type EventHandler
@@ -75,60 +75,61 @@ public sealed class EventRelayStorage {
     #endregion
 
     public EventRelayStorage() {
-        this.eventInfoToRelayMap = new Dictionary<EventInfoKey, SenderEventRelay>();
+        this.eventInfoToRelayMap = new Dictionary<EventInfoKey, EventWrapper>();
         this.attachedInstanceMap = new ConcurrentDictionary<object, HybridDictionary>(ReferenceEqualityComparer.Instance);
         this.m_OnEventRaised = this.OnEventRaised;
     }
 
-    public void AddHandler(object instance, IRelayEventHandler handler, SenderEventRelay relay) {
+    public void AddHandler(object instance, IRelayEventHandler handler, EventWrapper relay) {
         HybridDictionary eventToHandlerList = this.attachedInstanceMap.GetOrAdd(instance, _ => new HybridDictionary());
-
+        string name = relay.EventInfo.Name;
+        
         lock (eventToHandlerList) {
-            IRelayEventHandler[]? array = (IRelayEventHandler[]?) eventToHandlerList[relay.EventName];
+            IRelayEventHandler[]? array = (IRelayEventHandler[]?) eventToHandlerList[name];
             if (array == null) {
                 relay.AddEventHandler(instance);
-                eventToHandlerList[relay.EventName] = new[] { handler };
+                eventToHandlerList[name] = new[] { handler };
             }
             else {
-                eventToHandlerList[relay.EventName] = ArrayUtils.Add(array, handler);
+                eventToHandlerList[name] = ArrayUtils.Add(array, handler);
             }
         }
     }
 
-    public void RemoveHandler(object instance, IRelayEventHandler handler, SenderEventRelay relay) {
+    public void RemoveHandler(object instance, IRelayEventHandler handler, EventWrapper relay) {
         HybridDictionary eventToHandlerList = this.attachedInstanceMap[instance];
 
+        string name = relay.EventInfo.Name;
         lock (eventToHandlerList) {
-            IRelayEventHandler[]? array = (IRelayEventHandler[]?) eventToHandlerList[relay.EventName];
-            if (array == null)
-                return;
-
-            if (array.Length == 1) {
-                relay.RemoveEventHandler(instance); // no more binders listen to event, so remove handler
-                eventToHandlerList.Remove(relay.EventName); // remove the list to open possibility to remove model from attachedInstanceMap
-                if (eventToHandlerList.Count == 0) {
-                    // prevent memory leak. the model should always be removed as soon as all binders using it are detached.
-                    bool removed = this.attachedInstanceMap.TryRemove(instance, out HybridDictionary? removedInnerMap);
-                    Debug.Assert(removed && removedInnerMap == eventToHandlerList);
+            IRelayEventHandler[]? array = (IRelayEventHandler[]?) eventToHandlerList[name];
+            if (array != null) {
+                if (array.Length == 1) {
+                    relay.RemoveEventHandler(instance); // no more binders listen to event, so remove handler
+                    eventToHandlerList.Remove(name); // remove the list to open possibility to remove model from attachedInstanceMap
+                    if (eventToHandlerList.Count == 0) {
+                        // prevent memory leak. the model should always be removed as soon as all binders using it are detached.
+                        bool removed = this.attachedInstanceMap.TryRemove(instance, out HybridDictionary? removedInnerMap);
+                        Debug.Assert(removed && removedInnerMap == eventToHandlerList);
+                    }
                 }
-            }
-            else {
-                int idx = ArrayUtils.IndexOf_RefType(array, handler);
-                Debug.Assert(idx != -1);
-                eventToHandlerList[relay.EventName] = ArrayUtils.RemoveAt(array, idx);
+                else {
+                    int idx = ArrayUtils.IndexOfRef(array, handler);
+                    Debug.Assert(idx != -1);
+                    eventToHandlerList[name] = ArrayUtils.RemoveAt(array, idx);
+                }
             }
         }
     }
 
-    public SenderEventRelay GetEventRelay(Type modelType, string eventName) {
+    public EventWrapper GetEventRelay(Type modelType, string eventName) {
         EventInfoKey key = new EventInfoKey(modelType, eventName);
 
         lock (this.eventInfoMapLock) {
-            if (!this.eventInfoToRelayMap.TryGetValue(key, out SenderEventRelay relay)) {
+            if (!this.eventInfoToRelayMap.TryGetValue(key, out EventWrapper relay)) {
                 EventInfo info = EventReflectionUtils.GetEventInfoForName(modelType, eventName);
                 Type handlerType = info.EventHandlerType ?? throw new Exception("Missing event handler type");
                 Delegate eventHandler = this.GetOrCreateEventHandler(handlerType, eventName);
-                this.eventInfoToRelayMap[key] = relay = SenderEventRelay.CreateUnsafe(info, eventHandler);
+                this.eventInfoToRelayMap[key] = relay = EventWrapper.CreateUnsafe(info, eventHandler);
             }
 
             return relay;
@@ -154,7 +155,6 @@ public sealed class EventRelayStorage {
     }
 
     // Note: this can be invoked from any thread
-
     private void OnEventRaised(object model, object theEventName) {
         // assert theEventName is string;
         if (this.attachedInstanceMap.TryGetValue(model, out HybridDictionary? dictionary)) {

@@ -23,7 +23,7 @@ namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
 
 public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, IRelayEventHandler where TModel : class {
     private readonly Func<IBinder<TModel>, string> getText;
-    private readonly SenderEventRelay[] eventRelay;
+    private readonly EventWrapper[] eventRelay;
 
     /// <summary>
     /// Initialises the <see cref="TextBoxToEventPropertyBinder{TModel}"/> object
@@ -52,7 +52,7 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, I
     /// </param>
     public TextBoxToEventPropertyBinder(string[] eventNames, Func<IBinder<TModel>, string> getText, Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate) : base(parseAndUpdate) {
         this.getText = getText;
-        this.eventRelay = new SenderEventRelay[eventNames.Length];
+        this.eventRelay = new EventWrapper[eventNames.Length];
         for (int i = 0; i < eventNames.Length; i++)
             this.eventRelay[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]);
     }
@@ -63,13 +63,13 @@ public class TextBoxToEventPropertyBinder<TModel> : BaseTextBoxBinder<TModel>, I
     
     protected override void OnAttached() {
         base.OnAttached();
-        foreach (SenderEventRelay relay in this.eventRelay)
+        foreach (EventWrapper relay in this.eventRelay)
             EventRelayStorage.UIStorage.AddHandler(this.Model, this, relay);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        foreach (SenderEventRelay relay in this.eventRelay)
+        foreach (EventWrapper relay in this.eventRelay)
             EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, relay);
     }
 }

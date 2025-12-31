@@ -32,7 +32,7 @@ public class ComboBoxToEventPropertyEnumBinder<TEnum> : IRelayEventHandler where
 
     private readonly Action<object, TEnum> setter;
     private readonly Func<object, TEnum?> getter;
-    private readonly SenderEventRelay eventRelay;
+    private readonly EventWrapper eventRelay;
     private bool isUpdatingControl;
     private DataParameterEnumInfo<TEnum>? enumInfo;
     

@@ -33,7 +33,7 @@ public static class SelectionUtils {
     }
 
     public static int GetIndexOfFirstSelectedItem<T>(HashSet<T> selection, IObservableList<T> sourceList) {
-        using (RentHelper.RentSpan(selection.Count, out Span<int> span)) {
+        using (ArrayPools.RentSpan(selection.Count, out Span<int> span)) {
             int i = 0;
             foreach (T item in selection) {
                 int idx = sourceList.IndexOf(item);
@@ -52,7 +52,7 @@ public static class SelectionUtils {
         int count = selection.Count;
         int endIndex = sourceList.Count - 1;
 
-        using (RentHelper.RentSpan(count, out Span<int> span)) {
+        using (ArrayPools.RentSpan(count, out Span<int> span)) {
             int i = 0;
             foreach (T item in selection) {
                 int idx = sourceList.IndexOf(item);
@@ -68,7 +68,7 @@ public static class SelectionUtils {
     }
     
     private static int InternalGetIndexOfNthSelectedItem<T>(int index, HashSet<T> selection, IObservableList<T> sourceList) {
-        using (RentHelper.RentSpan(selection.Count, out Span<int> span)) {
+        using (ArrayPools.RentSpan(selection.Count, out Span<int> span)) {
             int i = 0;
             foreach (T item in selection) {
                 int idx = sourceList.IndexOf(item);

@@ -28,13 +28,13 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
 public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel>, IRelayEventHandler where TModel : class {
-    private readonly SenderEventRelay[] autoEventHelpers;
+    private readonly EventWrapper[] autoEventHelpers;
 
     protected BaseAvaloniaPropertyToMultiEventPropertyBinder(string eventName) : this(null, eventName) {
     }
 
     protected BaseAvaloniaPropertyToMultiEventPropertyBinder(AvaloniaProperty? property, params string[] eventNames) : base(property) {
-        this.autoEventHelpers = new SenderEventRelay[eventNames.Length];
+        this.autoEventHelpers = new EventWrapper[eventNames.Length];
         for (int i = 0; i < eventNames.Length; i++) {
             this.autoEventHelpers[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]);
         }
@@ -47,13 +47,13 @@ public abstract class BaseAvaloniaPropertyToMultiEventPropertyBinder<TModel> : B
 
     protected override void OnAttached() {
         base.OnAttached();
-        foreach (SenderEventRelay aeh in this.autoEventHelpers)
+        foreach (EventWrapper aeh in this.autoEventHelpers)
             EventRelayStorage.UIStorage.AddHandler(this.Model, this, aeh);
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        foreach (SenderEventRelay aeh in this.autoEventHelpers)
+        foreach (EventWrapper aeh in this.autoEventHelpers)
             EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, aeh);
     }
 

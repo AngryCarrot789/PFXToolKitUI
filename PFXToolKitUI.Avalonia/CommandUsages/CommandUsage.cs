@@ -38,37 +38,29 @@ namespace PFXToolKitUI.Avalonia.CommandUsages;
 /// executability state to be re-queried from the command based on the new contextual data
 /// </para>
 /// </summary>
-public abstract class CommandUsage : ICommandUsage {
+public abstract class CommandUsage {
     // Since its invoke method is only called from the main thread,
     // there's no need for the extended version
     private RapidDispatchActionEx? delayedContextUpdate;
+    private EventHandler<RoutedEventArgs>? d_OnInheritedContextChangedImmediately;
 
+    /// <summary>
+    /// Gets the target command ID for this usage instance. This is not null, not empty and
+    /// does not consist of only whitespaces; it's a fully valid command ID
+    /// </summary>
     public string CommandId { get; }
-
-    IContextData ICommandUsage.ContextData => this.GetContextData() ?? EmptyContext.Instance;
 
     public AvaloniaObject? Control { get; private set; }
 
-    public Icon? Icon {
-        get => field;
-        set => PropertyHelper.SetAndRaiseINE(ref field, value, ReferenceEquals, this, static (s, o, n) => s.OnIconChanged(o, n));
-    }
-    
     /// <summary>
     /// Gets whether this usage is currently connected to a control. When disconnecting, this is set
     /// to false while <see cref="Control"/> remains non-null, until <see cref="OnDisconnected"/> has returned
     /// </summary>
     public bool IsConnected { get; private set; }
 
-    public event EventHandler<ValueChangedEventArgs<Icon?>>? IconChanged;
-
     protected CommandUsage(string commandId) {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         this.CommandId = commandId;
-    }
-
-    protected virtual void OnIconChanged(Icon? oldIcon, Icon? newIcon) {
-        this.IconChanged?.Invoke(this, new ValueChangedEventArgs<Icon?>(oldIcon, newIcon));
     }
 
     /// <summary>
@@ -93,7 +85,7 @@ public abstract class CommandUsage : ICommandUsage {
         }
 
         this.IsConnected = true;
-        DataManager.AddInheritedContextChangedHandler(control, this.OnInheritedContextChangedImmediately);
+        DataManager.AddInheritedContextChangedHandler(control, this.d_OnInheritedContextChangedImmediately ??= this.OnInheritedContextChangedImmediately);
         this.OnConnected();
     }
 
@@ -105,7 +97,7 @@ public abstract class CommandUsage : ICommandUsage {
         if (this.Control == null)
             throw new InvalidCastException("Not connected");
 
-        DataManager.RemoveInheritedContextChangedHandler(this.Control, this.OnInheritedContextChangedImmediately);
+        DataManager.RemoveInheritedContextChangedHandler(this.Control, this.d_OnInheritedContextChangedImmediately!);
         this.IsConnected = false;
         this.OnDisconnected();
         this.Control = null;

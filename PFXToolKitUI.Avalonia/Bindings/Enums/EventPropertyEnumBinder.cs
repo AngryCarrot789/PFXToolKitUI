@@ -27,7 +27,7 @@ namespace PFXToolKitUI.Avalonia.Bindings.Enums;
 public class EventPropertyEnumBinder<TEnum> : BaseEnumBinder<TEnum>, IRelayEventHandler where TEnum : unmanaged, Enum {
     private readonly Action<object, TEnum> setter;
     private readonly Func<object, TEnum> getter;
-    private readonly SenderEventRelay eventRelay;
+    private readonly EventWrapper eventRelay;
 
     /// <summary>
     /// Gets or sets the active transferable data owner

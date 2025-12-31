@@ -65,7 +65,7 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     /// </summary>
     public Icon? Icon {
         get => field;
-        set => PropertyHelper.SetAndRaiseINE(ref field, value, ReferenceEquals, this, this.IconChanged);
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IconChanged);
     }
 
     /// <summary>
@@ -73,7 +73,7 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     /// </summary>
     public Icon? DisabledIcon {
         get => field;
-        set => PropertyHelper.SetAndRaiseINE(ref field, value, ReferenceEquals, this, this.DisabledIconChanged);
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.DisabledIconChanged);
     }
 
     /// <summary>

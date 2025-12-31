@@ -28,7 +28,7 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
 public abstract class BaseAvaloniaPropertyToEventPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel>, IRelayEventHandler where TModel : class {
-    private readonly SenderEventRelay eventRelay;
+    private readonly EventWrapper eventRelay;
 
     protected BaseAvaloniaPropertyToEventPropertyBinder(string eventName) : this(null, eventName) {
     }

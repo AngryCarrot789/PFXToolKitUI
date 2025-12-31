@@ -138,7 +138,7 @@ public static class ArrayUtils {
         return newArray;
     }
 
-    public static int IndexOf_RefType<T>(T[] array, T value) where T : class {
+    public static int IndexOfRef<T>(T[] array, T value) where T : class {
         for (int i = 0; i < array.Length; i++) {
             if (Equals(value, array[i])) {
                 return i;
@@ -148,14 +148,72 @@ public static class ArrayUtils {
         return -1;
     }
 
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ThrowIfOutOfBounds(Array array, int offset, int count) {
         ArgumentNullException.ThrowIfNull(array);
+        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, count);
+    }
+    
+    public static void ThrowIfOutOfBounds<T>(T[] array, int offset, int count) {
+        ArgumentNullException.ThrowIfNull(array);
+        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, count);
+    }
+
+    public static void ThrowIfOutOfBounds<T>(Span<T> span, int offset, int count) {
+        ThrowIfOutOfBounds((uint) span.Length, offset, count);
+    }
+    
+    public static void ThrowIfOutOfBounds<T>(ReadOnlySpan<T> span, int offset, int count) {
+        ThrowIfOutOfBounds((uint) span.Length, offset, count);
+    }
+
+    public static void ThrowIfOutOfBounds(uint length, int offset, int count) {
         ArgumentOutOfRangeException.ThrowIfNegative(offset);
         ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if ((uint) offset >= length || (uint) count > (length - (uint) offset)) {
+            ThrowOutOfBounds(length, offset, count);
+        }
+
+        return;
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowOutOfBounds(uint length, int offset, int count) {
+            throw (uint) offset >= length 
+                ? new ArgumentException($"Offset out of bounds of length: {offset} > {length}") 
+                : new ArgumentException($"Offset+Count exceeds bounds: ({offset} + {count}) > {length}");
+        }
+    }
         
-        ulong length = (ulong) array.LongLength;
-        if ((uint) offset > length || (ulong) count > length - (uint) offset)
-            throw new ArgumentException($"Offset and count are out of bounds for the buffer: {offset} + {count}");
+    public static void ThrowIfOutOfBounds(Array array, int offset) {
+        ArgumentNullException.ThrowIfNull(array);
+        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset);
+    }
+    
+    public static void ThrowIfOutOfBounds<T>(T[] array, int offset) {
+        ArgumentNullException.ThrowIfNull(array);
+        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset);
+    }
+
+    public static void ThrowIfOutOfBounds<T>(Span<T> span, int offset) {
+        ThrowIfOutOfBounds((uint) span.Length, offset);
+    }
+    
+    public static void ThrowIfOutOfBounds<T>(ReadOnlySpan<T> span, int offset) {
+        ThrowIfOutOfBounds((uint) span.Length, offset);
+    }
+    
+    public static void ThrowIfOutOfBounds(uint length, int offset) {
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        if ((uint) offset >= length || 1 > (length - (uint) offset)) {
+            ThrowOutOfBounds(length, offset);
+        }
+
+        return;
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowOutOfBounds(uint length, int offset) {
+            throw new ArgumentException($"Offset out of bounds of length: {offset} > {length}");
+        }
     }
 }

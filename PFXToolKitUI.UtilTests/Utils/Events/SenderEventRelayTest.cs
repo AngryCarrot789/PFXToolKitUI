@@ -28,8 +28,8 @@ using Xunit;
 
 namespace PFXToolKitUI.UtilTests.Utils.Events;
 
-[TestSubject(typeof(SenderEventRelay))]
-public class SenderEventRelayTest {
+[TestSubject(typeof(EventWrapper))]
+public class EventWrapperTest {
     private const string TestTextAsCustomParameter = "mr sexy!";
 
     private int handleCount;
@@ -39,19 +39,19 @@ public class SenderEventRelayTest {
     [Fact]
     [SuppressMessage("Usage", "CA2263:Prefer generic overload when type is known")]
     public void TestOrder() {
-        SenderEventRelay relay1 = SenderEventRelay.Create<CommandMenuEntry>(nameof(CommandMenuEntry.DescriptionChanged), obj => {
+        EventWrapper relay1 = EventWrapper.CreateWithSender<CommandMenuEntry>(nameof(CommandMenuEntry.DescriptionChanged), obj => {
             Assert.Equal(this.entry, obj);
             Assert.Equal(0, this.handleCount);
             this.handleCount++;
         });
         
-        SenderEventRelay relay2 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), obj => {
+        EventWrapper relay2 = EventWrapper.CreateWithSender(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), obj => {
             Assert.Equal(this.entry, obj);
             Assert.Equal(1, this.handleCount);
             this.handleCount++;
         });
         
-        SenderEventRelay relay3 = SenderEventRelay.Create(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), (arg1, arg2) => {
+        EventWrapper relay3 = EventWrapper.CreateWithSenderAndState(nameof(CommandMenuEntry.DescriptionChanged), typeof(CommandMenuEntry), (arg1, arg2) => {
             Assert.Equal(this.entry, arg1);
             Assert.Equal(TestTextAsCustomParameter, arg2);
             Assert.Equal(2, this.handleCount);
@@ -71,7 +71,7 @@ public class SenderEventRelayTest {
     private class TestObject {
         public string? Prop1 {
             get => field;
-            set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static t => t.Prop1Changed?.Invoke(t, EventArgs.Empty));
+            set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.Prop1Changed);
         }
         
         public string? Prop2 {
@@ -90,12 +90,12 @@ public class SenderEventRelayTest {
 
     [Fact]
     public void TestGenericUsage() {
-        SenderEventRelay relay1 = SenderEventRelay.Create<TestObject>(nameof(TestObject.Prop1Changed), obj => {
+        EventWrapper relay1 = EventWrapper.CreateWithSender<TestObject>(nameof(TestObject.Prop1Changed), obj => {
             Assert.Equal(this.testObj, obj);
             this.handleCount++;
         });
         
-        SenderEventRelay relay2 = SenderEventRelay.Create<TestObject>(nameof(TestObject.Prop2Changed), obj => {
+        EventWrapper relay2 = EventWrapper.CreateWithSender<TestObject>(nameof(TestObject.Prop2Changed), obj => {
             Assert.Equal(this.testObj, obj);
             this.handleCount++;
         });

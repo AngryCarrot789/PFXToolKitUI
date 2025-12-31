@@ -35,48 +35,42 @@ public sealed class WindowSizingInfo {
     public static readonly double DefaultWidth = Layoutable.WidthProperty.GetDefaultValue(typeof(DesktopNativeWindow));
     public static readonly double DefaultHeight = Layoutable.HeightProperty.GetDefaultValue(typeof(DesktopNativeWindow));
 
-    private double? minWidth, minHeight;
-    private double? maxWidth, maxHeight;
-    private double? width, height;
-    private bool canResize;
-    private SizeToContent sizeToContent;
-
     public double? MinWidth {
-        get => this.minWidth;
-        set => PropertyHelper.SetAndRaise(ref this.minWidth, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MinWidth)));
+        get => field;
+        set => PropertyHelper.SetAndRaise(ref field, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MinWidth)));
     }
 
     public double? MinHeight {
-        get => this.minHeight;
-        set => PropertyHelper.SetAndRaise(ref this.minHeight, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MinHeight)));
+        get => field;
+        set => PropertyHelper.SetAndRaise(ref field, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MinHeight)));
     }
 
     public double? MaxWidth {
-        get => this.maxWidth;
-        set => PropertyHelper.SetAndRaise(ref this.maxWidth, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MaxWidth)));
+        get => field;
+        set => PropertyHelper.SetAndRaise(ref field, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MaxWidth)));
     }
 
     public double? MaxHeight {
-        get => this.maxHeight;
-        set => PropertyHelper.SetAndRaise(ref this.maxHeight, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MaxHeight)));
+        get => field;
+        set => PropertyHelper.SetAndRaise(ref field, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(MaxHeight)));
     }
 
     public double? Width {
-        get => this.width;
-        set => PropertyHelper.SetAndRaise(ref this.width, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(Width)));
+        get => field;
+        set => PropertyHelper.SetAndRaise(ref field, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(Width)));
     }
 
     public double? Height {
-        get => this.height;
-        set => PropertyHelper.SetAndRaise(ref this.height, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(Height)));
+        get => field;
+        set => PropertyHelper.SetAndRaise(ref field, value, this, static t => t.DoubleValueChanged?.Invoke(t, nameof(Height)));
     }
 
     /// <summary>
     /// Gets or sets if the window can be resized by the user. This also hides the maximize button, if used
     /// </summary>
     public bool CanResize {
-        get => this.canResize;
-        set => PropertyHelper.SetAndRaiseINE(ref this.canResize, value, this, this.CanResizeChanged);
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CanResizeChanged);
     }
 
     /// <summary>
@@ -84,8 +78,8 @@ public sealed class WindowSizingInfo {
     /// initially takes up the framework default window size, unless our width/height or minimum analogues are set
     /// </summary>
     public SizeToContent SizeToContent {
-        get => this.sizeToContent;
-        set => PropertyHelper.SetAndRaiseINE(ref this.sizeToContent, value, this, this.SizeToContentChanged);
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.SizeToContentChanged);
     }
 
     public event EventHandler<string>? DoubleValueChanged;
@@ -99,13 +93,13 @@ public sealed class WindowSizingInfo {
 
     internal WindowSizingInfo(IDesktopWindow window, WindowBuilder builder) {
         this.Window = window;
-        this.minWidth = builder.MinWidth;
-        this.minHeight = builder.MinHeight;
-        this.maxWidth = builder.MaxWidth;
-        this.maxHeight = builder.MaxHeight;
-        this.width = builder.Width;
-        this.height = builder.Height;
-        this.canResize = builder.CanResize;
-        this.sizeToContent = builder.SizeToContent;
+        this.MinWidth = builder.MinWidth;
+        this.MinHeight = builder.MinHeight;
+        this.MaxWidth = builder.MaxWidth;
+        this.MaxHeight = builder.MaxHeight;
+        this.Width = builder.Width;
+        this.Height = builder.Height;
+        this.CanResize = builder.CanResize;
+        this.SizeToContent = builder.SizeToContent;
     }
 }

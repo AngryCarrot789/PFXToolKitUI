@@ -24,7 +24,7 @@ namespace PFXToolKitUI.EventHelpers;
 public class AutoValueHelperEx<T> : IRelayEventHandler where T : class {
     private readonly Action<T> update;
     private readonly EventRelayStorage storage;
-    private readonly SenderEventRelay eventRelay;
+    private readonly EventWrapper eventRelay;
     private T? value;
 
     /// <summary>

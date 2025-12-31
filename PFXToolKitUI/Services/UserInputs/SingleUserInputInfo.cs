@@ -37,7 +37,6 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     private string text;
     private string? label;
     private TimerDispatcherDebouncer? errorDebouncer;
-    private static string[]? s_IndexOfAny;
 
     /// <summary>
     /// Gets the value the user have typed into the text field
