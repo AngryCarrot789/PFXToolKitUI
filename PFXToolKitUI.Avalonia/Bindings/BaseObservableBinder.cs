@@ -33,7 +33,7 @@ public abstract class BaseObservableBinder<TModel> : BaseBinder<TModel> where TM
     private volatile int rdaLock;
     private readonly IEventObservable<TModel>[] observables;
     private readonly IDisposable?[] subscriptions;
-    private Action<TModel>? m_OnEvent;
+    private EventHandler<TModel, object?>? m_OnEvent;
 
     /// <summary>
     /// Gets or sets (init only) if the event can be fired from any thread. Default is true
@@ -92,9 +92,9 @@ public abstract class BaseObservableBinder<TModel> : BaseBinder<TModel> where TM
     }
 
     protected override void OnAttached() {
-        Action<TModel> handler = this.m_OnEvent ??= this.OnEvent;
+        EventHandler<TModel, object?> handler = this.m_OnEvent ??= this.OnEvent;
         for (int i = 0; i < this.observables.Length; i++) {
-            this.subscriptions[i] = this.observables[i].Subscribe(this.Model, handler, invokeImmediately: false /* BaseBinder calls UpdateControl after OnAttached */);
+            this.subscriptions[i] = this.observables[i].Subscribe(this.Model, null, handler, invokeImmediately: false /* BaseBinder calls UpdateControl after OnAttached */);
         }
     }
 
@@ -105,5 +105,5 @@ public abstract class BaseObservableBinder<TModel> : BaseBinder<TModel> where TM
         }
     }
 
-    private void OnEvent(TModel sender) => this.OnModelValueChanged();
+    private void OnEvent(TModel sender, object? state) => this.OnModelValueChanged();
 }

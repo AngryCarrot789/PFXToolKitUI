@@ -201,6 +201,11 @@ public static class ArrayUtils {
     public static void ThrowIfOutOfBounds<T>(ReadOnlySpan<T> span, int offset) {
         ThrowIfOutOfBounds((uint) span.Length, offset);
     }
+
+    public static void ThrowIfOutOfBounds(int length, int offset) {
+        ArgumentOutOfRangeException.ThrowIfNegative(length);
+        ThrowIfOutOfBounds((uint) length, offset);
+    }
     
     public static void ThrowIfOutOfBounds(uint length, int offset) {
         ArgumentOutOfRangeException.ThrowIfNegative(offset);
@@ -215,5 +220,15 @@ public static class ArrayUtils {
         static void ThrowOutOfBounds(uint length, int offset) {
             throw new ArgumentException($"Offset out of bounds of length: {offset} > {length}");
         }
+    }
+
+    public static bool IsOutOfBounds(int length, int offset) {
+        if (length < 0 || offset < 0)
+            return true;
+        return IsOutOfBounds((uint) length, (uint) offset);
+    }
+    
+    public static bool IsOutOfBounds(uint length, uint offset) {
+        return offset >= length || 1 > (length - offset);
     }
 }

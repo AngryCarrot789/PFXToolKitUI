@@ -27,8 +27,9 @@ public interface IEventObservable<T> {
     /// Adds a subscriber to the event
     /// </summary>
     /// <param name="owner">The instance to add the event handler to</param>
+    /// <param name="state">The state passed to the callback</param>
     /// <param name="callback">The callback</param>
     /// <param name="invokeImmediately">Immediately calls the callback before this method returns</param>
     /// <returns>The subscription to the event. Dispose to unsubscribe</returns>
-    IDisposable Subscribe(T owner, Action<T> callback, bool invokeImmediately = true);
+    IDisposable Subscribe(T owner, object? state, EventHandler<T, object?> callback, bool invokeImmediately = true);
 }

@@ -46,27 +46,29 @@ public static class Observable {
         private readonly Action<T, EventHandler> addHandler = addHandler;
         private readonly Action<T, EventHandler> removeHandler = removeHandler;
 
-        public IDisposable Subscribe(T owner, Action<T> callback, bool invokeImmediately = true) {
-            return new Subscriber(this, owner, callback, invokeImmediately);
+        public IDisposable Subscribe(T owner, object? state, EventHandler<T, object?> callback, bool invokeImmediately = true) {
+            return new Subscriber(this, owner, state, callback, invokeImmediately);
         }
 
         private sealed class Subscriber : IDisposable {
             private readonly EventObservableImpl<T> impl;
             private readonly T owner;
-            private readonly Action<T> callback;
+            private readonly object? state;
+            private readonly EventHandler<T, object?> callback;
             private readonly EventHandler myHandler;
 
-            public Subscriber(EventObservableImpl<T> impl, T owner, Action<T> callback, bool initialCallback) {
+            public Subscriber(EventObservableImpl<T> impl, T owner, object? state, EventHandler<T, object?> callback, bool initialCallback) {
                 this.impl = impl;
                 this.owner = owner;
+                this.state = state;
                 this.callback = callback;
                 this.impl.addHandler(this.owner, this.myHandler = this.OnEvent);
                 if (initialCallback)
-                    this.OnEvent(null, EventArgs.Empty);
+                    this.callback(this.owner, this.state);
             }
 
             private void OnEvent(object? sender, EventArgs e) {
-                this.callback(this.owner);
+                this.callback(this.owner, this.state);
             }
 
             public void Dispose() {
@@ -79,27 +81,29 @@ public static class Observable {
         private readonly Action<T, EventHandler<TEventArgs>> addHandler = addHandler;
         private readonly Action<T, EventHandler<TEventArgs>> removeHandler = removeHandler;
 
-        public IDisposable Subscribe(T owner, Action<T> callback, bool invokeImmediately = true) {
-            return new Subscriber(this, owner, callback, invokeImmediately);
+        public IDisposable Subscribe(T owner, object? state, EventHandler<T, object?> callback, bool invokeImmediately = true) {
+            return new Subscriber(this, owner, state, callback, invokeImmediately);
         }
 
         private sealed class Subscriber : IDisposable {
             private readonly EventObservableWithArgsImpl<T, TEventArgs> impl;
             private readonly T owner;
-            private readonly Action<T> callback;
+            private readonly object? state;
+            private readonly EventHandler<T, object?> callback;
             private readonly EventHandler<TEventArgs> myHandler;
 
-            public Subscriber(EventObservableWithArgsImpl<T, TEventArgs> impl, T owner, Action<T> callback, bool initialCallback) {
+            public Subscriber(EventObservableWithArgsImpl<T, TEventArgs> impl, T owner, object? state, EventHandler<T, object?> callback, bool initialCallback) {
                 this.impl = impl;
                 this.owner = owner;
+                this.state = state;
                 this.callback = callback;
                 this.impl.addHandler(this.owner, this.myHandler = this.OnEvent);
                 if (initialCallback)
-                    this.callback(this.owner);
+                    this.callback(this.owner, this.state);
             }
 
             private void OnEvent(object? sender, TEventArgs eventArgs) {
-                this.callback(this.owner);
+                this.callback(this.owner, this.state);
             }
 
             public void Dispose() {

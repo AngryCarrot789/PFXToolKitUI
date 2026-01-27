@@ -28,29 +28,43 @@ namespace PFXToolKitUI.Avalonia.Bindings;
 /// </summary>
 /// <typeparam name="TModel">The model type</typeparam>
 public abstract class BaseAvaloniaPropertyToEventPropertyBinder<TModel> : BaseAvaloniaPropertyBinder<TModel>, IRelayEventHandler where TModel : class {
-    private readonly EventWrapper eventRelay;
+    private readonly EventWrapper[] eventRelays;
 
     protected BaseAvaloniaPropertyToEventPropertyBinder(string eventName) : this(null, eventName) {
     }
+    
+    protected BaseAvaloniaPropertyToEventPropertyBinder(string[] eventNames) : this(null, eventNames) {
+    }
 
     protected BaseAvaloniaPropertyToEventPropertyBinder(AvaloniaProperty? property, string eventName) : base(property) {
-        this.eventRelay = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName);
+        this.eventRelays = [EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventName)];
+    }
+    
+    protected BaseAvaloniaPropertyToEventPropertyBinder(AvaloniaProperty? property, string[] eventNames) : base(property) {
+        this.eventRelays = new  EventWrapper[eventNames.Length];
+        for (int i = 0; i < eventNames.Length; i++) {
+            this.eventRelays[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(TModel), eventNames[i]); 
+        }
     }
 
     /// <summary>
     /// Invoked by the model's value changed event handler. By default this method invokes <see cref="IBinder.UpdateControl"/>
     /// </summary>
     protected virtual void OnModelValueChanged() => this.UpdateControl();
-
-    void IRelayEventHandler.OnEvent(object sender) => this.OnModelValueChanged();
     
     protected override void OnAttached() {
         base.OnAttached();
-        EventRelayStorage.UIStorage.AddHandler(this.Model, this, this.eventRelay);
+        foreach (EventWrapper wrapper in this.eventRelays) {
+            EventRelayStorage.UIStorage.AddHandler(this.Model, this, wrapper);
+        }
     }
 
     protected override void OnDetached() {
         base.OnDetached();
-        EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, this.eventRelay);
+        foreach (EventWrapper wrapper in this.eventRelays) {
+            EventRelayStorage.UIStorage.RemoveHandler(this.Model, this, wrapper);
+        }
     }
+    
+    void IRelayEventHandler.OnEvent(object sender) => this.OnModelValueChanged();
 }

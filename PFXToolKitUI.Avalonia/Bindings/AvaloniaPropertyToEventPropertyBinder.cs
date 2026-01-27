@@ -31,8 +31,14 @@ public class AvaloniaPropertyToEventPropertyBinder<TModel> : BaseAvaloniaPropert
 
     public AvaloniaPropertyToEventPropertyBinder(string eventName, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel) : this(null, eventName, updateControl, updateModel) {
     }
+    
+    public AvaloniaPropertyToEventPropertyBinder(string[] eventNames, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel) : this(null, eventNames, updateControl, updateModel) {
+    }
 
-    public AvaloniaPropertyToEventPropertyBinder(AvaloniaProperty? property, string eventName, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel) : base(property, eventName) {
+    public AvaloniaPropertyToEventPropertyBinder(AvaloniaProperty? property, string eventName, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel) : this(property, [eventName], updateControl, updateModel) {
+    }
+    
+    public AvaloniaPropertyToEventPropertyBinder(AvaloniaProperty? property, string[] eventNames, Action<IBinder<TModel>>? updateControl, Action<IBinder<TModel>>? updateModel) : base(property, eventNames) {
         this.updateControl = updateControl;
         this.updateModel = updateModel;
     }
