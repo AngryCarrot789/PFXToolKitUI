@@ -39,7 +39,7 @@ public readonly struct TopLevelIdentifier : IEquatable<TopLevelIdentifier> {
     }
     
     /// <summary>
-    /// Creates an identifier for a top level that is only instantiated once
+    /// Creates an identifier for a top level that is only instantiated once or has a single/shared unique state
     /// </summary>
     /// <param name="id">The top level ID</param>
     /// <returns>The identifier</returns>
@@ -68,4 +68,9 @@ public readonly struct TopLevelIdentifier : IEquatable<TopLevelIdentifier> {
     public static bool operator ==(TopLevelIdentifier left, TopLevelIdentifier right) => left.Equals(right);
 
     public static bool operator !=(TopLevelIdentifier left, TopLevelIdentifier right) => !(left == right);
+
+    public static void ThrowIfInvalid(TopLevelIdentifier topLevelIdentifier) {
+        if (string.IsNullOrWhiteSpace(topLevelIdentifier.Id))
+            throw new InvalidOperationException("Identifier's Id is null, empty or consists of only whitespaces");
+    }
 }

@@ -44,8 +44,8 @@ public class CommandIdToGestureConverter : IValueConverter {
 
     public static bool CommandIdToGesture(string? id, [NotNullWhen(true)] out string? gesture) {
         if (id != null && CommandManager.Instance.GetCommandById(id) != null) {
-            IEnumerable<ShortcutEntry>? shortcuts = ShortcutManager.Instance.GetShortcutsByCommandId(id);
-            if (shortcuts != null) {
+            IReadOnlyCollection<ShortcutEntry> shortcuts = ShortcutManager.Instance.GetShortcutsByCommandId(id);
+            if (shortcuts.Count > 0) {
                 return (gesture = ShortcutIdToGestureConverter.ShortcutsToGesture(shortcuts, null)) != null;
             }
         }

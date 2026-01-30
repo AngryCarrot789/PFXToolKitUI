@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
@@ -131,9 +132,13 @@ public abstract class ShortcutManager {
         return this.cachedAllShortcuts!;
     }
 
-    public IEnumerable<ShortcutEntry>? GetShortcutsByCommandId(string cmdId) {
+    public IReadOnlyCollection<ShortcutEntry> GetShortcutsByCommandId(string cmdId) {
         this.EnsureCacheBuilt();
-        return this.cachedCmdToShortcut.GetValueOrDefault(cmdId);
+        LinkedList<ShortcutEntry>? list = this.cachedCmdToShortcut.GetValueOrDefault(cmdId);
+        if (list != null)
+            return list;
+        
+        return ReadOnlyCollection<ShortcutEntry>.Empty;
     }
 
     public static void GetAllShortcuts(ShortcutGroupEntry rootGroupEntry, ICollection<ShortcutEntry> accumulator) {
