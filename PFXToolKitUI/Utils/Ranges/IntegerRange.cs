@@ -17,12 +17,14 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace PFXToolKitUI.Utils.Ranges;
 
+[DebuggerDisplay("{Start} -> {End} ({Length})")]
 public readonly struct IntegerRange<T> : IEquatable<IntegerRange<T>> where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
     public static IntegerRange<T> Empty => default;
 
@@ -107,7 +109,7 @@ public readonly struct IntegerRange<T> : IEquatable<IntegerRange<T>> where T : u
 
     public override int GetHashCode() => HashCode.Combine(this.Start, this.End);
 
-    public override string ToString() => this.IsEmpty ? $"[{this.Start} (empty)]" : $"[{this.Start} -> {unchecked(this.End - T.One)}]";
+    public override string ToString() => this.IsEmpty ? $"[{this.Start} (empty)]" : $"[{this.Start} -> {this.End}]";
 
     public static bool operator ==(IntegerRange<T> left, IntegerRange<T> right) => left.Equals(right);
 

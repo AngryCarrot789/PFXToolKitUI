@@ -70,6 +70,10 @@ public class FragmentedMemoryBuffer {
         this.myFragments = keepList.OrderBy(f => f.Address).ToList();
     }
 
+    public void Clear() {
+        this.myFragments.Clear();
+    }
+
     public void Clear(ulong offset, ulong count) {
         if (count == 0)
             return;
@@ -139,6 +143,7 @@ public class FragmentedMemoryBuffer {
         return $"Fragments: {string.Join(", ", this.myFragments.Select(f => $"[{f.Address}-{f.End})"))}";
     }
 
+    [DebuggerDisplay("{Address} -> {End} ({Data.Length})")]
     private readonly struct Fragment(ulong address, byte[] data) : IEquatable<Fragment>, IComparable<Fragment> {
         public readonly ulong Address = address;
         public readonly byte[] Data = data;
