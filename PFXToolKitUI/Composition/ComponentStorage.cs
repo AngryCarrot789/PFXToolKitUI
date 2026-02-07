@@ -22,9 +22,13 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace PFXToolKitUI.Composition;
 
+/// <summary>
+/// A thread-safe dictionary of components that may be constant or lazily generated
+/// </summary>
 public sealed class ComponentStorage {
     private readonly Dictionary<Type, ComponentEntry> myComponents = new();
     private readonly IComponentManager componentManager;
+    private readonly Lock myLock = new Lock();
 
     public ComponentStorage(IComponentManager componentManager) {
         this.componentManager = componentManager;
@@ -37,16 +41,18 @@ public sealed class ComponentStorage {
     /// <returns>True if we have a component of the specified type</returns>
     public bool HasComponent(Type componentType) {
         ArgumentNullException.ThrowIfNull(componentType);
-        return this.TryGetOrInitializeComponent(componentType, out _, false);
+        lock (this.myLock)
+            return this.TryGetOrInitializeComponent(componentType, out _, false);
     }
-    
+
     /// <summary>
     /// Checks if we have a component of the specified type
     /// </summary>
     /// <typeparam name="T">The type of component to check</typeparam>
     /// <returns>True if we have a component of the specified type</returns>
     public bool HasComponent<T>() {
-        return this.TryGetOrInitializeComponent(typeof(T), out _, false);
+        lock (this.myLock)
+            return this.TryGetOrInitializeComponent(typeof(T), out _, false);
     }
 
     /// <summary>
@@ -57,9 +63,11 @@ public sealed class ComponentStorage {
     /// <exception cref="Exception">No such component of the specified type</exception>
     public object GetComponent(Type componentType) {
         ArgumentNullException.ThrowIfNull(componentType);
-        if (!this.TryGetOrInitializeComponent(componentType, out object? component))
-            throw new Exception($"No component registered with type: {componentType}");
-        return component!;
+        lock (this.myLock) {
+            if (!this.TryGetOrInitializeComponent(componentType, out object? component))
+                throw new Exception($"No component registered with type: {componentType}");
+            return component!;
+        }
     }
 
     /// <summary>
@@ -77,7 +85,8 @@ public sealed class ComponentStorage {
     /// <param name="component">The component, or null, if we didn't have it</param>
     /// <returns>True if we have a component of the specified type</returns>
     public bool TryGetComponent(Type componentType, [NotNullWhen(true)] out object? component) {
-        return this.TryGetOrInitializeComponent(componentType, out component);
+        lock (this.myLock)
+            return this.TryGetOrInitializeComponent(componentType, out component);
     }
 
     /// <summary>
@@ -87,11 +96,13 @@ public sealed class ComponentStorage {
     /// <typeparam name="T">The type of component to get</typeparam>
     /// <returns>True if we have a component of the specified type</returns>
     public bool TryGetComponent<T>([NotNullWhen(true)] out T? component) where T : class {
-        bool result = this.TryGetOrInitializeComponent(typeof(T), out object? comp);
-        component = (T?) comp;
-        return result;
+        lock (this.myLock) {
+            bool result = this.TryGetOrInitializeComponent(typeof(T), out object? comp);
+            component = (T?) comp;
+            return result;
+        }
     }
-    
+
     /// <summary>
     /// Either gets an existing component of the specified type, or creates it and registers it using type <see cref="T"/>
     /// </summary>
@@ -99,32 +110,40 @@ public sealed class ComponentStorage {
     /// <typeparam name="T">The type of component to get or register the new component instance with</typeparam>
     /// <returns>The component, either pre-existing or newly created</returns>
     public T GetOrCreateComponent<T>(Func<IComponentManager, T> factory) where T : class {
-        if (this.TryGetComponent(out T? component)) {
-            return component;
+        lock (this.myLock) {
+            if (this.TryGetOrInitializeComponent(typeof(T), out object? comp)) {
+                return (T) comp!;
+            }
+
+            T newValue = factory(this.componentManager);
+            this.myComponents[typeof(T)] = new ComponentEntry(false, newValue);
+            return newValue;
         }
-
-        T newValue = factory(this.componentManager);
-        this.myComponents[typeof(T)] = new ComponentEntry(false, newValue);
-        return newValue;
     }
-    
-    public void AddComponent<TComponent>(TComponent component) where TComponent : class {
-        if (this.myComponents.ContainsKey(typeof(TComponent)))
-            throw new InvalidOperationException("Component type already registered: " + typeof(TComponent));
 
-        this.myComponents[typeof(TComponent)] = new ComponentEntry(false, component);
+    public void AddComponent<TComponent>(TComponent component) where TComponent : class {
+        lock (this.myLock) {
+            if (this.myComponents.ContainsKey(typeof(TComponent)))
+                throw new InvalidOperationException("Component type already registered: " + typeof(TComponent));
+
+            this.myComponents[typeof(TComponent)] = new ComponentEntry(false, component);
+        }
     }
 
     public void AddLazyComponent<TComponent>(Func<IComponentManager, TComponent> factory) where TComponent : class {
         ArgumentNullException.ThrowIfNull(factory);
-        if (this.myComponents.ContainsKey(typeof(TComponent)))
-            throw new InvalidOperationException("Component type already registered: " + typeof(TComponent));
 
-        this.myComponents[typeof(TComponent)] = new ComponentEntry(true, new Func<IComponentManager, object>(factory));
+        lock (this.myLock) {
+            if (this.myComponents.ContainsKey(typeof(TComponent)))
+                throw new InvalidOperationException("Component type already registered: " + typeof(TComponent));
+
+            this.myComponents[typeof(TComponent)] = new ComponentEntry(true, new Func<IComponentManager, object>(factory));
+        }
     }
-    
+
     private bool TryGetOrInitializeComponent(Type componentType, out object? component, bool initializeIfLazy = true) {
         ArgumentNullException.ThrowIfNull(componentType);
+
         if (!this.myComponents.TryGetValue(componentType, out ComponentEntry entry)) {
             component = null;
             return false;
@@ -138,6 +157,7 @@ public sealed class ComponentStorage {
 
             component = ((Func<IComponentManager, object>) entry.value)(this.componentManager);
             Debug.Assert(componentType.IsInstanceOfType(component), "New component instance is incompatible with target type");
+            
             this.myComponents[componentType] = new ComponentEntry(false, component);
         }
         else {

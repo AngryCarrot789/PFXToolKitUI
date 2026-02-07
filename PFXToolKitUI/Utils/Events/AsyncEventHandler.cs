@@ -51,7 +51,7 @@ public delegate Task AsyncEventHandler<in TSender, in TEventArgs>(TSender sender
 
 public static class AsyncEventUtils {
     private delegate Task InvokeHandlerAsync(Delegate handler, object? sender, object? args, object? state);
-    
+
     /// <summary>
     /// Asynchronously invokes the given async event handler's invocation list
     /// </summary>
@@ -61,9 +61,13 @@ public static class AsyncEventUtils {
     /// <param name="ignoreCancelled">True to ignore cancelled tasks, False to append them to the exception list and cause this function to throw</param>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeAsync(AsyncEventHandler? handler, object? sender, EventArgs args, bool ignoreCancelled = true) {
+    public static Task InvokeAsync(this AsyncEventHandler? handler, object? sender, EventArgs args, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, args, null, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, args, null, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _args, object? _) {
             return Task.Run(() => ((AsyncEventHandler) handler)(_sender, (EventArgs) _args!));
@@ -80,9 +84,13 @@ public static class AsyncEventUtils {
     /// <typeparam name="TEventArgs">The type of event args passed to the handlers</typeparam>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeAsync<TEventArgs>(AsyncEventHandler<TEventArgs>? handler, object? sender, TEventArgs args, bool ignoreCancelled = true) {
+    public static Task InvokeAsync<TEventArgs>(this AsyncEventHandler<TEventArgs>? handler, object? sender, TEventArgs args, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, args, null, list, InvokeAsyncWithArgsImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, args, null, list, InvokeAsyncWithArgsImpl, ignoreCancelled);
 
         static Task InvokeAsyncWithArgsImpl(Delegate handler, object? _sender, object? _args, object? _) {
             return Task.Run(() => ((AsyncEventHandler<TEventArgs>) handler)(_sender, (TEventArgs) _args!));
@@ -100,15 +108,19 @@ public static class AsyncEventUtils {
     /// <typeparam name="TEventArgs">The type of event args passed to the handlers</typeparam>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeAsync<TSender, TEventArgs>(AsyncEventHandler<TSender, TEventArgs>? handler, TSender sender, TEventArgs args, bool ignoreCancelled = true) {
+    public static Task InvokeAsync<TSender, TEventArgs>(this AsyncEventHandler<TSender, TEventArgs>? handler, TSender sender, TEventArgs args, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, args, null, list, InvokeAsyncWithSenderAndArgsImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, args, null, list, InvokeAsyncWithSenderAndArgsImpl, ignoreCancelled);
 
         static Task InvokeAsyncWithSenderAndArgsImpl(Delegate handler, object? _sender, object? _args, object? _) {
             return Task.Run(() => ((AsyncEventHandler<TSender, TEventArgs>) handler)((TSender) _sender!, (TEventArgs) _args!));
         }
     }
-    
+
     /// <summary>
     /// Asynchronously invokes the given async event handler's invocation list using a custom defined function that produces a task for a handler
     /// </summary>
@@ -119,15 +131,19 @@ public static class AsyncEventUtils {
     /// <param name="ignoreCancelled">True to ignore cancelled tasks, False to append them to the exception list and cause this function to throw</param>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeCustomDispatchAsync(AsyncEventHandler? handler, object? sender, EventArgs args, Func<object?, EventArgs, AsyncEventHandler, Task> invokeAsync, bool ignoreCancelled = true) {
+    public static Task InvokeCustomDispatchAsync(this AsyncEventHandler? handler, object? sender, EventArgs args, Func<object?, EventArgs, AsyncEventHandler, Task> invokeAsync, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, args, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, args, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _args, object? _state) {
             return ((Func<object?, EventArgs, AsyncEventHandler, Task>) _state!)(_sender, (EventArgs) _args!, (AsyncEventHandler) handler);
         }
     }
-    
+
     /// <summary>
     /// Asynchronously invokes the given async event handler's invocation list using a custom defined function that produces a task for a handler
     /// </summary>
@@ -139,15 +155,19 @@ public static class AsyncEventUtils {
     /// <typeparam name="TEventArgs">The type of event args passed to the handlers</typeparam>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeCustomDispatchAsync<TEventArgs>(AsyncEventHandler<TEventArgs>? handler, object? sender, TEventArgs args, Func<object?, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
+    public static Task InvokeCustomDispatchAsync<TEventArgs>(this AsyncEventHandler<TEventArgs>? handler, object? sender, TEventArgs args, Func<object?, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, args, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, args, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _args, object? _state) {
             return ((Func<object?, TEventArgs, AsyncEventHandler<TEventArgs>, Task>) _state!)(_sender, (TEventArgs) _args!, (AsyncEventHandler<TEventArgs>) handler);
         }
     }
-    
+
     /// <summary>
     /// Asynchronously invokes the given async event handler's invocation list using a custom defined function that produces a task for a handler
     /// </summary>
@@ -160,15 +180,19 @@ public static class AsyncEventUtils {
     /// <typeparam name="TEventArgs">The type of event args passed to the handlers</typeparam>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeCustomDispatchAsync<TSender, TEventArgs>(AsyncEventHandler<TSender, TEventArgs>? handler, TSender? sender, TEventArgs args, Func<TSender, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
+    public static Task InvokeCustomDispatchAsync<TSender, TEventArgs>(this AsyncEventHandler<TSender, TEventArgs>? handler, TSender? sender, TEventArgs args, Func<TSender, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, args, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, args, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _args, object? _state) {
             return ((Func<TSender, TEventArgs, AsyncEventHandler<TEventArgs>, Task>) _state!)((TSender) _sender!, (TEventArgs) _args!, (AsyncEventHandler<TEventArgs>) handler);
         }
     }
-    
+
     /// <summary>
     /// Asynchronously invokes the given async event handler's invocation list, and calls the args factory for each
     /// handler (on the calling thread) and passes the returned value to each handler
@@ -180,16 +204,20 @@ public static class AsyncEventUtils {
     /// <typeparam name="TEventArgs">The type of event args passed to the handlers</typeparam>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeCustomArgsAsync<TEventArgs>(AsyncEventHandler<TEventArgs>? handler, object? sender, Func<object?, TEventArgs> argsFactory, bool ignoreCancelled = true) {
+    public static Task InvokeCustomArgsAsync<TEventArgs>(this AsyncEventHandler<TEventArgs>? handler, object? sender, Func<object?, TEventArgs> argsFactory, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, argsFactory, null, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, argsFactory, null, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _argsFactory, object? _) {
             TEventArgs args = ((Func<object?, TEventArgs>) _argsFactory!)(_sender);
             return Task.Run(() => ((AsyncEventHandler<TEventArgs>) handler)(_sender, args));
         }
     }
-    
+
     /// <summary>
     /// Asynchronously invokes the given async event handler's invocation list, and calls the args factory for each
     /// handler (on the calling thread) and passes the returned value to each handler
@@ -202,28 +230,40 @@ public static class AsyncEventUtils {
     /// <typeparam name="TEventArgs">The type of event args passed to the handlers</typeparam>
     /// <returns>A task that completes once all handlers have completed</returns>
     /// <exception cref="AggregateException">One or more tasks became faulted</exception>
-    public static Task InvokeCustomArgsAsync<TSender, TEventArgs>(AsyncEventHandler<TSender, TEventArgs>? handler, TSender? sender, Func<TSender, TEventArgs> argsFactory, bool ignoreCancelled = true) {
+    public static Task InvokeCustomArgsAsync<TSender, TEventArgs>(this AsyncEventHandler<TSender, TEventArgs>? handler, TSender? sender, Func<TSender, TEventArgs> argsFactory, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, argsFactory, null, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, argsFactory, null, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _argsFactory, object? _) {
             TEventArgs args = ((Func<TSender, TEventArgs>) _argsFactory!)((TSender) _sender!);
             return Task.Run(() => ((AsyncEventHandler<TEventArgs>) handler)(_sender, args));
         }
     }
-    
-    public static Task InvokeCustomDispatchAndArgsAsync<TEventArgs>(AsyncEventHandler<TEventArgs>? handler, object? sender, Func<object?, TEventArgs> argsFactory, Func<object?, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
+
+    public static Task InvokeCustomDispatchAndArgsAsync<TEventArgs>(this AsyncEventHandler<TEventArgs>? handler, object? sender, Func<object?, TEventArgs> argsFactory, Func<object?, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, argsFactory, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, argsFactory, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _argsFactory, object? _dispatch) {
             return ((Func<object?, TEventArgs, AsyncEventHandler<TEventArgs>, Task>) _dispatch!)(_sender!, ((Func<object?, TEventArgs>) _argsFactory!)(_sender!), (AsyncEventHandler<TEventArgs>) handler);
         }
     }
-    
-    public static Task InvokeCustomDispatchAndArgsAsync<TSender, TEventArgs>(AsyncEventHandler<TSender, TEventArgs>? handler, TSender? sender, Func<TSender, TEventArgs> argsFactory, Func<TSender, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
+
+    public static Task InvokeCustomDispatchAndArgsAsync<TSender, TEventArgs>(this AsyncEventHandler<TSender, TEventArgs>? handler, TSender? sender, Func<TSender, TEventArgs> argsFactory, Func<TSender, TEventArgs, AsyncEventHandler<TEventArgs>, Task> invokeAsync, bool ignoreCancelled = true) {
         Delegate[]? list = handler?.GetInvocationList();
-        return list == null || list.Length < 1 ? Task.CompletedTask : InternalInvokeAsync(sender, argsFactory, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
+        if (list == null || list.Length < 1) {
+            return Task.CompletedTask;
+        }
+
+        return InternalInvokeAsync(sender, argsFactory, invokeAsync, list, InvokeAsyncImpl, ignoreCancelled);
 
         static Task InvokeAsyncImpl(Delegate handler, object? _sender, object? _argsFactory, object? _dispatch) {
             return ((Func<TSender, TEventArgs, AsyncEventHandler<TEventArgs>, Task>) _dispatch!)((TSender) _sender!, ((Func<TSender, TEventArgs>) _argsFactory!)((TSender) _sender!), (AsyncEventHandler<TEventArgs>) handler);

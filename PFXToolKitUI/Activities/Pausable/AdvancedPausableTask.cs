@@ -220,7 +220,7 @@ public abstract class AdvancedPausableTask : BasePausableTask {
 
     private async Task RaiseOnPausedChanged() {
         try {
-            await AsyncEventUtils.InvokeAsync(this.PausedStateChanged, this, EventArgs.Empty);
+            await this.PausedStateChanged.InvokeAsync(this, EventArgs.Empty);
         }
         catch (AggregateException e) {
             AppLogger.Instance.WriteLine($"[Pausable Task] one or more handlers threw: {e.GetToString()}");

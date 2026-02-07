@@ -270,7 +270,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
             }
 
             try {
-                await AsyncEventUtils.InvokeAsync(this.TryCloseAsync, this, beforeClosingArgs);
+                await this.TryCloseAsync.InvokeAsync(this, beforeClosingArgs);
             }
             catch (AggregateException e) {
                 Debugger.Break();
@@ -301,7 +301,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         }
 
         try {
-            await AsyncEventUtils.InvokeAsync(this.ClosingAsync, this, closingArgs);
+            await this.ClosingAsync.InvokeAsync(this, closingArgs);
         }
         catch (AggregateException e) {
             Debugger.Break();

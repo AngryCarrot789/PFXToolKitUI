@@ -268,7 +268,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
                 this.TryClose?.Invoke(this, cancelCloseArgs);
 
                 try {
-                    this.myManager.myFrameManager.AwaitForCompletion(AsyncEventUtils.InvokeAsync(this.TryCloseAsync, this, cancelCloseArgs, ignoreCancelled: true));
+                    this.myManager.myFrameManager.AwaitForCompletion(this.TryCloseAsync.InvokeAsync(this, cancelCloseArgs, ignoreCancelled: true));
                 }
                 catch (AggregateException e) {
                     List<Exception> errors = e.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
@@ -292,7 +292,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             this.Closing?.Invoke(this, closingArgs);
 
             try {
-                this.myManager.myFrameManager.AwaitForCompletion(AsyncEventUtils.InvokeAsync(this.ClosingAsync, this, closingArgs, ignoreCancelled: true));
+                this.myManager.myFrameManager.AwaitForCompletion(this.ClosingAsync.InvokeAsync(this, closingArgs, ignoreCancelled: true));
             }
             catch (AggregateException e) {
                 Debugger.Break();
