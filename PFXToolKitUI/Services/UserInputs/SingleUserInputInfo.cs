@@ -171,7 +171,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
             debouncer = new TimerDispatcherDebouncer(TimeSpan.FromMilliseconds(debounceDelay), updateErrors, state);
 
         if (debouncer != null && validate != null) {
-            debouncer.InvokeOrPostpone();
+            debouncer.TryInvokeOrPostpone();
         }
         else {
             // validate function might have been set to null at some point,

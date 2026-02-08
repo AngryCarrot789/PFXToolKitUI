@@ -20,7 +20,7 @@
 namespace PFXToolKitUI.Utils.Debouncing;
 
 /// <summary>
-/// A class that posts a callback to the dispatcher once a specific amount of time since the last post attempt has ellapsed
+/// A class that posts a callback to the dispatcher once a specific amount of time since the last post attempt has elapsed
 /// </summary>
 public class TimerDispatcherDebouncer {
     private static readonly SendOrPostCallback s_CallbackWithAction = static a => ((Action) a!)();
@@ -80,7 +80,7 @@ public class TimerDispatcherDebouncer {
     /// If enough time has elapsed, then invoke the callback. Otherwise, push the timer forward and wait longer to invoke.
     /// </summary>
     /// <returns>True if the callback was invoked. False if it was postponed</returns>
-    public bool InvokeOrPostpone() {
+    public bool TryInvokeOrPostpone() {
         if (this.TryInvoke()) {
             return true;
         }

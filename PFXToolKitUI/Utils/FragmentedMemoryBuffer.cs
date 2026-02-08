@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Utils;
 
@@ -113,7 +114,7 @@ public class FragmentedMemoryBuffer {
         this.myFragments = keepFrags.OrderBy(f => f.Address).ToList();
     }
 
-    public int Read(ulong offset, Span<byte> buffer, List<(ulong, ulong)>? affectedRanges = null) {
+    public int Read(ulong offset, Span<byte> buffer, List<IntegerRange<ulong>>? affectedRanges = null) {
         if (buffer.Length == 0)
             return 0;
         if (Maths.WillAdditionOverflow(offset, buffer.Length))
@@ -131,7 +132,7 @@ public class FragmentedMemoryBuffer {
                 int destIndex = (int) (start - offset);
 
                 frag.Data.AsSpan(srcIndex, length).CopyTo(buffer.Slice(destIndex, length));
-                affectedRanges?.Add((offset + (ulong) destIndex, (ulong) length));
+                affectedRanges?.Add(IntegerRange.FromStartAndLength(offset + (ulong) destIndex, (ulong) length));
                 cbTotalRead += length;
             }
         }
