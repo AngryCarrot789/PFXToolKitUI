@@ -26,6 +26,7 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.PropertyEditing;
 using PFXToolKitUI.PropertyEditing.Grids;
 using PFXToolKitUI.Utils;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.PropertyEditing;
 
@@ -126,15 +127,15 @@ public class PropertyEditorGroupControl : TemplatedControl {
         this.Model = null;
     }
 
-    private void ModelOnItemAdded(object? sender, PropertyEditorObjectIndexEventArgs e) {
+    private void ModelOnItemAdded(object? sender, ItemIndexEventArgs<BasePropertyEditorObject> e) {
         this.Panel!.InsertItem(e.Item, e.Index);
     }
 
-    private void ModelOnItemRemoved(object? sender, PropertyEditorObjectIndexEventArgs e) {
+    private void ModelOnItemRemoved(object? sender, ItemIndexEventArgs<BasePropertyEditorObject> e) {
         this.Panel!.RemoveItem(e.Index);
     }
 
-    private void ModelOnItemMoved(object? sender, PropertyEditorObjectMovedEventArgs e) {
+    private void ModelOnItemMoved(object? sender, ItemMovedEventArgs<BasePropertyEditorObject> e) {
         this.Panel!.MoveItem(e.OldIndex, e.NewIndex);
     }
 

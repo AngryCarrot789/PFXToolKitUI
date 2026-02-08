@@ -114,11 +114,12 @@ public static class CollectionUtils {
     }
 
     public static void MoveItem<T>(this IList<T> list, int oldIndex, int newIndex) {
-        if (newIndex < 0 || newIndex >= list.Count)
-            throw new IndexOutOfRangeException($"{nameof(newIndex)} is not within range: {(newIndex < 0 ? "less than zero" : "greater than list length")} ({newIndex})");
-        T removedItem = list[oldIndex];
-        list.RemoveAt(oldIndex);
-        list.Insert(newIndex, removedItem);
+        ArrayUtils.ThrowIfOutOfBounds(list.Count, newIndex);
+        if (oldIndex != newIndex) {
+            T removedItem = list[oldIndex];
+            list.RemoveAt(oldIndex);
+            list.Insert(newIndex, removedItem);
+        }
     }
 
     public static void MoveItem(IList list, int oldIndex, int newIndex) {
@@ -158,12 +159,10 @@ public static class CollectionUtils {
     }
 
     public static bool HasAtleast<T>(this IEnumerable<T> source, int count) {
-        int i = 0;
-        using (IEnumerator<T> enumerator = source.GetEnumerator()) {
-            while (enumerator.MoveNext()) {
-                if (++i >= count) {
-                    return true;
-                }
+        using IEnumerator<T> enumerator = source.GetEnumerator();
+        for (int i = 0; enumerator.MoveNext();) {
+            if (++i >= count) {
+                return true;
             }
         }
 
@@ -242,7 +241,7 @@ public static class CollectionUtils {
     }
 
     /// <summary>
-    /// Adds all items in the given enumerable, and returns a list of items that actually added
+    /// Adds all items in the given enumerable, and returns a list of items that were actually added
     /// </summary>
     /// <param name="set">Target set</param>
     /// <param name="itemsToAdd">Items to add</param>
@@ -261,9 +260,9 @@ public static class CollectionUtils {
     }
 
     /// <summary>
-    /// Removes all items in the given enumerable, and returns a list of items that actually removes
+    /// Removes all items in the given enumerable, and returns a list of items that were actually removed
     /// </summary>
-    /// <param name="set">Target set</param>
+    /// <param name="set">Source set</param>
     /// <param name="itemsToRemove">Items to remove</param>
     /// <typeparam name="T">Type of element</typeparam>
     /// <returns>The items that were actually removed</returns>

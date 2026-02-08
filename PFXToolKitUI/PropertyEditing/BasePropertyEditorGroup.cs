@@ -59,9 +59,9 @@ public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
 
     public bool IsRoot => this.Parent == null!;
 
-    public event EventHandler<PropertyEditorObjectIndexEventArgs>? ItemAdded;
-    public event EventHandler<PropertyEditorObjectIndexEventArgs>? ItemRemoved;
-    public event EventHandler<PropertyEditorObjectMovedEventArgs>? ItemMoved;
+    public event EventHandler<ItemIndexEventArgs<BasePropertyEditorObject>>? ItemAdded;
+    public event EventHandler<ItemIndexEventArgs<BasePropertyEditorObject>>? ItemRemoved;
+    public event EventHandler<ItemMovedEventArgs<BasePropertyEditorObject>>? ItemMoved;
     public event EventHandler? DisplayNameChanged;
     public event EventHandler? IsExpandedChanged;
 
@@ -105,7 +105,7 @@ public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
             throw new ArgumentException("The specific property editor object is not allowed: " + propObj);
         this.propObjs.Insert(index, propObj);
         OnAddedToGroup(propObj, this);
-        this.ItemAdded?.Invoke(this, new PropertyEditorObjectIndexEventArgs(propObj, index));
+        this.ItemAdded?.Invoke(this, new ItemIndexEventArgs<BasePropertyEditorObject>(propObj, index));
     }
 
     public virtual bool RemoveItem(BasePropertyEditorObject propObj) {
@@ -120,13 +120,13 @@ public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
         BasePropertyEditorObject propObj = this.propObjs[index];
         this.propObjs.RemoveAt(index);
         OnRemovedFromGroup(propObj, this);
-        this.ItemRemoved?.Invoke(this, new PropertyEditorObjectIndexEventArgs(propObj, index));
+        this.ItemRemoved?.Invoke(this, new ItemIndexEventArgs<BasePropertyEditorObject>(propObj, index));
     }
 
     public virtual void MoveItem(int oldIndex, int newIndex) {
         BasePropertyEditorObject propObj = this.propObjs[oldIndex];
         this.propObjs.MoveItem(oldIndex, newIndex);
-        this.ItemMoved?.Invoke(this, new PropertyEditorObjectMovedEventArgs(propObj, oldIndex, newIndex));
+        this.ItemMoved?.Invoke(this, new ItemMovedEventArgs<BasePropertyEditorObject>(propObj, oldIndex, newIndex));
     }
 
     /// <summary>
@@ -135,15 +135,4 @@ public abstract class BasePropertyEditorGroup : BasePropertyEditorItem {
     /// <param name="obj"></param>
     /// <returns></returns>
     public abstract bool IsPropertyEditorObjectAcceptable(BasePropertyEditorObject obj);
-}
-
-public readonly struct PropertyEditorObjectIndexEventArgs(BasePropertyEditorObject item, int index) {
-    public BasePropertyEditorObject Item { get; } = item;
-    public int Index { get; } = index;
-}
-
-public readonly struct PropertyEditorObjectMovedEventArgs(BasePropertyEditorObject item, int oldIndex, int newIndex) {
-    public BasePropertyEditorObject Item { get; } = item;
-    public int OldIndex { get; } = oldIndex;
-    public int NewIndex { get; } = newIndex;
 }

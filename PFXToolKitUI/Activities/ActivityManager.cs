@@ -21,6 +21,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Logging;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Activities;
 
@@ -94,12 +95,12 @@ public sealed class ActivityManager : IDisposable {
     /// <summary>
     /// Fired when a task is started. This is fired on the main thread
     /// </summary>
-    public event EventHandler<ActivityTaskIndexEventArgs>? TaskStarted;
+    public event EventHandler<ItemIndexEventArgs<ActivityTask>>? TaskStarted;
 
     /// <summary>
     /// Fired when a task is completed in any way. Fired on the main thread
     /// </summary>
-    public event EventHandler<ActivityTaskIndexEventArgs>? TaskCompleted;
+    public event EventHandler<ItemIndexEventArgs<ActivityTask>>? TaskCompleted;
 
     public ActivityManager() {
         this.localActivities = new AsyncLocal<ActivityTask?>();
@@ -247,7 +248,7 @@ public sealed class ActivityManager : IDisposable {
     internal static void InternalOnTaskStarted(ActivityManager manager, ActivityTask task) {
         int index = manager.activeTasks.Count;
         manager.activeTasks.Insert(index, task);
-        manager.TaskStarted?.Invoke(manager, new ActivityTaskIndexEventArgs(task, index));
+        manager.TaskStarted?.Invoke(manager, new ItemIndexEventArgs<ActivityTask>(task, index));
 
         // The activity task object can be used before the even get started, since starting
         // one requires starting a Task which then calls InternalPreActivateTask which
@@ -270,7 +271,7 @@ public sealed class ActivityManager : IDisposable {
         }
 
         manager.activeTasks.RemoveAt(index);
-        manager.TaskCompleted?.Invoke(manager, new ActivityTaskIndexEventArgs(task, index));
+        manager.TaskCompleted?.Invoke(manager, new ItemIndexEventArgs<ActivityTask>(task, index));
         manager.backgroundTasks.Remove(task); // don't care if not removed
 
         ActivityTask.InternalPostCompleted(task);
@@ -320,9 +321,4 @@ public sealed class ActivityManager : IDisposable {
     }
 
     #endregion
-}
-
-public readonly struct ActivityTaskIndexEventArgs(ActivityTask activityTask, int index) {
-    public ActivityTask ActivityTask { get; } = activityTask;
-    public int Index { get; } = index;
 }

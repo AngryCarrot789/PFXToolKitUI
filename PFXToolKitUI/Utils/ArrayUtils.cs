@@ -184,48 +184,50 @@ public static class ArrayUtils {
         }
     }
         
-    public static void ThrowIfOutOfBounds(Array array, int offset) {
+    public static void ThrowIfOutOfBounds(Array array, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
         ArgumentNullException.ThrowIfNull(array);
-        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset);
+        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, paramName);
     }
     
-    public static void ThrowIfOutOfBounds<T>(T[] array, int offset) {
+    public static void ThrowIfOutOfBounds<T>(T[] array, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
         ArgumentNullException.ThrowIfNull(array);
-        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset);
+        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, paramName);
     }
 
-    public static void ThrowIfOutOfBounds<T>(Span<T> span, int offset) {
-        ThrowIfOutOfBounds((uint) span.Length, offset);
+    public static void ThrowIfOutOfBounds<T>(Span<T> span, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
+        ThrowIfOutOfBounds((uint) span.Length, offset, paramName);
     }
     
-    public static void ThrowIfOutOfBounds<T>(ReadOnlySpan<T> span, int offset) {
-        ThrowIfOutOfBounds((uint) span.Length, offset);
+    public static void ThrowIfOutOfBounds<T>(ReadOnlySpan<T> span, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
+        ThrowIfOutOfBounds((uint) span.Length, offset, paramName);
     }
 
-    public static void ThrowIfOutOfBounds(int length, int offset) {
+    public static void ThrowIfOutOfBounds(int length, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
         ArgumentOutOfRangeException.ThrowIfNegative(length);
-        ThrowIfOutOfBounds((uint) length, offset);
+        ThrowIfOutOfBounds((uint) length, offset, paramName);
     }
     
-    public static void ThrowIfOutOfBounds(uint length, int offset) {
+    public static void ThrowIfOutOfBounds(uint length, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
         ArgumentOutOfRangeException.ThrowIfNegative(offset);
-        if ((uint) offset >= length || 1 > (length - (uint) offset)) {
-            ThrowOutOfBounds(length, offset);
+        if (IsOutOfBounds(length, offset)) {
+            ThrowTooLarge(length, offset, paramName);
         }
 
         return;
 
         [DoesNotReturn]
         [MethodImpl(MethodImplOptions.NoInlining)]
-        static void ThrowOutOfBounds(uint length, int offset) {
-            throw new ArgumentException($"Offset out of bounds of length: {offset} > {length}");
+        static void ThrowTooLarge(uint length, int offset, string? paramName) {
+            throw new ArgumentException($"'{paramName ?? "offset"}' out of bounds: {(offset < 0 ? $"{offset} < 0" : $"{offset} > {length}")}");
         }
     }
 
     public static bool IsOutOfBounds(int length, int offset) {
-        if (length < 0 || offset < 0)
-            return true;
-        return IsOutOfBounds((uint) length, (uint) offset);
+        return length < 0 || offset < 0 || IsOutOfBounds((uint) length, (uint) offset);
+    }
+
+    public static bool IsOutOfBounds(uint length, int offset) {
+        return offset < 0 || IsOutOfBounds(length, (uint) offset);
     }
     
     public static bool IsOutOfBounds(uint length, uint offset) {

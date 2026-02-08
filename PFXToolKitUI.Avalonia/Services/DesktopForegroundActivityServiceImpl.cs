@@ -115,8 +115,7 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             CanResize = false,
             IsToolWindow = true
         });
-
-        progress.CaptionChanged += (s, _) => window.Title = ((IActivityProgress) s!).Caption;
+        
         window.TryClose += (sender, args) => {
             bool forceClose = options.DialogCancellation.IsCancellationRequested;
             bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
@@ -147,6 +146,9 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             SetIsActivityPresentInDialog(theTask, false);
             myContent.ActivityTask = null;
         };
+        
+        EventHandler captionChangeHandler = (s, _) => window.Title = ((IActivityProgress) s!).Caption;
+        progress.CaptionChanged += captionChangeHandler;
 
         // Use WeakReference just in case the task continuation doesn't get removed
         // from the parent task for some reason when dialogCancellation is cancelled
@@ -160,7 +162,8 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
 
         window.Title = progress.Caption ?? "Activity Progress";
         await window.ShowDialogAsync();
-        progress.CaptionChanged -= (EventHandler) ((s, _) => window.Title = ((IActivityProgress) s!).Caption);
+        
+        progress.CaptionChanged -= captionChangeHandler;
 
         bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
         return new WaitForActivityResult(isMinimizingToBackground, false);
