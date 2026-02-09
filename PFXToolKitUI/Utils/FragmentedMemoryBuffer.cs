@@ -39,60 +39,66 @@ public class FragmentedMemoryBuffer {
     /// <param name="buffer"></param>
     public void Write(ulong address, Span<byte> buffer) {
         ulong length = (ulong) buffer.Length;
-        if (length == 0)
+        if (length < 1)
             return;
         if (Maths.WillAdditionOverflow(address, length))
-            throw new InvalidOperationException($"Writing the buffer results in the address overflowing ({address} + {length}))");
+            throw new InvalidOperationException("Writing the buffer results in address overflow");
 
-        List<Fragment> overlapping = new List<Fragment>();
-        List<Fragment> keepList = new List<Fragment>();
-        foreach (Fragment fragment in this.myFragments) {
-            if ((address + length) >= fragment.Address && fragment.End >= address) {
-                overlapping.Add(fragment);
-            }
-            else {
-                keepList.Add(fragment);
-            }
+        ulong endAddress = address + length;
+        int startIndex = 0, high = this.myFragments.Count - 1;
+        while (startIndex <= high) {
+            int mid = (startIndex + high) >> 1;
+            if (this.myFragments[mid].End < address)
+                startIndex = mid + 1;
+            else
+                high = mid - 1;
         }
 
-        Debug.Assert(overlapping.Count == 0 || overlapping.OrderBy(f => f.Address).SequenceEqual(overlapping));
-        // overlapping = overlapping.OrderBy(f => f.Address).ToList();
-
-        ulong start = overlapping.Count != 0 ? Math.Min(address, overlapping[0].Address) : address;
-        ulong end = overlapping.Count != 0 ? Math.Max(address + length, overlapping[overlapping.Count - 1].End) : address + length;
-        byte[] mergedData = new byte[end - start];
-
-        foreach (Fragment f in overlapping) {
-            f.Data.CopyTo(mergedData.AsSpan((int) (f.Address - start)));
+        int endIndex = startIndex;
+        while (endIndex < this.myFragments.Count && this.myFragments[endIndex].Address <= endAddress) {
+            endIndex++;
         }
 
-        buffer.CopyTo(mergedData.AsSpan((int) (address - start)));
-        keepList.Add(new Fragment(start, mergedData));
-        this.myFragments = keepList.OrderBy(f => f.Address).ToList();
+        if (startIndex == endIndex) {
+            this.myFragments.Insert(startIndex, new Fragment(address, buffer.ToArray()));
+            return;
+        }
+
+        ulong start = Math.Min(address, this.myFragments[startIndex].Address);
+        ulong end = Math.Max(endAddress, this.myFragments[endIndex - 1].End);
+        byte[] merged = new byte[end - start];
+        for (int i = startIndex; i < endIndex; i++) {
+            Fragment f = this.myFragments[i];
+            f.Data.CopyTo(merged.AsSpan((int) (f.Address - start)));
+        }
+
+        buffer.CopyTo(merged.AsSpan((int) (address - start)));
+        this.myFragments.RemoveRange(startIndex, endIndex - startIndex);
+        this.myFragments.Insert(startIndex, new Fragment(start, merged));
     }
 
     public void Clear() {
         this.myFragments.Clear();
     }
 
-    public void Clear(ulong offset, ulong count) {
+    public void Clear(ulong address, ulong count) {
         if (count == 0)
             return;
-        if (Maths.WillAdditionOverflow(offset, count))
-            count = ulong.MaxValue - offset;
+        if (Maths.WillAdditionOverflow(address, count))
+            count = ulong.MaxValue - address;
 
-        ulong end = offset + count;
+        ulong endAddress = address + count;
         List<Fragment> keepFrags = new List<Fragment>();
         foreach (Fragment f in this.myFragments) {
             ulong fragmentEnd = f.End;
-            if (fragmentEnd <= offset || f.Address >= end) {
+            if (fragmentEnd <= address || f.Address >= endAddress) {
                 keepFrags.Add(f);
                 continue;
             }
 
             ulong leftStart = f.Address;
-            ulong leftEnd = Math.Min(offset, fragmentEnd);
-            ulong rightStart = Math.Max(end, f.Address);
+            ulong leftEnd = Math.Min(address, fragmentEnd);
+            ulong rightStart = Math.Max(endAddress, f.Address);
             ulong rightEnd = fragmentEnd;
 
             if (leftEnd > leftStart) {
@@ -114,30 +120,45 @@ public class FragmentedMemoryBuffer {
         this.myFragments = keepFrags.OrderBy(f => f.Address).ToList();
     }
 
-    public int Read(ulong offset, Span<byte> buffer, List<IntegerRange<ulong>>? affectedRanges = null) {
-        if (buffer.Length == 0)
+    public int Read(ulong address, Span<byte> buffer, List<IntegerRange<ulong>>? affectedRanges = null) {
+        int bufferLength = buffer.Length;
+        if (bufferLength == 0)
             return 0;
-        if (Maths.WillAdditionOverflow(offset, buffer.Length))
+
+        if (Maths.WillAdditionOverflow(address, bufferLength))
             throw new InvalidOperationException("Reading the buffer results in the address overflowing");
 
-        ulong offsetEnd = offset + (ulong) buffer.Length;
-        int cbTotalRead = 0;
-        foreach (Fragment frag in this.myFragments) {
-            ulong fragEnd = frag.End;
-            if (fragEnd > offset && frag.Address < offsetEnd) {
-                ulong start = Math.Max(offset, frag.Address);
-                ulong end = Math.Min(offsetEnd, fragEnd);
-                int length = (int) (end - start);
+        ulong endAddress = address + (ulong) bufferLength;
+        int read = 0;
+        int startAddress = 0, idxB = this.myFragments.Count - 1;
+        while (startAddress <= idxB) {
+            int mid = (startAddress + idxB) >> 1;
+            if (this.myFragments[mid].End <= address)
+                startAddress = mid + 1;
+            else
+                idxB = mid - 1;
+        }
+
+        for (int i = startAddress; i < this.myFragments.Count; i++) {
+            Fragment frag = this.myFragments[i];
+            if (frag.Address >= endAddress) {
+                break;
+            }
+
+            ulong start = address > frag.Address ? address : frag.Address;
+            ulong end = endAddress < frag.End ? endAddress : frag.End;
+            int length = (int) (end - start);
+            if (length > 0) {
                 int srcIndex = (int) (start - frag.Address);
-                int destIndex = (int) (start - offset);
+                int destIndex = (int) (start - address);
 
                 frag.Data.AsSpan(srcIndex, length).CopyTo(buffer.Slice(destIndex, length));
-                affectedRanges?.Add(IntegerRange.FromStartAndLength(offset + (ulong) destIndex, (ulong) length));
-                cbTotalRead += length;
+                affectedRanges?.Add(IntegerRange.FromStartAndLength(address + (ulong) destIndex, (ulong) length));
+                read += length;
             }
         }
 
-        return cbTotalRead;
+        return read;
     }
 
     public override string ToString() {
