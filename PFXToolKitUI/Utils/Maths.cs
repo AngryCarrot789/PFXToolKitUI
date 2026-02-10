@@ -159,24 +159,32 @@ public static class Maths {
     public static bool WillAdditionOverflow<T>(T a, T b) where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
         return (b > T.Zero && a > T.MaxValue - b) || (b < T.Zero && a < T.MinValue - b);
     }
-
+    
     /// <summary>
-    /// Adds two numbers. If the 2nd value is negative, the summation is clamped to <see cref="IMinMaxValue{T}.MinValue"/>.
-    /// If the 2nd value is positive, the summation is clamped to <see cref="IMinMaxValue{T}.MaxValue"/>
+    /// Subtracts <see cref="b"/> to <see cref="a"/>, clamping to the minimum or maximum values if overflow occurs
     /// </summary>
-    /// <param name="a">Left value</param>
-    /// <param name="b">Right value</param>
-    /// <typeparam name="T">The type of number</typeparam>
-    /// <returns>The result of <c>a + b</c>, while clamping to the min and max values</returns>
-    public static T SumAndClampOverflow<T>(T a, T b) where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
-        if (b == T.Zero)
-            return a;
-        else if (b > T.Zero)
-            return a <= unchecked(T.MaxValue - b) ? unchecked(a + b) : T.MaxValue;
-        else
-            return a >= unchecked(T.MinValue - b) ? unchecked(a + b) : T.MinValue;
+    /// <returns>clamp(a + b, T.MinValue, T.MaxValue)</returns>
+    public static T AddAndClampOverflow<T>(T a, T b) where T : IBinaryInteger<T>, IMinMaxValue<T> {
+        if (b > T.Zero && a > unchecked(T.MaxValue - b))
+            return T.MaxValue;
+        if (b < T.Zero && a < unchecked(T.MinValue - b))
+            return T.MinValue;
+        
+        return unchecked(a + b);
     }
 
+    /// <summary>
+    /// Subtracts <see cref="b"/> from <see cref="a"/>, clamping to the minimum or maximum values if overflow occurs
+    /// </summary>
+    /// <returns>clamp(a - b, T.MinValue, T.MaxValue)</returns>
+    public static T SubAndClampOverflow<T>(T a, T b) where T : IBinaryInteger<T>, IMinMaxValue<T> {
+        if (b > T.Zero && a < unchecked(T.MinValue + b))
+            return T.MinValue;
+        if (b < T.Zero && a > unchecked(T.MaxValue + b))
+            return T.MaxValue;
+        
+        return unchecked(a - b);
+    }
 
     /// <summary>
     /// Adds a signed value to an unsigned int. If the addition results in overflow, the value is

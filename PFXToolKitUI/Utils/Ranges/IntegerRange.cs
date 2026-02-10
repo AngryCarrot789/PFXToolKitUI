@@ -64,6 +64,24 @@ public readonly struct IntegerRange<T> : IEquatable<IntegerRange<T>> where T : u
         this.End = end;
     }
 
+    public IntegerRange<T> ExpandClamped(T value) => this.ExpandClamped(value, value);
+
+    public IntegerRange<T> ExpandClamped(T left, T right) {
+        return new IntegerRange<T>(Maths.SubAndClampOverflow(this.Start, left), Maths.AddAndClampOverflow(this.End, right));
+    }
+
+    public IntegerRange<T> CollapseClamped(T value) => this.CollapseClamped(value, value);
+
+    public IntegerRange<T> CollapseClamped(T left, T right) {
+        return new IntegerRange<T>(Maths.AddAndClampOverflow(this.Start, left), Maths.SubAndClampOverflow(this.End, right));
+    }
+
+    public IntegerRange<T> WithStart(T start) => IntegerRange.FromStartAndEnd(start, this.End);
+
+    public IntegerRange<T> WithEnd(T end) => IntegerRange.FromStartAndEnd(this.Start, end);
+
+    public IntegerRange<T> WithLength(T length) => IntegerRange.FromStartAndLength(this.Start, length);
+
     public bool Contains(T location) => location >= this.Start && location < this.End;
 
     /// <summary>
@@ -71,7 +89,7 @@ public readonly struct IntegerRange<T> : IEquatable<IntegerRange<T>> where T : u
     /// </summary>
     /// <param name="other">The other range</param>
     /// <returns>True if the other is entirely within the current instance</returns>
-    public bool Contains(IntegerRange<T> other) => other.IsEmpty || (this.Start <= other.Start && other.End <= this.End);
+    public bool Contains(IntegerRange<T> other) => other.IsEmpty || (other.Start >= this.Start && other.End <= this.End);
 
     /// <summary>
     /// Returns true when the other range overlaps this range. Returns false when the current instance or <see cref="other"/> is empty 
@@ -127,19 +145,21 @@ public static class IntegerRange {
 
     public static IntegerRange<T> FromStartAndLength<T>(T start, T length) where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
         ArgumentOutOfRangeException.ThrowIfNegative(length);
-        if (start > T.MaxValue - length)
+        if (start > T.MaxValue - length) {
             ThrowAdditionOverflows();
+        }
 
         return new IntegerRange<T>(start, unchecked(start + length));
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowAdditionOverflows() {
+            throw new ArgumentException("start+length overflows");
+        }
     }
 
     public static IntegerRange<T> FromStartAndLengthClamped<T>(T start, T length) where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
         ArgumentOutOfRangeException.ThrowIfNegative(length);
         return new IntegerRange<T>(start, start > T.MaxValue - length ? T.MaxValue : unchecked(start + length));
-    }
-
-    [DoesNotReturn]
-    private static void ThrowAdditionOverflows() {
-        throw new ArgumentException($"start+length overflows");
     }
 }
