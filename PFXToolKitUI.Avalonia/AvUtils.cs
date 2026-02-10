@@ -21,6 +21,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Platform;
 using Avalonia.Rendering;
 using Avalonia.VisualTree;
 using PFXToolKitUI.Avalonia.Utils;
@@ -34,10 +35,14 @@ namespace PFXToolKitUI.Avalonia;
 public static class AvUtils {
     private static AvaloniaLocator Locator;
     private static MethodInfo GetServiceMethod;
+    private static MethodInfo Get_Handle;
 
     public static void OnApplicationInitialised() {
         Locator = (AvaloniaLocator) GetProperty<AvaloniaLocator, IAvaloniaDependencyResolver>(null, "Current", true)!;
         GetServiceMethod = typeof(AvaloniaLocator).GetMethod("GetService", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance, null, [typeof(Type)], null) ?? throw new Exception("Could not find GetService method");
+
+        PropertyInfo prop = typeof(ITopLevelImpl).GetProperty("Handle", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) ?? throw new Exception("Could not find Handle property");
+        Get_Handle = prop.GetMethod ?? throw new Exception("Could not find get_Handle method"); 
 
         // Test that the above code works
         GetService(typeof(object));
@@ -163,5 +168,9 @@ public static class AvUtils {
                     RaiseResourcesChangedMethod.Invoke(this.Dictionary, []);
             }
         }
+    }
+
+    public static IPlatformHandle? GetWindowHandle(IWindowImpl? window) {
+        return (IPlatformHandle?) Get_Handle.Invoke(window, null);
     }
 }

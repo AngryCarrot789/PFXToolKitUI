@@ -130,7 +130,7 @@ public abstract class Notification : IComponentManager {
     /// </summary>
     public NotificationAlertMode AlertMode {
         get => field;
-        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.AlertModeChanged);
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static t => t.OnAlertModeChanged());
     }
 
     public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
@@ -216,6 +216,11 @@ public abstract class Notification : IComponentManager {
 
     protected internal virtual void OnHidden() {
         this.ctsAutoHide?.Cancel();
+    }
+    
+    private void OnAlertModeChanged() {
+        this.AlertModeChanged?.Invoke(this, EventArgs.Empty);
+        this.NotificationManager?.InternalOnAlertModeChanged(this);
     }
 
     /// <summary>

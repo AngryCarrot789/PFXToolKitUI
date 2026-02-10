@@ -23,6 +23,7 @@ using Avalonia.Controls;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Interactivity.Contexts;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Features;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Interactivity.Windowing;
@@ -113,6 +114,14 @@ public interface IWindowBase : ITopLevel {
     /// <exception cref="InvalidOperationException">Not on the main thread</exception>
     /// <remarks>This method does not throw <see cref="OperationCanceledException"/></remarks>
     Task WaitForClosedAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Tries to get a window feature with the given type
+    /// </summary>
+    /// <param name="feature">The feature, if available</param>
+    /// <typeparam name="T">The type of feature</typeparam>
+    /// <returns>True if such a feature is available, otherwise false</returns>
+    bool TryGetFeature<T>([NotNullWhen(true)] out T? feature) where T : class, IWindowFeature;
     
     /// <summary>
     /// Tries to get the window from the visual, or returns null, if the visual isn't in a <see cref="IWindowBase"/>

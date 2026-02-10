@@ -19,6 +19,7 @@
 
 using PFXToolKitUI.Composition;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Notifications;
 
@@ -32,6 +33,16 @@ public class NotificationManager : IComponentManager {
     /// Gets the list of visible toast notifications shown in the UI
     /// </summary>
     public ObservableList<Notification> Toasts { get; }
+    
+    /// <summary>
+    /// Gets whether any notifications have alert mode currently active
+    /// </summary>
+    public bool IsAlertActive {
+        get => field;
+        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.IsAlertActiveChanged);
+    }
+
+    public event EventHandler? IsAlertActiveChanged;
 
     public NotificationManager() {
         this.Toasts = new ObservableList<Notification>();
@@ -51,6 +62,8 @@ public class NotificationManager : IComponentManager {
                 toast.NotificationManager = this;
                 toast.OnShowing();
             }
+            
+            this.UpdateIsAlertActive();
         };
 
         this.Toasts.ItemsRemoved += (list, index, items) => {
@@ -58,15 +71,26 @@ public class NotificationManager : IComponentManager {
                 toast.OnHidden();
                 toast.NotificationManager = null;
             }
+            
+            this.UpdateIsAlertActive();
         };
 
         this.Toasts.ItemReplaced += (list, index, oldItem, newItem) => {
             oldItem.NotificationManager = null;
             newItem.NotificationManager = this;
+            this.UpdateIsAlertActive();
         };
     }
 
     public static NotificationManager GetInstance(IComponentManager componentManager) {
         return componentManager.GetComponent<NotificationManager>();
+    }
+
+    internal void InternalOnAlertModeChanged(Notification notification) {
+        this.UpdateIsAlertActive();
+    }
+
+    private void UpdateIsAlertActive() {
+        this.IsAlertActive = this.Toasts.Any(x => x.AlertMode != NotificationAlertMode.None);
     }
 }

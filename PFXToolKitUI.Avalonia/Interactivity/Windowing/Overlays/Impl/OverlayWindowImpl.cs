@@ -26,6 +26,7 @@ using Avalonia.Input.Platform;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Features;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Composition;
 using PFXToolKitUI.Interactivity;
@@ -212,6 +213,11 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
                 // ignored
             }
         }
+    }
+
+    public bool TryGetFeature<T>([NotNullWhen(true)] out T? feature) where T : class, IWindowFeature {
+        feature = null;
+        return false;
     }
 
     private void ShowImpl() {

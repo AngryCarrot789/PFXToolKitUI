@@ -20,6 +20,8 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -29,6 +31,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform.Storage;
+using PFXToolKitUI.Avalonia.Interactivity.Windowing.Features;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Composition;
@@ -144,6 +147,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
     // utils for "binding" brushes from the BrushManager api
     private readonly ColourBrushHandler titleBarBrushHandler;
     private readonly ColourBrushHandler borderBrushHandler;
+    private Win32FeaturesImpl? win32Features;
 
     internal bool internalIsProcessingClose;
 
@@ -480,6 +484,15 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         }
     }
 
+    public bool TryGetFeature<T>([NotNullWhen(true)] out T? feature) where T : class, IWindowFeature {
+        if (OperatingSystem.IsWindows()) {
+            return (feature = (this.win32Features ??= new Win32FeaturesImpl(this)) as T) != null;
+        }
+        
+        feature = null;
+        return false;
+    }
+
     public void Activate() {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
         this.myNativeWindow.Activate();
@@ -501,6 +514,51 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         public async Task<IDataObjekt?> TryGetInProcessDataObjectAsync() {
             IDataObject? obj = await clipboard.TryGetInProcessDataObjectAsync();
             return obj != null ? new DataObjectWrapper(obj) : null;
+        }
+    }
+
+    private class Win32FeaturesImpl : IWindowFeatureUserAlert {
+        public IWindowBase Owner { get; }
+
+        public bool IsAlertEnabled {
+            get => field;
+            set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static (t, o, n) => {
+                SetFlash(((DesktopWindowImpl) t.Owner).myNativeWindow, n);
+            });
+        }
+
+        public Win32FeaturesImpl(IWindowBase owner) {
+            this.Owner = owner;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern bool FlashWindowEx(ref FLASHWINFO pwfi);
+
+        private const uint FLASHW_TRAY = 0x00000002;
+        private const uint FLASHW_TIMERNOFG = 0x0000000C;
+
+        public static void SetFlash(Window window, bool flash) {
+            IntPtr hwnd = AvUtils.GetWindowHandle(window.PlatformImpl)?.Handle ?? IntPtr.Zero;
+            if (hwnd != IntPtr.Zero) {
+                FLASHWINFO info = new FLASHWINFO {
+                    cbSize = (uint) Unsafe.SizeOf<FLASHWINFO>(),
+                    hwnd = hwnd,
+                    dwFlags = flash ? (FLASHW_TRAY | FLASHW_TIMERNOFG) : 0,
+                    uCount = flash ? uint.MaxValue : 0,
+                    dwTimeout = 0
+                };
+
+                FlashWindowEx(ref info);
+            }
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        private struct FLASHWINFO {
+            public uint cbSize;
+            public IntPtr hwnd;
+            public uint dwFlags;
+            public uint uCount;
+            public uint dwTimeout;
         }
     }
 }
