@@ -11,6 +11,11 @@
         <Setter Property="BorderBrush" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
         <Setter Property="Padding" Value="0"/>
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel Orientation="Vertical" Spacing="5"/>
+            </ItemsPanelTemplate>
+        </Setter>
     </ControlTheme>
 
     <ControlTheme x:Key="{x:Type n:NotificationListBoxItem}" TargetType="{x:Type n:NotificationListBoxItem}">

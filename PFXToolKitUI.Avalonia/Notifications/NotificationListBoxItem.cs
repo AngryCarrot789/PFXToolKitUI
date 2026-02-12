@@ -215,35 +215,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         if (this.PART_ActionPanel != null)
             this.PART_ActionPanel!.Children.Move(oldindex, newindex);
     }
-
-    private class NotificationContent_Activity : ActivityListItem, INotificationContent {
-        protected override Type StyleKeyOverride => typeof(ActivityListItem);
-
-        private readonly ActivityNotification notification;
-
-        public NotificationContent_Activity(ActivityNotification notification) {
-            this.ShowCaption = false;
-
-            this.notification = notification;
-            if (!this.notification.ActivityTask.IsCompleted) {
-                this.notification.ActivityTask.IsCompletedChanged += this.OnIsCompletedChanged;
-            }
-        }
-
-        private void OnIsCompletedChanged(object? o, EventArgs e) {
-            this.notification.ActivityTask.IsCompletedChanged -= this.OnIsCompletedChanged;
-            this.notification.Hide();
-        }
-
-        public void OnShown() {
-            this.ActivityTask = this.notification.ActivityTask;
-        }
-
-        public void OnHidden() {
-            this.ActivityTask = null;
-        }
-    }
-
+    
     private class NotificationHyperlinkButton : HyperlinkButton {
         private static readonly Stack<NotificationHyperlinkButton> buttonCache = new Stack<NotificationHyperlinkButton>(8);
 
@@ -270,6 +242,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         public NotificationHyperlinkButton() {
             this.Command = new NotificationCommandDelegate(this);
             Binders.AttachControls(this, this.toolTipBinder, this.textBinder);
+            this.Padding = new Thickness(4.0);
         }
 
         public static NotificationHyperlinkButton GetCachedOrCreate(NotificationAction item) {
