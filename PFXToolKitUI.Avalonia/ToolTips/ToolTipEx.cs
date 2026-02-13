@@ -36,8 +36,7 @@ public static class ToolTipEx {
     public static readonly AttachedProperty<Type?> TipTypeProperty = AvaloniaProperty.RegisterAttached<Control, Type?>("TipType", typeof(ToolTipEx));
     public static readonly AttachedProperty<object?> TipProperty = AvaloniaProperty.RegisterAttached<Control, object?>("Tip", typeof(ToolTipEx));
     public static readonly AttachedProperty<bool> MoveWithCursorProperty = AvaloniaProperty.RegisterAttached<Control, bool>("MoveWithCursor", typeof(ToolTipEx), defaultValue: true);
-
-    private static ToolTipControlEx? currentShownToolTip;
+    private static readonly AttachedProperty<ToolTipControlEx?> CursorToolTipProperty = AvaloniaProperty.RegisterAttached<TopLevel, ToolTipControlEx?>("CursorToolTip", typeof(ToolTipEx));
 
     static ToolTipEx() {
         TipTypeProperty.Changed.AddClassHandler<Control, Type?>(static (s, e) => OnTipTypeChanged(s, e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
@@ -59,12 +58,14 @@ public static class ToolTipEx {
     public static bool GetMoveWithCursor(Control obj) => obj.GetValue(MoveWithCursorProperty);
 
     private static void OnPreviewPointerMoved(TopLevel topLevel, PointerEventArgs e) {
-        if (currentShownToolTip != null) {
-            Control? control = currentShownToolTip.CurrentlyAdornedControl;
+        ToolTipControlEx? tip = topLevel.GetValue(CursorToolTipProperty);
+
+        if (tip != null) {
+            Control? control = tip.CurrentlyAdornedControl;
             Debug.Assert(control != null);
 
-            if (GetMoveWithCursor(control!)) {
-                currentShownToolTip.UpdatePosition();
+            if (GetMoveWithCursor(control)) {
+                tip.UpdatePosition();
             }
         }
     }
@@ -111,7 +112,7 @@ public static class ToolTipEx {
                 bool isOpen = ToolTip.GetIsOpen(control);
                 if (isOpen)
                     ToolTip.SetIsOpen(control, false);
-                
+
                 tip = new ToolTipControlEx(newTip);
                 ToolTip.SetTip(control, tip);
 
@@ -138,20 +139,26 @@ public static class ToolTipEx {
 
         public Control? CurrentlyAdornedControl { get; private set; }
 
+        public TopLevel? CurrentlyAdornedTopLevel { get; private set; }
+
         public ToolTipControlEx(object content) {
             this.Content = content;
             Style style = new Style((x) => x.OfType<TextBlock>()) {
                 Setters = { new Setter(TextBlock.TextWrappingProperty, TextWrapping.Wrap) }
             };
-            
+
             this.Styles.Add(style);
         }
 
         protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
             base.OnPropertyChanged(change);
-            if (change.Property == ContentProperty) {
-                this.EnsureOnClosedInvoked();
-                this.TryOpen();
+            if (change.Property == ContentProperty && this.CurrentlyAdornedControl != null) {
+                Control adorned = this.CurrentlyAdornedControl!;
+                TopLevel topLevel = this.CurrentlyAdornedTopLevel!;
+                Debug.Assert(topLevel != null);
+
+                this.EnsureDisconnected();
+                this.TryConnect(adorned, topLevel);
             }
         }
 
@@ -163,8 +170,13 @@ public static class ToolTipEx {
 
         protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
             base.OnAttachedToVisualTree(e);
-            this.EnsureOnClosedInvoked();
-            this.TryOpen();
+            this.EnsureDisconnected();
+
+            Control? adorned = this.AdornedControl;
+            TopLevel? topLevel;
+            if (adorned != null && (topLevel = TopLevel.GetTopLevel(this.AdornedControl)) != null) {
+                this.TryConnect(adorned, topLevel);
+            }
 
             // ApplicationPFX.Instance.Dispatcher.Post(() => {
             //     if (this.Parent is Popup popup)
@@ -172,16 +184,33 @@ public static class ToolTipEx {
             // }, DispatchPriority.ApplicationIdle);
         }
 
-        private void TryOpen() {
-            Debug.Assert(currentShownToolTip == null);
+        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
+            base.OnDetachedFromVisualTree(e);
+            this.EnsureDisconnected();
+        }
 
-            Control? adorned = this.AdornedControl;
+        private void TryConnect(Control adorned, TopLevel topLevel) {
+            Debug.Assert(this.CurrentlyAdornedControl == null);
+            Debug.Assert(this.CurrentlyAdornedTopLevel == null);
+
+            this.CurrentlyAdornedControl = adorned;
+            this.CurrentlyAdornedTopLevel = topLevel;
+            topLevel.SetValue(CursorToolTipProperty, this);
+            
+            if (this.Content is IToolTipControl tipControl) {
+                tipControl.OnOpened(adorned, DataManager.GetFullContextData(adorned));
+            }
+        }
+
+        private void EnsureDisconnected() {
+            Control? adorned = this.CurrentlyAdornedControl;
             if (adorned != null) {
-                currentShownToolTip = this;
-                
-                this.CurrentlyAdornedControl = adorned;
+                this.CurrentlyAdornedTopLevel!.SetValue(CursorToolTipProperty, null);
+                this.CurrentlyAdornedTopLevel = null;
+                this.CurrentlyAdornedControl = null;
+
                 if (this.Content is IToolTipControl tipControl) {
-                    tipControl.OnOpened(adorned, DataManager.GetFullContextData(adorned));
+                    tipControl.OnClosed(adorned);
                 }
             }
         }
@@ -189,23 +218,6 @@ public static class ToolTipEx {
         public void UpdatePosition() {
             if (this.Parent is Popup popup)
                 UpdatePositionMethod.Invoke(popup, []);
-        }
-
-        private void EnsureOnClosedInvoked() {
-            if (this.CurrentlyAdornedControl != null) {
-                Debug.Assert(currentShownToolTip == this);
-                currentShownToolTip = null;
-
-                if (this.Content is IToolTipControl tipControl)
-                    tipControl.OnClosed(this.CurrentlyAdornedControl);
-
-                this.CurrentlyAdornedControl = null;
-            }
-        }
-
-        protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
-            base.OnDetachedFromVisualTree(e);
-            this.EnsureOnClosedInvoked();
         }
     }
 }
