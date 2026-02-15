@@ -29,7 +29,8 @@
                         Background="{TemplateBinding Background}"
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
-                        CornerRadius="0">
+                        CornerRadius="0" Margin="5"
+                        BoxShadow="1 1 3 #ee000000">
                     <DockPanel VerticalSpacing="2">
                         <Border x:Name="PART_HeaderBorder"
                                 BorderBrush="{TemplateBinding BorderBrush}"
@@ -40,7 +41,7 @@
                                 <avc:IconButton x:Name="PART_Close" DockPanel.Dock="Right"
                                                 Icon="{x:Static pfxToolKitUi:StandardIcons.CancelActivityIcon}"
                                                 Background="Transparent" BorderThickness="0" Width="22"/>
-                                
+
                                 <TextBlock Text="{TemplateBinding Caption}"
                                            VerticalAlignment="Center"
                                            FontSize="14"

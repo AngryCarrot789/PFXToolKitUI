@@ -26,7 +26,7 @@ namespace PFXToolKitUI.Utils.Ranges;
 /// Represents a disjoint list of integer ranges. This data structure cannot store <see cref="IMinMaxValue{T}.MaxValue"/>
 /// </summary>
 public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryInteger<T>, IMinMaxValue<T> {
-    private readonly List<IntegerRange<T>> myRanges = new();
+    private readonly List<IntegerRange<T>> myRanges;
     private Optional<T> cachedGrandTotal;
 
     public IReadOnlyList<IntegerRange<T>> Ranges => this.myRanges;
@@ -58,6 +58,11 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
     /// Creates a new empty union.
     /// </summary>
     public IntegerSet() {
+        this.myRanges = new List<IntegerRange<T>>();
+    }
+
+    public IntegerSet(int initialCapacity) {
+        this.myRanges = new List<IntegerRange<T>>(initialCapacity);
     }
 
     /// <summary>
@@ -66,6 +71,10 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
     /// <param name="ranges">The ranges to unify.</param>
     public IntegerSet(IEnumerable<IntegerRange<T>> ranges) {
         ArgumentNullException.ThrowIfNull(ranges);
+        this.myRanges = ranges is ICollection<IntegerRange<T>> c
+            ? new List<IntegerRange<T>>(c.Count)
+            : new List<IntegerRange<T>>();
+
         foreach (IntegerRange<T> range in ranges) {
             this.Add(range);
         }
@@ -73,14 +82,7 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
 
     public IntegerSet(IReadOnlyIntegerSet<T> ranges) {
         ArgumentNullException.ThrowIfNull(ranges);
-        if (ranges is IntegerSet<T> union) {
-            this.myRanges = new List<IntegerRange<T>>(union.myRanges);
-        }
-        else {
-            foreach (IntegerRange<T> range in ranges.Ranges) {
-                this.Add(range);
-            }
-        }
+        this.myRanges = new List<IntegerRange<T>>(ranges.Ranges);
     }
 
     private IntegerSet(List<IntegerRange<T>> ranges) {
@@ -101,27 +103,28 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
         if (range.Start == range.End)
             return; // we are adding literally nothing
 
-        bool found = FirstIndexOfOverlapping(this.myRanges, range, out bool isAfterIndex, out int index);
-        this.myRanges.Insert((!found || isAfterIndex) ? index : (index + 1), range);
+        FirstIndexOfOverlapping(this.myRanges, range, out int index);
 
-        // Merge ranges
-        int i = Math.Max(0, index - 1);
-        while (i < this.myRanges.Count - 1) {
-            IntegerRange<T> current = this.myRanges[i];
-            IntegerRange<T> next = this.myRanges[i + 1];
-            if (current.End < next.Start) {
-                i++;
-            }
-            else {
-                T start = T.Min(current.Start, next.Start);
-                T end = T.Max(current.End, next.End);
-                this.myRanges[i] = new IntegerRange<T>(start, end);
-                this.myRanges.RemoveAt(i + 1);
-            }
+        T start = range.Start;
+        T end = range.End;
+        int i;
+        for (i = index - 1; i >= 0 && this.myRanges[i].End >= start; i--) {
+            start = T.Min(start, this.myRanges[i].Start);
+            end = T.Max(end, this.myRanges[i].End);
         }
+
+        int j = i + 1;
+        for (i = index; i < this.myRanges.Count && this.myRanges[i].Start <= end; i++) {
+            start = T.Min(start, this.myRanges[i].Start);
+            end = T.Max(end, this.myRanges[i].End);
+        }
+
+        this.myRanges.RemoveRange(j, i - j);
+        this.myRanges.Insert(j, new IntegerRange<T>(start, end));
 
         this.cachedGrandTotal = default;
     }
+
 
     public void Clear() {
         this.myRanges.Clear();
@@ -148,7 +151,7 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
     public bool Overlaps(IntegerRange<T> range) => Overlaps(range, this.myRanges);
 
     public int GetOverlappingRanges(IntegerRange<T> range, Span<IntegerRange<T>> output) {
-        if (!FirstIndexOfOverlapping(this.myRanges, range, out bool isAfterIndex, out int index)) {
+        if (!FirstIndexOfOverlapping(this.myRanges, range, out int index)) {
             return 0;
         }
 
@@ -200,7 +203,7 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
     public bool Remove(IntegerRange<T> range) {
         if (range.Start == T.MaxValue || range.IsEmpty)
             return false;
-        if (!FirstIndexOfOverlapping(this.myRanges, range, out _, out int index))
+        if (!FirstIndexOfOverlapping(this.myRanges, range, out int index))
             return false;
 
         for (int i = index; i < this.myRanges.Count; i++) {
@@ -208,7 +211,7 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
             if (!r.Overlaps(range)) {
                 break;
             }
-            
+
             if (range.Contains(r)) {
                 this.myRanges.RemoveAt(i--);
                 continue;
@@ -243,18 +246,18 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
     }
 
     public static bool Contains(IntegerRange<T> range, List<IntegerRange<T>> list) {
-        if (range.Start == T.MaxValue || !FirstIndexOfOverlapping(list, range, out bool isAfterIndex, out int index))
+        if (range.Start == T.MaxValue || !FirstIndexOfOverlapping(list, range, out int index))
             return false;
         return list[index].Contains(range);
     }
 
     public static bool Overlaps(IntegerRange<T> range, List<IntegerRange<T>> list) {
-        if (range.Start == T.MaxValue || !FirstIndexOfOverlapping(list, range, out bool isAfterIndex, out int index))
+        if (range.Start == T.MaxValue || !FirstIndexOfOverlapping(list, range, out int index))
             return false;
         return list[index].Overlaps(range);
     }
 
-    internal static bool FirstIndexOfOverlapping(List<IntegerRange<T>> list, IntegerRange<T> range, out bool isAfterIndex, out int index) {
+    internal static bool FirstIndexOfOverlapping(List<IntegerRange<T>> list, IntegerRange<T> range, out int index) {
         int start = 0, end = list.Count - 1;
         while (start <= end) {
             int mid = start + (end - start) / 2;
@@ -266,17 +269,15 @@ public sealed class IntegerSet<T> : IIntegerSet<T> where T : unmanaged, IBinaryI
                 end = mid - 1;
             }
             else {
-                isAfterIndex = check.Start >= range.Start;
                 index = mid;
                 return true;
             }
         }
 
         index = start;
-        isAfterIndex = false;
         return false;
     }
-    
+
     private static void GetPresenceUnion(IntegerSet<T> dstSet, IntegerRange<T> range, bool complement, List<IntegerRange<T>> list) {
         T pos = range.Start;
         foreach (IntegerRange<T> r in list) {

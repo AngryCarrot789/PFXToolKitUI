@@ -187,10 +187,10 @@ public class IntegerSetTest {
         public void TestEnclosingRange() {
             IntegerSet<T> list = new IntegerSet<T>();
             list.Add(T.CreateChecked(-20));
-            list.Add(T.CreateChecked(0));
-            list.Add(T.CreateChecked(1));
-            list.Add(T.CreateChecked(5));
             list.Add(T.CreateChecked(42));
+            list.Add(T.CreateChecked(0));
+            list.Add(T.CreateChecked(5));
+            list.Add(T.CreateChecked(1));
             list.Add(T.CreateChecked(41));
             
             Assert.Equal(list.EnclosingRange, IntegerRange.FromStartAndEnd(T.CreateChecked(-20), T.CreateChecked(43) /* exclusive */));

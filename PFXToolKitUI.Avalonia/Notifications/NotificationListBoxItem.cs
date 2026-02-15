@@ -27,7 +27,6 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Styling;
-using PFXToolKitUI.Avalonia.Activities;
 using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity;
@@ -179,6 +178,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
         TimeSpan preExistingTime = DateTime.Now - this.Model!.AutoHideStartTime;
         TimeSpan delay = this.Model!.AutoHideDelay - preExistingTime;
         if (delay >= TimeSpan.FromMilliseconds(50)) {
+            // No point in a sub-50 millisecond animation really
             this.animation = new Animation {
                 Duration = delay,
                 Easing = new QuarticEaseIn(), FillMode = FillMode.Forward,
