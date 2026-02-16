@@ -22,6 +22,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -161,7 +162,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         this.IsMainWindow = builder.MainWindow;
         this.SizingInfo = new WindowSizingInfo(this, builder);
         this.SizingInfo.DoubleValueChanged += OnSizingInfoPropertyChanged;
-        this.SizingInfo.CanResizeChanged += static (s, _) => ((DesktopWindowImpl) ((WindowSizingInfo) s!).Window).myNativeWindow.CanResize = ((WindowSizingInfo) s!).CanResize;
+        this.SizingInfo.CanResizeChanged += static (s, _) => ((DesktopWindowImpl) ((WindowSizingInfo) s!).Window).myNativeWindow.CanResize = ((WindowSizingInfo) s).CanResize;
         this.SizingInfo.SizeToContentChanged += static (s, e) => {
             DesktopWindowImpl window = (DesktopWindowImpl) ((WindowSizingInfo) s!).Window;
             if (!window.myNativeWindow.doNotModifySizeToContent) {
@@ -517,6 +518,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         }
     }
 
+    [SupportedOSPlatform("windows")]
     private class Win32FeaturesImpl : IWindowFeatureUserAlert {
         public IWindowBase Owner { get; }
 

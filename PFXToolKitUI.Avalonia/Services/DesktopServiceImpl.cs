@@ -19,6 +19,7 @@
 
 using System.ComponentModel;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 using Avalonia;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Input;
@@ -55,6 +56,7 @@ public class DesktopServiceImpl : IDesktopService {
         return false;
     }
 
+    [SupportedOSPlatform("windows")]
     public static class Win32CursorUtils {
         [StructLayout(LayoutKind.Sequential)]
         public struct RECT {

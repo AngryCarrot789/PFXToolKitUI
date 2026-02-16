@@ -18,6 +18,8 @@
 // 
 
 using System.Diagnostics;
+using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace PFXToolKitUI.Utils;
 
@@ -107,21 +109,92 @@ public static class Time {
     /// <param name="delay">The amount of time to delay for</param>
     /// <param name="cancellation">Signals the delay to become cancelled</param>
     /// <param name="osThreadPeriod">The maximum amount of milliseconds between os thread time slices</param>
-    public static async Task DelayForAsync(TimeSpan delay, CancellationToken cancellation, int osThreadPeriod = 18) {
-        double nextTick = Stopwatch.GetTimestamp() / (double) TimeSpan.TicksPerMillisecond + delay.TotalMilliseconds;
-        int ms = (int) delay.TotalMilliseconds;
-        
+    public static Task DelayForAsync(TimeSpan delay, CancellationToken cancellation, int osThreadPeriod = 18) {
+        return DelayForAsyncImpl(delay.TotalMilliseconds, true, cancellation, osThreadPeriod);
+    }
+
+    private static async Task DelayForAsyncImpl(double milliseconds, bool canSpin, CancellationToken cancellation, int osThreadPeriod = 18) {
+        double nextTick = Stopwatch.GetTimestamp() / (double) TimeSpan.TicksPerMillisecond + milliseconds;
+        int ms = (int) milliseconds;
+
         if (ms >= osThreadPeriod) {
             // average windows thread-slice time == 15~ millis
             await Task.Delay(ms - osThreadPeriod, cancellation);
         }
-        
-        double temp;
-        while ((temp = GetSystemMillis() - nextTick) < -0.05 /* say 50 micros to do continuations to reschedule */) {
-            // do nothing but loop for the rest of the duration, for precise timing
-            cancellation.ThrowIfCancellationRequested();
-            if (temp < 2.0)
-                await Task.Yield();
+
+        if (canSpin) {
+            double temp;
+            while ((temp = GetSystemMillis() - nextTick) < -0.05 /* say 50 micros to do continuations to reschedule */) {
+                // do nothing but loop for the rest of the duration, for precise timing
+                cancellation.ThrowIfCancellationRequested();
+                if (temp < 2.0)
+                    await Task.Yield();
+            }
         }
     }
+
+    /// <summary>
+    /// Returns a task that completes once the delay has elapsed using the OS's high-resolution timer mechanisms
+    /// </summary>
+    /// <param name="delay">The delay</param>
+    /// <param name="canSpin">
+    /// Whether spin-waiting the final amount of time is allowed. When false, the task may complete too early.
+    /// </param>
+    /// <param name="cancellation">A cancellation token to cancel the delay operation</param>
+    /// <returns></returns>
+    /// <exception cref="OperationCanceledException">The cancellation token was cancelled</exception>
+    public static Task DelayForAsyncEx(TimeSpan delay, bool canSpin = true, CancellationToken cancellation = default) {
+        if (OperatingSystem.IsWindows()) {
+            // if (OperatingSystem.IsWindowsVersionAtLeast(1803)) {
+            //     return Win32HighResolutionTimer.DelayForAsync(delay, cancellation);
+            // }
+            // else {
+            return Win32Natives.DelayForAsync(delay, canSpin, cancellation);
+            // }
+        }
+        else {
+            return DelayForAsync(delay, cancellation);
+        }
+    }
+
+    [SupportedOSPlatform("windows")]
+    private static class Win32Natives {
+        [DllImport("winmm.dll")]
+        private static extern uint timeBeginPeriod(uint uPeriod /* millis */);
+
+        [DllImport("winmm.dll")]
+        private static extern uint timeEndPeriod(uint uPeriod);
+
+        // SEE: https://blog.bearcats.nl/perfect-sleep-function/
+        public static async Task DelayForAsync(TimeSpan delay, bool canSpin, CancellationToken cancellation) {
+            uint result = timeBeginPeriod(1);
+            try {
+                if (result == 0 /* success */) {
+                    await Task.Run(async () => {
+                        long targetTick = Stopwatch.GetTimestamp() + delay.Ticks;
+                        int delayMillis = (int) (delay.TotalMilliseconds - (canSpin ? 1.1 /* 0.1 tolerance */ : 0));
+                        if (delayMillis > 0)
+                            await Task.Delay(delayMillis, cancellation).ConfigureAwait(false);
+
+                        if (canSpin) {
+                            while (Stopwatch.GetTimestamp() < targetTick)
+                                await Task.Yield();
+                        }
+                    }, cancellation);
+                }
+                else {
+                    await DelayForAsyncImpl(delay.TotalMilliseconds, canSpin, cancellation).ConfigureAwait(false);
+                }
+            }
+            finally {
+                _ = timeEndPeriod(1);
+            }
+        }
+    }
+
+    // [SupportedOSPlatform("windows")]
+    // private static class Win32HighResolutionTimer {
+    //     public static async Task DelayForAsync(TimeSpan delay, CancellationToken cancellation) {
+    //     }
+    // }
 }
