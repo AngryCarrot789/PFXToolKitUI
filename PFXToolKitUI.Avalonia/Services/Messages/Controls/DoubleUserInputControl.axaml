@@ -9,12 +9,21 @@
         <TextBox x:Name="PART_TextBoxA" Padding="5,5" VerticalContentAlignment="Center"
                  Background="{DynamicResource ABrush.Tone4.Background.Static}"
                  Text="Text Here" Focusable="True" TabIndex="0"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <TextBox.InnerLeftContent>
+                <TextBlock Text="" Opacity="0.7" x:Name="PART_InnerLeftContentA"/>
+            </TextBox.InnerLeftContent>
+        </TextBox>
+        
         <TextBlock x:Name="PART_LabelB" Text="Label Here" Padding="0,5"/>
         <TextBox x:Name="PART_TextBoxB" Padding="5,5" VerticalContentAlignment="Center"
                  Background="{DynamicResource ABrush.Tone4.Background.Static}"
                  Text="Text Here" Focusable="True" TabIndex="1"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <TextBox.InnerLeftContent>
+                <TextBlock Text="" Opacity="0.7" x:Name="PART_InnerLeftContentB"/>
+            </TextBox.InnerLeftContent>
+        </TextBox>
 
         <TextBlock x:Name="PART_FooterTextBlock" FontSize="11" Padding="5,5" Foreground="{DynamicResource ABrush.Foreground.Deeper}"/>
     </StackPanel>

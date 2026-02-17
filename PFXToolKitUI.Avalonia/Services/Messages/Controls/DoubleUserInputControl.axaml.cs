@@ -26,10 +26,39 @@ using PFXToolKitUI.Services.UserInputs;
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
 public partial class DoubleUserInputControl : UserControl, IUserInputContent {
-    private readonly IBinder<DoubleUserInputInfo> labelABinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelAChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelA));
-    private readonly IBinder<DoubleUserInputInfo> labelBBinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LabelBChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelB));
-    private readonly IBinder<DoubleUserInputInfo> textABinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextAChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextA), b => b.Model.TextA = b.Control.GetValue(TextBox.TextProperty) ?? "");
-    private readonly IBinder<DoubleUserInputInfo> textBBinder = new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(TextBox.TextProperty, nameof(DoubleUserInputInfo.TextBChanged), b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextB), b => b.Model.TextB = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    private readonly IBinder<DoubleUserInputInfo> labelABinder =
+        new EventUpdateBinder<DoubleUserInputInfo>(
+            nameof(DoubleUserInputInfo.LabelAChanged),
+            b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelA));
+
+    private readonly IBinder<DoubleUserInputInfo> labelBBinder =
+        new EventUpdateBinder<DoubleUserInputInfo>(
+            nameof(DoubleUserInputInfo.LabelBChanged),
+            b => b.Control.SetValue(TextBlock.TextProperty, b.Model.LabelB));
+
+    private readonly IBinder<DoubleUserInputInfo> textABinder =
+        new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(
+            TextBox.TextProperty,
+            nameof(DoubleUserInputInfo.TextAChanged),
+            b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextA),
+            b => b.Model.TextA = b.Control.GetValue(TextBox.TextProperty) ?? "");
+
+    private readonly IBinder<DoubleUserInputInfo> textBBinder =
+        new AvaloniaPropertyToEventPropertyBinder<DoubleUserInputInfo>(
+            TextBox.TextProperty,
+            nameof(DoubleUserInputInfo.TextBChanged),
+            b => b.Control.SetValue(TextBox.TextProperty, b.Model.TextB),
+            b => b.Model.TextB = b.Control.GetValue(TextBox.TextProperty) ?? "");
+    
+    private readonly IBinder<DoubleUserInputInfo> prefixABinder =
+        new EventUpdateBinder<DoubleUserInputInfo>(
+            nameof(DoubleUserInputInfo.PrefixAChanged),
+            b => ((TextBlock) b.Control).Text = string.IsNullOrEmpty(b.Model.PrefixA) ? "" : b.Model.PrefixA);
+
+    private readonly IBinder<DoubleUserInputInfo> prefixBBinder =
+        new EventUpdateBinder<DoubleUserInputInfo>(
+            nameof(DoubleUserInputInfo.PrefixBChanged),
+            b => ((TextBlock) b.Control).Text = string.IsNullOrEmpty(b.Model.PrefixB) ? "" : b.Model.PrefixB);
 
     private readonly IBinder<DoubleUserInputInfo> linesABinder = new EventUpdateBinder<DoubleUserInputInfo>(nameof(DoubleUserInputInfo.LineCountHintAChanged), b => {
         b.Control.SetValue(TextBox.MinLinesProperty, b.Model.LineCountHintA);
@@ -50,8 +79,12 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
         this.labelABinder.AttachControl(this.PART_LabelA);
         this.labelBBinder.AttachControl(this.PART_LabelB);
         this.textABinder.AttachControl(this.PART_TextBoxA);
+        this.textBBinder.AttachControl(this.PART_TextBoxB);
+        this.linesABinder.AttachControl(this.PART_TextBoxA);
+        this.linesBBinder.AttachControl(this.PART_TextBoxB);
+        this.prefixABinder.AttachControl(this.PART_InnerLeftContentA);
+        this.prefixBBinder.AttachControl(this.PART_InnerLeftContentB);
         this.footerBinder.AttachControl(this.PART_FooterTextBlock);
-        Binders.AttachControls(this.PART_TextBoxB, this.textBBinder, this.linesABinder, this.linesBBinder);
 
         this.PART_TextBoxA.KeyDown += this.OnAnyTextFieldKeyDown;
         this.PART_TextBoxB.KeyDown += this.OnAnyTextFieldKeyDown;
@@ -67,7 +100,10 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     public void Connect(UserInputDialogView dialog, UserInputInfo info) {
         this.myDialog = dialog;
         this.myData = (DoubleUserInputInfo) info;
-        Binders.AttachModels(this.myData, this.labelABinder, this.labelBBinder, this.textABinder, this.textBBinder, this.linesABinder, this.linesBBinder, this.footerBinder);
+        Binders.AttachModels(this.myData, 
+            this.labelABinder, this.labelBBinder, this.textABinder, this.textBBinder, 
+            this.linesABinder, this.linesBBinder, this.footerBinder, this.prefixABinder, this.prefixBBinder);
+        
         this.myData.LabelAChanged += this.OnLabelAChanged;
         this.myData.LabelBChanged += this.OnLabelBChanged;
         this.myData.FooterChanged += this.OnFooterChanged;
@@ -81,7 +117,10 @@ public partial class DoubleUserInputControl : UserControl, IUserInputContent {
     }
 
     public void Disconnect() {
-        Binders.DetachModels(this.labelABinder, this.labelBBinder, this.textABinder, this.textBBinder, this.linesABinder, this.linesBBinder, this.footerBinder);
+        Binders.DetachModels(this.labelABinder, 
+            this.labelBBinder, this.textABinder, this.textBBinder, this.linesABinder, 
+            this.linesBBinder, this.footerBinder, this.prefixABinder, this.prefixBBinder);
+        
         this.myData!.LabelAChanged -= this.OnLabelAChanged;
         this.myData!.LabelBChanged -= this.OnLabelBChanged;
         this.myData!.FooterChanged -= this.OnFooterChanged;

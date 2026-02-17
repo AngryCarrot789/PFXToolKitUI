@@ -127,4 +127,10 @@ public static class NumberUtils {
         byte[] bytes = encoding.GetBytes(input);
         return BytesToHexAscii(bytes, null);
     }
+
+    public static string FormatHex(long value, int digits = -1) {
+        string format = digits >= 0 ? $"X{Math.Clamp(digits, 1, 16)}" : "X";
+        string text = value < 0 ? (-value).ToString(format) : value.ToString(format); 
+        return value < 0 ? $"-{text}" : text;
+    }
 }

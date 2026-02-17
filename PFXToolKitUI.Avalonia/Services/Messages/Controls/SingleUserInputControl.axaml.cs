@@ -28,8 +28,6 @@ using PFXToolKitUI.Services.UserInputs;
 namespace PFXToolKitUI.Avalonia.Services.Messages.Controls;
 
 public partial class SingleUserInputControl : UserControl, IUserInputContent {
-    private readonly IBinder<SingleUserInputInfo> labelBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LabelChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Label));
-
     private readonly IBinder<SingleUserInputInfo> textBinder =
         new AvaloniaPropertyToEventPropertyBinder<SingleUserInputInfo>(
             TextBox.TextProperty,
@@ -37,12 +35,29 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
             b => b.Control.SetValue(TextBox.TextProperty, b.Model.Text),
             b => b.Model.Text = b.Control.GetValue(TextBox.TextProperty) ?? "");
 
-    private readonly IBinder<SingleUserInputInfo> linesBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(SingleUserInputInfo.LineCountHintChanged), b => {
-        b.Control.SetValue(TextBox.MinLinesProperty, b.Model.LineCountHint);
-        b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.LineCountHint);
-    });
+    private readonly IBinder<SingleUserInputInfo> labelBinder =
+        new EventUpdateBinder<SingleUserInputInfo>(
+            nameof(SingleUserInputInfo.LabelChanged),
+            b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Label));
 
-    private readonly IBinder<SingleUserInputInfo> footerBinder = new EventUpdateBinder<SingleUserInputInfo>(nameof(BaseTextUserInputInfo.FooterChanged), b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
+    private readonly IBinder<SingleUserInputInfo> prefixBinder =
+        new EventUpdateBinder<SingleUserInputInfo>(
+            nameof(SingleUserInputInfo.PrefixChanged),
+            b => ((TextBlock) b.Control).Text = string.IsNullOrEmpty(b.Model.Prefix) ? "" : b.Model.Prefix);
+
+    private readonly IBinder<SingleUserInputInfo> linesBinder =
+        new EventUpdateBinder<SingleUserInputInfo>(
+            nameof(SingleUserInputInfo.LineCountHintChanged),
+            b => {
+                b.Control.SetValue(TextBox.MinLinesProperty, b.Model.LineCountHint);
+                b.Control.SetValue(TextBox.MaxLinesProperty, b.Model.LineCountHint);
+            });
+
+    private readonly IBinder<SingleUserInputInfo> footerBinder =
+        new EventUpdateBinder<SingleUserInputInfo>(
+            nameof(BaseTextUserInputInfo.FooterChanged),
+            b => b.Control.SetValue(TextBlock.TextProperty, b.Model.Footer));
+
     private UserInputDialogView? myDialog;
     private SingleUserInputInfo? myData;
 
@@ -50,6 +65,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         this.InitializeComponent();
         this.labelBinder.AttachControl(this.PART_Label);
         this.textBinder.AttachControl(this.PART_TextBox);
+        this.prefixBinder.AttachControl(this.PART_InnerLeftContent);
         this.linesBinder.AttachControl(this.PART_TextBox);
         this.footerBinder.AttachControl(this.PART_FooterTextBlock);
 
@@ -71,6 +87,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
         this.myData = (SingleUserInputInfo) info;
         this.labelBinder.AttachModel(this.myData);
         this.textBinder.AttachModel(this.myData);
+        this.prefixBinder.AttachModel(this.myData);
         this.linesBinder.AttachModel(this.myData);
         this.footerBinder.AttachModel(this.myData);
         this.PART_TextBox.AcceptsReturn = this.myData.LineCountHint > 1;
@@ -85,6 +102,7 @@ public partial class SingleUserInputControl : UserControl, IUserInputContent {
     public void Disconnect() {
         this.labelBinder.DetachModel();
         this.textBinder.DetachModel();
+        this.prefixBinder.DetachModel();
         this.linesBinder.DetachModel();
         this.footerBinder.DetachModel();
         this.myData!.LabelChanged -= this.OnLabelChanged;

@@ -71,7 +71,7 @@ public abstract class UserInputInfo : ITransferableData {
         get => field;
         set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CancelTextChanged);
     } = "Cancel";
-
+    
     /// <summary>
     /// Gets or sets the button that is focused by default. The default is <see cref="ButtonType.None"/>, meaning no button is focused
     /// </summary>
@@ -116,7 +116,7 @@ public abstract class UserInputInfo : ITransferableData {
     /// </para>
     /// </summary>
     public abstract void UpdateAllErrors();
-
+    
     /// <summary>
     /// Specifies the type of button the user can click to cause the dialog to produce a result
     /// </summary>
@@ -133,5 +133,16 @@ public abstract class UserInputInfo : ITransferableData {
         /// The cancel button
         /// </summary>
         Cancel
+    }
+}
+
+public sealed class UserInputDialogCloseEventArgs : EventArgs {
+    public bool IsCancelled { get; private set; }
+
+    public UserInputDialogCloseEventArgs() {
+    }
+
+    public void SetCancelled() {
+        this.IsCancelled = true;
     }
 }

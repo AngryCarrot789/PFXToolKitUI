@@ -42,8 +42,19 @@ using SkiaSharp;
 namespace PFXToolKitUI.Avalonia.Services.UserInputs;
 
 public partial class UserInputDialogView : UserControl {
-    public static readonly SingleUserInputInfo DummySingleInput = new SingleUserInputInfo("Text Input Here") { Message = "A primary message here", ConfirmText = "Confirm", CancelText = "Cancel", Caption = "The caption here", Label = "The label here" };
-    public static readonly DoubleUserInputInfo DummyDoubleInput = new DoubleUserInputInfo("Text A Here", "Text B Here") { Message = "A primary message here", ConfirmText = "Confirm", CancelText = "Cancel", Caption = "The caption here", LabelA = "Label A Here:", LabelB = "Label B Here:" };
+    public static readonly SingleUserInputInfo DummySingleInput = new SingleUserInputInfo() {
+        Caption = "The caption here", Message = "A primary message here",
+        Text = "Text Input Here",
+        Label = "The label here",
+        ConfirmText = "Confirm", CancelText = "Cancel"
+    };
+
+    public static readonly DoubleUserInputInfo DummyDoubleInput = new DoubleUserInputInfo() {
+        Caption = "The caption here", Message = "A primary message here",
+        TextA = "Text A Here", TextB = "Text B Here",
+        LabelA = "Label A Here:", LabelB = "Label B Here:",
+        ConfirmText = "Confirm", CancelText = "Cancel"
+    };
 
     public static readonly ModelControlRegistry<UserInputInfo, Control> Registry;
     public static readonly StyledProperty<UserInputInfo?> UserInputInfoProperty = AvaloniaProperty.Register<UserInputDialogView, UserInputInfo?>("UserInputInfo");
@@ -253,6 +264,8 @@ public partial class UserInputDialogView : UserControl {
             Content = view,
             SizeToContent = SizeToContent.WidthAndHeight,
             CanResize = false,
+            CanMinimize = false,
+            CanMaximize = false,
             TitleBarBrush = BrushManager.Instance.GetDynamicThemeBrush("ABrush.Tone4.Background.Static"),
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
         });

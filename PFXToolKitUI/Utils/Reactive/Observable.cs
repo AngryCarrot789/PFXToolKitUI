@@ -30,7 +30,7 @@ public static class Observable {
     public static IEventObservable<T> ForEvent<T>(Action<T, EventHandler> addHandler, Action<T, EventHandler> removeHandler) where T : class {
         return new EventObservableImpl<T>(addHandler, removeHandler);
     }
-    
+
     /// <summary>
     /// Creates an observable object that can add and remove event handlers
     /// </summary>
@@ -40,6 +40,16 @@ public static class Observable {
     /// <returns>The observable</returns>
     public static IEventObservable<T> ForEvent<T, TEventArgs>(Action<T, EventHandler<TEventArgs>> addHandler, Action<T, EventHandler<TEventArgs>> removeHandler) where T : class where TEventArgs : allows ref struct {
         return new EventObservableWithArgsImpl<T, TEventArgs>(addHandler, removeHandler);
+    }
+
+    /// <summary>
+    /// Creates an observable object that can observable multiple other observables
+    /// </summary>
+    /// <param name="observables">The observables we can subscribe to, to observe</param>
+    /// <typeparam name="T">The type of owner</typeparam>
+    /// <returns>The observable</returns>
+    public static IEventObservable<T> ForCombinedObservables<T>(params IEventObservable<T>[] observables) where T : class {
+        return new EventObservableCombinedImpl<T>(observables);
     }
 
     private sealed class EventObservableImpl<T>(Action<T, EventHandler> addHandler, Action<T, EventHandler> removeHandler) : IEventObservable<T> {
@@ -64,7 +74,7 @@ public static class Observable {
                 this.callback = callback;
                 this.impl.addHandler(this.owner, this.myHandler = this.OnEvent);
                 if (initialCallback)
-                    this.callback(this.owner, this.state);
+                    callback(owner, state);
             }
 
             private void OnEvent(object? sender, EventArgs e) {
@@ -76,7 +86,7 @@ public static class Observable {
             }
         }
     }
-    
+
     private sealed class EventObservableWithArgsImpl<T, TEventArgs>(Action<T, EventHandler<TEventArgs>> addHandler, Action<T, EventHandler<TEventArgs>> removeHandler) : IEventObservable<T> where TEventArgs : allows ref struct where T : class {
         private readonly Action<T, EventHandler<TEventArgs>> addHandler = addHandler;
         private readonly Action<T, EventHandler<TEventArgs>> removeHandler = removeHandler;
@@ -99,7 +109,7 @@ public static class Observable {
                 this.callback = callback;
                 this.impl.addHandler(this.owner, this.myHandler = this.OnEvent);
                 if (initialCallback)
-                    this.callback(this.owner, this.state);
+                    callback(owner, state);
             }
 
             private void OnEvent(object? sender, TEventArgs eventArgs) {
@@ -108,6 +118,45 @@ public static class Observable {
 
             public void Dispose() {
                 this.impl.removeHandler(this.owner, this.myHandler);
+            }
+        }
+    }
+
+    private sealed class EventObservableCombinedImpl<T>(IEventObservable<T>[] observable) : IEventObservable<T> {
+        private readonly IEventObservable<T>[] observable = observable;
+
+        public IDisposable Subscribe(T owner, object? state, EventHandler<T, object?> callback, bool invokeImmediately = true) {
+            return new Subscriber(this, owner, state, callback, invokeImmediately);
+        }
+
+        private sealed class Subscriber : IDisposable {
+            private readonly IDisposable?[] subscriptions;
+            private readonly T owner;
+            private readonly object? state;
+            private readonly EventHandler<T, object?> callback;
+
+            public Subscriber(EventObservableCombinedImpl<T> impl, T owner, object? state, EventHandler<T, object?> callback, bool initialCallback) {
+                this.owner = owner;
+                this.state = state;
+                this.callback = callback;
+                this.subscriptions = new IDisposable[impl.observable.Length];
+                for (int i = 0; i < impl.observable.Length; i++) {
+                    this.subscriptions[i] = impl.observable[i].Subscribe(owner, this, static (_, s) => ((Subscriber) s!).OnEvent());
+                }
+
+                if (initialCallback)
+                    callback(owner, state);
+            }
+
+            private void OnEvent() {
+                this.callback(this.owner, this.state);
+            }
+
+            public void Dispose() {
+                for (int i = 0; i < this.subscriptions.Length; i++) {
+                    this.subscriptions[i]?.Dispose();
+                    this.subscriptions[i] = null;
+                }
             }
         }
     }

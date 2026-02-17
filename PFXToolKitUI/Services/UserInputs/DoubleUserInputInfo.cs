@@ -35,6 +35,8 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
     public static IEventObservable<DoubleUserInputInfo> TextErrorsBObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.TextErrorsBChanged += e, (s, e) => s.TextErrorsBChanged -= e);
     public static IEventObservable<DoubleUserInputInfo> DebounceErrorsDelayAObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.DebounceErrorsDelayAChanged += e, (s, e) => s.DebounceErrorsDelayAChanged -= e);
     public static IEventObservable<DoubleUserInputInfo> DebounceErrorsDelayBObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.DebounceErrorsDelayBChanged += e, (s, e) => s.DebounceErrorsDelayBChanged -= e);
+    public static IEventObservable<DoubleUserInputInfo> DebounceAElapsedObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.DebounceAElapsed += e, (s, e) => s.DebounceAElapsed -= e);
+    public static IEventObservable<DoubleUserInputInfo> DebounceBElapsedObservable => field ??= Observable.ForEvent<DoubleUserInputInfo>((s, e) => s.DebounceBElapsed += e, (s, e) => s.DebounceBElapsed -= e);
     
     private static readonly SendOrPostCallback s_UpdateTextErrorsAForced = static x => ((DoubleUserInputInfo) x!).UpdateTextAError(true);
     private static readonly SendOrPostCallback s_UpdateTextErrorsBForced = static x => ((DoubleUserInputInfo) x!).UpdateTextBError(true);
@@ -88,6 +90,16 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
         set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.LabelBChanged);
     }
 
+    public string? PrefixA {
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.PrefixAChanged);
+    }
+
+    public string? PrefixB {
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.PrefixBChanged);
+    }
+    
     /// <summary>
     /// Gets or sets a hint for the amount of visual lines the text input A should display. 
     /// Default is 1. A value greater than 1 disables auto-close when pressing return
@@ -173,8 +185,8 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             if (field == value)
                 return;
 
-            SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsAForced, this, value, ref this.errorDebouncerA);
             field = value;
+            SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsAForced, this, value, ref this.errorDebouncerA);
             this.DebounceErrorsDelayAChanged?.Invoke(this, EventArgs.Empty);
         }
     }
@@ -191,16 +203,30 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             if (field == value)
                 return;
 
-            SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsBForced, this, value, ref this.errorDebouncerB);
             field = value;
+            SingleUserInputInfo.HandleDebounceDelayChanged(s_UpdateTextErrorsBForced, this, value, ref this.errorDebouncerB);
             this.DebounceErrorsDelayBChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
-    public event EventHandler? TextAChanged, TextBChanged, LabelAChanged, LabelBChanged;
+    public event EventHandler? TextAChanged, TextBChanged;
+    public event EventHandler? LabelAChanged, LabelBChanged;
+    public event EventHandler? PrefixBChanged, PrefixAChanged;
     public event EventHandler? LineCountHintAChanged, LineCountHintBChanged;
     public event EventHandler? TextErrorsAChanged, TextErrorsBChanged;
     public event EventHandler? DebounceErrorsDelayAChanged, DebounceErrorsDelayBChanged;
+    
+    /// <summary>
+    /// An event raised when the debounce delay A has elapsed and <see cref="TextErrorsA"/> has been updated.
+    /// If <see cref="DebounceErrorsDelayA"/> is zero, then this event is raised immediately.
+    /// </summary>
+    public event EventHandler? DebounceAElapsed;
+    
+    /// <summary>
+    /// An event raised when the debounce delay A has elapsed and <see cref="TextErrorsB"/> has been updated.
+    /// If <see cref="DebounceErrorsDelayB"/> is zero, then this event is raised immediately.
+    /// </summary>
+    public event EventHandler? DebounceBElapsed;
 
     public DoubleUserInputInfo() {
     }
@@ -228,6 +254,8 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             
             this.isUpdatingErrorA = true;
             this.TextErrorsA = SingleUserInputInfo.GetErrors(this.TextA, this.ValidateA, this.TextErrorsA != null)?.AsReadOnly();
+            this.DebounceAElapsed?.Invoke(this, EventArgs.Empty);
+            
             if (this.doUpdateBAfterA) {
                 this.doUpdateBAfterA = false;
                 this.UpdateTextBError(true);
@@ -258,6 +286,8 @@ public class DoubleUserInputInfo : BaseTextUserInputInfo {
             
             this.isUpdatingErrorB = true;
             this.TextErrorsB = SingleUserInputInfo.GetErrors(this.TextB, this.ValidateB, this.TextErrorsB != null)?.AsReadOnly();
+            this.DebounceBElapsed?.Invoke(this, EventArgs.Empty);
+            
             if (this.doUpdateAAfterB) {
                 this.doUpdateAAfterB = false;
                 this.UpdateTextAError(true);

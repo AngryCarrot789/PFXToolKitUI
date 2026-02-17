@@ -110,27 +110,29 @@ public static class Time {
     /// <param name="cancellation">Signals the delay to become cancelled</param>
     /// <param name="osThreadPeriod">The maximum amount of milliseconds between os thread time slices</param>
     public static Task DelayForAsync(TimeSpan delay, CancellationToken cancellation, int osThreadPeriod = 18) {
-        return DelayForAsyncImpl(delay.TotalMilliseconds, true, cancellation, osThreadPeriod);
+        return DelayUntilAsync(GetSystemTicks() + delay.Ticks, true, cancellation, osThreadPeriod);
     }
 
-    private static async Task DelayForAsyncImpl(double milliseconds, bool canSpin, CancellationToken cancellation, int osThreadPeriod = 18) {
-        double nextTick = Stopwatch.GetTimestamp() / (double) TimeSpan.TicksPerMillisecond + milliseconds;
-        int ms = (int) milliseconds;
+    public static async Task DelayUntilAsync(long tick, bool canSpin, CancellationToken cancellation, int osThreadPeriod = 18) {
+        await Task.Run(async () => {
+            long delayTicks = tick - GetSystemTicks();
+            if (delayTicks > 0) {
+                int delayMillis = (int) (delayTicks / TimeSpan.TicksPerMillisecond);
+                if (delayMillis >= osThreadPeriod) {
+                    await Task.Delay(delayMillis - (canSpin ? osThreadPeriod : 0), cancellation);
+                }
 
-        if (ms >= osThreadPeriod) {
-            // average windows thread-slice time == 15~ millis
-            await Task.Delay(ms - osThreadPeriod, cancellation);
-        }
-
-        if (canSpin) {
-            double temp;
-            while ((temp = GetSystemMillis() - nextTick) < -0.05 /* say 50 micros to do continuations to reschedule */) {
-                // do nothing but loop for the rest of the duration, for precise timing
-                cancellation.ThrowIfCancellationRequested();
-                if (temp < 2.0)
-                    await Task.Yield();
+                if (canSpin) {
+                    long temp;
+                    while ((temp = (GetSystemTicks() - tick)) < -500L /* say 50 micros to do continuations to reschedule */) {
+                        // do nothing but loop for the rest of the duration, for precise timing
+                        cancellation.ThrowIfCancellationRequested();
+                        if (temp < 20000L /* 2 milliseconds */)
+                            await Task.Yield();
+                    }
+                }
             }
-        }
+        }, cancellation);
     }
 
     /// <summary>
@@ -143,17 +145,17 @@ public static class Time {
     /// <param name="cancellation">A cancellation token to cancel the delay operation</param>
     /// <returns></returns>
     /// <exception cref="OperationCanceledException">The cancellation token was cancelled</exception>
-    public static Task DelayForAsyncEx(TimeSpan delay, bool canSpin = true, CancellationToken cancellation = default) {
+    public static async Task DelayForAsyncEx(TimeSpan delay, bool canSpin = true, CancellationToken cancellation = default) {
         if (OperatingSystem.IsWindows()) {
             // if (OperatingSystem.IsWindowsVersionAtLeast(1803)) {
             //     return Win32HighResolutionTimer.DelayForAsync(delay, cancellation);
             // }
             // else {
-            return Win32Natives.DelayForAsync(delay, canSpin, cancellation);
+            await Win32Natives.DelayForAsync(delay, canSpin, cancellation);
             // }
         }
         else {
-            return DelayForAsync(delay, cancellation);
+            await DelayForAsync(delay, cancellation);
         }
     }
 
@@ -167,12 +169,18 @@ public static class Time {
 
         // SEE: https://blog.bearcats.nl/perfect-sleep-function/
         public static async Task DelayForAsync(TimeSpan delay, bool canSpin, CancellationToken cancellation) {
+            long targetTick = Stopwatch.GetTimestamp() + delay.Ticks;
+            int millis = (int) delay.TotalMilliseconds;
+            if (millis > 20) {
+                await Task.Delay(millis - 16, cancellation);
+            }
+
             uint result = timeBeginPeriod(1);
             try {
                 if (result == 0 /* success */) {
                     await Task.Run(async () => {
-                        long targetTick = Stopwatch.GetTimestamp() + delay.Ticks;
-                        int delayMillis = (int) (delay.TotalMilliseconds - (canSpin ? 1.1 /* 0.1 tolerance */ : 0));
+                        long absDelayMillis = (targetTick - GetSystemTicks()) / TimeSpan.TicksPerMillisecond;
+                        int delayMillis = (int) (absDelayMillis - (canSpin ? 1.1 /* 0.1 tolerance */ : 0));
                         if (delayMillis > 0)
                             await Task.Delay(delayMillis, cancellation).ConfigureAwait(false);
 
@@ -183,7 +191,7 @@ public static class Time {
                     }, cancellation);
                 }
                 else {
-                    await DelayForAsyncImpl(delay.TotalMilliseconds, canSpin, cancellation).ConfigureAwait(false);
+                    await DelayUntilAsync(targetTick, canSpin, cancellation).ConfigureAwait(false);
                 }
             }
             finally {

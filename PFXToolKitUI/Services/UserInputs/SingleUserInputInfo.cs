@@ -30,6 +30,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     public static IEventObservable<SingleUserInputInfo> TextObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.TextChanged += e, (s, e) => s.TextChanged -= e);
     public static IEventObservable<SingleUserInputInfo> LabelObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.LabelChanged += e, (s, e) => s.LabelChanged -= e);
     public static IEventObservable<SingleUserInputInfo> TextErrorsObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.TextErrorsChanged += e, (s, e) => s.TextErrorsChanged -= e);
+    public static IEventObservable<SingleUserInputInfo> DebounceElapsedObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.DebounceElapsed += e, (s, e) => s.DebounceElapsed -= e);
     public static IEventObservable<SingleUserInputInfo> LineCountHintObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.LineCountHintChanged += e, (s, e) => s.LineCountHintChanged -= e);
     public static IEventObservable<SingleUserInputInfo> MinimumDialogWidthHintObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.MinimumDialogWidthHintChanged += e, (s, e) => s.MinimumDialogWidthHintChanged -= e);
     public static IEventObservable<SingleUserInputInfo> DebounceErrorsDelayObservable => field ??= Observable.ForEvent<SingleUserInputInfo>((s, e) => s.DebounceErrorsDelayChanged += e, (s, e) => s.DebounceErrorsDelayChanged -= e);
@@ -51,7 +52,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
             });
         }
     }
-
+    
     /// <summary>
     /// Gets the label placed right above the text field
     /// </summary>
@@ -60,6 +61,14 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         set => PropertyHelper.SetAndRaiseINE(ref this.label, value, this, this.LabelChanged);
     }
 
+    /// <summary>
+    /// Gets or sets the prefix displayed in the text box. When null or empty, nothing is displayed
+    /// </summary>
+    public string? Prefix {
+        get => field;
+        set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.PrefixChanged);
+    }
+    
     /// <summary>
     /// Gets or sets a hint for the amount of visual lines the text input should display. Default is 1,
     /// meaning only 1 line is shown. A value greater than 1 disables auto-close when pressing return.
@@ -121,19 +130,29 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
             if (field == value)
                 return;
 
-            HandleDebounceDelayChanged(s_UpdateTextErrors, this, value, ref this.errorDebouncer);
             field = value;
+            HandleDebounceDelayChanged(s_UpdateTextErrors, this, value, ref this.errorDebouncer);
             this.DebounceErrorsDelayChanged?.Invoke(this, EventArgs.Empty);
         }
     }
 
     public event EventHandler? TextChanged;
     public event EventHandler? LabelChanged;
+    public event EventHandler? PrefixChanged;
     public event EventHandler? TextErrorsChanged;
     public event EventHandler? LineCountHintChanged;
     public event EventHandler? MinimumDialogWidthHintChanged;
     public event EventHandler? DebounceErrorsDelayChanged;
+    
+    /// <summary>
+    /// An event raised when the debounce delay has elapsed and <see cref="TextErrors"/> has been updated.
+    /// If <see cref="DebounceErrorsDelay"/> is zero, then this event is raised immediately.
+    /// </summary>
+    public event EventHandler? DebounceElapsed;
 
+    public SingleUserInputInfo() {
+    }
+    
     public SingleUserInputInfo(string? defaultText) : this(null, null, null, defaultText) {
     }
 
@@ -148,6 +167,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
     private void UpdateTextError() {
         this.errorDebouncer?.Reset();
         this.TextErrors = GetErrors(this.Text, this.Validate, this.HasErrors())?.AsReadOnly();
+        this.DebounceElapsed?.Invoke(this, EventArgs.Empty);
     }
 
     public override bool HasErrors() => this.TextErrors != null;
@@ -166,7 +186,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         return list.Count > 0 ? list : null;
     }
 
-    public static void HandleTextChanged(SendOrPostCallback updateErrors, object state, int debounceDelay, ref TimerDispatcherDebouncer? debouncer, Action<ValidationArgs>? validate) {
+    internal static void HandleTextChanged(SendOrPostCallback updateErrors, object state, int debounceDelay, ref TimerDispatcherDebouncer? debouncer, Action<ValidationArgs>? validate) {
         if (debouncer == null && debounceDelay > 0 && validate != null)
             debouncer = new TimerDispatcherDebouncer(TimeSpan.FromMilliseconds(debounceDelay), updateErrors, state);
 
@@ -181,7 +201,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         }
     }
 
-    public static void HandleDebounceDelayChanged(SendOrPostCallback updateErrors, object state, int newValue, ref TimerDispatcherDebouncer? debouncer) {
+    internal static void HandleDebounceDelayChanged(SendOrPostCallback updateErrors, object state, int newValue, ref TimerDispatcherDebouncer? debouncer) {
         if (debouncer != null) {
             if (newValue == 0) {
                 if (debouncer.IsWaiting)
@@ -196,7 +216,7 @@ public class SingleUserInputInfo : BaseTextUserInputInfo {
         }
     }
 
-    public static string CanonicalizeTextForLineCount(string value, int lineCount) {
+    internal static string CanonicalizeTextForLineCount(string value, int lineCount) {
         if (lineCount == 1) {
             int idx = value.IndexOf("\r\n");
             if (idx == -1) {

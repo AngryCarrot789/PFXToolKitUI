@@ -9,7 +9,11 @@
         <TextBox x:Name="PART_TextBox" Padding="5,5" VerticalContentAlignment="Center"
                  Background="{DynamicResource ABrush.Tone4.Background.Static}"
                  Text="Text Here"
-                 ScrollViewer.VerticalScrollBarVisibility="Auto"/>
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+            <TextBox.InnerLeftContent>
+                <TextBlock Text="" Opacity="0.7" x:Name="PART_InnerLeftContent"/>
+            </TextBox.InnerLeftContent>
+        </TextBox>
         <TextBlock x:Name="PART_FooterTextBlock" FontSize="11" Padding="5,5" Foreground="{DynamicResource ABrush.Foreground.Deeper}"/>
     </StackPanel>
 </UserControl>
