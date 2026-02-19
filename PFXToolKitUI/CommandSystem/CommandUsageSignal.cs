@@ -17,6 +17,7 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Composition;
 using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.CommandSystem;
@@ -51,15 +52,21 @@ public sealed class CommandUsageSignal {
     /// Raises the <see cref="CanExecuteChanged"/> event
     /// </summary>
     public void RaiseCanExecuteChanged() => this.CanExecuteChanged?.Invoke(this, EventArgs.Empty);
-
-    /// <summary>
-    /// Gets or creates a signal for the given context data
-    /// </summary>
-    public static CommandUsageSignal GetOrCreate(IMutableContextData context, DataKey<CommandUsageSignal> key) {
-        if (!key.TryGetContext(context, out CommandUsageSignal? signal)) {
-            context.Set(key, signal = new CommandUsageSignal());
+    
+    public static CommandUsageSignal GetOrCreate(IComponentManager componentManager, DataKey<CommandUsageSignal> key) {
+        ContextData storage = CommandUsageSignalStorageManager.GetInstance(componentManager).Storage;
+        if (!key.TryGetContext(storage, out CommandUsageSignal? signal)) {
+            storage.Set(key, signal = new CommandUsageSignal());
         }
 
         return signal;
+    }
+
+    private class CommandUsageSignalStorageManager {
+        public readonly ContextData Storage = new ContextData();
+
+        public static CommandUsageSignalStorageManager GetInstance(IComponentManager componentManager) {
+            return componentManager.GetOrCreateComponent(s => new CommandUsageSignalStorageManager());
+        }
     }
 }

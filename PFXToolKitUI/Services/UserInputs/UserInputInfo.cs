@@ -71,7 +71,17 @@ public abstract class UserInputInfo : ITransferableData {
         get => field;
         set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CancelTextChanged);
     } = "Cancel";
-    
+
+    /// <summary>
+    /// Gets or sets an async callback that is invoked and awaited when the dialog window is about to close.
+    /// This is only invoked when there are no text errors.
+    /// <para>
+    /// If the result of the awaited task returns false, the dialog will not be closed.
+    /// </para>
+    /// </summary>
+    /// <remarks>Do not use <see cref="Delegate.Combine(Delegate?, Delegate?)"/> on this value, because it will not be handled correctly</remarks>
+    public TryConfirmAsyncEventHandler? TryConfirmAsync { get; set; }
+
     /// <summary>
     /// Gets or sets the button that is focused by default. The default is <see cref="ButtonType.None"/>, meaning no button is focused
     /// </summary>
@@ -136,13 +146,12 @@ public abstract class UserInputInfo : ITransferableData {
     }
 }
 
-public sealed class UserInputDialogCloseEventArgs : EventArgs {
-    public bool IsCancelled { get; private set; }
-
-    public UserInputDialogCloseEventArgs() {
-    }
-
-    public void SetCancelled() {
-        this.IsCancelled = true;
-    }
-}
+/// <summary>
+/// A delegate for the try confirm handler
+/// </summary>
+/// <param name="info">The sender info</param>
+/// <param name="token">
+/// The cancellation token that becomes cancelled when the user forces the window to be closed,
+/// e.g. by clicking cancel or the X button, when the try confirm callback is already running.
+/// </param>
+public delegate Task<bool> TryConfirmAsyncEventHandler(UserInputInfo info, CancellationToken token);

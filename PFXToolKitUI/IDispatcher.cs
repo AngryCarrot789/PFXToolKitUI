@@ -97,13 +97,13 @@ public interface IDispatcher {
     /// this method will cause any exception the actions throws and will throw it on the main thread, causing the app to crash,
     /// as apposed to silencing it and stuffing it into the Task object
     /// </summary>
-    /// <param name="action">The callback to invoke</param>
-    /// <param name="state">The state object to pass to the callback</param>
+    /// <param name="callback">The callback to invoke</param>
+    /// <param name="state">The state object passed to the callback</param>
     /// <param name="priority">The priority to invoke the callback at</param>
     /// <param name="captureContext">
     /// Specifies whether to capture the current execution context and restore it while executing the callback
     /// </param>
-    void Post(SendOrPostCallback action, object? state, DispatchPriority priority = DispatchPriority.Default, bool captureContext = false);
+    void Post(SendOrPostCallback callback, object? state, DispatchPriority priority = DispatchPriority.Default, bool captureContext = false);
 
     /// <summary>
     /// Process all queued events at and above the given priority. Once the task is complete,

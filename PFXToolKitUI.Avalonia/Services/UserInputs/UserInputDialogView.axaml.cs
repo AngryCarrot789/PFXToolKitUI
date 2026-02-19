@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Runtime.ExceptionServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -31,9 +32,9 @@ using PFXToolKitUI.Avalonia.Services.Messages.Controls;
 using PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Windowing;
-using PFXToolKitUI.Logging;
 using PFXToolKitUI.Services.ColourPicking;
 using PFXToolKitUI.Services.InputStrokes;
+using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.UserInputs;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
@@ -89,6 +90,8 @@ public partial class UserInputDialogView : UserControl {
 
     private readonly IBinder<UserInputInfo> confirmTextBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.ConfirmTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.ConfirmText));
     private readonly IBinder<UserInputInfo> cancelTextBinder = new EventUpdateBinder<UserInputInfo>(nameof(UserInputInfo.CancelTextChanged), b => b.Control.SetValue(ContentProperty, b.Model.CancelText));
+    private bool hasErrors, isAwaitingTryConfirm;
+    private CancellationTokenSource? ctsTryConfirm;
 
     public UserInputDialogView() {
         this.InitializeComponent();
@@ -151,7 +154,7 @@ public partial class UserInputDialogView : UserControl {
         if (oldData != null) {
             (this.PART_InputFieldContent.Content as IUserInputContent)?.Disconnect();
             this.PART_InputFieldContent.Content = null;
-            oldData.HasErrorsChanged -= this.UpdateConfirmButton;
+            oldData.HasErrorsChanged -= this.OnHasErrorsChanged;
         }
 
         // Create this first just in case there's a problem with no registrations
@@ -162,7 +165,7 @@ public partial class UserInputDialogView : UserControl {
         this.confirmTextBinder.SwitchModel(newData);
         this.cancelTextBinder.SwitchModel(newData);
         if (control != null) {
-            newData!.HasErrorsChanged += this.UpdateConfirmButton;
+            newData!.HasErrorsChanged += this.OnHasErrorsChanged;
             this.PART_InputFieldContent.Content = control;
             control.ApplyStyling();
             control.ApplyTemplate();
@@ -185,8 +188,9 @@ public partial class UserInputDialogView : UserControl {
         }, DispatchPriority.Loaded);
     }
 
-    private void UpdateConfirmButton(object? sender, EventArgs eventArgs) {
-        this.PART_ConfirmButton.IsEnabled = !this.UserInputInfo!.HasErrors();
+    private void OnHasErrorsChanged(object? sender, EventArgs eventArgs) {
+        this.hasErrors = this.UserInputInfo!.HasErrors();
+        this.UpdateIsConfirmEnabled();
     }
 
     /// <summary>
@@ -194,13 +198,17 @@ public partial class UserInputDialogView : UserControl {
     /// update all errors, and then updates our confirm button
     /// </summary>
     public void DoUpdateAllErrors() {
-        if (this.UserInputInfo is UserInputInfo info) {
+        UserInputInfo? info = this.UserInputInfo;
+        if (info != null) {
             info.UpdateAllErrors();
-            this.PART_ConfirmButton.IsEnabled = !info.HasErrors();
+            this.hasErrors = info.HasErrors();
         }
-        else {
-            this.PART_ConfirmButton.IsEnabled = false;
-        }
+
+        this.UpdateIsConfirmEnabled();
+    }
+
+    private void UpdateIsConfirmEnabled() {
+        this.PART_ConfirmButton.IsEnabled = this.UserInputInfo != null && !this.hasErrors && !this.isAwaitingTryConfirm;
     }
 
     /// <summary>
@@ -212,12 +220,14 @@ public partial class UserInputDialogView : UserControl {
     /// false if it could not be closed due to a validation error or other error
     /// </returns>
     public void RequestClose(bool result) {
+        // If anyone tries to close this view, cancel the try confirm callback
+        this.ctsTryConfirm?.Cancel();
+
         if (this.OwnerWindow == null) {
             return;
         }
 
         if (this.OwnerWindow.OpenState != OpenState.Open) {
-            AppLogger.Instance.WriteLine($"Warning: attempt to request user input dialog to close again. State = {this.OwnerWindow.OpenState}");
             return;
         }
 
@@ -242,6 +252,61 @@ public partial class UserInputDialogView : UserControl {
         }
 
         this.OwnerWindow.RequestClose(BoolBox.True);
+    }
+
+    private void BeforeAwaitTryConfirm() {
+        this.isAwaitingTryConfirm = true;
+        this.UpdateIsConfirmEnabled();
+    }
+
+    private void AfterAwaitTryConfirm() {
+        this.isAwaitingTryConfirm = false;
+        this.UpdateIsConfirmEnabled();
+    }
+
+    private static async Task<bool> RunTryConfirmAsync(UserInputInfo info, UserInputDialogView view) {
+        Debug.Assert(view.ctsTryConfirm == null);
+
+        view.ctsTryConfirm = new CancellationTokenSource();
+        view.BeforeAwaitTryConfirm();
+
+        try {
+            return await info.TryConfirmAsync!(info, view.ctsTryConfirm.Token);
+        }
+        catch (OperationCanceledException) {
+            return false;
+        }
+        catch (Exception exception) {
+            if (!Debugger.IsAttached) {
+                await IMessageDialogService.Instance.ShowExceptionMessage("Internal Error", "An error occurred while closing dialog", exception);
+            }
+            else {
+                ApplicationPFX.Instance.Dispatcher.Post(static s => ((ExceptionDispatchInfo) s!).Throw(), ExceptionDispatchInfo.Capture(exception));
+            }
+
+            return false;
+        }
+        finally {
+            view.AfterAwaitTryConfirm();
+
+            bool isCloseRequested = view.ctsTryConfirm.IsCancellationRequested;
+            view.ctsTryConfirm.Dispose();
+            view.ctsTryConfirm = null;
+
+            if (isCloseRequested) {
+                ApplicationPFX.Instance.Dispatcher.Post(static (state) => {
+                    UserInputDialogView v = (UserInputDialogView) state!;
+                    if (v.OwnerWindow != null && v.OwnerWindow.OpenState == OpenState.Open) {
+                        v.RequestClose(false);
+                    }
+                    
+                    // Priority below Default is required, because async callbacks use Default.
+                    // When RunTryConfirmAsync finishes, it posts the continuation to finalize
+                    // the TryCloseAsync procedure, but this post callback here would run first
+                    // without < Default priority, meaning OpenState will still be TryingToClose
+                }, view, DispatchPriority.Input);
+            }
+        }
     }
 
     /// <summary>
@@ -270,28 +335,31 @@ public partial class UserInputDialogView : UserControl {
             BorderBrush = BrushManager.Instance.CreateConstant(SKColors.DodgerBlue)
         });
 
-        window.Control.AddHandler(KeyDownEvent, WindowOnKeyDown);
-        window.Opening += WindowOnWindowOpening;
-        window.Opened += WindowOnWindowOpened;
-        window.Closed += WindowOnWindowClosed;
+        window.Control.AddHandler(KeyDownEvent, (s, e) => {
+            if (!e.Handled && e.Key == Key.Escape && view.OwnerWindow != null) {
+                view.RequestClose(false);
+            }
+        });
+
+        window.Opening += (s, e) => {
+            window.SizingInfo.SizeToContent = SizeToContent.Manual;
+            view.OnWindowOpening(window);
+        };
+
+        window.Opened += (s, e) => view.OnWindowOpened(window);
+        window.Closed += (s, e) => view.OnWindowClosed(window);
+
+        window.TryCloseAsync += (s, e) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+            if (e.DialogResult == BoolBox.True && info.TryConfirmAsync != null) {
+                if (!await RunTryConfirmAsync(info, view)) {
+                    e.SetCancelled();
+                }
+            }
+        }).Unwrap();
 
         bool? result = await window.ShowDialogAsync() as bool?;
         view.UserInputInfo = null; // unhook models' event handlers
         return result;
-
-        void WindowOnWindowOpening(object? s, EventArgs e) {
-            ((IDesktopWindow) s!).SizingInfo.SizeToContent = SizeToContent.Manual;
-            view.OnWindowOpening((IDesktopWindow) s!);
-        }
-
-        void WindowOnWindowOpened(object? s, EventArgs e) => view.OnWindowOpened((IDesktopWindow) s!);
-        void WindowOnWindowClosed(object? s, WindowCloseEventArgs e) => view.OnWindowClosed((IDesktopWindow) s!);
-
-        void WindowOnKeyDown(object? s, KeyEventArgs e) {
-            if (!e.Handled && e.Key == Key.Escape && view.OwnerWindow != null) {
-                view.RequestClose(false);
-            }
-        }
     }
 
     public static async Task<bool?> ShowDialogOverlayAsync(UserInputInfo info, IOverlayWindowManager overlayManager, IOverlayWindow? parent) {
@@ -313,27 +381,27 @@ public partial class UserInputDialogView : UserControl {
             CloseOnLostFocus = true
         });
 
-        overlayWindow.Control.AddHandler(KeyDownEvent, WindowOnKeyDown); // just in case on desktop
-        overlayWindow.Opening += WindowOnWindowOpening;
-        overlayWindow.Opened += WindowOnWindowOpened;
-        overlayWindow.Closed += WindowOnWindowClosed;
+        overlayWindow.Control.AddHandler(KeyDownEvent, (s, e) => {
+            if (!e.Handled && e.Key == Key.Escape && view.OwnerWindow != null) {
+                view.RequestClose(false);
+            }
+        }); // just in case on desktop
+
+        overlayWindow.Opening += (s, e) => view.OnWindowOpening(overlayWindow);
+        overlayWindow.Opened += (s, e) => view.OnWindowOpened(overlayWindow);
+        overlayWindow.Closed += (s, e) => view.OnWindowClosed(overlayWindow);
+
+        overlayWindow.TryCloseAsync += (s, e) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+            if (e.DialogResult == BoolBox.True && info.TryConfirmAsync != null) {
+                if (!await RunTryConfirmAsync(info, view)) {
+                    e.SetCancelled();
+                }
+            }
+        }).Unwrap();
 
         bool? result = await overlayWindow.ShowDialogAsync() as bool?;
         view.UserInputInfo = null; // unhook models' event handlers
         return result;
-
-        static void WindowOnWindowOpening(object? s, EventArgs e) {
-            ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OnWindowOpening((IOverlayWindow) s!);
-        }
-
-        static void WindowOnWindowOpened(object? s, EventArgs e) => ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OnWindowOpened((IOverlayWindow) s!);
-        static void WindowOnWindowClosed(object? s, OverlayWindowCloseEventArgs popupCloseEventArgs) => ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OnWindowClosed((IOverlayWindow) s!);
-
-        static void WindowOnKeyDown(object? s, KeyEventArgs e) {
-            if (!e.Handled && e.Key == Key.Escape && ((UserInputDialogView) ((IOverlayWindow) s!).Content!).OwnerWindow != null) {
-                ((UserInputDialogView) ((IOverlayWindow) s!).Content!).RequestClose(false);
-            }
-        }
     }
 
     /// <summary>

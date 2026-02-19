@@ -264,7 +264,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         if (!forced) {
             this.OpenState = OpenState.TryingToClose;
             this.isProcessingClosingInternal = true;
-            OverlayWindowCancelCloseEventArgs beforeClosingArgs = new OverlayWindowCancelCloseEventArgs(this, reason, isFromCode);
+            OverlayWindowCancelCloseEventArgs beforeClosingArgs = new OverlayWindowCancelCloseEventArgs(this, reason, isFromCode, dialogResult);
 
             try {
                 this.TryClose?.Invoke(this, beforeClosingArgs);
@@ -295,7 +295,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
 
         this.myDialogResult = dialogResult;
         this.OpenState = OpenState.Closing;
-        OverlayWindowCloseEventArgs closingArgs = new OverlayWindowCloseEventArgs(this, reason, isFromCode, forced);
+        OverlayWindowCloseEventArgs closingArgs = new OverlayWindowCloseEventArgs(this, reason, isFromCode, forced, dialogResult);
 
         try {
             this.Closing?.Invoke(this, closingArgs);

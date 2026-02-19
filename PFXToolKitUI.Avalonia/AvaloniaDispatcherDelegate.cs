@@ -27,7 +27,7 @@ namespace PFXToolKitUI.Avalonia;
 /// <summary>
 /// A delegate around the avalonia dispatcher so that core projects can access it, since features RateLimitedDispatchAction require it
 /// </summary>
-public class AvaloniaDispatcherDelegate : IDispatcher {
+public sealed class AvaloniaDispatcherDelegate : BaseDispatcher {
     private static readonly ConstructorInfo TimerCTOR = typeof(DispatcherTimer).GetConstructor(BindingFlags.Instance | BindingFlags.NonPublic, null, [typeof(DispatcherPriority), typeof(Dispatcher)], null) ?? throw new Exception("Missing constructor for Avalonia DispatcherTimer");
 
     private readonly Dispatcher dispatcher;
@@ -38,39 +38,23 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
         this.myFrameManager = this.dispatcher.SupportsRunLoops ? new FrameManagerImpl(this) : null;
     }
 
-    public bool CheckAccess() => this.dispatcher.CheckAccess();
+    public override bool CheckAccess() => this.dispatcher.CheckAccess();
 
-    public void VerifyAccess() => this.dispatcher.VerifyAccess();
+    public override void VerifyAccess() => this.dispatcher.VerifyAccess();
 
-    public Task InvokeAsync(Action action, DispatchPriority priority = DispatchPriority.Normal, bool captureContext = false, CancellationToken token = default) {
-        TaskCompletionSource tcs = new TaskCompletionSource();
-        this.dispatcher.Post(InvokeHandlers.s_HandleInvokeAsyncInfo, new InvokeAsyncInfo(action, tcs, token, captureContext), ToAvaloniaPriority(priority));
-        return tcs.Task;
-    }
+    protected override void ShutdownCore() => this.dispatcher.InvokeShutdown();
 
-    public Task<T> InvokeAsync<T>(Func<T> function, DispatchPriority priority = DispatchPriority.Normal, bool captureContext = false, CancellationToken token = default) {
-        TaskCompletionSource<T> tcs = new TaskCompletionSource<T>();
-        this.dispatcher.Post(InvokeHandlers<T>.s_HandleInvokeAsync, new InvokeAsyncInfo<T>(function, tcs, token, captureContext), ToAvaloniaPriority(priority));
-        return tcs.Task;
-    }
-
-    public void Post(Action action, DispatchPriority priority = DispatchPriority.Default, bool captureContext = false) {
-        this.dispatcher.Post(InvokeHandlers.s_HandlePostInfo, new PostInfo(InvokeHandlers.s_InvokeAction, action, captureContext), ToAvaloniaPriority(priority));
-    }
-
-    public void Post(SendOrPostCallback action, object? state, DispatchPriority priority = DispatchPriority.Default, bool captureContext = false) {
-        this.dispatcher.Post(InvokeHandlers.s_HandlePostInfo, new PostInfo(action, state, captureContext), ToAvaloniaPriority(priority));
-    }
-
-    public void Shutdown() => this.dispatcher.InvokeShutdown();
-
-    public IDispatcherTimer CreateTimer(DispatchPriority priority) {
+    public override IDispatcherTimer CreateTimer(DispatchPriority priority) {
         DispatcherTimer timer = (DispatcherTimer) TimerCTOR.Invoke([ToAvaloniaPriority(priority), this.dispatcher]);
         return new TimerDelegate(timer, this);
     }
 
-    public bool TryGetFrameManager([NotNullWhen(true)] out IDispatcherFrameManager? frameManager) {
+    public override bool TryGetFrameManager([NotNullWhen(true)] out IDispatcherFrameManager? frameManager) {
         return (frameManager = this.myFrameManager) != null;
+    }
+
+    protected override void PostCore(SendOrPostCallback callback, object? state, DispatchPriority priority) {
+        this.dispatcher.Post(callback, state, ToAvaloniaPriority(priority));
     }
 
     private static DispatcherPriority ToAvaloniaPriority(DispatchPriority priority) {
@@ -127,125 +111,6 @@ public class AvaloniaDispatcherDelegate : IDispatcher {
 
         static FrameManagerImpl() {
             // defined to force DisabledProcessingCountInfo to be evaluated
-        }
-    }
-
-    private sealed class PostInfo(SendOrPostCallback callback, object? state, bool captureContext) {
-        public readonly ExecutionContext? CapturedContext = captureContext ? ExecutionContext.Capture() : null;
-        public readonly SendOrPostCallback Callback = callback;
-        public readonly object? State = state;
-    }
-
-    private sealed class InvokeAsyncInfo(Action action, TaskCompletionSource taskCompletionSource, CancellationToken token, bool captureContext) {
-        public readonly ExecutionContext? CapturedContext = captureContext ? ExecutionContext.Capture() : null;
-        public readonly Action Action = action;
-        public readonly TaskCompletionSource TaskCompletionSource = taskCompletionSource;
-        public readonly CancellationToken Token = token;
-    }
-
-    private sealed class InvokeAsyncInfo<T>(Func<T> callback, TaskCompletionSource<T> taskCompletionSource, CancellationToken token, bool captureContext) {
-        public readonly ExecutionContext? CapturedContext = captureContext ? ExecutionContext.Capture() : null;
-        public readonly Func<T> Callback = callback;
-        public readonly TaskCompletionSource<T> TaskCompletionSource = taskCompletionSource;
-        public readonly CancellationToken Token = token;
-    }
-
-    private static class InvokeHandlers<T> {
-        [SuppressMessage("ReSharper", "StaticMemberInGenericType")]
-        public static readonly SendOrPostCallback s_HandleInvokeAsync = HandleInvokeAsync;
-
-        [SuppressMessage("ReSharper", "StaticMemberInGenericType")]
-        private static readonly ContextCallback s_RunCallback = RunCallback;
-
-        private static void RunCallback(object? inf) {
-            InvokeAsyncInfo<T> info = (InvokeAsyncInfo<T>) inf!;
-            try {
-                info.TaskCompletionSource.SetResult(info.Callback());
-            }
-            catch (Exception e) {
-                info.TaskCompletionSource.SetException(e);
-            }
-        }
-
-        private static void HandleInvokeAsync(object? x) {
-            InvokeAsyncInfo<T> info = (InvokeAsyncInfo<T>) x!;
-            TaskCompletionSource<T> tcs = info.TaskCompletionSource;
-
-            if (info.Token.IsCancellationRequested) {
-                tcs.TrySetCanceled(info.Token);
-                return;
-            }
-
-            if (info.CapturedContext != null) {
-                ExecutionContext.Run(info.CapturedContext, s_RunCallback, info);
-            }
-            else {
-                try {
-                    tcs.SetResult(info.Callback());
-                }
-                catch (Exception e) {
-                    tcs.SetException(e);
-                }
-            }
-        }
-    }
-
-    private static class InvokeHandlers {
-        public static readonly SendOrPostCallback s_HandleInvokeAsyncInfo = HandleInvokeAsync;
-        private static readonly ContextCallback s_RunCallback = RunCallback;
-        public static readonly SendOrPostCallback s_InvokeAction = InvokeAction;
-        private static readonly ContextCallback s_RunPost = RunPost;
-        public static readonly SendOrPostCallback s_HandlePostInfo = HandlePost;
-
-        private static void RunCallback(object? inf) {
-            InvokeAsyncInfo info = (InvokeAsyncInfo) inf!;
-            try {
-                info.Action();
-                info.TaskCompletionSource.SetResult();
-            }
-            catch (Exception e) {
-                info.TaskCompletionSource.SetException(e);
-            }
-        }
-
-        private static void HandleInvokeAsync(object? x) {
-            InvokeAsyncInfo info = (InvokeAsyncInfo) x!;
-            TaskCompletionSource tcs = info.TaskCompletionSource;
-
-            if (info.Token.IsCancellationRequested) {
-                tcs.TrySetCanceled(info.Token);
-                return;
-            }
-
-            if (info.CapturedContext != null) {
-                ExecutionContext.Run(info.CapturedContext, s_RunCallback, info);
-            }
-            else {
-                try {
-                    info.Action();
-                    tcs.SetResult();
-                }
-                catch (Exception e) {
-                    tcs.SetException(e);
-                }
-            }
-        }
-
-        private static void InvokeAction(object? s) => ((Action) s!)();
-
-        private static void RunPost(object? state) {
-            PostInfo info = (PostInfo) state!;
-            info.Callback(info.State);
-        }
-
-        private static void HandlePost(object? state) {
-            PostInfo info = (PostInfo) state!;
-            if (info.CapturedContext != null) {
-                ExecutionContext.Run(info.CapturedContext, s_RunPost, info);
-            }
-            else {
-                info.Callback(info.State);
-            }
         }
     }
 }

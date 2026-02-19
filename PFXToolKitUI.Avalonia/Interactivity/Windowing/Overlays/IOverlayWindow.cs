@@ -120,16 +120,16 @@ public class OverlayWindowEventArgs(IOverlayWindow dialog) : EventArgs {
 /// <summary>
 /// Event args for when an overlay window is closing and when closed
 /// </summary>
-public class OverlayWindowCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode, bool forced) : OverlayWindowEventArgs(dialog) {
+public class OverlayWindowCloseEventArgs : OverlayWindowEventArgs {
     /// <summary>
     /// Gets the reason for why the overlay window is closing 
     /// </summary>
-    public WindowCloseReason Reason { get; } = reason;
+    public WindowCloseReason Reason { get; }
 
     /// <summary>
     /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IOverlayWindow.CloseAsync"/>)
     /// </summary>
-    public bool IsFromCode { get; } = isFromCode;
+    public bool IsFromCode { get; }
 
     /// <summary>
     /// Gets whether the close operation is being forced. For example, the app or OS is shutting down,
@@ -141,13 +141,28 @@ public class OverlayWindowCloseEventArgs(IOverlayWindow dialog, WindowCloseReaso
     /// they are not called when this property is true)
     /// </para>
     /// </summary>
-    public bool IsForced { get; } = forced;
+    public bool IsForced { get; }
+    
+    /// <summary>
+    /// Gets the dialog result passed to <see cref="IOverlayWindow.RequestClose"/> or <see cref="IOverlayWindow.RequestCloseAsync"/>
+    /// </summary>
+    public object? DialogResult { get; }
+    
+    /// <summary>
+    /// Event args for when an overlay window is closing and when closed
+    /// </summary>
+    public OverlayWindowCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode, bool forced, object? dialogResult) : base(dialog) {
+        this.Reason = reason;
+        this.IsFromCode = isFromCode;
+        this.IsForced = forced;
+        this.DialogResult = dialogResult;
+    }
 }
 
 /// <summary>
 /// Event args for when trying to close an overlay window
 /// </summary>
-public class OverlayWindowCancelCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode) : OverlayWindowCloseEventArgs(dialog, reason, isFromCode, false) {
+public class OverlayWindowCancelCloseEventArgs : OverlayWindowCloseEventArgs {
     // We don't allow de-cancelling the close because it could lead to unexpected behaviour and issues
     private volatile bool isCancelled;
 
@@ -155,6 +170,12 @@ public class OverlayWindowCancelCloseEventArgs(IOverlayWindow dialog, WindowClos
     /// Gets whether the closing of the overlay window should be cancelled
     /// </summary>
     public bool IsCancelled => this.isCancelled;
+    
+    /// <summary>
+    /// Event args for when trying to close an overlay window
+    /// </summary>
+    public OverlayWindowCancelCloseEventArgs(IOverlayWindow dialog, WindowCloseReason reason, bool isFromCode, object? dialogResult) : base(dialog, reason, isFromCode, false, dialogResult) {
+    }
 
     /// <summary>
     /// Sets <see cref="IsCancelled"/> to true, preventing the overlay window from closing

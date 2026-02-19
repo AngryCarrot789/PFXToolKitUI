@@ -130,6 +130,26 @@ public abstract class CommandUsage {
         guard.InvokeAsync();
     }
 
+    private void SignalOnCanExecuteChanged(object? sender, EventArgs e) {
+        this.UpdateCanExecuteLater();
+    }
+    
+    /// <summary>
+    /// Adds a handler to the signal's <see cref="CommandUsageSignal.CanExecuteChanged"/> event that invokes <see cref="UpdateCanExecuteLater"/>.
+    /// </summary>
+    /// <param name="signal">The signal</param>
+    public void AddCommandSignalHandler(CommandUsageSignal signal) {
+        signal.CanExecuteChanged += this.SignalOnCanExecuteChanged;
+    }
+
+    /// <summary>
+    /// Removes a handler from the signal's <see cref="CommandUsageSignal.CanExecuteChanged"/> event that invokes <see cref="UpdateCanExecuteLater"/>.
+    /// </summary>
+    /// <param name="signal">The signal</param>
+    public void RemoveCommandSignalHandler(CommandUsageSignal signal) {
+        signal.CanExecuteChanged -= this.SignalOnCanExecuteChanged;
+    }
+
     public virtual void UpdateCanExecute() {
         IContextData? ctx = this.GetContextData();
         this.OnUpdateForCanExecuteState(

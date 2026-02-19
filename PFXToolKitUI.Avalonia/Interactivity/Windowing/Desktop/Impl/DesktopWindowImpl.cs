@@ -258,10 +258,12 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         if (this.OpenState != OpenState.Open && this.OpenState != OpenState.TryingToClose)
             throw new InvalidOperationException("Window is not in its normal open state");
 
+        object? dialogResult = this.myNativeWindow.GetDialogResult();
+        
         try {
             this.internalIsProcessingClose = true;
             this.OpenState = OpenState.TryingToClose;
-            WindowCancelCloseEventArgs cancelCloseArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode);
+            WindowCancelCloseEventArgs cancelCloseArgs = new WindowCancelCloseEventArgs(this, reason, isFromCode, dialogResult);
             foreach (DesktopWindowImpl window in this.myVisibleChildWindows.ToList()) {
                 window.myNativeWindow.Close();
             }
@@ -293,7 +295,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             }
 
             this.OpenState = OpenState.Closing;
-            WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode);
+            WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode, dialogResult);
             this.Closing?.Invoke(this, closingArgs);
 
             try {
@@ -324,7 +326,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         this.myManager.OnWindowClosed(this);
 
         try {
-            this.Closed?.Invoke(this, new WindowCloseEventArgs(this, reason, isFromCode));
+            this.Closed?.Invoke(this, new WindowCloseEventArgs(this, reason, isFromCode, this.myNativeWindow.GetDialogResult()));
         }
         finally {
             this.tcsWaitForClosed?.TrySetResult();

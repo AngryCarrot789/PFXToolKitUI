@@ -36,6 +36,7 @@ public static class AvUtils {
     private static AvaloniaLocator Locator;
     private static MethodInfo GetServiceMethod;
     private static MethodInfo Get_Handle;
+    private static FieldInfo DialogResultField;
 
     public static void OnApplicationInitialised() {
         Locator = (AvaloniaLocator) GetProperty<AvaloniaLocator, IAvaloniaDependencyResolver>(null, "Current", true)!;
@@ -43,6 +44,8 @@ public static class AvUtils {
 
         PropertyInfo prop = typeof(ITopLevelImpl).GetProperty("Handle", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) ?? throw new Exception("Could not find Handle property");
         Get_Handle = prop.GetMethod ?? throw new Exception("Could not find get_Handle method"); 
+        
+        DialogResultField = typeof(Window).GetField("_dialogResult", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance) ?? throw new Exception("Could not find _dialogResult field");
 
         // Test that the above code works
         GetService(typeof(object));
@@ -172,5 +175,9 @@ public static class AvUtils {
 
     public static IPlatformHandle? GetWindowHandle(IWindowImpl? window) {
         return (IPlatformHandle?) Get_Handle.Invoke(window, null);
+    }
+    
+    public static object? GetDialogResult(Window window) {
+        return DialogResultField.GetValue(window);
     }
 }

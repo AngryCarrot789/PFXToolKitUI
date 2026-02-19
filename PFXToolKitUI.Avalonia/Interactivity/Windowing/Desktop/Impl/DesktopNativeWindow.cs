@@ -393,4 +393,6 @@ public sealed class DesktopNativeWindow : Window {
         if (GetTopLevel(sender as Button) is DesktopNativeWindow window)
             window.Close();
     }
+
+    public object? GetDialogResult() => AvUtils.GetDialogResult(this);
 }

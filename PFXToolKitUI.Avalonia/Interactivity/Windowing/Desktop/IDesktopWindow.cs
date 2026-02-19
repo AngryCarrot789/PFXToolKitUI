@@ -233,27 +233,41 @@ public class WindowEventArgs(IDesktopWindow window) : EventArgs {
 /// <summary>
 /// Event args for when a window is closing and when closed
 /// </summary>
-public class WindowCloseEventArgs(IDesktopWindow window, WindowCloseReason reason, bool isFromCode) : WindowEventArgs(window) {
+public class WindowCloseEventArgs : WindowEventArgs {
     /// <summary>
     /// Gets the reason for why the window is closing 
     /// </summary>
-    public WindowCloseReason Reason { get; } = reason;
+    public WindowCloseReason Reason { get; }
 
     /// <summary>
     /// Gets whether the closing operation was caused by user code (i.e. called from <see cref="IDesktopWindow.RequestCloseAsync"/>)
     /// </summary>
-    public bool IsFromCode { get; } = isFromCode;
+    public bool IsFromCode { get; }
 
     /// <summary>
     /// Gets whether the window will absolutely be force-closed due to <see cref="Reason"/> being OS or App shutdown
     /// </summary>
     public bool IsEffectivelyForced => this.Reason == WindowCloseReason.OSShutdown || this.Reason == WindowCloseReason.ApplicationShutdown;
+    
+    /// <summary>
+    /// Gets the dialog result passed to <see cref="IDesktopWindow.RequestClose"/> or <see cref="IDesktopWindow.RequestCloseAsync"/>
+    /// </summary>
+    public object? DialogResult { get; }
+    
+    /// <summary>
+    /// Event args for when a window is closing and when closed
+    /// </summary>
+    public WindowCloseEventArgs(IDesktopWindow window, WindowCloseReason reason, bool isFromCode, object? dialogResult) : base(window) {
+        this.Reason = reason;
+        this.IsFromCode = isFromCode;
+        this.DialogResult = dialogResult;
+    }
 }
 
 /// <summary>
 /// Event args for when trying to close a window
 /// </summary>
-public class WindowCancelCloseEventArgs(IDesktopWindow window, WindowCloseReason reason, bool isFromCode) : WindowCloseEventArgs(window, reason, isFromCode) {
+public class WindowCancelCloseEventArgs : WindowCloseEventArgs {
     // We don't allow de-cancelling the close because it could lead to unexpected behaviour and issues
     private volatile bool isCancelled;
 
@@ -261,6 +275,12 @@ public class WindowCancelCloseEventArgs(IDesktopWindow window, WindowCloseReason
     /// Gets whether the closing of the window should be cancelled
     /// </summary>
     public bool IsCancelled => this.isCancelled;
+    
+    /// <summary>
+    /// Event args for when trying to close a window
+    /// </summary>
+    public WindowCancelCloseEventArgs(IDesktopWindow window, WindowCloseReason reason, bool isFromCode, object? dialogResult) : base(window, reason, isFromCode, dialogResult) {
+    }
 
     /// <summary>
     /// Sets <see cref="IsCancelled"/> to true, preventing the window from closing
