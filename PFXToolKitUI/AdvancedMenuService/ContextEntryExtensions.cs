@@ -50,107 +50,142 @@ public static class ContextEntryExtensions {
         public T3 Value3 { get; } = value3;
     }
 
-    /// <summary>
-    /// Adds a handler to <see cref="BaseMenuEntry.CapturedContextChanged"/> that fires the update callback with the value keyed by the data key, or null if there is no value by that key.
-    /// </summary>
-    /// <param name="entry">The menu entry to add the change handler to</param>
-    /// <param name="key">The data key used to get the value of <see cref="T"/></param>
-    /// <param name="update">Invoked when the context changes</param>
-    /// <typeparam name="T">The type of value to pass to the context change callback</typeparam>
-    /// <returns>The entry, for chained calling</returns>
-    public static BaseMenuEntry AddContextUpdateHandler<T>(this BaseMenuEntry entry, DataKey<T> key, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> update) where T : class {
-        entry.CapturedContextChanged += (sender, e) => update((BaseMenuEntry) sender!, new UpdateEventArgs<T?>(e.NewValue != null && key.TryGetContext(e.NewValue, out T? value) ? value : null));
-        return entry;
-    }
+    /// <param name="this">The menu entry to add the change handler to</param>
+    extension(BaseMenuEntry @this) {
+        /// <summary>
+        /// Adds a handler to <see cref="BaseMenuEntry.CapturedContextChanged"/> that fires the update callback with the value keyed by the data key, or null if there is no value by that key.
+        /// </summary>
+        /// <param name="key">The data key used to get the value of <see cref="T"/></param>
+        /// <param name="update">Invoked when the context changes</param>
+        /// <typeparam name="T">The type of value to pass to the context change callback</typeparam>
+        /// <returns>The entry, for chained calling</returns>
+        public BaseMenuEntry AddContextUpdateHandler<T>(DataKey<T> key, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> update) where T : class {
+            @this.CapturedContextChanged += (sender, e) => update((BaseMenuEntry) sender!, new UpdateEventArgs<T?>(e.NewValue != null && key.TryGetContext(e.NewValue, out T? value) ? value : null));
+            return @this;
+        }
 
-    /// <summary>
-    /// Same as <see cref="AddContextUpdateHandler{T}"/> except supports two values.
-    /// The callback is either called with all non-null parameters or all null.
-    /// </summary>
-    /// <returns>The entry</returns>
-    public static BaseMenuEntry AddContextUpdateHandler<T1, T2>(this BaseMenuEntry entry, DataKey<T1> key1, DataKey<T2> key2, EventHandler<BaseMenuEntry, UpdateEventArgs<T1?, T2?>> update) where T1 : class where T2 : class {
-        entry.CapturedContextChanged += (sender, e) => {
-            if (e.NewValue != null && key1.TryGetContext(e.NewValue, out T1? val1) && key2.TryGetContext(e.NewValue, out T2? val2))
-                update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?>(val1, val2));
-            else
-                update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?>(null, null));
-        };
-        return entry;
-    }
+        /// <summary>
+        /// Same as <see cref="AddContextUpdateHandler{T}"/> except supports two values.
+        /// The callback is either called with all non-null parameters or all null.
+        /// </summary>
+        /// <returns>The entry</returns>
+        public BaseMenuEntry AddContextUpdateHandler<T1, T2>(DataKey<T1> key1, DataKey<T2> key2, EventHandler<BaseMenuEntry, UpdateEventArgs<T1?, T2?>> update) where T1 : class where T2 : class {
+            @this.CapturedContextChanged += (sender, e) => {
+                if (e.NewValue != null && key1.TryGetContext(e.NewValue, out T1? val1) && key2.TryGetContext(e.NewValue, out T2? val2))
+                    update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?>(val1, val2));
+                else
+                    update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?>(null, null));
+            };
+            
+            return @this;
+        }
 
-    /// <summary>
-    /// Same as <see cref="AddContextUpdateHandler{T}"/> except supports three values.
-    /// The callback is either called with all non-null parameters or all null.
-    /// </summary>
-    /// <returns>The entry</returns>
-    public static BaseMenuEntry AddContextUpdateHandler<T1, T2, T3>(this BaseMenuEntry entry, DataKey<T1> key1, DataKey<T2> key2, DataKey<T3> key3, EventHandler<BaseMenuEntry, UpdateEventArgs<T1?, T2?, T3?>> update) where T1 : class where T2 : class where T3 : class {
-        entry.CapturedContextChanged += (sender, e) => {
-            if (e.NewValue != null && key1.TryGetContext(e.NewValue, out T1? val1) && key2.TryGetContext(e.NewValue, out T2? val2) && key3.TryGetContext(e.NewValue, out T3? val3))
-                update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?, T3?>(val1, val2, val3));
-            else
-                update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?, T3?>(null, null, null));
-        };
-        return entry;
-    }
+        /// <summary>
+        /// Same as <see cref="AddContextUpdateHandler{T}"/> except supports three values.
+        /// The callback is either called with all non-null parameters or all null.
+        /// </summary>
+        /// <returns>The entry</returns>
+        public BaseMenuEntry AddContextUpdateHandler<T1, T2, T3>(DataKey<T1> key1, DataKey<T2> key2, DataKey<T3> key3, EventHandler<BaseMenuEntry, UpdateEventArgs<T1?, T2?, T3?>> update) where T1 : class where T2 : class where T3 : class {
+            @this.CapturedContextChanged += (sender, e) => {
+                if (e.NewValue != null && key1.TryGetContext(e.NewValue, out T1? val1) && key2.TryGetContext(e.NewValue, out T2? val2) && key3.TryGetContext(e.NewValue, out T3? val3))
+                    update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?, T3?>(val1, val2, val3));
+                else
+                    update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?, T3?>(null, null, null));
+            };
+            
+            return @this;
+        }
 
-    /// <summary>
-    /// Adds a handler to <see cref="BaseMenuEntry.CapturedContextChanged"/> that fires the update callback with previous and new value keyed by the data key.
-    /// </summary>
-    /// <param name="entry">The menu entry to add the change handler to</param>
-    /// <param name="key">The data key used to get the value of <see cref="T"/></param>
-    /// <param name="onDataChanged">The callback invoked with the old and new value, tracked with a field inside a lambda class</param>
-    /// <typeparam name="T">The type of value to pass to the context change callback</typeparam>
-    /// <returns>The entry, for chained calling</returns>
-    public static BaseMenuEntry AddContextChangedHandler<T>(this BaseMenuEntry entry, DataKey<T> key, EventHandler<BaseMenuEntry, ValueChangedEventArgs<T?>> onDataChanged) where T : class {
-        T? field_CurrentValue = null;
-        entry.CapturedContextChanged += (sender, e) => {
-            if (e.NewValue == null || !key.TryGetContext(e.NewValue, out T? newValue)) {
-                if (field_CurrentValue != null) {
-                    onDataChanged((BaseMenuEntry) sender!, new ValueChangedEventArgs<T?>(field_CurrentValue, null));
-                    field_CurrentValue = null;
+        /// <summary>
+        /// Adds a handler to <see cref="BaseMenuEntry.CapturedContextChanged"/> that fires the update callback with previous and new value keyed by the data key.
+        /// </summary>
+        /// <param name="key">The data key used to get the value of <see cref="T"/></param>
+        /// <param name="onDataChanged">The callback invoked with the old and new value, tracked with a field inside a lambda class</param>
+        /// <typeparam name="T">The type of value to pass to the context change callback</typeparam>
+        /// <returns>The entry, for chained calling</returns>
+        public BaseMenuEntry AddContextChangedHandler<T>(DataKey<T> key, EventHandler<BaseMenuEntry, ValueChangedEventArgs<T?>> onDataChanged) where T : class {
+            T? field_CurrentValue = null;
+            @this.CapturedContextChanged += (sender, e) => {
+                if (e.NewValue == null || !key.TryGetContext(e.NewValue, out T? newValue)) {
+                    if (field_CurrentValue != null) {
+                        onDataChanged((BaseMenuEntry) sender!, new ValueChangedEventArgs<T?>(field_CurrentValue, null));
+                        field_CurrentValue = null;
+                    }
                 }
-            }
-            else if (!Equals(field_CurrentValue, newValue)) {
-                onDataChanged((BaseMenuEntry) sender!, new ValueChangedEventArgs<T?>(field_CurrentValue, newValue));
-                field_CurrentValue = newValue;
-            }
-        };
-        return entry;
+                else if (!Equals(field_CurrentValue, newValue)) {
+                    onDataChanged((BaseMenuEntry) sender!, new ValueChangedEventArgs<T?>(field_CurrentValue, newValue));
+                    field_CurrentValue = newValue;
+                }
+            };
+            
+            return @this;
+        }
+
+        public BaseMenuEntry AddContextUpdateHandlerWithEvent<T>(DataKey<T> key, string eventName, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<T, T>(@this, key, [eventName], x => x, onUpdate).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddContextUpdateHandlerWithEvents<T>(DataKey<T> key, string[] eventNames, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<T, T>(@this, key, eventNames, x => x, onUpdate).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddContextUpdateHandlerWithEventsEx<TKey, T>(DataKey<TKey> key, Func<TKey, T> keyValueToDstValue, string eventNames, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) where TKey : class where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<TKey, T>(@this, key, [eventNames], keyValueToDstValue, onUpdate).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddContextUpdateHandlerWithEventsEx<TKey, T>(DataKey<TKey> key, Func<TKey, T> keyValueToDstValue, string[] eventNames, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) where TKey : class where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<TKey, T>(@this, key, eventNames, keyValueToDstValue, onUpdate).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddCanExecuteChangeUpdaterForEvent<T>(DataKey<T> key, string eventName) where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<T, T>(@this, key, [eventName], x => x, static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddCanExecuteChangeUpdaterForEvents<T>(DataKey<T> key, string[] eventNames) where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<T, T>(@this, key, eventNames, x => x, static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddCanExecuteChangeUpdaterForEventsEx<TKey, T>(DataKey<TKey> key, Func<TKey, T> keyValueToDstValue, string eventNames) where TKey : class where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<TKey, T>(@this, key, [eventNames], keyValueToDstValue, static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddCanExecuteChangeUpdaterForEventsEx<TKey, T>(DataKey<TKey> key, Func<TKey, T> keyValueToDstValue, string[] eventNames) where TKey : class where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<TKey, T>(@this, key, eventNames, keyValueToDstValue, static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddIsCheckedChangeUpdaterForEvent<T>(DataKey<T> key, string eventName) where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<T, T>(@this, key, [eventName], x => x, static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddIsCheckedChangeUpdaterForEvents<T>(DataKey<T> key, string[] eventNames) where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<T, T>(@this, key, eventNames, x => x, static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddIsCheckedChangeUpdaterForEventsEx<TKey, T>(DataKey<TKey> key, Func<TKey, T> keyValueToDstValue, string eventNames) where TKey : class where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<TKey, T>(@this, key, [eventNames], keyValueToDstValue, static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
+            return @this;
+        }
+
+        public BaseMenuEntry AddIsCheckedChangeUpdaterForEventsEx<TKey, T>(DataKey<TKey> key, Func<TKey, T> keyValueToDstValue, string[] eventNames) where TKey : class where T : class {
+            @this.CapturedContextChanged += new SpecializedChangeHandler_Callback<TKey, T>(@this, key, eventNames, keyValueToDstValue, static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
+            return @this;
+        }
     }
 
-    public static BaseMenuEntry AddContextUpdateHandlerWithEvent<T>(this BaseMenuEntry entry, DataKey<T> key, string eventName, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, [eventName], onUpdate).OnCapturedContextChanged;
-        return entry;
-    }
-
-    public static BaseMenuEntry AddContextUpdateHandlerWithEvents<T>(this BaseMenuEntry entry, DataKey<T> key, string[] eventNames, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, eventNames, onUpdate).OnCapturedContextChanged;
-        return entry;
-    }
-
-    public static BaseMenuEntry AddCanExecuteChangeUpdaterForEvent<T>(this BaseMenuEntry entry, DataKey<T> key, string eventName) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, [eventName], static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
-        return entry;
-    }
-
-    public static BaseMenuEntry AddCanExecuteChangeUpdaterForEvents<T>(this BaseMenuEntry entry, DataKey<T> key, string[] eventNames) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, eventNames, static (e, t) => e.RaiseCanExecuteChanged()).OnCapturedContextChanged;
-        return entry;
-    }
-
-    public static BaseMenuEntry AddIsCheckedChangeUpdaterForEvent<T>(this BaseMenuEntry entry, DataKey<T> key, string eventName) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, [eventName], static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
-        return entry;
-    }
-
-    public static BaseMenuEntry AddIsCheckedChangeUpdaterForEvents<T>(this BaseMenuEntry entry, DataKey<T> key, string[] eventNames) where T : class {
-        entry.CapturedContextChanged += new SpecializedChangeHandler_Callback<T>(entry, key, eventNames, static (e, t) => e.RaiseIsCheckedChanged()).OnCapturedContextChanged;
-        return entry;
-    }
-
-    private abstract class BaseSpecializedChangeHandler<T> : IRelayEventHandler where T : class {
-        private readonly DataKey<T> key;
+    private abstract class BaseSpecializedChangeHandler<TKey, T> : IRelayEventHandler where TKey : class where T : class {
+        private readonly DataKey<TKey> key;
         private readonly string[] eventNames;
+        private readonly Func<TKey, T> keyValueToDstValue;
         private EventWrapper[]? relays;
         private RapidDispatchActionEx? rda;
 
@@ -158,15 +193,17 @@ public static class ContextEntryExtensions {
 
         public BaseMenuEntry Entry { get; }
         
-        protected BaseSpecializedChangeHandler(BaseMenuEntry entry, DataKey<T> key, string[] eventNames) {
+        protected BaseSpecializedChangeHandler(BaseMenuEntry entry, DataKey<TKey> key, string[] eventNames, Func<TKey, T> keyValueToDstValue) {
             this.Entry = entry;
             this.key = key;
             this.eventNames = eventNames;
+            this.keyValueToDstValue = keyValueToDstValue;
         }
 
         internal void OnCapturedContextChanged(object? o, ValueChangedEventArgs<IContextData?> e) {
             Debug.Assert(this.Entry == o);
-            if (e.NewValue == null || !this.key.TryGetContext(e.NewValue, out T? newValue)) {
+            T newValue;
+            if (e.NewValue == null || !this.key.TryGetContext(e.NewValue, out TKey? newSrcValue)) {
                 if (this.CurrentValue != null) {
                     foreach (EventWrapper relay in this.relays!)
                         EventRelayStorage.UIStorage.RemoveHandler(this.CurrentValue, this, relay);
@@ -174,7 +211,7 @@ public static class ContextEntryExtensions {
                     this.Update();
                 }
             }
-            else if (!Equals(this.CurrentValue, newValue)) {
+            else if (!Equals(this.CurrentValue, newValue = this.keyValueToDstValue(newSrcValue))) {
                 if (this.relays != null && this.CurrentValue != null) {
                     foreach (EventWrapper relay in this.relays!)
                         EventRelayStorage.UIStorage.RemoveHandler(this.CurrentValue, this, relay);
@@ -183,7 +220,7 @@ public static class ContextEntryExtensions {
                 if (this.relays == null) {
                     this.relays = new EventWrapper[this.eventNames.Length];
                     for (int i = 0; i < this.eventNames.Length; i++) {
-                        this.relays[i] = EventRelayStorage.UIStorage.GetEventRelay(this.key.DataType, this.eventNames[i]);
+                        this.relays[i] = EventRelayStorage.UIStorage.GetEventRelay(typeof(T), this.eventNames[i]);
                     }
                 }
 
@@ -209,7 +246,13 @@ public static class ContextEntryExtensions {
         protected abstract void Update();
     }
 
-    private class SpecializedChangeHandler_Callback<T>(BaseMenuEntry entry, DataKey<T> key, string[] eventNames, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) : BaseSpecializedChangeHandler<T>(entry, key, eventNames) where T : class {
-        protected override void Update() => onUpdate(this.Entry, new UpdateEventArgs<T?>(this.CurrentValue));
+    private class SpecializedChangeHandler_Callback<TKey, T> : BaseSpecializedChangeHandler<TKey, T> where TKey : class where T : class {
+        private readonly EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate;
+
+        public SpecializedChangeHandler_Callback(BaseMenuEntry entry, DataKey<TKey> key, string[] eventNames, Func<TKey, T> keyValueToDstValue, EventHandler<BaseMenuEntry, UpdateEventArgs<T?>> onUpdate) : base(entry, key, eventNames, keyValueToDstValue) {
+            this.onUpdate = onUpdate;
+        }
+
+        protected override void Update() => this.onUpdate(this.Entry, new UpdateEventArgs<T?>(this.CurrentValue));
     }
 }
