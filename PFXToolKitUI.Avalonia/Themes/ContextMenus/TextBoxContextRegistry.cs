@@ -27,18 +27,22 @@ namespace PFXToolKitUI.Avalonia.Themes.ContextMenus;
 
 public static class TextBoxContextRegistry {
     public static readonly ContextRegistry Registry = new ContextRegistry("Text Box");
+
+    /// <summary>
+    /// The data key used to identify the text box that uses <see cref="TextBoxContextRegistry"/> for its context menu
+    /// </summary>
     public static readonly DataKey<TextBox> TextBoxDataKey = DataKeys.Create<TextBox>(nameof(TextBox));
 
     static TextBoxContextRegistry() {
         FixedWeightedMenuEntryGroup group = Registry.GetFixedGroup("general");
-        group.AddEntry(new TextBoxMenuEntry("Undo", (t) => t.Undo(), TextBox.CanUndoProperty) {InputGestureText = "CTRL+Z"});
-        group.AddEntry(new TextBoxMenuEntry("Redo", (t) => t.Redo(), TextBox.CanRedoProperty) {InputGestureText = "CTRL+Y or CTRL+SHIFT+Z"});
+        group.AddEntry(new TextBoxMenuEntry("Undo", (t) => t.Undo(), TextBox.CanUndoProperty) { InputGestureText = "CTRL+Z" });
+        group.AddEntry(new TextBoxMenuEntry("Redo", (t) => t.Redo(), TextBox.CanRedoProperty) { InputGestureText = "CTRL+Y or CTRL+SHIFT+Z" });
         group.AddSeparator();
-        group.AddEntry(new TextBoxMenuEntry("Cut", (t) => t.Cut(), TextBox.CanCutProperty) {InputGestureText = "CTRL+X"});
-        group.AddEntry(new TextBoxMenuEntry("Copy", (t) => t.Copy(), TextBox.CanCopyProperty) {InputGestureText = "CTRL+C"});
-        group.AddEntry(new TextBoxMenuEntry("Paste", (t) => t.Paste(), TextBox.CanPasteProperty) {InputGestureText = "CTRL+V"});
+        group.AddEntry(new TextBoxMenuEntry("Cut", (t) => t.Cut(), TextBox.CanCutProperty) { InputGestureText = "CTRL+X" });
+        group.AddEntry(new TextBoxMenuEntry("Copy", (t) => t.Copy(), TextBox.CanCopyProperty) { InputGestureText = "CTRL+C" });
+        group.AddEntry(new TextBoxMenuEntry("Paste", (t) => t.Paste(), TextBox.CanPasteProperty) { InputGestureText = "CTRL+V" });
         group.AddSeparator();
-        group.AddEntry(new TextBoxMenuEntry("Select All", (t) => t.SelectAll(), null) {InputGestureText = "CTRL+A"});
+        group.AddEntry(new TextBoxMenuEntry("Select All", (t) => t.SelectAll(), null) { InputGestureText = "CTRL+A" });
         group.AddSeparator();
         group.AddEntry(new TextBoxMenuEntry("Clear Text", (t) => t.Clear(), null));
     }
@@ -47,53 +51,42 @@ public static class TextBoxContextRegistry {
 public class TextBoxMenuEntry : CustomMenuEntry {
     private readonly Action<TextBox> invoke;
     private readonly DirectProperty<TextBox, bool>? canExecuteProperty;
-    private TextBox? currTb;
+    private TextBox? currentTextBox;
 
     public TextBoxMenuEntry(string header, Action<TextBox> invoke, DirectProperty<TextBox, bool>? canExecuteProperty) : base(header, null) {
         this.invoke = invoke;
         this.canExecuteProperty = canExecuteProperty;
-        this.CapturedContextChanged += this.OnCapturedContextChanged;
     }
 
-    private void OnCapturedContextChanged(object? o, ValueChangedEventArgs<IContextData?> e) {
-        if (e.NewValue != null && TextBoxContextRegistry.TextBoxDataKey.TryGetContext(e.NewValue, out TextBox? newTextBox)) {
-            if (!ReferenceEquals(this.currTb, newTextBox)) {
-                this.OnTextBoxChanged(this.currTb, newTextBox);
-                this.currTb = newTextBox;
+    protected override void OnCapturedContextChanged(IContextData? oldContext, IContextData? newContext) {
+        base.OnCapturedContextChanged(oldContext, newContext);
+        this.OnContextChangedHelper(TextBoxContextRegistry.TextBoxDataKey, ref this.currentTextBox, static (@this, e) => {
+            if (@this.canExecuteProperty != null) {
+                if (e.OldValue != null)
+                    e.OldValue.PropertyChanged -= @this.OnTextBoxPropertyChanged;
+                if (e.NewValue != null)
+                    e.NewValue.PropertyChanged += @this.OnTextBoxPropertyChanged;
             }
-        }
-        else if (this.currTb != null) {
-            this.OnTextBoxChanged(this.currTb, null);
-            this.currTb = null;
-        }
-        
+        });
+
         this.RaiseCanExecuteChanged();
     }
 
-    private void OnTextBoxChanged(TextBox? oldTextBox, TextBox? newTextBox) {
-        if (this.canExecuteProperty != null) {
-            if (oldTextBox != null)
-                oldTextBox.PropertyChanged -= this.OnTBPropertyChanged;
-            if (newTextBox != null)
-                newTextBox.PropertyChanged += this.OnTBPropertyChanged;
-        }
-    }
-
-    private void OnTBPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
+    private void OnTextBoxPropertyChanged(object? sender, AvaloniaPropertyChangedEventArgs e) {
         if (e.Property == this.canExecuteProperty) {
             this.RaiseCanExecuteChanged();
         }
     }
 
     public override bool CanExecute(IContextData context) {
-        return this.currTb != null && (this.canExecuteProperty == null || this.currTb.GetValue(this.canExecuteProperty));
+        return this.currentTextBox != null && (this.canExecuteProperty == null || this.currentTextBox.GetValue(this.canExecuteProperty));
     }
 
     public override Task OnExecute(IContextData context) {
         if (TextBoxContextRegistry.TextBoxDataKey.TryGetContext(context, out TextBox? textBox)) {
             this.invoke(textBox);
         }
-        
+
         return Task.CompletedTask;
     }
 }

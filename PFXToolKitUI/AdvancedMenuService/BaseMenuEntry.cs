@@ -85,7 +85,7 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     /// </summary>
     public IContextData? CapturedContext {
         get => field;
-        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, this.CapturedContextChanged);
+        private set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static (t, o, n) => t.OnCapturedContextChanged(o, n));
     }
 
     /// <summary>
@@ -146,6 +146,10 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
 
     public void RaiseIsCheckedChanged() {
         this.IsCheckedChanged?.Invoke(this, EventArgs.Empty);
+    }
+    
+    protected virtual void OnCapturedContextChanged(IContextData? oldContext, IContextData? newContext) {
+        this.CapturedContextChanged?.Invoke(this, new ValueChangedEventArgs<IContextData?>(oldContext, newContext));
     }
     
     DisabledHintInfo? IDisabledHintProvider.ProvideDisabledHint(IContextData context, ContextRegistry? sourceContextMenu) {

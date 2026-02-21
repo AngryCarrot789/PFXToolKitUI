@@ -30,15 +30,15 @@ public static class PropertyHelper {
         onValueChanged();
     }
 
-    public static void SetAndRaise<T, TInstance>(ref T field, T newValue, TInstance instance, Action<TInstance> onValueChanged) {
+    public static void SetAndRaise<T, TSender>(ref T field, T newValue, TSender sender, Action<TSender> onValueChanged) {
         field = newValue;
-        onValueChanged(instance);
+        onValueChanged(sender);
     }
 
-    public static void SetAndRaise<T, TInstance>(ref T field, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
+    public static void SetAndRaise<T, TSender>(ref T field, T newValue, TSender sender, Action<TSender, T, T> onValueChanged) {
         T oldValue = field;
         field = newValue;
-        onValueChanged(instance, oldValue, newValue);
+        onValueChanged(sender, oldValue, newValue);
     }
 
     public static void SetAndRaise<T>(ref T field, T newValue, object sender, EventHandler? onValueChanged) {
@@ -70,24 +70,24 @@ public static class PropertyHelper {
 
     /// <summary>
     /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
-    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/> parameter 
+    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="sender"/> parameter 
     /// </summary>
     /// <param name="field">The field to set when it does not equal the new value</param>
     /// <param name="newValue">The new value</param>
-    /// <param name="instance">A parameter to pass to <see cref="onValueChanged"/></param>
+    /// <param name="sender">A parameter to pass to <see cref="onValueChanged"/></param>
     /// <param name="onValueChanged">A callback to fire when the field differs from the new value. Invoked after updating the field</param>
     /// <typeparam name="T">The type of value</typeparam>
-    /// <typeparam name="TInstance">The type of parameter</typeparam>
-    public static void SetAndRaiseINE<T, TInstance>(ref T field, T newValue, TInstance instance, Action<TInstance> onValueChanged) {
+    /// <typeparam name="TSender">The type of parameter</typeparam>
+    public static void SetAndRaiseINE<T, TSender>(ref T field, T newValue, TSender sender, Action<TSender> onValueChanged) {
         if (!EqualityComparer<T>.Default.Equals(field, newValue)) {
             field = newValue;
-            onValueChanged(instance);
+            onValueChanged(sender);
         }
     }
 
     /// <summary>
     /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
-    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/> parameter 
+    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="sender"/> parameter 
     /// </summary>
     /// <param name="field">The field to set when it does not equal the new value</param>
     /// <param name="newValue">The new value</param>
@@ -95,39 +95,39 @@ public static class PropertyHelper {
     /// A function that returns true when the two values are equal. When it returns 
     /// false, we can update the field and invoke the callback
     /// </param>
-    /// <param name="instance">A parameter to pass to <see cref="onValueChanged"/></param>
+    /// <param name="sender">A parameter to pass to <see cref="onValueChanged"/></param>
     /// <param name="onValueChanged">A callback to fire when the field differs from the new value. Invoked after updating the field</param>
     /// <typeparam name="T">The type of value</typeparam>
-    /// <typeparam name="TInstance">The type of parameter</typeparam>
-    public static void SetAndRaiseINE<T, TInstance>(ref T field, T newValue, Func<T, T, bool> equals, TInstance instance, Action<TInstance> onValueChanged) {
+    /// <typeparam name="TSender">The type of parameter</typeparam>
+    public static void SetAndRaiseINE<T, TSender>(ref T field, T newValue, Func<T, T, bool> equals, TSender sender, Action<TSender> onValueChanged) {
         if (!equals(field, newValue)) {
             field = newValue;
-            onValueChanged(instance);
+            onValueChanged(sender);
         }
     }
 
     /// <summary>
     /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
-    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/>
+    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="sender"/>
     /// parameter and the old and new values
     /// </summary>
     /// <param name="field">The field to set when it does not equal the new value</param>
     /// <param name="newValue">The new value</param>
-    /// <param name="instance">A parameter to pass to <see cref="onValueChanged"/></param>
+    /// <param name="sender">A parameter to pass to <see cref="onValueChanged"/></param>
     /// <param name="onValueChanged">A callback to fire when the field differs from the new value. Invoked after updating the field</param>
     /// <typeparam name="T">The type of value</typeparam>
-    /// <typeparam name="TInstance">The type of parameter</typeparam>
-    public static void SetAndRaiseINE<T, TInstance>(ref T field, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
+    /// <typeparam name="TSender">The type of parameter</typeparam>
+    public static void SetAndRaiseINE<T, TSender>(ref T field, T newValue, TSender sender, Action<TSender, T, T> onValueChanged) {
         T oldValue = field;
         if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
             field = newValue;
-            onValueChanged(instance, oldValue, newValue);
+            onValueChanged(sender, oldValue, newValue);
         }
     }
 
     /// <summary>
     /// Checks that <see cref="field"/> does not equal <see cref="newValue"/> and only then sets <see cref="field"/>
-    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="instance"/>
+    /// to <see cref="newValue"/> and then invokes <see cref="onValueChanged"/> passing in the <see cref="sender"/>
     /// parameter and the old and new values
     /// </summary>
     /// <param name="field">The field to set when it does not equal the new value</param>
@@ -136,20 +136,20 @@ public static class PropertyHelper {
     /// A function that returns true when the two values are equal. When it returns 
     /// false, we can update the field and invoke the callback
     /// </param>
-    /// <param name="instance">A parameter to pass to <see cref="onValueChanged"/></param>
+    /// <param name="sender">A parameter to pass to <see cref="onValueChanged"/></param>
     /// <param name="onValueChanged">A callback to fire when the field differs from the new value. Invoked after updating the field</param>
     /// <typeparam name="T">The type of value</typeparam>
-    /// <typeparam name="TInstance">The type of parameter</typeparam>
-    public static void SetAndRaiseINE<T, TInstance>(ref T field, T newValue, Func<T, T, bool> equals, TInstance instance, Action<TInstance, T, T> onValueChanged) {
+    /// <typeparam name="TSender">The type of parameter</typeparam>
+    public static void SetAndRaiseINE<T, TSender>(ref T field, T newValue, Func<T, T, bool> equals, TSender sender, Action<TSender, T, T> onValueChanged) {
         T oldValue = field;
         if (!equals(oldValue, newValue)) {
             field = newValue;
-            onValueChanged(instance, oldValue, newValue);
+            onValueChanged(sender, oldValue, newValue);
         }
     }
 
     /// <summary>
-    /// Checks that the field does not equal the new value, and updates the field and invokes <see cref="onValueChanged"/> (if non-null) with the given instance
+    /// Checks that the field does not equal the new value, and updates the field and invokes <see cref="onValueChanged"/> (if non-null) with the given sender
     /// </summary>
     /// <param name="field">The field to set when it does not equal the new value</param>
     /// <param name="newValue">The new value</param>
@@ -164,7 +164,7 @@ public static class PropertyHelper {
     }
 
     /// <summary>
-    /// Checks that the field does not equal the new value, and updates the field and invokes <see cref="onValueChanged"/> (if non-null) with the given instance.
+    /// Checks that the field does not equal the new value, and updates the field and invokes <see cref="onValueChanged"/> (if non-null) with the given sender.
     /// </summary>
     /// <param name="field">The field to set when it does not equal the new value</param>
     /// <param name="newValue">The new value</param>
@@ -180,7 +180,7 @@ public static class PropertyHelper {
     }
 
     /// <summary>
-    /// Checks that the field does not equal the new value, and updates the field and invokes <see cref="onValueChanged"/> (if non-null) with the given instance.
+    /// Checks that the field does not equal the new value, and updates the field and invokes <see cref="onValueChanged"/> (if non-null) with the given sender.
     /// </summary>
     /// <param name="field">The field to set when it does not equal the new value</param>
     /// <param name="newValue">The new value</param>
@@ -223,19 +223,19 @@ public static class PropertyHelper {
         }
     }
 
-    public static void SetAndRaiseINEEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance> onValueChanged) {
+    public static void SetAndRaiseINEEx<TOwner, T, TSender>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TSender sender, Action<TSender> onValueChanged) {
         T oldValue = getter(propertyOwner);
         if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
             setter(propertyOwner, newValue);
-            onValueChanged(instance);
+            onValueChanged(sender);
         }
     }
 
-    public static void SetAndRaiseINEEx<TOwner, T, TInstance>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TInstance instance, Action<TInstance, T, T> onValueChanged) {
+    public static void SetAndRaiseINEEx<TOwner, T, TSender>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, TSender sender, Action<TSender, T, T> onValueChanged) {
         T oldValue = getter(propertyOwner);
         if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
             setter(propertyOwner, newValue);
-            onValueChanged(instance, oldValue, newValue);
+            onValueChanged(sender, oldValue, newValue);
         }
     }
 
@@ -247,19 +247,19 @@ public static class PropertyHelper {
         }
     }
 
-    public static void SetAndRaiseINEEx<TOwner, T>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, object instance, EventHandler<ValueChangedEventArgs<T>>? onValueChanged) {
+    public static void SetAndRaiseINEEx<TOwner, T>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, object sender, EventHandler<ValueChangedEventArgs<T>>? onValueChanged) {
         T oldValue = getter(propertyOwner);
         if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
             setter(propertyOwner, newValue);
-            onValueChanged?.Invoke(instance, new ValueChangedEventArgs<T>(oldValue, newValue));
+            onValueChanged?.Invoke(sender, new ValueChangedEventArgs<T>(oldValue, newValue));
         }
     }
 
-    public static void SetAndRaiseINEEx<TOwner, T>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, object instance, EventHandler<T>? onValueChanged) {
+    public static void SetAndRaiseINEEx<TOwner, T>(TOwner propertyOwner, Func<TOwner, T> getter, Action<TOwner, T> setter, T newValue, object sender, EventHandler<T>? onValueChanged) {
         T oldValue = getter(propertyOwner);
         if (!EqualityComparer<T>.Default.Equals(oldValue, newValue)) {
             setter(propertyOwner, newValue);
-            onValueChanged?.Invoke(instance, newValue);
+            onValueChanged?.Invoke(sender, newValue);
         }
     }
 
