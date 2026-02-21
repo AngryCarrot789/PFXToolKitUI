@@ -56,7 +56,7 @@ public class TextBoxMenuEntry : CustomMenuEntry {
     }
 
     private void OnCapturedContextChanged(object? o, ValueChangedEventArgs<IContextData?> e) {
-        if (e.NewValue != null && TextBoxContextRegistry.TextBoxDataKey.TryGetContext(e.NewValue, out var newTextBox)) {
+        if (e.NewValue != null && TextBoxContextRegistry.TextBoxDataKey.TryGetContext(e.NewValue, out TextBox? newTextBox)) {
             if (!ReferenceEquals(this.currTb, newTextBox)) {
                 this.OnTextBoxChanged(this.currTb, newTextBox);
                 this.currTb = newTextBox;
