@@ -17,6 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using System.Diagnostics;
+
 namespace PFXToolKitUI.Utils;
 
 public static class TaskUtils {
@@ -42,28 +44,60 @@ public static class TaskUtils {
                 }
             }, state: cts, cts.Token);
         }
-        
+
         if (task.IsCompleted) {
             cts.Cancel();
         }
-        
+
         return cts;
     }
 
     /// <summary>
-    /// Awaits the task. Returns null when it executes successfully. Returns the exception that the filter
-    /// accepted, or throws when the filter does not accept the exception. 
+    /// Tries to wait for a task to become completed within an amount of time
     /// </summary>
-    /// <param name="task"></param>
-    /// <param name="filter"></param>
-    /// <returns>The exception that was filtered</returns>
-    public static async Task<Exception?> AwaitOrCatch(this Task task, Predicate<Exception> filter) {
-        try {
-            await task;
-            return null;
+    /// <param name="task">The task to wait for</param>
+    /// <param name="timeoutMilliseconds">The timeout</param>
+    /// <param name="cancellationToken">A cancellation token to additionally cancel the timeout</param>
+    /// <returns>
+    /// True if the task completed on its own, otherwise false because the 
+    /// timeout elapsed or the cancellation token became cancelled
+    /// </returns>
+    /// <remarks>This method does not throw <see cref="OperationCanceledException"/></remarks>
+    public static Task<bool> TryWaitAsync(this Task task, int timeoutMilliseconds, CancellationToken cancellationToken = default) {
+        return task.TryWaitAsync(TimeSpan.FromMilliseconds(timeoutMilliseconds), cancellationToken);
+    }
+
+    /// <summary>
+    /// Tries to wait for a task to become completed within an amount of time
+    /// </summary>
+    /// <param name="task">The task to wait for</param>
+    /// <param name="timeout">The timeout</param>
+    /// <param name="cancellationToken">A cancellation token to additionally cancel the timeout</param>
+    /// <returns>
+    /// True if the task completed on its own, otherwise false because the 
+    /// timeout elapsed or the cancellation token became cancelled
+    /// </returns>
+    /// <remarks>This method does not throw <see cref="OperationCanceledException"/></remarks>
+    public static Task<bool> TryWaitAsync(this Task task, TimeSpan timeout, CancellationToken cancellationToken = default) {
+        if (task.IsCompleted || cancellationToken.IsCancellationRequested) {
+            return Task.FromResult(task.IsCompleted);
         }
-        catch (Exception e) when (filter(e)) {
-            return e;
+        
+        return task.TryWaitAsyncImpl(timeout, cancellationToken);
+    }
+
+    private static async Task<bool> TryWaitAsyncImpl(this Task task, TimeSpan timeout, CancellationToken cancellationToken = default) {
+        try {
+            await task.WaitAsync(timeout, cancellationToken);
+
+            Debug.Assert(task.IsCompleted);
+            return task.IsCompleted;
+        }
+        catch (OperationCanceledException) {
+            return false;
+        }
+        catch (TimeoutException) {
+            return false;
         }
     }
 }

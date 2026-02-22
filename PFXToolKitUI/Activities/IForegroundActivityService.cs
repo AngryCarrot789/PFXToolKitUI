@@ -19,6 +19,7 @@
 
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.Interactivity.Windowing;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Activities;
 
@@ -129,7 +130,7 @@ public interface IForegroundActivityService {
 
         if (showDelay > 0) {
             // Wait for either the activity to complete, or for the show delay to elapse
-            await Task.WhenAny(options.Activity.Task, Task.Delay(showDelay, options.DialogCancellation));
+            await options.Activity.Task.TryWaitAsync(showDelay, options.DialogCancellation);
         }
         
         if (options.Activity.IsCompleted)
