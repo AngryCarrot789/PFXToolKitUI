@@ -27,6 +27,7 @@ using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
 
@@ -92,19 +93,19 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         }
     }
 
-    private void OnItemAdded(object sender, int index, MenuEntryGroup item) {
-        AdvancedMenuItem menuItem = (AdvancedMenuItem) AdvancedMenuHelper.CreateItem(this, item);
-        menuItem.OnAdding(this, this, item);
-        this.Items.Insert(index, menuItem);
+    private void OnItemAdded(ItemAddOrRemoveEventArgs<MenuEntryGroup> e) {
+        AdvancedMenuItem menuItem = (AdvancedMenuItem) AdvancedMenuHelper.CreateItem(this, e.Item);
+        menuItem.OnAdding(this, this, e.Item);
+        this.Items.Insert(e.Index, menuItem);
         menuItem.OnAdded();
     }
 
-    private void OnItemRemoved(object sender, int index, MenuEntryGroup item) {
+    private void OnItemRemoved(ItemAddOrRemoveEventArgs<MenuEntryGroup> e) {
         ItemCollection list = this.Items;
-        this.OnItemRemoved(list, index, (AdvancedMenuItem) list[index]!);
+        this.OnItemRemovedImpl(list, e.Index, (AdvancedMenuItem) list[e.Index]!);
     }
 
-    private void OnItemRemoved(ItemCollection items, int index, AdvancedMenuItem item) {
+    private void OnItemRemovedImpl(ItemCollection items, int index, AdvancedMenuItem item) {
         Type type = item.Entry!.GetType();
         item.OnRemoving();
         items.RemoveAt(index);
@@ -112,14 +113,14 @@ public sealed class AdvancedTopLevelMenu : Menu, IAdvancedMenu {
         this.PushCachedItem(type, item);
     }
 
-    private void OnItemMoved(object sender, int oldindex, int newindex, MenuEntryGroup item) {
+    private void OnItemMoved(ItemMoveEventArgs<MenuEntryGroup> e) {
         ItemCollection list = this.Items;
-        if (newindex < 0 || newindex >= list.Count)
-            throw new IndexOutOfRangeException($"{nameof(newindex)} is not within range: {(newindex < 0 ? "less than zero" : "greater than list length")} ({newindex})");
+        if (e.NewIndex < 0 || e.NewIndex >= list.Count)
+            throw new IndexOutOfRangeException($"{nameof(e.NewIndex)} is not within range: {(e.NewIndex < 0 ? "less than zero" : "greater than list length")} ({e.NewIndex})");
 
-        object? removedItem = list[oldindex];
-        list.RemoveAt(oldindex);
-        list.Insert(newindex, removedItem);
+        object? removedItem = list[e.OldIndex];
+        list.RemoveAt(e.OldIndex);
+        list.Insert(e.NewIndex, removedItem);
     }
 
     protected override void OnSubmenuOpened(RoutedEventArgs e) {

@@ -24,19 +24,16 @@ namespace PFXToolKitUI.Interactivity.Contexts;
 
 public static class ContextValueHelper {
     private static void OnContextChangedImpl<TSender, TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, IContextData? newContext, Func<TKey, TValue> keyValueToDstValue, TSender sender, object? state, Action<TSender, object?, ValueChangedEventArgs<TValue?>> onValueChanged) {
-        if (newContext != null && dataKey.TryGetContext(newContext, out TKey? newKeyValue)) {
-            TValue newValue = keyValueToDstValue(newKeyValue);
-            if (!EqualityComparer<TValue>.Default.Equals(field, newValue)) {
-                onValueChanged(sender, state, new ValueChangedEventArgs<TValue?>(field, newValue));
-                field = newValue;
-            }
-        }
-        else if (EqualityComparer<TValue>.Default.Equals(field, default)) {
-            onValueChanged(sender, state, new ValueChangedEventArgs<TValue?>(field, default));
-            field = default;
+        TValue? newDstValue = newContext != null && dataKey.TryGetContext(newContext, out TKey? newKeyValue)
+            ? keyValueToDstValue(newKeyValue)
+            : default;
+
+        if (!EqualityComparer<TValue>.Default.Equals(field, newDstValue)) {
+            onValueChanged(sender, state, new ValueChangedEventArgs<TValue?>(field, newDstValue));
+            field = newDstValue;
         }
     }
-    
+
     public static void SetAndRaiseINE<T>(ref T? field, DataKey<T> dataKey, IContextData? newContext, object sender, EventHandler onValueChanged) {
         OnContextChangedImpl(ref field, dataKey, newContext, static x => x, sender, onValueChanged, static (_sender, _state, e) => {
             ((EventHandler) _state!)(_sender, EventArgs.Empty);
@@ -54,7 +51,7 @@ public static class ContextValueHelper {
             ((EventHandler<TSender, ValueChangedEventArgs<T?>>) _state!)(_sender, e);
         });
     }
-    
+
     public static void SetAndRaiseINEEx<TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, IContextData? newContext, Func<TKey, TValue> keyValueToDstValue, object sender, EventHandler onValueChanged) {
         OnContextChangedImpl(ref field, dataKey, newContext, keyValueToDstValue, sender, onValueChanged, static (_sender, _state, e) => {
             ((EventHandler) _state!)(_sender, EventArgs.Empty);

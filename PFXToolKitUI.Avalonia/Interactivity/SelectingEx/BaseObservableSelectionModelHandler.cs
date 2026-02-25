@@ -19,6 +19,7 @@
 
 using Avalonia.Controls.Selection;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx;
 
@@ -83,16 +84,16 @@ public abstract class BaseObservableSelectionModelHandler<T> where T : class {
         this.IsUpdatingModel = false;
     }
 
-    private void OnSourceItemsAdded(IObservableList<T> list, int index, IList<T> items) {
+    private void OnSourceItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         if (this.IsUpdatingModel || this.IsUpdatingControl)
             throw new InvalidOperationException("Reentrancy");
 
         this.IsUpdatingControl = true;
 
         ISelectionModel selection = this.SelectionModel;
-        for (int i = 0; i < items.Count; i++) {
-            int idx = index + i;
-            if (this.selectedItems.Contains(items[i])) {
+        for (int i = 0; i < e.Items.Count; i++) {
+            int idx = e.Index + i;
+            if (this.selectedItems.Contains(e.Items[i])) {
                 if (!selection.IsSelected(idx))
                     selection.Select(idx);
             }
@@ -104,28 +105,28 @@ public abstract class BaseObservableSelectionModelHandler<T> where T : class {
         this.IsUpdatingControl = false;
     }
 
-    private void OnSourceItemReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
+    private void OnSourceItemReplaced(object? sender, ItemReplaceEventArgs<T> e) {
         if (this.IsUpdatingModel || this.IsUpdatingControl)
             throw new InvalidOperationException("Reentrancy");
 
         this.IsUpdatingControl = true;
 
         ISelectionModel selection = this.SelectionModel;
-        if (this.selectedItems.Contains(newitem)) {
-            if (!selection.IsSelected(index))
-                selection.Select(index);
+        if (this.selectedItems.Contains(e.NewItem)) {
+            if (!selection.IsSelected(e.Index))
+                selection.Select(e.Index);
         }
-        else if (selection.IsSelected(index)) {
-            selection.Deselect(index);
+        else if (selection.IsSelected(e.Index)) {
+            selection.Deselect(e.Index);
         }
 
         this.IsUpdatingControl = false;
     }
 
-    private void OnSelectedItemsAdded(IObservableList<T> list, int index, IList<T> items) {
+    private void OnSelectedItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         if (!this.IsUpdatingModel && this.sourceItems.Count > 0 /* check if we were created before items initialized. Not an issue, just worse perf */) {
             this.IsUpdatingControl = true;
-            this.InternalSelectControls(items, this.SelectionModel);
+            this.InternalSelectControls(e.Items, this.SelectionModel);
             this.IsUpdatingControl = false;
         }
     }
@@ -141,16 +142,16 @@ public abstract class BaseObservableSelectionModelHandler<T> where T : class {
         }
     }
 
-    private void OnSelectedItemsRemoved(IObservableList<T> list, int index, IList<T> items) {
+    private void OnSelectedItemsRemoved(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         if (!this.IsUpdatingModel) {
             this.IsUpdatingControl = true;
 
             ISelectionModel selection = this.SelectionModel;
-            if (list.Count == 0) {
+            if (this.selectedItems.Count == 0) {
                 selection.Clear();
             }
             else if (this.sourceItems.Count > 0) {
-                foreach (T item in items) {
+                foreach (T item in e.Items) {
                     int idx = this.sourceItems.IndexOf(item);
                     if (idx != -1 && selection.IsSelected(idx)) {
                         selection.Deselect(idx);
@@ -162,16 +163,16 @@ public abstract class BaseObservableSelectionModelHandler<T> where T : class {
         }
     }
 
-    private void OnSelectedItemReplaced(IObservableList<T> list, int index, T oldItem, T newItem) {
+    private void OnSelectedItemReplaced(object? sender, ItemReplaceEventArgs<T> e) {
         if (!this.IsUpdatingModel) {
             this.IsUpdatingControl = true;
 
             ISelectionModel selection = this.SelectionModel;
-            int oldIdx = this.sourceItems.IndexOf(oldItem);
+            int oldIdx = this.sourceItems.IndexOf(e.OldItem);
             if (oldIdx != -1 && selection.IsSelected(oldIdx))
                 selection.Deselect(oldIdx);
 
-            int newIdx = this.sourceItems.IndexOf(newItem);
+            int newIdx = this.sourceItems.IndexOf(e.NewItem);
             if (newIdx != -1 && !selection.IsSelected(newIdx))
                 selection.Select(newIdx);
 

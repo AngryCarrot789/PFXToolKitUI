@@ -114,15 +114,15 @@ public class PropertyEditorGridGroupControl : TemplatedControl {
         this.Model = null;
     }
 
-    private void ModelOnItemAdded(object? sender, ItemIndexEventArgs<BasePropertyEditorObject> e) {
+    private void ModelOnItemAdded(object? sender, ItemAddOrRemoveEventArgs<BasePropertyEditorObject> e) {
         this.Panel!.InsertItem(e.Item, e.Index);
     }
 
-    private void ModelOnItemRemoved(object? sender, ItemIndexEventArgs<BasePropertyEditorObject> e) {
+    private void ModelOnItemRemoved(object? sender, ItemAddOrRemoveEventArgs<BasePropertyEditorObject> e) {
         this.Panel!.RemoveItem(e.Index);
     }
 
-    private void ModelOnItemMoved(object? sender, ItemMovedEventArgs<BasePropertyEditorObject> e) {
+    private void ModelOnItemMoved(object? sender, ItemMoveEventArgs<BasePropertyEditorObject> e) {
         this.Panel!.MoveItem(e.OldIndex, e.NewIndex);
     }
 

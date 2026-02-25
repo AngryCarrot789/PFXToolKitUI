@@ -76,7 +76,7 @@ public static class ContextEntryExtensions {
                 else
                     update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?>(null, null));
             };
-            
+
             return @this;
         }
 
@@ -92,7 +92,7 @@ public static class ContextEntryExtensions {
                 else
                     update((BaseMenuEntry) sender!, new UpdateEventArgs<T1?, T2?, T3?>(null, null, null));
             };
-            
+
             return @this;
         }
 
@@ -117,7 +117,7 @@ public static class ContextEntryExtensions {
                     field_CurrentValue = newValue;
                 }
             };
-            
+
             return @this;
         }
 
@@ -188,11 +188,12 @@ public static class ContextEntryExtensions {
         private readonly Func<TKey, T> keyValueToDstValue;
         private EventWrapper[]? relays;
         private RapidDispatchActionEx? rda;
+        private T? myField;
 
-        public T? CurrentValue { get; private set; }
+        protected T? CurrentValue => this.myField;
 
         public BaseMenuEntry Entry { get; }
-        
+
         protected BaseSpecializedChangeHandler(BaseMenuEntry entry, DataKey<TKey> key, string[] eventNames, Func<TKey, T> keyValueToDstValue) {
             this.Entry = entry;
             this.key = key;
@@ -202,21 +203,17 @@ public static class ContextEntryExtensions {
 
         internal void OnCapturedContextChanged(object? o, ValueChangedEventArgs<IContextData?> e) {
             Debug.Assert(this.Entry == o);
-            T newValue;
-            if (e.NewValue == null || !this.key.TryGetContext(e.NewValue, out TKey? newSrcValue)) {
-                if (this.CurrentValue != null) {
-                    foreach (EventWrapper relay in this.relays!)
-                        EventRelayStorage.UIStorage.RemoveHandler(this.CurrentValue, this, relay);
-                    this.CurrentValue = null;
-                    this.Update();
+            e.NewValue.SetAndRaiseINEEx(ref this.myField, this.key, this.keyValueToDstValue, this, static (@this, e) => @this.OnValueChanged(e.OldValue, e.NewValue));
+        }
+
+        private void OnValueChanged(T? oldValue, T? newValue) {
+            if (oldValue != null && this.relays != null) {
+                foreach (EventWrapper relay in this.relays) {
+                    EventRelayStorage.UIStorage.RemoveHandler(oldValue, this, relay);
                 }
             }
-            else if (!Equals(this.CurrentValue, newValue = this.keyValueToDstValue(newSrcValue))) {
-                if (this.relays != null && this.CurrentValue != null) {
-                    foreach (EventWrapper relay in this.relays!)
-                        EventRelayStorage.UIStorage.RemoveHandler(this.CurrentValue, this, relay);
-                }
 
+            if (newValue != null) {
                 if (this.relays == null) {
                     this.relays = new EventWrapper[this.eventNames.Length];
                     for (int i = 0; i < this.eventNames.Length; i++) {
@@ -224,11 +221,12 @@ public static class ContextEntryExtensions {
                     }
                 }
 
-                this.CurrentValue = newValue;
-                this.Update();
-                foreach (EventWrapper relay in this.relays!)
+                foreach (EventWrapper relay in this.relays) {
                     EventRelayStorage.UIStorage.AddHandler(newValue, this, relay);
+                }
             }
+
+            this.Update();
         }
 
         public void OnEvent(object sender) {

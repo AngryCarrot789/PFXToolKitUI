@@ -95,12 +95,12 @@ public sealed class ActivityManager : IDisposable {
     /// <summary>
     /// Fired when a task is started. This is fired on the main thread
     /// </summary>
-    public event EventHandler<ItemIndexEventArgs<ActivityTask>>? TaskStarted;
+    public event EventHandler<ItemAddOrRemoveEventArgs<ActivityTask>>? TaskStarted;
 
     /// <summary>
     /// Fired when a task is completed in any way. Fired on the main thread
     /// </summary>
-    public event EventHandler<ItemIndexEventArgs<ActivityTask>>? TaskCompleted;
+    public event EventHandler<ItemAddOrRemoveEventArgs<ActivityTask>>? TaskCompleted;
 
     public ActivityManager() {
         this.localActivities = new AsyncLocal<ActivityTask?>();
@@ -248,7 +248,7 @@ public sealed class ActivityManager : IDisposable {
     internal static void InternalOnTaskStarted(ActivityManager manager, ActivityTask task) {
         int index = manager.activeTasks.Count;
         manager.activeTasks.Insert(index, task);
-        manager.TaskStarted?.Invoke(manager, new ItemIndexEventArgs<ActivityTask>(task, index));
+        manager.TaskStarted?.Invoke(manager, new ItemAddOrRemoveEventArgs<ActivityTask>(index, task));
 
         // The activity task object can be used before the even get started, since starting
         // one requires starting a Task which then calls InternalPreActivateTask which
@@ -271,7 +271,7 @@ public sealed class ActivityManager : IDisposable {
         }
 
         manager.activeTasks.RemoveAt(index);
-        manager.TaskCompleted?.Invoke(manager, new ItemIndexEventArgs<ActivityTask>(task, index));
+        manager.TaskCompleted?.Invoke(manager, new ItemAddOrRemoveEventArgs<ActivityTask>(index, task));
         manager.backgroundTasks.Remove(task); // don't care if not removed
 
         ActivityTask.InternalPostCompleted(task);

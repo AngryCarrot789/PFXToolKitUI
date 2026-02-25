@@ -22,6 +22,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Interactivity.Selections;
@@ -227,17 +228,17 @@ public sealed class ListSelectionModel<T> : IListSelectionModel<T> {
         return SelectionUtils.GetIndexOfNthSelectedItem(index, this.selectedItems, this.SourceList);
     }
 
-    private void SourceListValidateRemove(IObservableList<T> list, int index, int count) {
-        if (count == 1) {
-            this.DeselectItem(list[index]);
+    private void SourceListValidateRemove(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
+        if (e.Items.Count == 1) {
+            this.DeselectItem(e.Items[0]);
         }
         else {
-            this.DeselectItems(list, index, count);
+            this.DeselectItems(e.Items, e.Index, e.Items.Count);
         }
     }
 
-    private void SourceListValidateReplaced(IObservableList<T> list, int index, T oldItem, T newItem) {
-        this.DeselectItem(oldItem);
+    private void SourceListValidateReplaced(object? sender, ItemReplaceEventArgs<T> e) {
+        this.DeselectItem(e.OldItem);
     }
     
     [DoesNotReturn]

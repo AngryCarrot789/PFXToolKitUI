@@ -1,7 +1,7 @@
 ﻿namespace PFXToolKitUI.Utils.Events;
 
 /// <summary>
-/// Helper methods for item add, remove and move events using <see cref="ItemIndexEventArgs{T}"/> and <see cref="ItemMovedEventArgs{T}"/>
+/// Helper methods for item add, remove and move events using <see cref="ItemAddOrRemoveEventArgs{T}"/> and <see cref="ItemMoveEventArgs{T}"/>
 /// </summary>
 public static class ItemEventUtils {
     /// <summary>
@@ -15,16 +15,16 @@ public static class ItemEventUtils {
     /// from 0 to Count-1, whereas when removing, we can remove back to front.
     /// </param>
     /// <typeparam name="T">The type of item</typeparam>
-    public static void InvokeItems<T>(IReadOnlyList<T> existingItems, object? sender, EventHandler<ItemIndexEventArgs<T>>? eventHandler, bool isAdding) {
+    public static void InvokeItems<T>(IReadOnlyList<T> existingItems, object? sender, EventHandler<ItemAddOrRemoveEventArgs<T>>? eventHandler, bool isAdding) {
         if (eventHandler != null) {
             if (isAdding) {
                 for (int i = 0; i < existingItems.Count; i++) {
-                    eventHandler(sender, new ItemIndexEventArgs<T>(existingItems[i], i));
+                    eventHandler(sender, new ItemAddOrRemoveEventArgs<T>(i, existingItems[i]));
                 }
             }
             else {
                 for (int i = existingItems.Count - 1; i >= 0; i--) {
-                    eventHandler(sender, new ItemIndexEventArgs<T>(existingItems[i], i));
+                    eventHandler(sender, new ItemAddOrRemoveEventArgs<T>(i, existingItems[i]));
                 }   
             }
         }

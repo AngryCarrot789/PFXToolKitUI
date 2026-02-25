@@ -59,11 +59,11 @@ public class ActivityListBoxControl : TemplatedControl {
                 Debug.Assert(self.backgroundActivityListProcessor == null);
                 self.backgroundActivityListProcessor = ObservableItemProcessor.MakeIndexable(
                     actMan.BackgroundTasks,
-                    (_, index, item) => self.InsertItem(index, item),
-                    (_, index, _) => self.RemoveItem(index),
-                    (_, oldIdx, newIdx, item) => {
-                        self.RemoveItem(oldIdx);
-                        self.InsertItem(newIdx, item);
+                    e => self.InsertItem(e.Index, e.Item),
+                    e => self.RemoveItem(e.Index),
+                    e => {
+                        self.RemoveItem(e.OldIndex);
+                        self.InsertItem(e.NewIndex, e.Item);
                     }
                 );
 

@@ -261,22 +261,22 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Header = entry.DisplayName;
     }
 
-    private void ItemsOnItemsAdded(IObservableList<IMenuEntry> list, int index, IList<IMenuEntry> items) {
+    private void ItemsOnItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<IMenuEntry> e) {
         this.OnItemAddedOrRemoved();
-        AdvancedMenuHelper.OnLogicalItemsAdded(this, index, items);
+        AdvancedMenuHelper.OnLogicalItemsAdded(this, e.Index, e.Items);
     }
 
-    private void ItemsOnItemsRemoved(IObservableList<IMenuEntry> list, int index, IList<IMenuEntry> items) {
+    private void ItemsOnItemsRemoved(object? sender, ItemsAddOrRemoveEventArgs<IMenuEntry> e) {
         this.OnItemAddedOrRemoved();
-        AdvancedMenuHelper.OnLogicalItemsRemoved(this, index, items);
+        AdvancedMenuHelper.OnLogicalItemsRemoved(this, e.Index, e.Items);
     }
 
-    private void ItemsOnItemMoved(IObservableList<IMenuEntry> list, int oldIndex, int newIndex, IMenuEntry item) {
-        AdvancedMenuHelper.OnLogicalItemMoved(this, oldIndex, newIndex, item);
+    private void ItemsOnItemMoved(object? sender, ItemMoveEventArgs<IMenuEntry> e) {
+        AdvancedMenuHelper.OnLogicalItemMoved(this, e.OldIndex, e.NewIndex, e.Item);
     }
 
-    private void ItemsOnItemReplaced(IObservableList<IMenuEntry> list, int index, IMenuEntry oldItem, IMenuEntry newItem) {
-        AdvancedMenuHelper.OnLogicalItemReplaced(this, index, oldItem, newItem);
+    private void ItemsOnItemReplaced(object? sender, ItemReplaceEventArgs<IMenuEntry> e) {
+        AdvancedMenuHelper.OnLogicalItemReplaced(this, e.Index, e.OldItem, e.NewItem);
     }
 
     private void OnAnyEntryIconChanged(object? o, ValueChangedEventArgs<Icon?> valueChangedEventArgs) {

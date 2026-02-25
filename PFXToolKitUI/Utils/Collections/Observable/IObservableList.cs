@@ -18,17 +18,10 @@
 // 
 
 using System.Collections.Specialized;
+using PFXToolKitUI.Utils.Events;
 using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
-
-public delegate void ObservableListBeforeRemovedEventHandler<T>(IObservableList<T> list, int index, int count);
-
-public delegate void ObservableListMultipleItemsEventHandler<T>(IObservableList<T> list, int index, IList<T> items);
-
-public delegate void ObservableListMoveEventHandler<T>(IObservableList<T> list, int oldIndex, int newIndex, T item);
-
-public delegate void ObservableListReplaceEventHandler<T>(IObservableList<T> list, int index, T oldItem, T newItem);
 
 /// <summary>
 /// A list implementation that invokes a series of events when the collection changes
@@ -38,22 +31,22 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// <summary>
     /// An event fired when items are about to be added to this collection
     /// </summary>
-    public event ObservableListMultipleItemsEventHandler<T>? ValidateAdd;
+    public event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ValidateAdd;
     
     /// <summary>
     /// An event fired when one or more items are about to be removed.
     /// </summary>
-    public event ObservableListBeforeRemovedEventHandler<T>? ValidateRemove;
+    public event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ValidateRemove;
     
     /// <summary>
     /// An event fired when an item is about to be replaced by another item
     /// </summary>
-    public event ObservableListReplaceEventHandler<T>? ValidateReplace;
+    public event EventHandler<ItemReplaceEventArgs<T>>? ValidateReplace;
     
     /// <summary>
     /// An event fired when an item is about to be moved from one index to another
     /// </summary>
-    public event ObservableListMoveEventHandler<T>? ValidateMove;
+    public event EventHandler<ItemMoveEventArgs<T>>? ValidateMove;
     
     /// <summary>
     /// An event fired when one or more items are inserted into the list.
@@ -61,7 +54,7 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// The event args are the list of items inserted, and the index of the insertion
     /// </para>
     /// </summary>
-    event ObservableListMultipleItemsEventHandler<T> ItemsAdded;
+    event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ItemsAdded;
 
     /// <summary>
     /// An event fired when one or more items are removed from this list, at the given index. This is also fired
@@ -71,17 +64,17 @@ public interface IObservableList<T> : IList<T>, INotifyCollectionChanged {
     /// they were in the list) and the original index of the first item in the removed items list
     /// </para>
     /// </summary>
-    event ObservableListMultipleItemsEventHandler<T> ItemsRemoved;
+    event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ItemsRemoved;
 
     /// <summary>
     /// An event fired when an item is replaced. Only a single item is supported
     /// </summary>
-    event ObservableListReplaceEventHandler<T> ItemReplaced;
+    event EventHandler<ItemReplaceEventArgs<T>>? ItemReplaced;
 
     /// <summary>
     /// An event fired when an item is moved from one index to another
     /// </summary>
-    event ObservableListMoveEventHandler<T> ItemMoved;
+    event EventHandler<ItemMoveEventArgs<T>>? ItemMoved;
 
     /// <summary>
     /// Specifies the behaviour that determines which <see cref="NotifyCollectionChangedAction"/> is used when this list becomes empty

@@ -51,6 +51,22 @@ public interface IBinder {
     /// Updates the model's value based on the control's value. This is typically called when the control's value changes
     /// </summary>
     public void UpdateModel();
+    
+    /// <summary>
+    /// Detaches both the control and model from this binder. This is equivalent to
+    /// calling <see cref="DetachControl"/> and <see cref="DetachModel"/>.
+    /// </summary>
+    void Detach();
+
+    /// <summary>
+    /// Detaches the control from this binder
+    /// </summary>
+    void DetachControl();
+
+    /// <summary>
+    /// Detaches the model from this binder
+    /// </summary>
+    void DetachModel();
 }
 
 /// <summary>
@@ -129,22 +145,6 @@ public interface IBinder<TModel> : IBinder where TModel : class {
     /// </summary>
     /// <param name="model">The model to be associated with</param>
     void AttachModel(TModel model);
-
-    /// <summary>
-    /// Detaches both the control and model from this binder. This is equivalent to
-    /// calling <see cref="DetachControl"/> and <see cref="DetachModel"/>.
-    /// </summary>
-    void Detach();
-
-    /// <summary>
-    /// Detaches the control from this binder
-    /// </summary>
-    void DetachControl();
-
-    /// <summary>
-    /// Detaches the model from this binder
-    /// </summary>
-    void DetachModel();
 
     /// <summary>
     /// Detaches the current model, if there is one, and then attaches the new model if it's non-null. This is a convenience method

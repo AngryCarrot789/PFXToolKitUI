@@ -46,8 +46,8 @@ public class NotificationManager : IComponentManager {
 
     public NotificationManager() {
         this.Toasts = new ObservableList<Notification>();
-        this.Toasts.ValidateAdd += (list, index, items) => {
-            foreach (Notification toast in items) {
+        this.Toasts.ValidateAdd += (list, e) => {
+            foreach (Notification toast in e.Items) {
                 if (toast == null)
                     throw new InvalidOperationException("Attempt to show null notification");
                 if (toast.NotificationManager == this)
@@ -57,8 +57,9 @@ public class NotificationManager : IComponentManager {
             }
         };
 
-        this.Toasts.ItemsAdded += (list, index, items) => {
-            foreach (Notification toast in items) {
+        
+        this.Toasts.ItemsAdded += (list, e) => {
+            foreach (Notification toast in e.Items) {
                 toast.NotificationManager = this;
                 toast.OnShowing();
             }
@@ -66,8 +67,8 @@ public class NotificationManager : IComponentManager {
             this.UpdateIsAlertActive();
         };
 
-        this.Toasts.ItemsRemoved += (list, index, items) => {
-            foreach (Notification toast in items) {
+        this.Toasts.ItemsRemoved += (list, e) => {
+            foreach (Notification toast in e.Items) {
                 toast.OnHidden();
                 toast.NotificationManager = null;
             }
@@ -75,9 +76,9 @@ public class NotificationManager : IComponentManager {
             this.UpdateIsAlertActive();
         };
 
-        this.Toasts.ItemReplaced += (list, index, oldItem, newItem) => {
-            oldItem.NotificationManager = null;
-            newItem.NotificationManager = this;
+        this.Toasts.ItemReplaced += (list, e) => {
+            e.OldItem.NotificationManager = null;
+            e.NewItem.NotificationManager = this;
             this.UpdateIsAlertActive();
         };
     }

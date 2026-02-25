@@ -42,6 +42,7 @@ using PFXToolKitUI.Themes;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Commands;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Notifications;
 
@@ -188,7 +189,7 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
                 }
             };
 
-            this.animation.RunAsync(this, this.Model!.CancellationToken);
+            this.animation.RunAsync(this, this.Model!.AutoHideCancellationToken);
         }
     }
 
@@ -198,22 +199,22 @@ public class NotificationListBoxItem : ModelBasedListBoxItem<Notification> {
 
     // Note: the buttons are added/removed when the actual notification is added to/removed from the notification list box.
     // This is only done so that we can cache hyperlinks. Even though the IBinders aren't that expensive, it's still good to do
-    private void OnCommandInserted(object sender, int index, NotificationAction item) {
+    private void OnCommandInserted(ItemAddOrRemoveEventArgs<NotificationAction> e) {
         if (this.PART_ActionPanel != null)
-            this.PART_ActionPanel!.Children.Insert(index, NotificationHyperlinkButton.GetCachedOrCreate(item));
+            this.PART_ActionPanel!.Children.Insert(e.Index, NotificationHyperlinkButton.GetCachedOrCreate(e.Item));
     }
 
-    private void OnCommandRemoved(object sender, int index, NotificationAction item) {
+    private void OnCommandRemoved(ItemAddOrRemoveEventArgs<NotificationAction> e) {
         if (this.PART_ActionPanel != null) {
-            NotificationHyperlinkButton button = (NotificationHyperlinkButton) this.PART_ActionPanel!.Children[index];
-            this.PART_ActionPanel!.Children.RemoveAt(index);
+            NotificationHyperlinkButton button = (NotificationHyperlinkButton) this.PART_ActionPanel!.Children[e.Index];
+            this.PART_ActionPanel!.Children.RemoveAt(e.Index);
             NotificationHyperlinkButton.PushCachedButton(button);
         }
     }
 
-    private void OnCommandMoved(object sender, int oldindex, int newindex, NotificationAction item) {
+    private void OnCommandMoved(ItemMoveEventArgs<NotificationAction> e) {
         if (this.PART_ActionPanel != null)
-            this.PART_ActionPanel!.Children.Move(oldindex, newindex);
+            this.PART_ActionPanel!.Children.Move(e.OldIndex, e.NewIndex);
     }
     
     private class NotificationHyperlinkButton : HyperlinkButton {

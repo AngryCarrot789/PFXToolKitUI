@@ -22,26 +22,14 @@ using Avalonia.Controls;
 namespace PFXToolKitUI.Avalonia.Bindings;
 
 public static class Binders {
-    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1) where TModel : class {
-        binder1.AttachControl(control);
+    public static void Attach<TModel>(Control control, TModel model, params IBinder<TModel>[] binders) where TModel : class {
+        foreach (IBinder<TModel> b in binders)
+            b.Attach(control, model);
     }
     
-    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
-        binder1.AttachControl(control);
-        binder2.AttachControl(control);
-    }
-    
-    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
-        binder1.AttachControl(control);
-        binder2.AttachControl(control);
-        binder3.AttachControl(control);
-    }
-    
-    public static void AttachControls<TModel>(Control control, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
-        binder1.AttachControl(control);
-        binder2.AttachControl(control);
-        binder3.AttachControl(control);
-        binder4.AttachControl(control);
+    public static void Attach<TModel>(Control control, TModel model, params ReadOnlySpan<IBinder<TModel>> binders) where TModel : class {
+        foreach (IBinder<TModel> b in binders)
+            b.Attach(control, model);
     }
     
     public static void AttachControls<TModel>(Control control, params IBinder<TModel>[] binders) where TModel : class {
@@ -49,86 +37,48 @@ public static class Binders {
             b.AttachControl(control);
     }
     
-    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1) where TModel : class {
-        binder1.AttachModel(model);
-    }
-    
-    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
-        binder1.AttachModel(model);
-        binder2.AttachModel(model);
-    }
-    
-    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
-        binder1.AttachModel(model);
-        binder2.AttachModel(model);
-        binder3.AttachModel(model);
-    }
-    
-    public static void AttachModels<TModel>(TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
-        binder1.AttachModel(model);
-        binder2.AttachModel(model);
-        binder3.AttachModel(model);
-        binder4.AttachModel(model);
-    }
-
-    public static void AttachModels<TModel>(TModel model, params IBinder<TModel>[] binders) where TModel : class {
-        foreach (IBinder<TModel> b in binders) {
-            b.AttachModel(model);
-        }
-    }
-    
-    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1) where TModel : class {
-        binder1.Attach(control, model);
-    }
-    
-    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
-        binder1.Attach(control, model);
-        binder2.Attach(control, model);
-    }
-    
-    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
-        binder1.Attach(control, model);
-        binder2.Attach(control, model);
-        binder3.Attach(control, model);
-    }
-    
-    public static void Attach<TModel>(Control control, TModel model, IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
-        binder1.Attach(control, model);
-        binder2.Attach(control, model);
-        binder3.Attach(control, model);
-        binder4.Attach(control, model);
-    }
-    
-    public static void Attach<TModel>(Control control, TModel model, params IBinder<TModel>[] binders) where TModel : class {
+    public static void AttachControls<TModel>(Control control, params ReadOnlySpan<IBinder<TModel>> binders) where TModel : class {
         foreach (IBinder<TModel> b in binders)
-            b.Attach(control, model);
+            b.AttachControl(control);
     }
     
-    public static void DetachModels<TModel>(IBinder<TModel> binder1) where TModel : class {
-        binder1.DetachModel();
+    public static void AttachModels<TModel>(TModel model, params IBinder<TModel>[] binders) where TModel : class {
+        foreach (IBinder<TModel> b in binders)
+            b.AttachModel(model);
     }
     
-    public static void DetachModels<TModel>(IBinder<TModel> binder1, IBinder<TModel> binder2) where TModel : class {
-        binder1.DetachModel();
-        binder2.DetachModel();
+    public static void AttachModels<TModel>(TModel model, params ReadOnlySpan<IBinder<TModel>> binders) where TModel : class {
+        foreach (IBinder<TModel> b in binders)
+            b.AttachModel(model);
     }
     
-    public static void DetachModels<TModel>(IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3) where TModel : class {
-        binder1.DetachModel();
-        binder2.DetachModel();
-        binder3.DetachModel();
+    public static void Detach(params IBinder[] binders) {
+        foreach (IBinder b in binders)
+            b.Detach();
     }
     
-    public static void DetachModels<TModel>(IBinder<TModel> binder1, IBinder<TModel> binder2, IBinder<TModel> binder3, IBinder<TModel> binder4) where TModel : class {
-        binder1.DetachModel();
-        binder2.DetachModel();
-        binder3.DetachModel();
-        binder4.DetachModel();
+    public static void Detach(params ReadOnlySpan<IBinder> binders) {
+        foreach (IBinder b in binders)
+            b.Detach();
     }
-
-    public static void DetachModels<TModel>(params IBinder<TModel>[] binders) where TModel : class {
-        foreach (IBinder<TModel> b in binders) {
+    
+    public static void DetachControls(params IBinder[] binders) {
+        foreach (IBinder b in binders)
+            b.DetachControl();
+    }
+    
+    public static void DetachControls(params ReadOnlySpan<IBinder> binders) {
+        foreach (IBinder b in binders)
+            b.DetachControl();
+    }
+    
+    public static void DetachModels(params IBinder[] binders) {
+        foreach (IBinder b in binders)
             b.DetachModel();
-        }
+    }
+    
+    public static void DetachModels(params ReadOnlySpan<IBinder> binders) {
+        foreach (IBinder b in binders)
+            b.DetachModel();
     }
 }

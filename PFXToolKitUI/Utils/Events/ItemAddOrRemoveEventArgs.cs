@@ -1,5 +1,5 @@
 ﻿// 
-// Copyright (c) 2025-2025 REghZy
+// Copyright (c) 2025-2026 REghZy
 // 
 // This file is part of PFXToolKitUI.
 // 
@@ -23,14 +23,30 @@ namespace PFXToolKitUI.Utils.Events;
 /// Event args for an item inserted or removed event
 /// </summary>
 /// <typeparam name="T">The type of item</typeparam>
-public readonly struct ItemIndexEventArgs<T>(T item, int index) {
-    /// <summary>
-    /// Gets the item that was inserted or removed
-    /// </summary>
-    public T Item { get; } = item;
-
+public readonly struct ItemAddOrRemoveEventArgs<T>(int index, T item) {
     /// <summary>
     /// Gets the index of the inserted or removed item
     /// </summary>
     public int Index { get; } = index;
+    
+    /// <summary>
+    /// Gets the item that was inserted or removed
+    /// </summary>
+    public T Item { get; } = item;
+}
+
+/// <summary>
+/// Event args for items inserted or removed event
+/// </summary>
+/// <typeparam name="T">The type of item</typeparam>
+public readonly struct ItemsAddOrRemoveEventArgs<T>(int index, IList<T> items) {
+    /// <summary>
+    /// Gets the index of the inserted or removed item
+    /// </summary>
+    public int Index { get; } = index;
+    
+    /// <summary>
+    /// Gets the items that weere inserted or removed
+    /// </summary>
+    public IList<T> Items { get; } = items;
 }

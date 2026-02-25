@@ -20,6 +20,7 @@
 using System.Diagnostics;
 using Avalonia.Controls;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.AvControls.ListBoxes;
 
@@ -112,25 +113,26 @@ public abstract class ModelBasedListBox<TModel> : BaseModelBasedListBox where TM
         }
     }
 
-    private void OnItemsAdded(IObservableList<TModel> list, int index, IList<TModel> items) {
-        foreach (TModel model in items) {
+    private void OnItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<TModel> e) {
+        int index = e.Index;
+        foreach (TModel model in e.Items) {
             this.InsertModelAt(index++, model);
         }
     }
 
-    private void OnItemsRemoved(IObservableList<TModel> list, int index, IList<TModel> items) {
-        for (int i = index + items.Count - 1; i >= index; i--) {
+    private void OnItemsRemoved(object? sender, ItemsAddOrRemoveEventArgs<TModel> e) {
+        for (int i = e.Index + e.Items.Count - 1; i >= e.Index; i--) {
             this.RemoveModelAt(i);
         }
     }
 
-    private void OnItemReplaced(IObservableList<TModel> list, int index, TModel oldItem, TModel newItem) {
-        this.RemoveModelAt(index);
-        this.InsertModelAt(index, newItem);
+    private void OnItemReplaced(object? sender, ItemReplaceEventArgs<TModel> e) {
+        this.RemoveModelAt(e.Index);
+        this.InsertModelAt(e.Index, e.NewItem);
     }
 
-    private void OnItemMoved(IObservableList<TModel> list, int oldIdx, int newIdx, TModel item) {
-        this.MoveModel(oldIdx, newIdx);
+    private void OnItemMoved(object? sender, ItemMoveEventArgs<TModel> e) {
+        this.MoveModel(e.OldIndex, e.NewIndex);
     }
 
     /// <summary>

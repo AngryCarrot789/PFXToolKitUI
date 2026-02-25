@@ -20,6 +20,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using PFXToolKitUI.Utils.Events;
 using PFXToolKitUI.Utils.Ranges;
 
 namespace PFXToolKitUI.Utils.Collections.Observable;
@@ -48,16 +49,6 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     private readonly bool isDerivedType;
     protected int blockReentrancyCount;
 
-    public event ObservableListMultipleItemsEventHandler<T>? ValidateAdd;
-    public event ObservableListBeforeRemovedEventHandler<T>? ValidateRemove;
-    public event ObservableListReplaceEventHandler<T>? ValidateReplace;
-    public event ObservableListMoveEventHandler<T>? ValidateMove;
-
-    public event ObservableListMultipleItemsEventHandler<T>? ItemsAdded;
-    public event ObservableListMultipleItemsEventHandler<T>? ItemsRemoved;
-    public event ObservableListReplaceEventHandler<T>? ItemReplaced;
-    public event ObservableListMoveEventHandler<T>? ItemMoved;
-
     /*
         Actions:
             Add:
@@ -76,8 +67,16 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
                 OldIndex = -1, OldItems = null
                 NewIndex = -1, NewItems = null,
      */
-    
+
     public event NotifyCollectionChangedEventHandler? CollectionChanged;
+    public event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ValidateAdd;
+    public event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ValidateRemove;
+    public event EventHandler<ItemReplaceEventArgs<T>>? ValidateReplace;
+    public event EventHandler<ItemMoveEventArgs<T>>? ValidateMove;
+    public event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ItemsAdded;
+    public event EventHandler<ItemsAddOrRemoveEventArgs<T>>? ItemsRemoved;
+    public event EventHandler<ItemReplaceEventArgs<T>>? ItemReplaced;
+    public event EventHandler<ItemMoveEventArgs<T>>? ItemMoved;
 
     public ResetBehavior ClearBehavior { get; }
 
@@ -105,7 +104,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
         this.ClearBehavior = clearBehavior;
     }
-    
+
     protected override void InsertItem(int index, T item) {
         this.CheckReentrancy();
         if (index < 0)
@@ -114,7 +113,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             throw new IndexOutOfRangeException($"Index beyond length of this list: {index} > {this.myItems.Count}");
 
         SingletonList<T>? itemList = null;
-        this.ValidateAdd?.Invoke(this, index, itemList = new SingletonList<T>(item));
+        this.ValidateAdd?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, itemList = new SingletonList<T>(item)));
         this.myItems.Insert(index, item);
 
         // Invoke base method when derived or if we have an ItemsAdded or CC handler
@@ -137,8 +136,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             list = items.ToList();
         }
 
-        if (list.Count > 0) {            
-            this.ValidateAdd?.Invoke(this, index, list);
+        if (list.Count > 0) {
+            this.ValidateAdd?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, list));
             this.myItems.InsertRange(index, list);
 
             if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null) // Stops the event handler modifying the list
@@ -152,12 +151,13 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         this.CheckReentrancy();
         T removedItem = this[index];
 
-        this.ValidateRemove?.Invoke(this, index, 1);
+        SingletonList<T>? list = null;
+        this.ValidateRemove?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, list = new SingletonList<T>(removedItem)));
         this.myItems.RemoveAt(index);
 
         // Invoke base method when derived or we have an ItemsRemoved handler
         if (this.isDerivedType || this.ItemsRemoved != null || this.CollectionChanged != null)
-            this.OnItemsRemoved(index, new SingletonList<T>(removedItem));
+            this.OnItemsRemoved(index, list ??= new SingletonList<T>(removedItem));
     }
 
     public void RemoveRange(int index, int count) {
@@ -172,18 +172,10 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
         this.CheckReentrancy();
 
-        this.ValidateRemove?.Invoke(this, index, count);
-        if (!this.isDerivedType && this.ItemsRemoved == null && this.CollectionChanged == null) {
-            // We are not a derived type, and we have no ItemsRemoved or CC handler,
-            // so we don't need to create any pointless sub-lists
-
-            this.myItems.RemoveRange(index, count);
-        }
-        else {
-            List<T> items = this.myItems.Slice(index, count);
-            this.myItems.RemoveRange(index, count);
-            this.OnItemsRemoved(index, items.AsReadOnly());
-        }
+        ReadOnlyCollection<T> items = this.myItems.Slice(index, count).AsReadOnly();
+        this.ValidateRemove?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, items));
+        this.myItems.RemoveRange(index, count);
+        this.OnItemsRemoved(index, items);
     }
 
     public IntegerSet<int> RemoveRange(IEnumerable<T> items) {
@@ -223,7 +215,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         this.CheckReentrancy();
         T oldItem = this[index];
 
-        this.ValidateReplace?.Invoke(this, index, oldItem, newItem);
+        this.ValidateReplace?.Invoke(this, new ItemReplaceEventArgs<T>(index, oldItem, newItem));
         base.SetItem(index, newItem);
         this.OnItemReplaced(index, oldItem, newItem);
     }
@@ -238,7 +230,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             throw new IndexOutOfRangeException($"newIndex beyond length of this list: {newIndex} >= {this.myItems.Count}");
 
         T item = this[oldIndex];
-        this.ValidateMove?.Invoke(this, oldIndex, newIndex, item);
+        this.ValidateMove?.Invoke(this, new ItemMoveEventArgs<T>(oldIndex, newIndex, item));
 
         base.RemoveItem(oldIndex);
         base.InsertItem(newIndex, item);
@@ -251,8 +243,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             return;
         }
 
-        this.ValidateRemove?.Invoke(this, 0, this.myItems.Count);
-        if (!this.isDerivedType && this.ItemsRemoved == null && this.CollectionChanged == null) {
+        EventHandler<ItemsAddOrRemoveEventArgs<T>>? validate = this.ValidateRemove;
+        if (validate == null && !this.isDerivedType && this.ItemsRemoved == null && this.CollectionChanged == null) {
             // We are not a derived type, and we have no ItemsRemoved or CC handler,
             // so we don't need to create any pointless sub-lists
             this.myItems.Clear();
@@ -261,13 +253,14 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             ReadOnlyCollection<T> items = this.myItems.ToList().AsReadOnly();
             this.myItems.Clear();
             this.OnItemsRemoved(0, items);
+            validate?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(0, items));
         }
     }
 
     protected virtual void OnItemsAdded(int index, IList<T> items) {
         try {
             this.blockReentrancyCount++;
-            this.ItemsAdded?.Invoke(this, index, items);
+            this.ItemsAdded?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, items));
             this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, items as IList ?? items.ToList(), index));
         }
         finally {
@@ -278,7 +271,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     protected virtual void OnItemsRemoved(int index, IList<T> items) {
         try {
             this.blockReentrancyCount++;
-            this.ItemsRemoved?.Invoke(this, index, items);
+            this.ItemsRemoved?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, items));
             this.CollectionChanged?.Invoke(this,
                 this.Count > 0 || this.ClearBehavior == ResetBehavior.Remove // call Remove on reset
                     ? new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, items as IList ?? items.ToList(), index)
@@ -292,7 +285,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     protected virtual void OnItemReplaced(int index, T oldItem, T newItem) {
         try {
             this.blockReentrancyCount++;
-            this.ItemReplaced?.Invoke(this, index, oldItem, newItem);
+            this.ItemReplaced?.Invoke(this, new ItemReplaceEventArgs<T>(index, oldItem, newItem));
             this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, newItem, oldItem, index));
         }
         finally {
@@ -303,7 +296,7 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     protected virtual void OnPostItemMoved(int oldIndex, int newIndex, T item) {
         try {
             this.blockReentrancyCount++;
-            this.ItemMoved?.Invoke(this, oldIndex, newIndex, item);
+            this.ItemMoved?.Invoke(this, new ItemMoveEventArgs<T>(oldIndex, newIndex, item));
             this.CollectionChanged?.Invoke(this, new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Move, item, newIndex, oldIndex));
         }
         finally {

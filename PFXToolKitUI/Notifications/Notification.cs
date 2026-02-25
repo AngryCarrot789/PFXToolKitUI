@@ -133,7 +133,10 @@ public abstract class Notification : IComponentManager {
         set => PropertyHelper.SetAndRaiseINE(ref field, value, this, static t => t.OnAlertModeChanged());
     }
 
-    public CancellationToken CancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
+    /// <summary>
+    /// Gets the cancellation token for when auto hiding is completed or cancelled.
+    /// </summary>
+    public CancellationToken AutoHideCancellationToken => this.ctsAutoHide?.Token ?? CancellationToken.None;
 
     /// <summary>
     /// Gets the list of notification actions that the user can execute
@@ -159,8 +162,8 @@ public abstract class Notification : IComponentManager {
 
     protected Notification() {
         this.Actions = new ObservableList<NotificationAction>();
-        this.Actions.ValidateAdd += (list, index, items) => {
-            foreach (NotificationAction item in items) {
+        this.Actions.ValidateAdd += (list, e) => {
+            foreach (NotificationAction item in e.Items) {
                 if (item.Notification != null)
                     throw new InvalidOperationException($"{nameof(NotificationAction)} already exists in another notification");
             }

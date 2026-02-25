@@ -21,6 +21,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using PFXToolKitUI.Utils;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Interactivity.Selections;
 
@@ -81,8 +82,8 @@ public sealed class TreeSelectionModel<T> where T : class {
     /// </summary>
     public event EventHandler<ChangedEventArgs>? SelectionChanged;
 
-    private readonly ObservableListMultipleItemsEventHandler<T> ItemsRemovedHandler;
-    private readonly ObservableListReplaceEventHandler<T> ItemReplacedHandler;
+    private readonly EventHandler<ItemsAddOrRemoveEventArgs<T>>? ItemsRemovedHandler;
+    private readonly EventHandler<ItemReplaceEventArgs<T>>? ItemReplacedHandler;
     private readonly Func<T, bool> CanSelectItem;
 
     public TreeSelectionModel(T rootItem, Func<T, bool> isItemInTree, Func<T, T?> getParentFunction, Func<T, IObservableList<T>?> getChildrenFunction) {
@@ -284,11 +285,11 @@ public sealed class TreeSelectionModel<T> where T : class {
         this.SelectionChanged?.Invoke(this, new ChangedEventArgs(addedItems, removedItems));
     }
 
-    private void OnItemsRemoved(IObservableList<T> list, int index, IList<T> items) {
+    private void OnItemsRemoved(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         if (this.selectedItems.Count > 0) {
             List<T> deselect = new List<T>(32);
-            for (int i = 0; i < items.Count; i++) {
-                this.RecursiveDeselect(items[i], deselect);
+            for (int i = 0; i < e.Items.Count; i++) {
+                this.RecursiveDeselect(e.Items[i], deselect);
             }
 
             if (deselect.Count > 0) {
@@ -297,10 +298,10 @@ public sealed class TreeSelectionModel<T> where T : class {
         }
     }
 
-    private void OnItemReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
+    private void OnItemReplaced(object? sender, ItemReplaceEventArgs<T> e) {
         if (this.selectedItems.Count > 0) {
             List<T> deselect = new List<T>(32);
-            this.RecursiveDeselect(olditem, deselect);
+            this.RecursiveDeselect(e.OldItem, deselect);
             if (deselect.Count > 0) {
                 this.RaiseSelectionChanged(EmptyList, deselect);
             }

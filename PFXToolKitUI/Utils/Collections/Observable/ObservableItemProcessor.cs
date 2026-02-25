@@ -17,13 +17,9 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
+using PFXToolKitUI.Utils.Events;
+
 namespace PFXToolKitUI.Utils.Collections.Observable;
-
-public delegate void ObservableItemProcessorItemEventHandler<in T>(object sender, int index, T item);
-
-public delegate void ObservableItemProcessorItemMovedEventHandler<in T>(object sender, int oldIndex, int newIndex, T item);
-
-public delegate void ObservableItemProcessorMultiItemEventHandler<T>(object sender, int index, IList<T> items);
 
 /// <summary>
 /// A helper class for creating observable item processors
@@ -49,7 +45,7 @@ public static class ObservableItemProcessor {
     /// <param name="onItemRemoved"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>
-    public static ObservableItemProcessorIndexing<T> MakeIndexable<T>(IObservableList<T> list, ObservableItemProcessorItemEventHandler<T>? onItemAdded, ObservableItemProcessorItemEventHandler<T>? onItemRemoved, ObservableItemProcessorItemMovedEventHandler<T>? onItemMoved, bool useOptimisedRemovalProcessing = true) {
+    public static ObservableItemProcessorIndexing<T> MakeIndexable<T>(IObservableList<T> list, Action<ItemAddOrRemoveEventArgs<T>>? onItemAdded, Action<ItemAddOrRemoveEventArgs<T>>? onItemRemoved, Action<ItemMoveEventArgs<T>>? onItemMoved, bool useOptimisedRemovalProcessing = true) {
         return new ObservableItemProcessorIndexing<T>(list, onItemAdded, onItemRemoved, onItemMoved, useOptimisedRemovalProcessing);
     }
 }
@@ -70,27 +66,27 @@ public sealed class ObservableItemProcessorSimple<T> : IDisposable {
         this.OnItemRemoved = itemRemoved;
     }
 
-    private void OnItemsAdded(IObservableList<T> observableList, int index, IList<T> items) {
+    private void OnItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         Action<T>? handler = this.OnItemAdded;
-        if (handler == null)
-            return;
-
-        foreach (T item in items)
-            handler(item);
+        if (handler != null) {
+            foreach (T item in e.Items) {
+                handler(item);
+            }
+        }
     }
 
-    private void OnItemsRemoved(IObservableList<T> observableList, int index, IList<T> items) {
+    private void OnItemsRemoved(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         Action<T>? handler = this.OnItemRemoved;
-        if (handler == null)
-            return;
-
-        foreach (T item in items)
-            handler(item);
+        if (handler != null) {
+            foreach (T item in e.Items) {
+                handler(item);
+            }
+        }
     }
 
-    private void OnItemReplaced(IObservableList<T> observableList, int index, T olditem, T newitem) {
-        this.OnItemRemoved?.Invoke(olditem);
-        this.OnItemAdded?.Invoke(newitem);
+    private void OnItemReplaced(object? sender, ItemReplaceEventArgs<T> e) {
+        this.OnItemRemoved?.Invoke(e.OldItem);
+        this.OnItemAdded?.Invoke(e.NewItem);
     }
 
     public void Dispose() {
@@ -104,11 +100,11 @@ public sealed class ObservableItemProcessorIndexing<T> : IDisposable {
     private readonly IObservableList<T> list;
     private readonly bool useOptimisedRemovalProcessing;
 
-    public event ObservableItemProcessorItemEventHandler<T>? OnItemAdded;
-    public event ObservableItemProcessorItemEventHandler<T>? OnItemRemoved;
-    public event ObservableItemProcessorItemMovedEventHandler<T>? OnItemMoved;
+    public event Action<ItemAddOrRemoveEventArgs<T>>? OnItemAdded;
+    public event Action<ItemAddOrRemoveEventArgs<T>>? OnItemRemoved;
+    public event Action<ItemMoveEventArgs<T>>? OnItemMoved;
 
-    public ObservableItemProcessorIndexing(IObservableList<T> list, ObservableItemProcessorItemEventHandler<T>? itemAdded, ObservableItemProcessorItemEventHandler<T>? itemRemoved, ObservableItemProcessorItemMovedEventHandler<T>? itemMoved, bool useOptimisedRemovalProcessing) {
+    public ObservableItemProcessorIndexing(IObservableList<T> list, Action<ItemAddOrRemoveEventArgs<T>>? itemAdded, Action<ItemAddOrRemoveEventArgs<T>>? itemRemoved, Action<ItemMoveEventArgs<T>>? itemMoved, bool useOptimisedRemovalProcessing) {
         this.list = list ?? throw new ArgumentNullException(nameof(list));
         this.useOptimisedRemovalProcessing = useOptimisedRemovalProcessing;
         list.ItemsAdded += this.ItemsAdded;
@@ -121,44 +117,43 @@ public sealed class ObservableItemProcessorIndexing<T> : IDisposable {
         this.OnItemMoved = itemMoved;
     }
 
-    private void ItemsAdded(IObservableList<T> observableList, int index, IList<T> items) {
-        ObservableItemProcessorItemEventHandler<T>? handler = this.OnItemAdded;
+    private void ItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
+        Action<ItemAddOrRemoveEventArgs<T>>? handler = this.OnItemAdded;
         if (handler == null)
             return;
 
-        int i = index - 1;
-        foreach (T item in items)
-            handler(this, ++i, item);
+        int i = e.Index - 1;
+        foreach (T item in e.Items)
+            handler(new ItemAddOrRemoveEventArgs<T>(++i, item));
     }
 
-    private void ItemsRemoved(IObservableList<T> observableList, int index, IList<T> items) {
-        ObservableItemProcessorItemEventHandler<T>? handler = this.OnItemRemoved;
-        if (handler == null)
-            return;
-
-        if (this.useOptimisedRemovalProcessing) {
-            // Remove back to front, as it's usually the most performant for array-based
-            // list implementations that may be modified by the handler,
-            // since they will do overall less copying
-            for (int j = items.Count, i = index + j - 1; i >= index; i--) {
-                // i = index of last item in unaware listeners' list, points to junk in real list
-                // j = index in items parameter list
-                handler(this, i, items[--j]);
+    private void ItemsRemoved(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
+        Action<ItemAddOrRemoveEventArgs<T>>? handler = this.OnItemRemoved;
+        if (handler != null) {
+            if (this.useOptimisedRemovalProcessing) {
+                // Remove back to front, as it's usually the most performant for array-based
+                // list implementations that may be modified by the handler,
+                // since they will do overall less copying
+                for (int j = e.Items.Count, i = e.Index + j - 1; i >= e.Index; i--) {
+                    // i = index of last item in unaware listeners' list, points to junk in real list
+                    // j = index in items parameter list
+                    handler(new ItemAddOrRemoveEventArgs<T>(i, e.Items[--j]));
+                }
+            }
+            else {
+                foreach (T item in e.Items)
+                    handler(new ItemAddOrRemoveEventArgs<T>(e.Index, item));
             }
         }
-        else {
-            foreach (T item in items)
-                handler(this, index, item);
-        }
     }
 
-    private void ItemReplaced(IObservableList<T> observableList, int index, T oldItem, T newItem) {
-        this.OnItemRemoved?.Invoke(this, index, oldItem);
-        this.OnItemAdded?.Invoke(this, index, newItem);
+    private void ItemReplaced(object? sender, ItemReplaceEventArgs<T> e) {
+        this.OnItemRemoved?.Invoke(new ItemAddOrRemoveEventArgs<T>(e.Index, e.OldItem));
+        this.OnItemAdded?.Invoke(new ItemAddOrRemoveEventArgs<T>(e.Index, e.NewItem));
     }
 
-    private void ItemMoved(IObservableList<T> observableList, int oldIndex, int newIndex, T item) {
-        this.OnItemMoved?.Invoke(this, oldIndex, newIndex, item);
+    private void ItemMoved(object? sender, ItemMoveEventArgs<T> e) {
+        this.OnItemMoved?.Invoke(new ItemMoveEventArgs<T>(e.OldIndex, e.NewIndex, e.Item));
     }
 
     public void Dispose() {
@@ -172,11 +167,11 @@ public sealed class ObservableItemProcessorIndexing<T> : IDisposable {
     /// Invokes our item add handler(s) on all items for the list
     /// </summary>
     public ObservableItemProcessorIndexing<T> AddExistingItems() {
-        ObservableItemProcessorItemEventHandler<T>? handler = this.OnItemAdded;
+        Action<ItemAddOrRemoveEventArgs<T>>? handler = this.OnItemAdded;
         if (handler != null) {
             int i = -1;
             foreach (T item in this.list)
-                handler(this, ++i, item);
+                handler(new ItemAddOrRemoveEventArgs<T>(++i, item));
         }
 
         return this;
@@ -186,16 +181,16 @@ public sealed class ObservableItemProcessorIndexing<T> : IDisposable {
     /// Invokes our item remove handler(s) on all items for the list
     /// </summary>
     public ObservableItemProcessorIndexing<T> RemoveExistingItems(bool backToFront = true) {
-        ObservableItemProcessorItemEventHandler<T>? handler = this.OnItemRemoved;
+        Action<ItemAddOrRemoveEventArgs<T>>? handler = this.OnItemRemoved;
         if (handler != null) {
             if (backToFront) {
                 for (int i = this.list.Count - 1; i >= 0; i--) {
-                    handler(this, i, this.list[i]);
+                    handler(new ItemAddOrRemoveEventArgs<T>(i, this.list[i]));
                 }
             }
             else {
                 for (int i = 0; i < this.list.Count; i++) {
-                    handler(this, i, this.list[i]);
+                    handler(new ItemAddOrRemoveEventArgs<T>(i, this.list[i]));
                 }
             }
         }

@@ -38,6 +38,7 @@
 
 using Avalonia.Controls;
 using PFXToolKitUI.Utils.Collections.Observable;
+using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.SelectingEx;
 
@@ -111,17 +112,17 @@ public class DataGridSelectionHandler<T> where T : class {
         this.IsUpdatingModel = false;
     }
 
-    private void OnSourceItemsAdded(IObservableList<T> list, int index, IList<T> items) {
+    private void OnSourceItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         if (this.IsUpdatingModel || this.IsUpdatingControl)
             throw new InvalidOperationException("Reentrancy");
 
         this.IsUpdatingControl = true;
 
         if (this.DataGrid.SelectionMode == DataGridSelectionMode.Single) {
-            this.DataGrid.SelectedItem = items[items.Count - 1];
+            this.DataGrid.SelectedItem = e.Items[e.Items.Count - 1];
         }
         else {
-            foreach (T item in items) {
+            foreach (T item in e.Items) {
                 if (this.selectedItems.Contains(item)) {
                     this.DataGrid.SelectedItems.Add(item);
                 }
@@ -131,28 +132,28 @@ public class DataGridSelectionHandler<T> where T : class {
         this.IsUpdatingControl = false;
     }
 
-    private void OnSourceItemReplaced(IObservableList<T> list, int index, T olditem, T newitem) {
+    private void OnSourceItemReplaced(object? sender, ItemReplaceEventArgs<T> e) {
         if (this.IsUpdatingModel || this.IsUpdatingControl)
             throw new InvalidOperationException("Reentrancy");
 
         this.IsUpdatingControl = true;
 
-        if (this.selectedItems.Contains(newitem)) {
+        if (this.selectedItems.Contains(e.NewItem)) {
             if (this.DataGrid.SelectionMode == DataGridSelectionMode.Single) {
-                this.DataGrid.SelectedItem = newitem;
+                this.DataGrid.SelectedItem = e.NewItem;
             }
             else {
-                this.DataGrid.SelectedItems.Add(newitem);
+                this.DataGrid.SelectedItems.Add(e.NewItem);
             }
         }
 
         this.IsUpdatingControl = false;
     }
 
-    private void OnSelectedItemsAdded(IObservableList<T> list, int index, IList<T> items) {
+    private void OnSelectedItemsAdded(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         if (!this.IsUpdatingModel && this.sourceItems.Count > 0 /* check if we were created before items initialized. Not an issue, just worse perf */) {
             this.IsUpdatingControl = true;
-            this.InternalSelectControls(items);
+            this.InternalSelectControls(e.Items);
             this.IsUpdatingControl = false;
         }
     }
@@ -170,11 +171,11 @@ public class DataGridSelectionHandler<T> where T : class {
         }
     }
 
-    private void OnSelectedItemsRemoved(IObservableList<T> list, int index, IList<T> items) {
+    private void OnSelectedItemsRemoved(object? sender, ItemsAddOrRemoveEventArgs<T> e) {
         if (!this.IsUpdatingModel) {
             this.IsUpdatingControl = true;
 
-            if (list.Count == 0) {
+            if (this.selectedItems.Count == 0) {
                 if (this.DataGrid.SelectionMode == DataGridSelectionMode.Single) {
                     this.DataGrid.SelectedItem = null;
                 }
@@ -184,10 +185,10 @@ public class DataGridSelectionHandler<T> where T : class {
             }
             else if (this.sourceItems.Count > 0) {
                 if (this.DataGrid.SelectionMode == DataGridSelectionMode.Single) {
-                    this.DataGrid.SelectedItem = items.FirstOrDefault();
+                    this.DataGrid.SelectedItem = e.Items.FirstOrDefault();
                 }
                 else {
-                    foreach (T item in items) {
+                    foreach (T item in e.Items) {
                         if (this.sourceItems.IndexOf(item) != -1) {
                             this.DataGrid.SelectedItems.Add(item);
                         }
@@ -201,19 +202,19 @@ public class DataGridSelectionHandler<T> where T : class {
         }
     }
 
-    private void OnSelectedItemReplaced(IObservableList<T> list, int index, T oldItem, T newItem) {
+    private void OnSelectedItemReplaced(object? sender, ItemReplaceEventArgs<T> e) {
         if (!this.IsUpdatingModel) {
             this.IsUpdatingControl = true;
 
             if (this.DataGrid.SelectionMode == DataGridSelectionMode.Single) {
-                this.DataGrid.SelectedItem = newItem;
+                this.DataGrid.SelectedItem = e.NewItem;
             }
             else {
-                if (this.sourceItems.IndexOf(oldItem) != -1)
-                    this.DataGrid.SelectedItems.Remove(oldItem);
+                if (this.sourceItems.IndexOf(e.OldItem) != -1)
+                    this.DataGrid.SelectedItems.Remove(e.OldItem);
 
-                if (this.sourceItems.IndexOf(newItem) != -1)
-                    this.DataGrid.SelectedItems.Add(newItem);
+                if (this.sourceItems.IndexOf(e.NewItem) != -1)
+                    this.DataGrid.SelectedItems.Add(e.NewItem);
             }
 
             this.IsUpdatingControl = false;
