@@ -48,25 +48,23 @@ public class SimpleButtonCommandUsage : CommandUsage {
     protected override ContextRegistry? GetContextRegistryForCommand() => this.button?.ContextRegistry;
 
     protected virtual void OnButtonClicked() {
-        if (!CommandManager.Instance.TryFindCommandById(this.CommandId, out Command? command)) {
-            return;
+        if (CommandManager.Instance.TryFindCommandById(this.CommandId, out Command? command)) {
+            this.ExecuteCommandImpl(command);
         }
-
-        ExecuteCommand();
-        return;
-
-        async void ExecuteCommand() {
-            try {
-                Task task = CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
-                this.UpdateCanExecute();
-                await task;
-            }
-            catch (Exception exception) when (!Debugger.IsAttached) {
-                await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
-            }
-            finally {
-                this.UpdateCanExecute();
-            }
+    }
+    
+    private async void ExecuteCommandImpl(Command command) {
+        try {
+            Task task = CommandManager.Instance.Execute(command, DataManager.GetFullContextData(this.Control!), null, null);
+            this.UpdateCanExecute();
+            await task;
+        }
+        catch (Exception exception) when (!Debugger.IsAttached) {
+            Debugger.Break();
+            await IMessageDialogService.Instance.ShowExceptionMessage("Command Error", exception);
+        }
+        finally {
+            this.UpdateCanExecute();
         }
     }
 

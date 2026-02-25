@@ -57,8 +57,10 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
         this.overlayWindowHost = new OverlayWindowHostImpl(overlayContentHost);
     }
 
-    internal sealed class AppOverlayWindowStorage {
-        public readonly List<OverlayWindowManagerImpl> visibleManagers = new List<OverlayWindowManagerImpl>();
+    public sealed class AppOverlayWindowStorage {
+        internal readonly List<OverlayWindowManagerImpl> visibleManagers = new List<OverlayWindowManagerImpl>();
+
+        public IEnumerable<OverlayWindowManagerImpl> VisibleManagers => this.visibleManagers;
 
         public static AppOverlayWindowStorage GetInstance() => ApplicationPFX.Instance.ComponentStorage.GetOrCreateComponent(m => new AppOverlayWindowStorage());
     }
@@ -138,5 +140,14 @@ public sealed class OverlayWindowManagerImpl : IOverlayWindowManager {
 
     public void RemovePopupFromVisualTree(OverlayWindowImpl overlayWindow) {
         this.overlayWindowHost.RemovePopupFromVisualTree(overlayWindow);
+    }
+
+    public void InternalOnAttachedToVisualTree() {
+        AppOverlayWindowStorage.GetInstance().visibleManagers.Add(this);
+    }
+
+    public void InternalOnDetachedFromVisualTree() {
+        AppOverlayWindowStorage.GetInstance().visibleManagers.Remove(this);
+        _ = this.CloseAllOverlays(WindowCloseReason.Undefined, isForced: true);
     }
 }

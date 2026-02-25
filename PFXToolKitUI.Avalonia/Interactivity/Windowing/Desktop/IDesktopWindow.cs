@@ -46,7 +46,7 @@ public interface IDesktopWindow : IWindowBase {
 
     /// <summary>
     /// Enumerates the child windows of this window. Windows are added to this before
-    /// <see cref="Opening"/> is fired, and removed before <see cref="Closed"/> is fired 
+    /// <see cref="Opening"/> is raised, and removed before <see cref="Closed"/> is raised 
     /// </summary>
     IEnumerable<IDesktopWindow> OwnedWindows { get; }
 
@@ -122,48 +122,31 @@ public interface IDesktopWindow : IWindowBase {
     PixelPoint Position { get; set; }
 
     /// <summary>
-    /// An event fired when the window is in the process of opening but has not been shown on screen yet.
+    /// An event raised when the window is in the process of opening but has not been shown on screen yet.
     /// </summary>
     event EventHandler? Opening;
 
     /// <summary>
-    /// An event fired when the window is fully opening.
+    /// An event raised when the window is fully open and visible on screen.
     /// </summary>
     event EventHandler? Opened;
 
     /// <summary>
-    /// An event fired when the window is requested to close.
-    /// <para>
-    /// This and <see cref="TryCloseAsync"/> are the only times that cancelling window closure is possible
-    /// </para>
-    /// </summary>
-    event EventHandler<WindowCancelCloseEventArgs>? TryClose;
-
-    /// <summary>
-    /// An asynchronous event fired when the window is requested to close. The handlers are invoked
-    /// in their own tasks once all handlers of <see cref="TryClose"/> are invoked.
-    /// <para>
-    /// This and <see cref="TryClose"/> are the only times that cancelling window closure is possible
-    /// </para>
+    /// An asynchronous event raised when the window is requested to close.
+    /// Each handler is invoked sequentially on the application main thread.
+    /// The window will start to close once all handlers have completed asynchronously and the event was not cancelled.
     /// </summary>
     event AsyncEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
 
     /// <summary>
-    /// An event fired when the window is actually about to close.
-    /// </summary>
-    event EventHandler<WindowCloseEventArgs>? Closing;
-
-    /// <summary>
-    /// An event fired when the window is actually about to close.
-    /// The handlers are invoked in their own tasks once all handlers
-    /// of <see cref="Closing"/> are invoked.
+    /// An asynchronous event raised when the window is about to close. This event cannot be cancelled.
     /// </summary>
     event AsyncEventHandler<WindowCloseEventArgs>? ClosingAsync;
 
     /// <summary>
-    /// An event fired when the window is fully closed.
+    /// An event raised when the window is fully closed. This event cannot be cancelled.
     /// <para>
-    /// This is fired before the task returned by <see cref="RequestCloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
+    /// This is raised before the task returned by <see cref="RequestCloseAsync"/> or <see cref="WaitForClosedAsync"/> becomes completed
     /// </para>
     /// </summary>
     event EventHandler<WindowCloseEventArgs>? Closed;

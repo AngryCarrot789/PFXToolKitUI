@@ -58,36 +58,17 @@ public interface IOverlayWindow : IWindowBase, IBaseOverlayOrContentHost {
     event EventHandler? Opened;
 
     /// <summary>
-    /// An event fired when the overlay window is requested to close. <see cref="IsClosing"/> and <see cref="IsClosed"/>
-    /// will both be false at this time.
-    /// <para>
-    /// This and <see cref="TryCloseAsync"/> are the only times that cancelling overlay window closure is possible.
-    /// </para>
-    /// <para>
-    /// Note, this event is not fired if the overlay is being force closed. You must handle <see cref="Closing"/>
-    /// or <see cref="ClosingAsync"/> to account for this possibility (see <see cref="OverlayWindowCloseEventArgs.IsForced"/>)
-    /// </para>
-    /// </summary>
-    event EventHandler<OverlayWindowCancelCloseEventArgs>? TryClose;
-
-    /// <summary>
     /// An asynchronous event fired when the overlay window is requested to close. The handlers are invoked
     /// in their own tasks once all handlers of <see cref="TryClose"/> are invoked.
     /// <para>
     /// This and <see cref="TryClose"/> are the only times that cancelling overlay window closure is possible
     /// </para>
     /// <para>
-    /// Note, this event is not fired if the overlay is being force closed. You must handle <see cref="Closing"/>
-    /// or <see cref="ClosingAsync"/> to account for this possibility (see <see cref="OverlayWindowCloseEventArgs.IsForced"/>)
+    /// Note, this event is not fired if the overlay is being force closed. You must handle <see cref="ClosingAsync"/>
+    /// to account for this possibility (see <see cref="OverlayWindowCloseEventArgs.IsForced"/>)
     /// </para>
     /// </summary>
     event AsyncEventHandler<OverlayWindowCancelCloseEventArgs>? TryCloseAsync;
-
-    /// <summary>
-    /// An event fired when the overlay window is actually about to close. This is fired after <see cref="IsClosing"/> is set as true,
-    /// but before <see cref="IsClosed"/> is set as true.
-    /// </summary>
-    event EventHandler<OverlayWindowCloseEventArgs>? Closing;
 
     /// <summary>
     /// An event fired when the overlay window is actually about to close. The handlers are invoked in their own tasks once all handlers
@@ -133,7 +114,9 @@ public class OverlayWindowCloseEventArgs : OverlayWindowEventArgs {
 
     /// <summary>
     /// Gets whether the close operation is being forced. For example, the app or OS is shutting down,
-    /// or a window which contains a <see cref="IOverlayWindowHost"/> is being removed from the visual tree soon.
+    /// or a window or control which contains a <see cref="IOverlayWindowHost"/> is being removed from the visual tree soon.
+    /// In these case, the overlay may not be visible when <see cref="IOverlayWindow.ClosingAsync"/> is raised (since it
+    /// would require pausing the UI thread until all handlers have been invoked).
     /// <para>
     /// Failing to acknowledge the forced mode could mean a loss of data or the application locking up
     /// (e.g. a <see cref="TaskCompletionSource"/> does not get completed because the logic did not expect

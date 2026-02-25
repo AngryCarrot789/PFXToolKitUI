@@ -21,12 +21,15 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
+using Avalonia.VisualTree;
 using PFXToolKitUI.Avalonia.Utils;
 
 namespace PFXToolKitUI.Avalonia.Interactivity.Windowing.Overlays.Impl;
 
 public class OverlayContentHostRoot : ContentControl {
-    public OverlayWindowManagerImpl Manager { get; private set; } = null!;
+    private OverlayWindowManagerImpl? manager;
+    
+    public OverlayWindowManagerImpl Manager => this.manager!;
 
     private Panel? PART_Panel;
     private readonly List<OverlayControl> preTemplateItems = new List<OverlayControl>();
@@ -46,17 +49,20 @@ public class OverlayContentHostRoot : ContentControl {
     }
 
     internal void SetupForPopupDialogManager(OverlayWindowManagerImpl overlayManager) {
-        this.Manager = overlayManager;
+        this.manager = overlayManager;
+        if (this.IsAttachedToVisualTree()) {
+            this.manager.InternalOnAttachedToVisualTree();
+        }
     }
 
     protected override void OnAttachedToVisualTree(VisualTreeAttachmentEventArgs e) {
         base.OnAttachedToVisualTree(e);
-        OverlayWindowManagerImpl.AppOverlayWindowStorage.GetInstance().visibleManagers.Add(this.Manager);
+        this.manager?.InternalOnAttachedToVisualTree();
     }
 
     protected override void OnDetachedFromVisualTree(VisualTreeAttachmentEventArgs e) {
         base.OnDetachedFromVisualTree(e);
-        OverlayWindowManagerImpl.AppOverlayWindowStorage.GetInstance().visibleManagers.Remove(this.Manager);
+        this.manager?.InternalOnDetachedFromVisualTree();
     }
 
     public void AddPopupToVisualTree(OverlayWindowImpl overlayWindow) {

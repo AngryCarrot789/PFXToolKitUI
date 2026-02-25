@@ -48,11 +48,11 @@ public class DesktopConfigurationDialogServiceImpl : IConfigurationDialogService
         window.Opened += static (s, e) => ((ConfigurationDialogView) ((IDesktopWindow) s!).Content!).Window = (IDesktopWindow) s!;
         window.Closed += static (s, e) => ((ConfigurationDialogView) ((IDesktopWindow) s!).Content!).Window = null;
 
-        window.ClosingAsync += static (s, args) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+        window.ClosingAsync += async (s, args) => {
             ConfigurationDialogView view = (ConfigurationDialogView) ((IDesktopWindow) s!).Content!;
             await view.configManager.RevertLiveChangesInHierarchyAsync(null);
             view.PART_EditorPanel.ConfigurationManager = null;
-        }).Unwrap();
+        };
 
         await window.ShowDialogAsync();
         return;

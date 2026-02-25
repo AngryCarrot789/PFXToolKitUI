@@ -121,9 +121,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
     public event EventHandler? Opening;
     public event EventHandler? Opened;
-    public event EventHandler<WindowCancelCloseEventArgs>? TryClose;
     public event AsyncEventHandler<WindowCancelCloseEventArgs>? TryCloseAsync;
-    public event EventHandler<WindowCloseEventArgs>? Closing;
     public event AsyncEventHandler<WindowCloseEventArgs>? ClosingAsync;
     public event EventHandler<WindowCloseEventArgs>? Closed;
     public event EventHandler<ValueChangedEventArgs<WindowIcon?>>? IconChanged;
@@ -259,7 +257,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
             throw new InvalidOperationException("Window is not in its normal open state");
 
         object? dialogResult = this.myNativeWindow.GetDialogResult();
-        
+
         try {
             this.internalIsProcessingClose = true;
             this.OpenState = OpenState.TryingToClose;
@@ -272,10 +270,9 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
                 cancelCloseArgs.SetCancelled();
             }
             else {
-                this.TryClose?.Invoke(this, cancelCloseArgs);
-
                 try {
-                    this.myManager.myFrameManager.AwaitForCompletion(this.TryCloseAsync.InvokeAsync(this, cancelCloseArgs, ignoreCancelled: true));
+                    Task asyncEventTask = this.TryCloseAsync.InvokeAsync(this, cancelCloseArgs, ignoreCancelled: true, static (h, s, e) => h(s, e));
+                    this.myManager.myFrameManager.AwaitForCompletion(asyncEventTask);
                 }
                 catch (AggregateException e) {
                     List<Exception> errors = e.InnerExceptions.Where(x => !(x is OperationCanceledException)).ToList();
@@ -296,14 +293,14 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
 
             this.OpenState = OpenState.Closing;
             WindowCloseEventArgs closingArgs = new WindowCloseEventArgs(this, reason, isFromCode, dialogResult);
-            this.Closing?.Invoke(this, closingArgs);
 
             try {
-                this.myManager.myFrameManager.AwaitForCompletion(this.ClosingAsync.InvokeAsync(this, closingArgs, ignoreCancelled: true));
+                Task asyncEventTask = this.ClosingAsync.InvokeAsync(this, closingArgs, ignoreCancelled: true, static (h, s, e) => h(s, e));
+                this.myManager.myFrameManager.AwaitForCompletion(asyncEventTask);
             }
             catch (AggregateException e) {
                 Debugger.Break();
-                AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.TryCloseAsync));
+                AppLogger.Instance.WriteLine("Failed to invoke one or more handlers to " + nameof(this.ClosingAsync));
                 foreach (Exception ex in e.InnerExceptions) {
                     AppLogger.Instance.WriteLine(ex.GetToString());
                 }
@@ -314,6 +311,10 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         finally {
             this.internalIsProcessingClose = false;
         }
+    }
+
+    private static Task InvokeHandler(object? sender, WindowCloseEventArgs args, AsyncEventHandler<WindowCloseEventArgs> handler) {
+        return handler(sender, args);
     }
 
     internal void OnNativeWindowClosed(WindowCloseReason reason, bool isFromCode) {
@@ -491,7 +492,7 @@ public sealed class DesktopWindowImpl : IDesktopWindow {
         if (OperatingSystem.IsWindows()) {
             return (feature = (this.win32Features ??= new Win32FeaturesImpl(this)) as T) != null;
         }
-        
+
         feature = null;
         return false;
     }

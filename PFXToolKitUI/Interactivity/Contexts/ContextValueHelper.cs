@@ -23,46 +23,10 @@ using PFXToolKitUI.Utils.Events;
 namespace PFXToolKitUI.Interactivity.Contexts;
 
 public static class ContextValueHelper {
-    public static void OnContextChangedHelper<T>(DataKey<T> dataKey, IContextData? newContext, ref T? field, object sender, EventHandler onValueChanged) {
-        OnContextChangedHelperImpl(dataKey, newContext, ref field, static x => x, sender, onValueChanged, static (_sender, _state, e) => {
-            ((EventHandler) _state!)(_sender, EventArgs.Empty);
-        });
-    }
-
-    public static void OnContextChangedHelper<T>(DataKey<T> dataKey, IContextData? newContext, ref T? field, object sender, EventHandler<ValueChangedEventArgs<T?>> onValueChanged) {
-        OnContextChangedHelperImpl(dataKey, newContext, ref field, static x => x, sender, onValueChanged, static (_sender, _state, e) => {
-            ((EventHandler<ValueChangedEventArgs<T?>>) _state!)(_sender, e);
-        });
-    }
-
-    public static void OnContextChangedHelper<TSender, T>(DataKey<T> dataKey, IContextData? newContext, ref T? field, TSender sender, EventHandler<TSender, ValueChangedEventArgs<T?>> onValueChanged) {
-        OnContextChangedHelperImpl(dataKey, newContext, ref field, static x => x, sender, onValueChanged, static (_sender, _state, e) => {
-            ((EventHandler<TSender, ValueChangedEventArgs<T?>>) _state!)(_sender, e);
-        });
-    }
-    
-    public static void OnContextChangedHelperEx<TKey, TValue>(DataKey<TKey> dataKey, IContextData? newContext, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, object sender, EventHandler onValueChanged) {
-        OnContextChangedHelperImpl(dataKey, newContext, ref field, keyValueToDstValue, sender, onValueChanged, static (_sender, _state, e) => {
-            ((EventHandler) _state!)(_sender, EventArgs.Empty);
-        });
-    }
-
-    public static void OnContextChangedHelperEx<TKey, TValue>(DataKey<TKey> dataKey, IContextData? newContext, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, object sender, EventHandler<ValueChangedEventArgs<TValue?>> onValueChanged) {
-        OnContextChangedHelperImpl(dataKey, newContext, ref field, keyValueToDstValue, sender, onValueChanged, static (_sender, _state, e) => {
-            ((EventHandler<ValueChangedEventArgs<TValue?>>) _state!)(_sender, e);
-        });
-    }
-
-    public static void OnContextChangedHelperEx<TSender, TKey, TValue>(DataKey<TKey> dataKey, IContextData? newContext, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, TSender sender, EventHandler<TSender, ValueChangedEventArgs<TValue?>> onValueChanged) {
-        OnContextChangedHelperImpl(dataKey, newContext, ref field, keyValueToDstValue, sender, onValueChanged, static (_sender, _state, e) => {
-            ((EventHandler<TSender, ValueChangedEventArgs<TValue?>>) _state!)(_sender, e);
-        });
-    }
-    
-    public static void OnContextChangedHelperImpl<TSender, TKey, TValue>(DataKey<TKey> dataKey, IContextData? newContext, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, TSender sender, object? state, Action<TSender, object?, ValueChangedEventArgs<TValue?>> onValueChanged) {
-        TValue? newValue;
+    private static void OnContextChangedImpl<TSender, TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, IContextData? newContext, Func<TKey, TValue> keyValueToDstValue, TSender sender, object? state, Action<TSender, object?, ValueChangedEventArgs<TValue?>> onValueChanged) {
         if (newContext != null && dataKey.TryGetContext(newContext, out TKey? newKeyValue)) {
-            if (!EqualityComparer<TValue>.Default.Equals(field, newValue = keyValueToDstValue(newKeyValue))) {
+            TValue newValue = keyValueToDstValue(newKeyValue);
+            if (!EqualityComparer<TValue>.Default.Equals(field, newValue)) {
                 onValueChanged(sender, state, new ValueChangedEventArgs<TValue?>(field, newValue));
                 field = newValue;
             }
@@ -72,36 +36,86 @@ public static class ContextValueHelper {
             field = default;
         }
     }
-
-    public static void OnContextChangedHelper<T>(this BaseMenuEntry @this, DataKey<T> dataKey, ref T? field, EventHandler onValueChanged) {
-        OnContextChangedHelper(dataKey, @this.CapturedContext, ref field, @this, onValueChanged);
+    
+    public static void SetAndRaiseINE<T>(ref T? field, DataKey<T> dataKey, IContextData? newContext, object sender, EventHandler onValueChanged) {
+        OnContextChangedImpl(ref field, dataKey, newContext, static x => x, sender, onValueChanged, static (_sender, _state, e) => {
+            ((EventHandler) _state!)(_sender, EventArgs.Empty);
+        });
     }
 
-    public static void OnContextChangedHelper<T>(this BaseMenuEntry @this, DataKey<T> dataKey, ref T? field, EventHandler<ValueChangedEventArgs<T?>> onValueChanged) {
-        OnContextChangedHelper(dataKey, @this.CapturedContext, ref field, @this, onValueChanged);
+    public static void SetAndRaiseINE<T>(ref T? field, DataKey<T> dataKey, IContextData? newContext, object sender, EventHandler<ValueChangedEventArgs<T?>> onValueChanged) {
+        OnContextChangedImpl(ref field, dataKey, newContext, static x => x, sender, onValueChanged, static (_sender, _state, e) => {
+            ((EventHandler<ValueChangedEventArgs<T?>>) _state!)(_sender, e);
+        });
+    }
+
+    public static void SetAndRaiseINE<TSender, T>(ref T? field, DataKey<T> dataKey, IContextData? newContext, TSender sender, EventHandler<TSender, ValueChangedEventArgs<T?>> onValueChanged) {
+        OnContextChangedImpl(ref field, dataKey, newContext, static x => x, sender, onValueChanged, static (_sender, _state, e) => {
+            ((EventHandler<TSender, ValueChangedEventArgs<T?>>) _state!)(_sender, e);
+        });
     }
     
-    public static void OnContextChangedHelperEx<TKey, TValue>(this BaseMenuEntry @this, DataKey<TKey> dataKey, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, EventHandler onValueChanged) {
-        OnContextChangedHelperEx(dataKey, @this.CapturedContext, ref field, keyValueToDstValue, @this, onValueChanged);
+    public static void SetAndRaiseINEEx<TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, IContextData? newContext, Func<TKey, TValue> keyValueToDstValue, object sender, EventHandler onValueChanged) {
+        OnContextChangedImpl(ref field, dataKey, newContext, keyValueToDstValue, sender, onValueChanged, static (_sender, _state, e) => {
+            ((EventHandler) _state!)(_sender, EventArgs.Empty);
+        });
     }
 
-    public static void OnContextChangedHelperEx<TKey, TValue>(this BaseMenuEntry @this, DataKey<TKey> dataKey, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, EventHandler<ValueChangedEventArgs<TValue?>> onValueChanged) {
-        OnContextChangedHelperEx(dataKey, @this.CapturedContext, ref field, keyValueToDstValue, @this, onValueChanged);
-    }
-    
-    public static void OnContextChangedHelper<TSender, T>(this TSender @this, DataKey<T> dataKey, ref T? field, EventHandler onValueChanged) where TSender : BaseMenuEntry {
-        OnContextChangedHelper(dataKey, @this.CapturedContext, ref field, @this, onValueChanged);
+    public static void SetAndRaiseINEEx<TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, IContextData? newContext, Func<TKey, TValue> keyValueToDstValue, object sender, EventHandler<ValueChangedEventArgs<TValue?>> onValueChanged) {
+        OnContextChangedImpl(ref field, dataKey, newContext, keyValueToDstValue, sender, onValueChanged, static (_sender, _state, e) => {
+            ((EventHandler<ValueChangedEventArgs<TValue?>>) _state!)(_sender, e);
+        });
     }
 
-    public static void OnContextChangedHelper<TSender, T>(this TSender @this, DataKey<T> dataKey, ref T? field, EventHandler<TSender, ValueChangedEventArgs<T?>> onValueChanged) where TSender : BaseMenuEntry {
-        OnContextChangedHelper(dataKey, @this.CapturedContext, ref field, @this, onValueChanged);
-    }
-    
-    public static void OnContextChangedHelperEx<TSender, TKey, TValue>(this TSender @this, DataKey<TKey> dataKey, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, EventHandler onValueChanged) where TSender : BaseMenuEntry {
-        OnContextChangedHelperEx(dataKey, @this.CapturedContext, ref field, keyValueToDstValue, @this, onValueChanged);
+    public static void SetAndRaiseINEEx<TSender, TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, IContextData? newContext, Func<TKey, TValue> keyValueToDstValue, TSender sender, EventHandler<TSender, ValueChangedEventArgs<TValue?>> onValueChanged) {
+        OnContextChangedImpl(ref field, dataKey, newContext, keyValueToDstValue, sender, onValueChanged, static (_sender, _state, e) => {
+            ((EventHandler<TSender, ValueChangedEventArgs<TValue?>>) _state!)(_sender, e);
+        });
     }
 
-    public static void OnContextChangedHelperEx<TSender, TKey, TValue>(this TSender @this, DataKey<TKey> dataKey, ref TValue? field, Func<TKey, TValue> keyValueToDstValue, EventHandler<TSender, ValueChangedEventArgs<TValue?>> onValueChanged) where TSender : BaseMenuEntry {
-        OnContextChangedHelperEx(dataKey, @this.CapturedContext, ref field, keyValueToDstValue, @this, onValueChanged);
+    extension(BaseMenuEntry @this) {
+        public void SetAndRaiseINE<T>(ref T? field, DataKey<T> dataKey, EventHandler onValueChanged) {
+            SetAndRaiseINE(ref field, dataKey, @this.CapturedContext, @this, onValueChanged);
+        }
+
+        public void SetAndRaiseINE<T>(ref T? field, DataKey<T> dataKey, EventHandler<ValueChangedEventArgs<T?>> onValueChanged) {
+            SetAndRaiseINE(ref field, dataKey, @this.CapturedContext, @this, onValueChanged);
+        }
+
+        public void SetAndRaiseINEEx<TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, Func<TKey, TValue> keyValueToDstValue, EventHandler onValueChanged) {
+            SetAndRaiseINEEx(ref field, dataKey, @this.CapturedContext, keyValueToDstValue, @this, onValueChanged);
+        }
+
+        public void SetAndRaiseINEEx<TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, Func<TKey, TValue> keyValueToDstValue, EventHandler<ValueChangedEventArgs<TValue?>> onValueChanged) {
+            SetAndRaiseINEEx(ref field, dataKey, @this.CapturedContext, keyValueToDstValue, @this, onValueChanged);
+        }
+    }
+
+    extension<TSender>(TSender @this) where TSender : BaseMenuEntry {
+        public void SetAndRaiseINE<T>(ref T? field, DataKey<T> dataKey, EventHandler<TSender, ValueChangedEventArgs<T?>> onValueChanged) {
+            SetAndRaiseINE(ref field, dataKey, @this.CapturedContext, @this, onValueChanged);
+        }
+
+        public void SetAndRaiseINEEx<TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, Func<TKey, TValue> keyValueToDstValue, EventHandler<TSender, ValueChangedEventArgs<TValue?>> onValueChanged) {
+            SetAndRaiseINEEx(ref field, dataKey, @this.CapturedContext, keyValueToDstValue, @this, onValueChanged);
+        }
+    }
+
+    extension(IContextData? @this) {
+        public void SetAndRaiseINE<TSender, T>(ref T? field, DataKey<T> dataKey, TSender sender, EventHandler onValueChanged) where TSender : class {
+            SetAndRaiseINE(ref field, dataKey, @this, sender, onValueChanged);
+        }
+
+        public void SetAndRaiseINE<TSender, T>(ref T? field, DataKey<T> dataKey, TSender sender, EventHandler<TSender, ValueChangedEventArgs<T?>> onValueChanged) where TSender : class {
+            SetAndRaiseINE(ref field, dataKey, @this, sender, onValueChanged);
+        }
+
+        public void SetAndRaiseINEEx<TSender, TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, Func<TKey, TValue> keyValueToDstValue, TSender sender, EventHandler onValueChanged) where TSender : class {
+            SetAndRaiseINEEx(ref field, dataKey, @this, keyValueToDstValue, sender, onValueChanged);
+        }
+
+        public void SetAndRaiseINEEx<TSender, TKey, TValue>(ref TValue? field, DataKey<TKey> dataKey, Func<TKey, TValue> keyValueToDstValue, TSender sender, EventHandler<TSender, ValueChangedEventArgs<TValue?>> onValueChanged) where TSender : class {
+            SetAndRaiseINEEx(ref field, dataKey, @this, keyValueToDstValue, sender, onValueChanged);
+        }
     }
 }

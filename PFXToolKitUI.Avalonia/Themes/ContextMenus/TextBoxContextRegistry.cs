@@ -60,7 +60,7 @@ public class TextBoxMenuEntry : CustomMenuEntry {
 
     protected override void OnCapturedContextChanged(IContextData? oldContext, IContextData? newContext) {
         base.OnCapturedContextChanged(oldContext, newContext);
-        this.OnContextChangedHelper(TextBoxContextRegistry.TextBoxDataKey, ref this.currentTextBox, static (@this, e) => {
+        this.SetAndRaiseINE(ref this.currentTextBox, TextBoxContextRegistry.TextBoxDataKey, static (@this, e) => {
             if (@this.canExecuteProperty != null) {
                 if (e.OldValue != null)
                     e.OldValue.PropertyChanged -= @this.OnTextBoxPropertyChanged;

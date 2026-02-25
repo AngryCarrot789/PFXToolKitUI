@@ -349,13 +349,13 @@ public partial class UserInputDialogView : UserControl {
         window.Opened += (s, e) => view.OnWindowOpened(window);
         window.Closed += (s, e) => view.OnWindowClosed(window);
 
-        window.TryCloseAsync += (s, e) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+        window.TryCloseAsync += async (s, e) => {
             if (e.DialogResult == BoolBox.True && info.TryConfirmAsync != null) {
                 if (!await RunTryConfirmAsync(info, view)) {
                     e.SetCancelled();
                 }
             }
-        }).Unwrap();
+        };
 
         bool? result = await window.ShowDialogAsync() as bool?;
         view.UserInputInfo = null; // unhook models' event handlers
@@ -391,13 +391,13 @@ public partial class UserInputDialogView : UserControl {
         overlayWindow.Opened += (s, e) => view.OnWindowOpened(overlayWindow);
         overlayWindow.Closed += (s, e) => view.OnWindowClosed(overlayWindow);
 
-        overlayWindow.TryCloseAsync += (s, e) => ApplicationPFX.Instance.Dispatcher.InvokeAsync(async () => {
+        overlayWindow.TryCloseAsync += async (s, e) => {
             if (e.DialogResult == BoolBox.True && info.TryConfirmAsync != null) {
                 if (!await RunTryConfirmAsync(info, view)) {
                     e.SetCancelled();
                 }
             }
-        }).Unwrap();
+        };
 
         bool? result = await overlayWindow.ShowDialogAsync() as bool?;
         view.UserInputInfo = null; // unhook models' event handlers

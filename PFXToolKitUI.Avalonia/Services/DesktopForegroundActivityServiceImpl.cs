@@ -116,11 +116,11 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             IsToolWindow = true
         });
         
-        window.TryClose += (sender, args) => {
+        window.TryCloseAsync += (sender, args) => {
             bool forceClose = options.DialogCancellation.IsCancellationRequested;
             bool isMinimizingToBackground = IsClosingToHideToBackground.GetContext(window.LocalContextData);
             if (options.Activity.IsCompleted || forceClose || isMinimizingToBackground) {
-                return;
+                return Task.CompletedTask;
             }
 
             if (options.CancelActivityOnCloseRequest) {
@@ -130,6 +130,8 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             if (options.WaitForActivityOnCloseRequest) {
                 args.SetCancelled();
             }
+
+            return Task.CompletedTask;
         };
 
         window.Opened += static (s, args) => {
@@ -243,28 +245,29 @@ public sealed class DesktopForegroundActivityServiceImpl : AbstractForegroundAct
             IsToolWindow = true
         });
 
-        window.TryClose += (sender, args) => {
+        window.TryCloseAsync += (sender, args) => {
             if (allTasksCompletedTask.IsCompleted || dialogCancellation.IsCancellationRequested) {
-                return; // closed due to tasks completing or dialog cancellation
+                return Task.CompletedTask;
             }
 
             // user may have clicked the close button. try cancel all sub activities still running
             foreach (Control control in panel.Children) {
                 SubActivity? subActivity = ((SubActivityProgressRowControl) control).SubActivity;
-                CancellationTokenSource? cancellation = subActivity?.Cancellation;
-                cancellation?.Cancel();
+                subActivity?.Cancellation?.Cancel();
             }
 
             args.SetCancelled();
+            return Task.CompletedTask;
         };
 
         // clean up sub activity controls in case dialogCancellation becomes cancelled
-        window.Closing += static (s, args) => {
+        window.ClosingAsync += static (s, args) => {
             StackPanel panel = (StackPanel) ((IDesktopWindow) s!).Content!;
             foreach (Control control in panel.Children)
                 ((SubActivityProgressRowControl) control).SubActivity = null;
 
             panel.Children.Clear();
+            return Task.CompletedTask;
         };
 
         // Use WeakReference just in case the task continuation doesn't get removed

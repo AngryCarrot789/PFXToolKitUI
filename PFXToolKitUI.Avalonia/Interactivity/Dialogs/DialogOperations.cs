@@ -94,12 +94,14 @@ public static class DialogOperations {
 
     private sealed class DesktopDialogOperation<T> : BaseDialogOperation<T>, IDesktopDialogOperation<T> {
         public DesktopDialogOperation(IDesktopWindow window) : base(window) {
-            window.Closing += this.WindowOnClosing;
+            window.ClosingAsync += this.WindowOnClosing;
         }
 
-        private void WindowOnClosing(object? o, WindowCloseEventArgs e) {
+        private Task WindowOnClosing(object? o, WindowCloseEventArgs e) {
             if (!this.IsCompleted)
                 this.SetCancelled();
+
+            return Task.CompletedTask;
         }
 
         public void Activate() {
@@ -109,12 +111,14 @@ public static class DialogOperations {
 
     private sealed class OverlayDialogOperation<T> : BaseDialogOperation<T> {
         public OverlayDialogOperation(IOverlayWindow window) : base(window) {
-            window.Closing += this.WindowOnClosing;
+            window.ClosingAsync += this.WindowOnClosing;
         }
 
-        private void WindowOnClosing(object? o, OverlayWindowCloseEventArgs e) {
+        private Task WindowOnClosing(object? o, OverlayWindowCloseEventArgs e) {
             if (!this.IsCompleted)
                 this.SetCancelled();
+
+            return Task.CompletedTask;
         }
     }
 }

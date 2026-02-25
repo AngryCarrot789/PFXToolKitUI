@@ -69,9 +69,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
 
     public event EventHandler? Opening;
     public event EventHandler? Opened;
-    public event EventHandler<OverlayWindowCancelCloseEventArgs>? TryClose;
     public event AsyncEventHandler<OverlayWindowCancelCloseEventArgs>? TryCloseAsync;
-    public event EventHandler<OverlayWindowCloseEventArgs>? Closing;
     public event AsyncEventHandler<OverlayWindowCloseEventArgs>? ClosingAsync;
     public event EventHandler<OverlayWindowCloseEventArgs>? Closed;
     public event EventHandler<ValueChangedEventArgs<IColourBrush?>>? BorderBrushChanged;
@@ -267,16 +265,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
             OverlayWindowCancelCloseEventArgs beforeClosingArgs = new OverlayWindowCancelCloseEventArgs(this, reason, isFromCode, dialogResult);
 
             try {
-                this.TryClose?.Invoke(this, beforeClosingArgs);
-            }
-            catch (Exception e) {
-                Debugger.Break();
-                AppLogger.Instance.WriteLine("Failed to invoke a handler to " + nameof(this.Closing));
-                AppLogger.Instance.WriteLine(e.GetToString());
-            }
-
-            try {
-                await this.TryCloseAsync.InvokeAsync(this, beforeClosingArgs);
+                await this.TryCloseAsync.InvokeAsync(this, beforeClosingArgs, ignoreCancelled: true, static (h, s, e) => h(s, e));
             }
             catch (AggregateException e) {
                 Debugger.Break();
@@ -298,16 +287,7 @@ public sealed class OverlayWindowImpl : IOverlayWindow {
         OverlayWindowCloseEventArgs closingArgs = new OverlayWindowCloseEventArgs(this, reason, isFromCode, forced, dialogResult);
 
         try {
-            this.Closing?.Invoke(this, closingArgs);
-        }
-        catch (Exception e) {
-            Debugger.Break();
-            AppLogger.Instance.WriteLine("Failed to invoke a handler to " + nameof(this.Closing));
-            AppLogger.Instance.WriteLine(e.GetToString());
-        }
-
-        try {
-            await this.ClosingAsync.InvokeAsync(this, closingArgs);
+            await this.ClosingAsync.InvokeAsync(this, closingArgs, ignoreCancelled: true, static (h, s, e) => h(s, e));
         }
         catch (AggregateException e) {
             Debugger.Break();
