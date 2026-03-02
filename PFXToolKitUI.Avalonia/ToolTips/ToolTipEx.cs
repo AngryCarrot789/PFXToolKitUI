@@ -50,11 +50,17 @@ public static class ToolTipEx {
     }
 
     public static void SetTipType(Control obj, Type? value) => obj.SetValue(TipTypeProperty, value);
+    
+    public static void SetTipType<T>(Control obj) where T : Control, IToolTipControl => obj.SetValue(TipTypeProperty, typeof(T));
+    
     public static Type? GetTipType(Control obj) => obj.GetValue(TipTypeProperty);
+    
     public static void SetTip(Control obj, object? value) => obj.SetValue(TipProperty, value);
+    
     public static object? GetTip(Control obj) => obj.GetValue(TipProperty);
 
     public static void SetMoveWithCursor(Control obj, bool value) => obj.SetValue(MoveWithCursorProperty, value);
+    
     public static bool GetMoveWithCursor(Control obj) => obj.GetValue(MoveWithCursorProperty);
 
     private static void OnPreviewPointerMoved(TopLevel topLevel, PointerEventArgs e) {

@@ -72,7 +72,7 @@ public class AdvancedMenuItem : MenuItem, IAdvancedMenuOrItem {
         this.Classes.CollectionChanged += this.ClassesOnCollectionChanged;
         this.previousEffectivelyEnabled = this.IsEffectivelyEnabled;
         
-        ToolTipEx.SetTipType(this, typeof(ToolTips.ContextMenuToolTip));
+        ToolTipEx.SetTipType<ToolTips.ContextMenuToolTip>(this);
         ToolTip.SetShowOnDisabled(this, true);
     }
 

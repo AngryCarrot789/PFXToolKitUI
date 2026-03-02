@@ -63,14 +63,26 @@ public class AutoMemoryValueFormatter : BaseSimpleValueFormatter {
     // value based on which unit is being displayed
 
     public override string ToString(double value, bool isEditing) {
-        double sourceFormatBytes = MemoryValueFormatter.ConversionTable[this.sourceFormat];
+        return ToString(value, isEditing ? this.EditingRoundedPlacesFormat : this.NonEditingRoundedPlacesFormat, this.sourceFormat, this.AllowedFormats);
+    }
+
+    public static string ToString(double value, int roundedPlaces, MemoryFormatType sourceFormat, IReadOnlySet<MemoryFormatType>? allowedFormats) {
+        return ToString(value, $"F{roundedPlaces}", sourceFormat, allowedFormats);
+    }
+    
+    public static string ToString(double value, string toStringFormat, MemoryFormatType sourceFormat, IReadOnlySet<MemoryFormatType>? allowedFormats) {
+        double outputValue = GetConvertedValue(value, sourceFormat, allowedFormats, out MemoryFormatType optimalFormat);
+        string formatted = outputValue.ToString(toStringFormat);
+        return $"{formatted} {MemoryValueFormatter.GetFormatLabel(optimalFormat, DoubleUtils.AreClose(outputValue, 1.0))}";
+    }
+    
+    public static double GetConvertedValue(double value, MemoryFormatType sourceFormat, IReadOnlySet<MemoryFormatType>? allowedFormats, out MemoryFormatType optimalFormat) {
+        double sourceFormatBytes = MemoryValueFormatter.ConversionTable[sourceFormat];
         double valueInBytes = value * sourceFormatBytes;
-        MemoryFormatType optimalFormat = GetOptimalFormat(valueInBytes, this.AllowedFormats);
+        optimalFormat = GetOptimalFormat(valueInBytes, allowedFormats);
 
         double optimalFormatBytes = MemoryValueFormatter.ConversionTable[optimalFormat];
-        double outputValue = valueInBytes / optimalFormatBytes;
-        string formatted = outputValue.ToString(isEditing ? this.EditingRoundedPlacesFormat : this.NonEditingRoundedPlacesFormat);
-        return $"{formatted} {MemoryValueFormatter.GetFormatLabel(optimalFormat, DoubleUtils.AreClose(outputValue, 1.0))}";
+        return valueInBytes / optimalFormatBytes;
     }
 
     public override bool TryConvertToDouble(string format, out double value) {
@@ -87,7 +99,7 @@ public class AutoMemoryValueFormatter : BaseSimpleValueFormatter {
         }
 
         if (!double.TryParse(valueText, out double theOriginalOutput)) {
-            value = default;
+            value = 0;
             return false;
         }
 

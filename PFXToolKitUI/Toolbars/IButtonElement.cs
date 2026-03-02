@@ -58,7 +58,7 @@ public interface IButtonElement {
     string? Text { get; set; }
 
     /// <summary>
-    /// Gets or sets the button's icon. Seting this may do nothing as some buttons might not support icons, only text.
+    /// Gets or sets the button's icon. Setting this may do nothing as some buttons might not support icons, only text.
     /// </summary>
     Icon? Icon { get; set; }
 

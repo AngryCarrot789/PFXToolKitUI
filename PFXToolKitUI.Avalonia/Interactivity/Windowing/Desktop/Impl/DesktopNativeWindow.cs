@@ -21,6 +21,7 @@ using System.Diagnostics;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
+using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
@@ -142,9 +143,17 @@ public sealed class DesktopNativeWindow : Window {
         this.PART_TitleBarTextBlock = e.NameScope.GetTemplateChild<TextBlock>("PART_TitleBarTextBlock");
         this.PART_IconControl = e.NameScope.GetTemplateChild<IconControl>("PART_IconControl");
         this.PART_IconControl.Icon = this.TitleBarIcon;
+        this.PART_TitleBarPanel.PointerPressed += this.PART_TitleBarPanelOnPointerPressed;
+        
         this.UpdateTitleBarButtonVisibility();
         this.OnIconStateChanged(null, null);
         this.UpdateTitleBarAndWindowChrome();
+    }
+
+    private void PART_TitleBarPanelOnPointerPressed(object? sender, PointerPressedEventArgs e) {
+        if (!OperatingSystem.IsWindows()) {
+            this.BeginMoveDrag(e);
+        }
     }
 
     protected override void OnLoaded(RoutedEventArgs e) {
@@ -226,7 +235,17 @@ public sealed class DesktopNativeWindow : Window {
             this.isFullyOpened = true;
             this.doNotModifySizeToContent = false;
             this.SizeToContent = this.Window.SizingInfo.SizeToContent;
-            this.UpdatePlacement();
+            if (OperatingSystem.IsWindows()) {
+                this.UpdatePlacement();
+            }
+            else {
+                Size size = this.ClientSize;
+                ApplicationPFX.Instance.Dispatcher.Post(void () => {
+                    this.ClientSize = size;
+                    this.UpdateLayout();
+                    this.UpdatePlacement();
+                }, DispatchPriority.Input);
+            }
         }, DispatchPriority.Loaded);
     }
 
@@ -287,6 +306,11 @@ public sealed class DesktopNativeWindow : Window {
             this.PART_ButtonMaximize!.Width = ButtonWidth_ToolWindow;
             this.PART_ButtonClose!.Width = ButtonWidth_ToolWindow;
         }
+
+        if (!OperatingSystem.IsWindows()) {
+            this.PART_TitleBarPanel.Background = Brushes.Transparent;
+            ((Border) this.PART_TitleBarPanel.Children[0]).IsHitTestVisible = true;
+        }
         
         this.UpdateTitleBarButtonVisibility();
     }
@@ -299,15 +323,22 @@ public sealed class DesktopNativeWindow : Window {
             this.SystemDecorations = SystemDecorations.BorderOnly;
         }
         else {
-            this.SystemDecorations = SystemDecorations.Full;
-            this.ExtendClientAreaToDecorationsHint = true;
-            // this.ExtendClientAreaChromeHints = IsUsingLLdxgi
-            //     ? ExtendClientAreaChromeHints.PreferSystemChrome
-            //     : ExtendClientAreaChromeHints.SystemChrome;
-            
-            this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.PreferSystemChrome;
-            
-            this.ExtendClientAreaTitleBarHeightHint = this.IsToolWindow ? TitleBarHeight_ToolWindow : TitleBarHeight_NormalWindow;
+            if (OperatingSystem.IsWindows()) {
+                this.SystemDecorations = SystemDecorations.Full;
+                this.ExtendClientAreaToDecorationsHint = true;
+                // this.ExtendClientAreaChromeHints = IsUsingLLdxgi
+                //     ? ExtendClientAreaChromeHints.PreferSystemChrome
+                //     : ExtendClientAreaChromeHints.SystemChrome;
+
+                this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.PreferSystemChrome;
+                this.ExtendClientAreaTitleBarHeightHint = this.IsToolWindow ? TitleBarHeight_ToolWindow : TitleBarHeight_NormalWindow;
+            }
+            else {
+                this.SystemDecorations = SystemDecorations.BorderOnly;
+                this.ExtendClientAreaToDecorationsHint = false;
+                this.ExtendClientAreaChromeHints = ExtendClientAreaChromeHints.NoChrome;
+                this.ExtendClientAreaTitleBarHeightHint = 0;
+            }
         }
     }
 

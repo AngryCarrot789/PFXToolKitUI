@@ -122,7 +122,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         // rawName should not be <root> because the root object should never be visible technically.
         // But just in case...
         this.headerKeyMapBinder.SwitchModel(this.Entry!);
-        ToolTipEx.SetTipType(this, typeof(ShotcutTreeViewItemToolTip));
+        ToolTipEx.SetTipType<ShotcutTreeViewItemToolTip>(this);
     }
 
     private void OnEntryShortcutChanged(object? o, ValueChangedEventArgs<IShortcut> e) {
