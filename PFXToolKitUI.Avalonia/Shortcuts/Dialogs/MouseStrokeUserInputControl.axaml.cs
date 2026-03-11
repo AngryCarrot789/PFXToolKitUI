@@ -19,12 +19,13 @@
 
 using Avalonia.Controls;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.UserInputs;
+using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
@@ -32,24 +33,30 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 public partial class MouseStrokeUserInputControl : UserControl, IUserInputContent {
     public MouseStrokeUserInputInfo? InputInfo { get; private set; }
 
-    private readonly IBinder<MouseStrokeUserInputInfo> mouseStrokeBinder = new AvaloniaPropertyToDataParameterAutoBinder<MouseStrokeUserInputInfo>(TextBox.TextProperty, MouseStrokeUserInputInfo.MouseStrokeParameter, (p) => {
-        MouseStroke s = (MouseStroke?) p ?? default;
-        return MouseStrokeStringConverter.ToStringFunction(s.MouseButton, s.Modifiers, s.ClickCount);
-    });
+    private readonly IBinder<MouseStrokeUserInputInfo> mouseStrokeBinder =
+        new AvaloniaPropertyToDataParameterAutoBinder<MouseStrokeUserInputInfo>(
+            TextBox.TextProperty,
+            MouseStrokeUserInputInfo.MouseStrokeParameter,
+            toProperty: p => KeymapUtils.GetStringForMouseStroke((MouseStroke?) p ?? default));
 
     public MouseStrokeUserInputControl() {
         this.InitializeComponent();
         this.mouseStrokeBinder.AttachControl(this.InputBox);
+
+        this.PART_Border.AddHandler(PointerPressedEvent, this.InputElement_OnPointerPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
+        this.PART_Border.AddHandler(PointerWheelChangedEvent, this.InputElement_OnPointerWheelChanged, RoutingStrategies.Tunnel, handledEventsToo: true);
     }
 
     private void InputElement_OnPointerPressed(object? sender, PointerPressedEventArgs e) {
         MouseStroke stroke = ShortcutUtils.GetMouseStrokeForEvent(e);
         this.InputInfo!.MouseStroke = stroke;
+        e.Handled = true;
     }
 
     private void InputElement_OnPointerWheelChanged(object? sender, PointerWheelEventArgs e) {
         if (ShortcutUtils.GetMouseStrokeForEvent(e, out MouseStroke stroke)) {
             this.InputInfo!.MouseStroke = stroke;
+            e.Handled = true;
         }
     }
 

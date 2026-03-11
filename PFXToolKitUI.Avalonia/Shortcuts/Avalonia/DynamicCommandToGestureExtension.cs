@@ -18,7 +18,7 @@
 // 
 
 using System.Runtime.CompilerServices;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
+using PFXToolKitUI.Shortcuts;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
@@ -39,7 +39,7 @@ public class DynamicCommandToGestureExtension {
         if (cmdId == null)
             throw new ArgumentException("DynamicShortcutsExtension.ResourceKey must be set.");
 
-        if (CommandIdToGestureConverter.CommandIdToGesture(cmdId.ToString() ?? "", out string? gesture))
+        if (KeymapUtils.TryGetStringForCommandId(cmdId.ToString() ?? "", out string? gesture))
             return gesture;
 
         return "";

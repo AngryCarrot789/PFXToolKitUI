@@ -20,6 +20,7 @@
 using System.Globalization;
 using Avalonia.Data.Converters;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 
@@ -29,12 +30,12 @@ public class ShortcutPathToInputGestureTextConverter : IValueConverter {
     public string? ShortcutFormat { get; set; } = null;
 
     public static string ShortcutToInputGestureText(string path, string? shortcutFormat = null, string? noSuchShortcutFormat = null) {
-        ShortcutEntry? shortcutEntry = ShortcutManager.Instance.FindShortcutByPath(path);
+        KeyMapEntry? shortcutEntry = KeyMapManager.Instance.FindShortcutByPath(path);
         if (shortcutEntry == null) {
             return noSuchShortcutFormat == null ? path : string.Format(noSuchShortcutFormat, path);
         }
 
-        string representation = shortcutEntry.Shortcut.ToString() ?? "";
+        string representation = KeymapUtils.GetStringForShortcut(shortcutEntry);
         return shortcutFormat == null ? representation : string.Format(shortcutFormat, representation);
     }
 

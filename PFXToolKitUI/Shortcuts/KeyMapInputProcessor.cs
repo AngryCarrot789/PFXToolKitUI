@@ -19,6 +19,7 @@
 
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Shortcuts.Usage;
 
 namespace PFXToolKitUI.Shortcuts;
@@ -30,34 +31,34 @@ namespace PFXToolKitUI.Shortcuts;
 /// This input manager processes its own input strokes and active usages
 /// </para>
 /// </summary>
-public abstract class ShortcutInputProcessor {
-    private static readonly Predicate<ShortcutEntry> RepeatedFilter = x => x.RepeatMode != RepeatMode.NonRepeat;
-    private static readonly Predicate<ShortcutEntry> NotRepeatedFilter = x => x.RepeatMode != RepeatMode.RepeatOnly;
-    private static readonly Predicate<ShortcutEntry> BlockAllFilter = x => false;
+public abstract class KeyMapInputProcessor {
+    private static readonly Predicate<KeyMapEntry> RepeatedFilter = x => x.RepeatMode != RepeatMode.NonRepeat;
+    private static readonly Predicate<KeyMapEntry> NotRepeatedFilter = x => x.RepeatMode != RepeatMode.RepeatOnly;
+    private static readonly Predicate<KeyMapEntry> BlockAllFilter = x => false;
 
-    private readonly List<ShortcutEntry> cachedShortcutList;
+    private readonly List<KeyMapEntry> cachedShortcutList;
     private readonly List<(InputStateEntry state, bool activate)> cachedInputStateList;
-    private readonly List<ShortcutEntry> cachedInstantActivationList;
+    private readonly List<KeyMapEntry> cachedInstantActivationList;
 
     /// <summary>
     /// A reference to the manager that created this processor
     /// </summary>
-    public ShortcutManager Manager { get; }
+    public KeyMapManager Manager { get; }
 
     /// <summary>
     /// All of this processor's active shortcut usages
     /// </summary>
-    public Dictionary<IShortcutUsage, ShortcutEntry> ActiveUsages { get; }
+    public Dictionary<IShortcutUsage, KeyMapEntry> ActiveUsages { get; }
 
     // We pass this to the CommandManager so that we don't generate the context data when it's unnecessary
     internal readonly Func<IContextData?> ProvideCurrentContextInternal;
 
-    public ShortcutInputProcessor(ShortcutManager manager) {
+    public KeyMapInputProcessor(KeyMapManager manager) {
         this.Manager = manager ?? throw new ArgumentNullException(nameof(manager));
-        this.ActiveUsages = new Dictionary<IShortcutUsage, ShortcutEntry>();
-        this.cachedShortcutList = new List<ShortcutEntry>(8);
+        this.ActiveUsages = new Dictionary<IShortcutUsage, KeyMapEntry>();
+        this.cachedShortcutList = new List<KeyMapEntry>(8);
         this.cachedInputStateList = new List<(InputStateEntry, bool)>();
-        this.cachedInstantActivationList = new List<ShortcutEntry>(4);
+        this.cachedInstantActivationList = new List<KeyMapEntry>(4);
         this.ProvideCurrentContextInternal = this.GetCurrentContext;
     }
 
@@ -69,7 +70,7 @@ public abstract class ShortcutInputProcessor {
 
     #region Shortcut Accumulation
 
-    private void AccumulateShortcuts(IInputStroke stroke, string? focusedGroup, Predicate<ShortcutEntry>? shortcutFilter = null, bool canProcessInputStates = true, bool canInherit = true) {
+    private void AccumulateShortcuts(IInputStroke stroke, string? focusedGroup, Predicate<KeyMapEntry>? shortcutFilter = null, bool canProcessInputStates = true, bool canInherit = true) {
         ShortcutEvalArgs args = new ShortcutEvalArgs(stroke, this.cachedShortcutList, this.cachedInputStateList, shortcutFilter, canProcessInputStates, canInherit);
         this.Manager.Root.EvaulateShortcutsAndInputStates(ref args, focusedGroup);
     }
@@ -107,7 +108,7 @@ public abstract class ShortcutInputProcessor {
             bool result = false;
             try {
                 this.AccumulateInstantActivationShortcuts();
-                foreach (ShortcutEntry s in this.cachedInstantActivationList) {
+                foreach (KeyMapEntry s in this.cachedInstantActivationList) {
                     if (this.Manager.OnShortcutActivated(this, s)) {
                         result = true;
                         break;
@@ -127,7 +128,7 @@ public abstract class ShortcutInputProcessor {
             // In most cases, the list should only ever have 1 item with no secondary inputs, or be full of
             // shortcuts that all have secondary inputs (because logically, that's how a key map should work...
             // why would you want multiple shortcuts to activate on the same key stroke?)
-            foreach (ShortcutEntry mc in this.cachedShortcutList) {
+            foreach (KeyMapEntry mc in this.cachedShortcutList) {
                 if (mc.Shortcut is IKeyboardShortcut shortcut) {
                     IKeyboardShortcutUsage usage = shortcut.CreateKeyUsage();
                     this.ActiveUsages[usage] = mc;
@@ -144,8 +145,8 @@ public abstract class ShortcutInputProcessor {
             }
         }
         else {
-            List<KeyValuePair<IShortcutUsage, ShortcutEntry>> valid = new List<KeyValuePair<IShortcutUsage, ShortcutEntry>>();
-            foreach (KeyValuePair<IShortcutUsage, ShortcutEntry> pair in this.ActiveUsages) {
+            List<KeyValuePair<IShortcutUsage, KeyMapEntry>> valid = new List<KeyValuePair<IShortcutUsage, KeyMapEntry>>();
+            foreach (KeyValuePair<IShortcutUsage, KeyMapEntry> pair in this.ActiveUsages) {
                 // Just in case, check if it's already completed. By default, it never should be
                 if (pair.Key.IsCompleted) {
                     return this.OnUnexpectedCompletedUsage(pair.Key, pair.Value);
@@ -201,7 +202,7 @@ public abstract class ShortcutInputProcessor {
                 return this.OnNoSuchShortcutForKeyStroke(focusedGroup, stroke);
             }
             else {
-                foreach (KeyValuePair<IShortcutUsage, ShortcutEntry> pair in valid) {
+                foreach (KeyValuePair<IShortcutUsage, KeyMapEntry> pair in valid) {
                     this.ActiveUsages[pair.Key] = pair.Value;
                 }
 
@@ -221,7 +222,7 @@ public abstract class ShortcutInputProcessor {
             bool result = false;
             try {
                 this.AccumulateInstantActivationShortcuts();
-                foreach (ShortcutEntry s in this.cachedInstantActivationList) {
+                foreach (KeyMapEntry s in this.cachedInstantActivationList) {
                     if (this.Manager.OnShortcutActivated(this, s)) {
                         result = true;
                         break;
@@ -236,7 +237,7 @@ public abstract class ShortcutInputProcessor {
                 return result;
             }
 
-            foreach (ShortcutEntry mc in this.cachedShortcutList) {
+            foreach (KeyMapEntry mc in this.cachedShortcutList) {
                 if (mc.Shortcut is IMouseShortcut shortcut) {
                     IMouseShortcutUsage usage = shortcut.CreateMouseUsage();
                     this.ActiveUsages[usage] = mc;
@@ -253,8 +254,8 @@ public abstract class ShortcutInputProcessor {
             }
         }
         else {
-            List<KeyValuePair<IShortcutUsage, ShortcutEntry>> valid = new List<KeyValuePair<IShortcutUsage, ShortcutEntry>>();
-            foreach (KeyValuePair<IShortcutUsage, ShortcutEntry> pair in this.ActiveUsages) {
+            List<KeyValuePair<IShortcutUsage, KeyMapEntry>> valid = new List<KeyValuePair<IShortcutUsage, KeyMapEntry>>();
+            foreach (KeyValuePair<IShortcutUsage, KeyMapEntry> pair in this.ActiveUsages) {
                 // Just in case, check if it's already completed. By default, it never should be
                 if (pair.Key.IsCompleted) {
                     return this.OnUnexpectedCompletedUsage(pair.Key, pair.Value);
@@ -305,7 +306,7 @@ public abstract class ShortcutInputProcessor {
                 return this.OnNoSuchShortcutForMouseStroke(focusedGroup, stroke);
             }
             else {
-                foreach (KeyValuePair<IShortcutUsage, ShortcutEntry> pair in valid) {
+                foreach (KeyValuePair<IShortcutUsage, KeyMapEntry> pair in valid) {
                     this.ActiveUsages[pair.Key] = pair.Value;
                 }
 
@@ -400,11 +401,11 @@ public abstract class ShortcutInputProcessor {
     /// </summary>
     /// <param name="stroke">The key stroke that was received</param>
     /// <returns>Whether to cancel the usage or not. True = cancel, False = keep</returns>
-    protected virtual bool OnCancelUsageForNoSuchNextKeyStroke(IShortcutUsage usage, ShortcutEntry shortcutEntry, KeyStroke stroke) {
-        if (!this.OnCancelUsage(usage, shortcutEntry))
+    protected virtual bool OnCancelUsageForNoSuchNextKeyStroke(IShortcutUsage usage, KeyMapEntry keyMapEntry, KeyStroke stroke) {
+        if (!this.OnCancelUsage(usage, keyMapEntry))
             return false;
         
-        this.Manager.OnCancelUsageForNoSuchNextKeyStroke(this, usage, shortcutEntry, stroke);
+        this.Manager.OnCancelUsageForNoSuchNextKeyStroke(this, usage, keyMapEntry, stroke);
         return true;
     }
 
@@ -414,15 +415,15 @@ public abstract class ShortcutInputProcessor {
     /// </summary>
     /// <param name="stroke">The mouse stroke that was received</param>
     /// <returns>Whether to cancel the usage or not. True = cancel, False = keep</returns>
-    protected virtual bool OnCancelUsageForNoSuchNextMouseStroke(IShortcutUsage usage, ShortcutEntry shortcutEntry, MouseStroke stroke) {
-        if (!this.OnCancelUsage(usage, shortcutEntry))
+    protected virtual bool OnCancelUsageForNoSuchNextMouseStroke(IShortcutUsage usage, KeyMapEntry keyMapEntry, MouseStroke stroke) {
+        if (!this.OnCancelUsage(usage, keyMapEntry))
             return false;
         
-        this.Manager.OnCancelUsageForNoSuchNextMouseStroke(this, usage, shortcutEntry, stroke);
+        this.Manager.OnCancelUsageForNoSuchNextMouseStroke(this, usage, keyMapEntry, stroke);
         return true;
     }
 
-    protected virtual bool OnCancelUsage(IShortcutUsage usage, ShortcutEntry shortcutEntry) {
+    protected virtual bool OnCancelUsage(IShortcutUsage usage, KeyMapEntry keyMapEntry) {
         return true;
     }
 
@@ -431,8 +432,8 @@ public abstract class ShortcutInputProcessor {
     /// <see cref="OnShortcutUsagesCreated"/> is called after all possible usages are created
     /// </summary>
     /// <param name="usage">The usage that was created</param>
-    /// <param name="shortcutEntry">A managed shortcut that created the usage</param>
-    protected virtual void OnShortcutUsageCreated(IShortcutUsage usage, ShortcutEntry shortcutEntry) { }
+    /// <param name="keyMapEntry">A managed shortcut that created the usage</param>
+    protected virtual void OnShortcutUsageCreated(IShortcutUsage usage, KeyMapEntry keyMapEntry) { }
 
     /// <summary>
     /// Called when one or more shortcut usages were created. <see cref="OnShortcutUsageCreated"/> is called for
@@ -450,7 +451,7 @@ public abstract class ShortcutInputProcessor {
     /// <returns>
     /// Whether the usage is allowed to be progressed further or not
     /// </returns>
-    protected virtual bool OnSecondShortcutUsageProgressed(IShortcutUsage usage, ShortcutEntry shortcutEntry) {
+    protected virtual bool OnSecondShortcutUsageProgressed(IShortcutUsage usage, KeyMapEntry keyMapEntry) {
         return true;
     }
 
@@ -463,15 +464,15 @@ public abstract class ShortcutInputProcessor {
     /// Called when a shortcut usage was completed. By default, this calls <see cref="ActivateShortcut"/> to activate the shortcut
     /// </summary>
     /// <param name="usage">The usage that was completed</param>
-    /// <param name="shortcutEntry">The managed shortcut that created the usage</param>
+    /// <param name="keyMapEntry">The managed shortcut that created the usage</param>
     /// <returns>The mouse stroke event outcome. True = Handled/Cancelled, False = Ignored/Continue</returns>
-    protected virtual bool OnSecondShortcutUsageCompleted(IShortcutUsage usage, ShortcutEntry shortcutEntry) {
-        return this.Manager.OnShortcutActivated(this, shortcutEntry);
+    protected virtual bool OnSecondShortcutUsageCompleted(IShortcutUsage usage, KeyMapEntry keyMapEntry) {
+        return this.Manager.OnShortcutActivated(this, keyMapEntry);
     }
 
-    protected virtual bool OnUnexpectedCompletedUsage(IShortcutUsage usage, ShortcutEntry shortcutEntry) {
+    protected virtual bool OnUnexpectedCompletedUsage(IShortcutUsage usage, KeyMapEntry keyMapEntry) {
         try {
-            return this.OnSecondShortcutUsageCompleted(usage, shortcutEntry);
+            return this.OnSecondShortcutUsageCompleted(usage, keyMapEntry);
         }
         finally {
             // The OnKeyStroke/OnMouseStroke functions immediately return the return of OnUnexpectedCompletedUsage,
@@ -488,19 +489,19 @@ public abstract class ShortcutInputProcessor {
     /// Whether to ignore the received key stroke
     /// </summary>
     /// <param name="usage"></param>
-    /// <param name="shortcutEntry"></param>
+    /// <param name="keyMapEntry"></param>
     /// <param name="input"></param>
     /// <param name="currentUsageKeyStroke"></param>
     /// <returns></returns>
-    protected virtual bool ShouldIgnoreKeyStroke(IKeyboardShortcutUsage usage, ShortcutEntry shortcutEntry, KeyStroke input, KeyStroke currentUsageKeyStroke) {
+    protected virtual bool ShouldIgnoreKeyStroke(IKeyboardShortcutUsage usage, KeyMapEntry keyMapEntry, KeyStroke input, KeyStroke currentUsageKeyStroke) {
         if (currentUsageKeyStroke.IsRelease && !input.IsRelease) {
-            if (this.ShouldIgnorePressWhenRequiredStrokeIsRelease(usage, shortcutEntry, input)) {
+            if (this.ShouldIgnorePressWhenRequiredStrokeIsRelease(usage, keyMapEntry, input)) {
                 return true;
             }
         }
 
         if (input.IsRelease && !usage.IsCompleted && !currentUsageKeyStroke.IsRelease) {
-            if (this.ShouldIgnoreReleaseWhenRequiredStrokeIsPress(usage, shortcutEntry, input)) {
+            if (this.ShouldIgnoreReleaseWhenRequiredStrokeIsPress(usage, keyMapEntry, input)) {
                 return true;
             }
         }
@@ -513,10 +514,10 @@ public abstract class ShortcutInputProcessor {
     /// this returns true. This is just for finer control over the behaviour that allows the key release to be used
     /// </summary>
     /// <param name="usage">The usage being checked</param>
-    /// <param name="shortcutEntry">The managed shortcut that created the usage</param>
+    /// <param name="keyMapEntry">The managed shortcut that created the usage</param>
     /// <param name="stroke">The input stroke</param>
     /// <returns>Whether to ignore the input stroke or not. When ignored, the usage will still remain active</returns>
-    public virtual bool ShouldIgnorePressWhenRequiredStrokeIsRelease(IKeyboardShortcutUsage usage, ShortcutEntry shortcutEntry, in KeyStroke stroke) {
+    public virtual bool ShouldIgnorePressWhenRequiredStrokeIsRelease(IKeyboardShortcutUsage usage, KeyMapEntry keyMapEntry, in KeyStroke stroke) {
         return true;
     }
 
@@ -525,10 +526,10 @@ public abstract class ShortcutInputProcessor {
     /// this returns true. This is just for finer control over the behaviour that allows the key release to be used
     /// </summary>
     /// <param name="usage">The usage being checked</param>
-    /// <param name="shortcutEntry">The managed shortcut that created the usage</param>
+    /// <param name="keyMapEntry">The managed shortcut that created the usage</param>
     /// <param name="stroke">The input stroke</param>
     /// <returns>Whether to ignore the input stroke or not. When ignored, the usage will still remain active</returns>
-    public virtual bool ShouldIgnoreReleaseWhenRequiredStrokeIsPress(IKeyboardShortcutUsage usage, ShortcutEntry shortcutEntry, in KeyStroke stroke) {
+    public virtual bool ShouldIgnoreReleaseWhenRequiredStrokeIsPress(IKeyboardShortcutUsage usage, KeyMapEntry keyMapEntry, in KeyStroke stroke) {
         return true;
     }
 

@@ -56,6 +56,9 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 public class DataManager {
     private static uint totalSuspensionCount; // used for performance reasons
 
+    // TODO: count how many even handlers exist for the a control's subtree.
+    // This will let us ignore invoking the event recursively down a tree that has no handlers
+    
     /// <summary>
     /// The context data property, used to store contextual information relative to a specific avalonia object.
     /// <para>

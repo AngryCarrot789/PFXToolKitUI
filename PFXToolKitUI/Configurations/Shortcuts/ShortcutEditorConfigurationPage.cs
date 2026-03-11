@@ -19,25 +19,26 @@
 
 using System.Diagnostics;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Configurations.Shortcuts;
 
 public class ShortcutEditorConfigurationPage : ConfigurationPage {
-    public ShortcutManager ShortcutManager { get; }
+    public KeyMapManager KeyMapManager { get; }
 
-    public ShortcutGroupEntry? RootGroupEntry { get; private set; }
+    public KeyMapGroupEntry? RootGroupEntry { get; private set; }
 
-    private Dictionary<ShortcutEntry, IShortcut>? originalShortcuts;
+    private Dictionary<KeyMapEntry, IShortcut>? originalShortcuts;
 
-    public IEnumerable<ShortcutEntry> ModifiedShortcuts => this.originalShortcuts?.Keys ?? Enumerable.Empty<ShortcutEntry>();
+    public IEnumerable<KeyMapEntry> ModifiedShortcuts => this.originalShortcuts?.Keys ?? Enumerable.Empty<KeyMapEntry>();
 
-    public ShortcutEditorConfigurationPage(ShortcutManager shortcutManager) {
-        this.ShortcutManager = shortcutManager;
+    public ShortcutEditorConfigurationPage(KeyMapManager keyMapManager) {
+        this.KeyMapManager = keyMapManager;
     }
 
     protected override ValueTask OnContextCreated(ConfigurationContext context) {
-        this.RootGroupEntry = this.ShortcutManager.Root;
-        this.originalShortcuts = new Dictionary<ShortcutEntry, IShortcut>();
+        this.RootGroupEntry = this.KeyMapManager.Root;
+        this.originalShortcuts = new Dictionary<KeyMapEntry, IShortcut>();
         return base.OnContextCreated(context);
     }
 
@@ -58,7 +59,7 @@ public class ShortcutEditorConfigurationPage : ConfigurationPage {
         return ValueTask.CompletedTask;
     }
 
-    public void OnShortcutChanged(ShortcutEntry entry, IShortcut oldShortcut, IShortcut newShortcut) {
+    public void OnShortcutChanged(KeyMapEntry entry, IShortcut oldShortcut, IShortcut newShortcut) {
         if (this.originalShortcuts == null) {
             Debug.Assert(false, "This method should not get called when the page is not active");
             return;

@@ -23,9 +23,9 @@ using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Services.UserInputs;
 using PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.UserInputs;
+using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
@@ -33,12 +33,13 @@ namespace PFXToolKitUI.Avalonia.Shortcuts.Dialogs;
 public partial class KeyStrokeUserInputControl : UserControl, IUserInputContent {
     public KeyStrokeUserInputInfo? InputInfo { get; private set; }
 
-    private readonly IBinder<KeyStrokeUserInputInfo> keyStrokeBinder = new AvaloniaPropertyToDataParameterAutoBinder<KeyStrokeUserInputInfo>(TextBox.TextProperty, KeyStrokeUserInputInfo.KeyStrokeParameter, (p) => {
-        KeyStroke s = (KeyStroke?) p ?? default;
-        return KeyStrokeStringConverter.ToStringFunction(s.KeyCode, s.Modifiers, s.IsRelease, false, true);
-    }) {
-        CanUpdateModel = false
-    };
+    private readonly IBinder<KeyStrokeUserInputInfo> keyStrokeBinder =
+        new AvaloniaPropertyToDataParameterAutoBinder<KeyStrokeUserInputInfo>(
+            TextBox.TextProperty,
+            KeyStrokeUserInputInfo.KeyStrokeParameter,
+            toProperty: p => KeymapUtils.GetStringForKeyStroke((KeyStroke?) p ?? default, false, true)) {
+            CanUpdateModel = false
+        };
 
     private UserInputDialogView? myDialog;
 

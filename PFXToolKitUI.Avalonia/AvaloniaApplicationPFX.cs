@@ -45,6 +45,7 @@ using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.UserInputs;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Toolbars;
 
@@ -124,7 +125,7 @@ public abstract class AvaloniaApplicationPFX : ApplicationPFX {
         manager.AddComponent<IMessageDialogService>(new MessageDialogServiceImpl());
 
         // we have to register these before base class
-        manager.AddComponent<ShortcutManager>(new AvaloniaShortcutManager());
+        manager.AddComponent<KeyMapManager>(new AvaloniaKeyMapManager());
         manager.AddComponent<ThemeManager>(new ThemeManagerImpl(this.Application));
         manager.AddComponent<IconManager>(new IconManagerImpl());
 

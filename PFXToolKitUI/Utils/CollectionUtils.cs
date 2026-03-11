@@ -18,6 +18,8 @@
 // 
 
 using System.Collections;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace PFXToolKitUI.Utils;
 
@@ -114,7 +116,7 @@ public static class CollectionUtils {
     }
 
     public static void MoveItem<T>(this IList<T> list, int oldIndex, int newIndex) {
-        ArrayUtils.ThrowIfOutOfBounds(list.Count, newIndex);
+        ThrowIfMoveOutOfBounds(list, oldIndex, newIndex);
         if (oldIndex != newIndex) {
             T removedItem = list[oldIndex];
             list.RemoveAt(oldIndex);
@@ -123,6 +125,7 @@ public static class CollectionUtils {
     }
 
     public static void MoveItem(IList list, int oldIndex, int newIndex) {
+        ThrowIfMoveOutOfBounds(list.Count, oldIndex, newIndex);
         object? removedItem = list[oldIndex];
         list.RemoveAt(oldIndex);
         list.Insert(newIndex, removedItem);
@@ -387,5 +390,132 @@ public static class CollectionUtils {
         }
 
         return list.Select(x => (x.Key, x.Value)).ToList();
+    }
+
+    public static void ThrowIfInsertOutOfBounds<T>(ICollection<T> collection, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfInsertOutOfBounds((uint) collection.Count, index, paramName);
+    }
+
+    public static void ThrowIfInsertOutOfBounds(Array array, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfInsertOutOfBounds((uint) array.LongLength, index, paramName);
+    }
+    
+    public static void ThrowIfInsertOutOfBounds<T>(T[] array, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfInsertOutOfBounds((uint) array.LongLength, index, paramName);
+    }
+
+    public static void ThrowIfInsertOutOfBounds(int length, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfInsertOutOfBounds((uint) length, index, paramName);
+    }
+
+    public static void ThrowIfInsertOutOfBounds(uint length, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ArgumentOutOfRangeException.ThrowIfNegative(index, paramName);
+        if (index > length) {
+            ThrowOutOfBounds(length, index, paramName);
+        }
+
+        return;
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowOutOfBounds(uint length, int index, string? paramName) {
+            throw new ArgumentOutOfRangeException(paramName, index, $"Index is out of bounds of collection ({index} > {length})");
+        }
+    }
+
+    public static void ThrowIfMoveOutOfBounds<T>(ICollection<T> collection, int oldIndex, int newIndex, [CallerArgumentExpression(nameof(oldIndex))] string? oldIndexParamName = null, [CallerArgumentExpression(nameof(newIndex))] string? newIndexParamName = null) {
+        ThrowIfMoveOutOfBounds((uint) collection.Count, oldIndex, newIndex, oldIndexParamName, newIndexParamName);
+    }
+
+    public static void ThrowIfMoveOutOfBounds(Array array, int oldIndex, int newIndex, [CallerArgumentExpression(nameof(oldIndex))] string? oldIndexParamName = null, [CallerArgumentExpression(nameof(newIndex))] string? newIndexParamName = null) {
+        ThrowIfMoveOutOfBounds((uint) array.LongLength, oldIndex, newIndex, oldIndexParamName, newIndexParamName);
+    }
+    
+    public static void ThrowIfMoveOutOfBounds<T>(T[] array, int oldIndex, int newIndex, [CallerArgumentExpression(nameof(oldIndex))] string? oldIndexParamName = null, [CallerArgumentExpression(nameof(newIndex))] string? newIndexParamName = null) {
+        ThrowIfMoveOutOfBounds((uint) array.LongLength, oldIndex, newIndex, oldIndexParamName, newIndexParamName);
+    }
+
+    public static void ThrowIfMoveOutOfBounds(int length, int oldIndex, int newIndex, [CallerArgumentExpression(nameof(oldIndex))] string? oldIndexParamName = null, [CallerArgumentExpression(nameof(newIndex))] string? newIndexParamName = null) {
+        ThrowIfMoveOutOfBounds((uint) length, oldIndex, newIndex, oldIndexParamName, newIndexParamName);
+    }
+
+    public static void ThrowIfMoveOutOfBounds(uint length, int oldIndex, int newIndex, [CallerArgumentExpression(nameof(oldIndex))] string? oldIndexParamName = null, [CallerArgumentExpression(nameof(newIndex))] string? newIndexParamName = null) {
+        ArgumentOutOfRangeException.ThrowIfNegative(oldIndex, oldIndexParamName);
+        ArgumentOutOfRangeException.ThrowIfNegative(newIndex, newIndexParamName);
+        if (oldIndex >= length)
+            ThrowOutOfBounds(length, oldIndex, oldIndexParamName);
+        if (newIndex >= length)
+            ThrowOutOfBounds(length, newIndex, newIndexParamName);
+
+        return;
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowOutOfBounds(uint length, int index, string? paramName) {
+            throw new ArgumentOutOfRangeException(paramName, index, $"Index is out of bounds of collection ({index} >= {length})");
+        }
+    }
+
+    public static void ThrowIfOutOfBounds<T>(ICollection<T> collection, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfOutOfBounds((uint) collection.Count, index, paramName);
+    }
+
+    public static void ThrowIfOutOfBounds(Array array, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfOutOfBounds((uint) array.LongLength, index, paramName);
+    }
+    
+    public static void ThrowIfOutOfBounds<T>(T[] array, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfOutOfBounds((uint) array.LongLength, index, paramName);
+    }
+
+    public static void ThrowIfOutOfBounds(int length, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ThrowIfOutOfBounds((uint) length, index, paramName);
+    }
+
+    public static void ThrowIfOutOfBounds(uint length, int index, [CallerArgumentExpression(nameof(index))] string? paramName = null) {
+        ArgumentOutOfRangeException.ThrowIfNegative(index, paramName);
+        if (index >= length) {
+            ThrowOutOfBounds(length, index, paramName);
+        }
+
+        return;
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowOutOfBounds(uint length, int index, string? paramName) {
+            throw new ArgumentOutOfRangeException(paramName, index, $"Index is out of bounds of collection ({index} >= {length})");
+        }
+    }
+
+    public static void ThrowIfOutOfBounds<T>(ICollection<T> collection, int index, int count, [CallerArgumentExpression(nameof(index))] string? indexParamName = null, [CallerArgumentExpression(nameof(count))] string? countParamName = null) {
+        ThrowIfOutOfBounds((uint) collection.Count, index, count, indexParamName, countParamName);
+    }
+
+    public static void ThrowIfOutOfBounds(Array array, int index, int count, [CallerArgumentExpression(nameof(index))] string? indexParamName = null, [CallerArgumentExpression(nameof(count))] string? countParamName = null) {
+        ThrowIfOutOfBounds((uint) array.LongLength, index, count, indexParamName, countParamName);
+    }
+    
+    public static void ThrowIfOutOfBounds<T>(T[] array, int index, int count, [CallerArgumentExpression(nameof(index))] string? indexParamName = null, [CallerArgumentExpression(nameof(count))] string? countParamName = null) {
+        ThrowIfOutOfBounds((uint) array.LongLength, index, count, indexParamName, countParamName);
+    }
+
+    public static void ThrowIfOutOfBounds(int length, int index, int count, [CallerArgumentExpression(nameof(index))] string? indexParamName = null, [CallerArgumentExpression(nameof(count))] string? countParamName = null) {
+        ThrowIfOutOfBounds((uint) length, index, count, indexParamName, countParamName);
+    }
+
+    public static void ThrowIfOutOfBounds(uint length, int index, int count, [CallerArgumentExpression(nameof(index))] string? indexParamName = null, [CallerArgumentExpression(nameof(count))] string? countParamName = null) {
+        ArgumentOutOfRangeException.ThrowIfNegative(index, indexParamName);
+        ArgumentOutOfRangeException.ThrowIfNegative(count, countParamName);
+        if ((uint) index >= length || (uint) count > (length - (uint) index)) {
+            ThrowOutOfBounds(length, index, count, indexParamName, countParamName);
+        }
+
+        return;
+
+        [DoesNotReturn]
+        [MethodImpl(MethodImplOptions.NoInlining)]
+        static void ThrowOutOfBounds(uint length, int offset, int count, string? indexParamName, string? countParamName) {
+            throw new ArgumentException($"{indexParamName}+{countParamName} exceeds bounds of collection: ({offset} + {count}) > {length}");
+        }
     }
 }

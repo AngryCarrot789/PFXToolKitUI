@@ -21,6 +21,7 @@ using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Configurations.Shortcuts.Commands;
 
@@ -30,7 +31,7 @@ public class AddKeyStrokeToShortcutUsingDialogCommand : Command {
     }
 
     protected override async Task ExecuteCommandAsync(CommandEventArgs e) {
-        if (!ShortcutContextRegistry.ShortcutEntryKey.TryGetContext(e.ContextData, out ShortcutEntry? entry)) {
+        if (!ShortcutContextRegistry.ShortcutEntryKey.TryGetContext(e.ContextData, out KeyMapEntry? entry)) {
             return;
         }
 

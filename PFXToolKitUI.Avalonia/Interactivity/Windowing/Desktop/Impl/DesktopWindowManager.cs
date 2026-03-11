@@ -84,15 +84,18 @@ public sealed class DesktopWindowManager : IWindowManager {
             return true;
 
         // lastActivated not set somehow, so find an activated window
-        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState.IsOpenOrTryingToClose() && x.IsActivated)) != null)
-            return true;
-        if ((window = this.allWindows.LastOrDefault(x => x.OpenState.IsOpenOrTryingToClose() && x.IsActivated)) != null)
+        if ((window = FindWindow(x => x.OpenState.IsOpenOrTryingToClose() && x.IsActivated)) != null)
             return true;
 
-        // bad case of the software bugs. Find an open window
-        if ((window = this.mainWindows.FirstOrDefault(x => x.OpenState.IsOpenOrTryingToClose())) != null)
+        // Find any open window
+        if ((window = FindWindow(x => x.OpenState.IsOpenOrTryingToClose())) != null)
             return true;
-        return (window = this.allWindows.LastOrDefault(x => x.OpenState.IsOpenOrTryingToClose())) != null;
+
+        return false;
+
+        IDesktopWindow? FindWindow(Func<DesktopWindowImpl, bool> accept) {
+            return this.mainWindows.FirstOrDefault(accept) ?? this.allWindows.FirstOrDefault(accept);
+        }
     }
 
     public bool TryGetWindowFromVisual(Visual visual, [NotNullWhen(true)] out IDesktopWindow? window) {

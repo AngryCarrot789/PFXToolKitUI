@@ -20,8 +20,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Shortcuts;
 
 namespace PFXToolKitUI.Avalonia.AvControls;
 
@@ -71,19 +71,12 @@ public class ShortcutLabel : TemplatedControl {
     }
 
     private void UpdateText() {
-        if (this.PART_Text == null)
-            return;
-
-        string? commandId = this.CommandId;
-        if (string.IsNullOrWhiteSpace(commandId)) {
-            return;
-        }
-
-        if (CommandIdToGestureConverter.CommandIdToGesture(commandId, out string? gesture)) {
+        if (this.PART_Text != null) {
+            if (!KeymapUtils.TryGetStringForCommandId(this.CommandId, out string? gesture)) {
+                gesture = this.NoShortcutText;
+            }
+            
             this.PART_Text.Text = gesture;
-        }
-        else {
-            this.PART_Text.Text = this.NoShortcutText;
         }
     }
 }

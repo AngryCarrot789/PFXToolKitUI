@@ -18,40 +18,41 @@
 // 
 
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees;
 
 /// <summary>
-/// An interface for shared properties between a <see cref="ShortcutTreeView"/> and <see cref="ShortcutTreeViewItem"/>
+/// An interface for shared properties between a <see cref="KeyMapTreeView"/> and <see cref="KeyMapTreeViewItem"/>
 /// </summary>
 public interface IShortcutTreeOrNode {
     /// <summary>
     /// Gets the configuration tree view associated with this node, or returns the current instance
     /// </summary>
-    ShortcutTreeView? ShortcutTree { get; }
+    KeyMapTreeView? ShortcutTree { get; }
 
     /// <summary>
     /// Gets the parent node, or null if we are a root node or a tree
     /// </summary>
-    ShortcutTreeViewItem? ParentNode { get; }
+    KeyMapTreeViewItem? ParentNode { get; }
 
     /// <summary>
     /// Gets this node's entry, or returns the "root" configuration entry which contains all the root level entries
     /// </summary>
-    IKeyMapEntry? Entry { get; }
+    IBaseKeyMapEntry? Entry { get; }
 
     /// <summary>
     /// Gets the node at the specific UI index
     /// </summary>
     /// <param name="index"></param>
     /// <returns></returns>
-    ShortcutTreeViewItem GetNodeAt(int index);
+    KeyMapTreeViewItem GetNodeAt(int index);
 
-    void InsertGroup(ShortcutGroupEntry entry, int index);
+    void InsertGroup(KeyMapGroupEntry entry, int index);
 
     void InsertInputState(InputStateEntry entry, int index);
 
-    void InsertShortcut(ShortcutEntry entry, int index);
+    void InsertShortcut(KeyMapEntry entry, int index);
 
     void RemoveGroup(int index, bool canCache = true);
 

@@ -80,8 +80,7 @@ public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
             return true;
         }
 
-        CommandManager manager = CommandManager.Instance;
-        Command? cmd = manager.GetCommandById(this.CommandId);
+        Command? cmd = CommandManager.Instance.GetCommandById(this.CommandId);
         if (cmd == null) {
             return false;
         }
@@ -92,8 +91,7 @@ public class DataManagerCommandWrapper : BaseAsyncRelayCommand {
     }
 
     protected override async Task ExecuteCoreAsync(object? parameter) {
-        CommandManager manager = CommandManager.Instance;
-        Command? cmd = manager.GetCommandById(this.CommandId);
+        Command? cmd = CommandManager.Instance.GetCommandById(this.CommandId);
         if (cmd != null) {
             IContextData data = DataManager.GetFullContextData(this.Control);
             try {

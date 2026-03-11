@@ -18,18 +18,19 @@
 // 
 
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Shortcuts;
 
 public readonly struct ShortcutEvalArgs {
     public readonly IInputStroke stroke;
-    public readonly List<ShortcutEntry> shortcuts;
+    public readonly List<KeyMapEntry> shortcuts;
     public readonly List<(InputStateEntry, bool)> inputStates;
-    public readonly Predicate<ShortcutEntry>? filter;
+    public readonly Predicate<KeyMapEntry>? filter;
     public readonly bool canProcessInputStates;
     public readonly bool canInherit;
 
-    public ShortcutEvalArgs(IInputStroke stroke, List<ShortcutEntry> shortcuts, List<(InputStateEntry, bool)> inputStates, Predicate<ShortcutEntry>? filter, bool canProcessInputStates, bool canInherit) {
+    public ShortcutEvalArgs(IInputStroke stroke, List<KeyMapEntry> shortcuts, List<(InputStateEntry, bool)> inputStates, Predicate<KeyMapEntry>? filter, bool canProcessInputStates, bool canInherit) {
         this.stroke = stroke;
         this.shortcuts = shortcuts;
         this.inputStates = inputStates;

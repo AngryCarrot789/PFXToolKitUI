@@ -23,38 +23,20 @@ using System.Text;
 namespace PFXToolKitUI.Utils;
 
 public static class StringUtils {
-    public static string JSubstring(this string @this, int startIndex, int endIndex) {
-        return @this.Substring(startIndex, endIndex - startIndex);
-    }
-
-    public static bool IsEmpty(this string @this) {
-        return string.IsNullOrEmpty(@this);
-    }
-
-    public static string Join(string a, string b, char join) {
-        return new StringBuilder(32).Append(a).Append(join).Append(b).ToString();
-    }
-
-    public static string Join(string a, string b, string c, char join) {
-        return new StringBuilder(32).Append(a).Append(join).Append(b).Append(join).Append(c).ToString();
-    }
-
-    [return: NotNullIfNotNull("emptyEnumerator")]
-    public static string? JoinString(this IEnumerable<string> elements, string delimiter, string finalDelimiter, string? emptyEnumerator = "") {
-        using IEnumerator<string> enumerator = elements.GetEnumerator();
-        return enumerator.JoinString(delimiter, finalDelimiter, emptyEnumerator);
-    }
-
-    [return: NotNullIfNotNull("emptyEnumerator")]
-    public static string? JoinString(this IEnumerator<string> elements, string delimiter, string finalDelimiter, string? emptyEnumerator = "") {
-        if (!elements.MoveNext()) {
-            return emptyEnumerator;
+    public static string? JoinString(this IEnumerable<string?> elements, string delimiter, string finalDelimiter) {
+        using IEnumerator<string?> enumerator = elements.GetEnumerator();
+        if (!enumerator.MoveNext()) {
+            return null;
         }
 
+        return enumerator.JoinString(delimiter, finalDelimiter);
+    }
+
+    public static string JoinString(this IEnumerator<string?> elements, string delimiter, string finalDelimiter) {
         StringBuilder sb = new StringBuilder();
         sb.Append(elements.Current);
         if (elements.MoveNext()) {
-            string last = elements.Current;
+            string? last = elements.Current;
             while (elements.MoveNext()) {
                 sb.Append(delimiter).Append(last);
                 last = elements.Current;
@@ -67,13 +49,7 @@ public static class StringUtils {
     }
 
     public static string Repeat(char ch, int count) {
-        // char[] chars = new char[count];
-        // for (int i = 0; i < count; i++)
-        //     chars[i] = ch;
-        // return new string(chars);
-
-        // C# has an optimised version I guess...
-        return count == 0 ? string.Empty : new String(ch, count);
+        return count == 0 ? string.Empty : new string(ch, count);
     }
 
     public static string Repeat(string str, int count) {

@@ -20,8 +20,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees.InputStrokeControls;
@@ -54,12 +54,8 @@ public class MouseStrokeControl : TemplatedControl {
     }
 
     private void UpdateText() {
-        if (this.PART_TextBlock == null)
-            return;
-
-        if (!(this.MouseStroke is MouseStroke stroke))
-            return;
-
-        this.PART_TextBlock.Text = MouseStrokeStringConverter.ToStringFunction(stroke.MouseButton, stroke.Modifiers, stroke.ClickCount);
+        if (this.PART_TextBlock != null && this.MouseStroke is MouseStroke stroke) {
+            this.PART_TextBlock.Text = KeymapUtils.GetStringForMouseStroke(stroke);
+        }
     }
 }

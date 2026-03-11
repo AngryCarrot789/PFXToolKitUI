@@ -18,10 +18,11 @@
 // 
 
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Keymapping;
 
 public interface IKeymapSerialiser {
-    Keymap Deserialise(ShortcutManager manager, Stream stream);
+    Keymap Deserialise(KeyMapManager manager, Stream stream);
     void Serialise(Keymap keymap, Stream stream);
 }

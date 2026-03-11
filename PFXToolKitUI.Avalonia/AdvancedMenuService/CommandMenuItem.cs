@@ -24,11 +24,11 @@ using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Interactivity;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Services.Messaging;
+using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -84,27 +84,11 @@ public class CommandMenuItem : MenuItem {
     }
 
     private void UpdateInputGestureText() {
-        if (this.InputGestureTextBlock == null) {
-            return;
-        }
-
-        if (!(this.CommandId is string id) || string.IsNullOrWhiteSpace(id)) {
-            return;
-        }
-
-        if (CommandManager.Instance.GetCommandById(id) != null) {
-            if (CommandIdToGestureConverter.CommandIdToGesture(id, out string? value)) {
-                this.InputGestureTextBlock.Text = value;
-            }
-        }
+        this.InputGestureTextBlock?.Text = KeymapUtils.TryGetStringForCommandId(this.CommandId, out string? value) ? value : null;
     }
 
     private void GenerateChildren() {
-        string? cmdId = this.CommandId;
-        if (string.IsNullOrWhiteSpace(cmdId))
-            return;
-
-        if (CommandManager.Instance.TryFindCommandById(cmdId, out Command? command) && command is CommandGroup group) {
+        if (CommandManager.Instance.TryFindCommandById(this.CommandId, out Command? command) && command is CommandGroup group) {
             ItemCollection list = this.Items;
             list.Clear();
             foreach (string childCmdId in group.Commands) {
@@ -160,7 +144,7 @@ public class CommandMenuItem : MenuItem {
         if (VisualTreeUtils.FindLogicalParent<AdvancedContextMenu>(this) is AdvancedContextMenu menu) {
             sourceMenu = menu.MyContextRegistry;
         }
-        
+
         ApplicationPFX.Instance.Dispatcher.Post(async void () => {
             try {
                 await CommandManager.Instance.Execute(cmdId, context, null, sourceMenu);

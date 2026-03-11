@@ -2,8 +2,90 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:a="using:PFXToolKitUI.Avalonia.Themes.Attached">
     <Design.PreviewWith>
-        <Grid Background="Gray" Width="200" Height="200">
-            <TabControl>
+        <Grid Background="Red" Width="200" Height="200">
+            <TabControl Background="Green" BorderBrush="Blue"
+                        a:TabControlStripExtras.LeftContent="left"
+                        a:TabControlStripExtras.RightContent="right"
+                        a:TabControlStripExtras.TabStripBackground="Orange">
+                <TabControl.Theme>
+                    <ControlTheme TargetType="{x:Type TabControl}">
+                        <Setter Property="Background" Value="Transparent"/>
+                        <Setter Property="BorderBrush" Value="{DynamicResource TabItem.Selected.Border}"/>
+                        <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+                        <Setter Property="(a:TabControlStripExtras.TabStripBackground)" Value="Transparent"/>
+                        <Setter Property="BorderThickness" Value="1"/>
+                        <Setter Property="Padding" Value="0"/>
+                        <Setter Property="Template">
+                            <ControlTemplate TargetType="{x:Type TabControl}">
+                                <Border Padding="{TemplateBinding Padding}"
+                                        HorizontalAlignment="{TemplateBinding HorizontalAlignment}"
+                                        VerticalAlignment="{TemplateBinding VerticalAlignment}"
+                                        Background="{TemplateBinding Background}"
+                                        BorderBrush="{TemplateBinding BorderBrush}"
+                                        BorderThickness="{TemplateBinding BorderThickness}"
+                                        CornerRadius="{TemplateBinding CornerRadius}">
+                                    <DockPanel>
+                                        <Grid x:Name="PART_Grid" ColumnDefinitions="Auto,*" DockPanel.Dock="Top"
+                                              Background="{TemplateBinding (a:TabControlStripExtras.TabStripBackground), Mode=OneWay}">
+                                            <DockPanel Grid.Column="0">
+                                                <ContentPresenter DockPanel.Dock="Left"
+                                                                  Content="{TemplateBinding (a:TabControlStripExtras.LeftContent), Mode=OneWay}"
+                                                                  BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1"/>
+                                                <ContentPresenter DockPanel.Dock="Right"
+                                                                  Content="{TemplateBinding (a:TabControlStripExtras.RightContent), Mode=OneWay}"
+                                                                  BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1"/>
+                                                <ItemsPresenter x:Name="PART_ItemsPresenter"
+                                                                ItemsPanel="{TemplateBinding ItemsPanel}"/>
+                                            </DockPanel>
+                                            <Border x:Name="PART_Border" Grid.Column="1"
+                                                    Background="Transparent"
+                                                    BorderBrush="{TemplateBinding BorderBrush}"
+                                                    BorderThickness="0,0,0,1"/>
+                                        </Grid>
+                                        <ContentPresenter x:Name="PART_SelectedContentHost"
+                                                          Margin="{TemplateBinding Padding}"
+                                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"
+                                                          Content="{TemplateBinding SelectedContent}"
+                                                          ContentTemplate="{TemplateBinding SelectedContentTemplate}"/>
+                                    </DockPanel>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter>
+                        <Style Selector="^[TabStripPlacement=Top] /template/ Grid#PART_Grid">
+                            <Setter Property="DockPanel.Dock" Value="Top"/>
+                        </Style>
+                        <Style Selector="^[TabStripPlacement=Bottom] /template/ Grid#PART_Grid">
+                            <Setter Property="DockPanel.Dock" Value="Bottom"/>
+                        </Style>
+                        <Style Selector="^[TabStripPlacement=Left] /template/ Grid#PART_Grid">
+                            <Setter Property="DockPanel.Dock" Value="Left"/>
+                        </Style>
+                        <Style Selector="^[TabStripPlacement=Right] /template/ Grid#PART_Grid">
+                            <Setter Property="DockPanel.Dock" Value="Right"/>
+                        </Style>
+
+                        <Style Selector="^[TabStripPlacement=Top] /template/ Border#PART_Border">
+                            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+                        </Style>
+                        <Style Selector="^[TabStripPlacement=Bottom] /template/ Border#PART_Border">
+                            <Setter Property="BorderThickness" Value="0,1,0,0"/>
+                        </Style>
+                        <Style Selector="^[TabStripPlacement=Left] /template/ Border#PART_Border">
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Style>
+                        <Style Selector="^[TabStripPlacement=Right] /template/ Border#PART_Border">
+                            <Setter Property="BorderThickness" Value="0"/>
+                        </Style>
+
+                        <Style Selector="^[TabStripPlacement=Left] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
+                            <Setter Property="Orientation" Value="Vertical"/>
+                        </Style>
+                        <Style Selector="^[TabStripPlacement=Right] /template/ ItemsPresenter#PART_ItemsPresenter > WrapPanel">
+                            <Setter Property="Orientation" Value="Vertical"/>
+                        </Style>
+                    </ControlTheme>
+                </TabControl.Theme>
                 <TabItem Header="A"></TabItem>
                 <TabItem Header="B"></TabItem>
                 <TabItem Header="C"></TabItem>
@@ -15,6 +97,7 @@
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="{DynamicResource TabItem.Selected.Border}"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>
+        <Setter Property="(a:TabControlStripExtras.TabStripBackground)" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="1"/>
         <Setter Property="Padding" Value="0"/>
         <Setter Property="Template">
@@ -27,19 +110,20 @@
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}">
                     <DockPanel>
-                        <Grid x:Name="PART_Grid" ColumnDefinitions="Auto,*" DockPanel.Dock="Top">
+                        <Grid x:Name="PART_Grid" ColumnDefinitions="Auto,*" DockPanel.Dock="Top"
+                              Background="{TemplateBinding (a:TabControlStripExtras.TabStripBackground), Mode=OneWay}">
                             <DockPanel Grid.Column="0">
-                                <ContentPresenter DockPanel.Dock="Left" 
-                                                  Content="{TemplateBinding (a:TabControlStripExtras.LeftContent), Mode=OneWay}" 
+                                <ContentPresenter DockPanel.Dock="Left"
+                                                  Content="{TemplateBinding (a:TabControlStripExtras.LeftContent), Mode=OneWay}"
                                                   BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1"/>
-                                <ContentPresenter DockPanel.Dock="Right" 
+                                <ContentPresenter DockPanel.Dock="Right"
                                                   Content="{TemplateBinding (a:TabControlStripExtras.RightContent), Mode=OneWay}"
                                                   BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="0,0,0,1"/>
                                 <ItemsPresenter x:Name="PART_ItemsPresenter"
                                                 ItemsPanel="{TemplateBinding ItemsPanel}"/>
                             </DockPanel>
                             <Border x:Name="PART_Border" Grid.Column="1"
-                                    Background="{TemplateBinding Background}"
+                                    Background="Transparent"
                                     BorderBrush="{TemplateBinding BorderBrush}"
                                     BorderThickness="0,0,0,1"/>
                         </Grid>

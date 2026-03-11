@@ -27,10 +27,10 @@ using Key = Avalonia.Input.Key;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
-public class KeyMapSerialiser : XMLShortcutSerialiser {
-    public static readonly KeyMapSerialiser Instance = new KeyMapSerialiser();
+public class KeyMapSerializer : XMLShortcutSerialiser {
+    public static readonly KeyMapSerializer Instance = new KeyMapSerializer();
 
-    public KeyMapSerialiser() { }
+    public KeyMapSerializer() { }
 
     protected override void SerialiseKeystroke(XmlDocument doc, XmlElement elem, in KeyStroke stroke, string childElementName = "KeyStroke") {
         XmlElement element = doc.CreateElement(childElementName);
@@ -66,8 +66,8 @@ public class KeyMapSerialiser : XMLShortcutSerialiser {
             case 2:                                         btn = "Right"; break;
             case 3:                                         btn = "X1"; break;
             case 4:                                         btn = "X2"; break;
-            case AvaloniaShortcutManager.BUTTON_WHEEL_UP:   btn = "WHEEL_UP"; break;
-            case AvaloniaShortcutManager.BUTTON_WHEEL_DOWN: btn = "WHEEL_DOWN"; break;
+            case AvaloniaKeyMapManager.BUTTON_WHEEL_UP:   btn = "WHEEL_UP"; break;
+            case AvaloniaKeyMapManager.BUTTON_WHEEL_DOWN: btn = "WHEEL_DOWN"; break;
             default:                                        throw new Exception("Invalid mouse button: " + stroke.MouseButton);
         }
 
@@ -138,11 +138,11 @@ public class KeyMapSerialiser : XMLShortcutSerialiser {
             case "x2": mouseButton = 4; break;
             case "wheel_up":
             case "wheelup":
-                mouseButton = AvaloniaShortcutManager.BUTTON_WHEEL_UP;
+                mouseButton = AvaloniaKeyMapManager.BUTTON_WHEEL_UP;
             break;
             case "wheel_down":
             case "wheeldown":
-                mouseButton = AvaloniaShortcutManager.BUTTON_WHEEL_DOWN;
+                mouseButton = AvaloniaKeyMapManager.BUTTON_WHEEL_DOWN;
             break;
             default: {
                 if (!int.TryParse(buttonText, out mouseButton)) {

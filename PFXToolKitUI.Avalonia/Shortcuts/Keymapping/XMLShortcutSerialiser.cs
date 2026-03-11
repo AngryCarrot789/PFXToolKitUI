@@ -20,6 +20,7 @@
 using System.Xml;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Keymapping;
@@ -39,8 +40,8 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
         document.Save(stream);
     }
 
-    private void SerialiseGroupData(XmlDocument doc, XmlElement groupElement, ShortcutGroupEntry groupEntry) {
-        foreach (ShortcutGroupEntry innerGroup in groupEntry.Groups) {
+    private void SerialiseGroupData(XmlDocument doc, XmlElement groupElement, KeyMapGroupEntry groupEntry) {
+        foreach (KeyMapGroupEntry innerGroup in groupEntry.Groups) {
             XmlElement childGroupElement = doc.CreateElement("Group");
             if (innerGroup.Name != null) // guaranteed not to be empty or only whitespaces
                 childGroupElement.SetAttribute("Name", innerGroup.Name);
@@ -56,7 +57,7 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
             groupElement.AppendChild(childGroupElement);
         }
 
-        foreach (ShortcutEntry shortcut in groupEntry.Shortcuts) {
+        foreach (KeyMapEntry shortcut in groupEntry.Shortcuts) {
             XmlElement shortcutElement = doc.CreateElement("Shortcut");
             shortcutElement.SetAttribute("Name", shortcut.Name); // guaranteed non-null, not empty and not whitespaces
             if (!string.IsNullOrWhiteSpace(shortcut.DisplayName))
@@ -160,7 +161,7 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
 
     #region Deserialisation
 
-    public Keymap Deserialise(ShortcutManager manager, Stream stream) {
+    public Keymap Deserialise(KeyMapManager manager, Stream stream) {
         XmlDocument document = new XmlDocument();
         document.Load(stream);
         if (!(document.SelectSingleNode("/KeyMap") is XmlElement rootElement)) {
@@ -170,7 +171,7 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
         string? version = GetAttributeNullable(rootElement, "Version");
         Version keymapVersion = !string.IsNullOrEmpty(version) ? Version.Parse(version) : new Version(1, 0, 0);
 
-        ShortcutGroupEntry root = ShortcutGroupEntry.CreateRoot(manager);
+        KeyMapGroupEntry root = KeyMapGroupEntry.CreateRoot(manager);
         this.DeserialiseGroupData(rootElement, root);
         return new Keymap() {
             Version = keymapVersion,
@@ -178,11 +179,11 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
         };
     }
 
-    private void DeserialiseGroupData(XmlElement src, ShortcutGroupEntry dst) {
+    private void DeserialiseGroupData(XmlElement src, KeyMapGroupEntry dst) {
         foreach (XmlElement child in src.ChildNodes.OfType<XmlElement>()) {
             switch (child.Name) {
                 case "Group": {
-                    ShortcutGroupEntry innerGroupEntry = dst.CreateGroupByName(GetElementName(dst, child), GetIsGlobal(child), GetIsInherit(child));
+                    KeyMapGroupEntry innerGroupEntry = dst.CreateGroupByName(GetElementName(dst, child), GetIsGlobal(child), GetIsInherit(child));
                     innerGroupEntry.Description = GetDescription(child);
                     innerGroupEntry.DisplayName = GetDisplayName(child);
                     this.DeserialiseGroupData(child, innerGroupEntry);
@@ -287,7 +288,7 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
                         continue;
                     }
 
-                    ShortcutEntry managed = dst.AddShortcut(name, shortcut, GetIsGlobal(child));
+                    KeyMapEntry managed = dst.AddShortcut(name, shortcut, GetIsGlobal(child));
                     managed.IsInherited = GetIsInherit(child);
                     managed.RepeatMode = GetRepeatMode(child);
                     managed.CommandId = GetAttributeNullable(child, "CommandId");
@@ -347,9 +348,9 @@ public abstract class XMLShortcutSerialiser : IKeymapSerialiser {
         return attribute;
     }
 
-    protected static string GetElementName(IKeyMapEntry owner, XmlElement child) => GetAttributeNonNull(owner, child, "Name");
+    protected static string GetElementName(IBaseKeyMapEntry owner, XmlElement child) => GetAttributeNonNull(owner, child, "Name");
 
-    protected static string GetAttributeNonNull(IKeyMapEntry owner, XmlElement element, string key, bool requireNonWhitespaces = true) {
+    protected static string GetAttributeNonNull(IBaseKeyMapEntry owner, XmlElement element, string key, bool requireNonWhitespaces = true) {
         if (!element.HasAttribute(key)) {
             throw new Exception($"'{key}' attribute must be provided, for object at path '{owner.FullPath ?? "<root>"}'");
         }

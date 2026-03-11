@@ -19,7 +19,7 @@
 
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -45,7 +45,7 @@ public class CommandEventArgs {
     /// <summary>
     /// Gets the shortcut entry that caused a command to execute
     /// </summary>
-    public ShortcutEntry? Shortcut { get; }
+    public KeyMapEntry? Shortcut { get; }
 
     /// <summary>
     /// Gets the context registry for the context menu that caused a command to execute
@@ -67,12 +67,12 @@ public class CommandEventArgs {
     /// </summary>
     public bool IsUserInitiated { get; }
 
-    public CommandEventArgs(CommandManager manager, IContextData contextData, ShortcutEntry? shortcut, ContextRegistry? sourceContextMenu, bool isUserInitiated) {
+    public CommandEventArgs(CommandManager manager, IContextData contextData, KeyMapEntry? shortcut, ContextRegistry? sourceContextMenu, bool isUserInitiated) {
         this.Manager = manager ?? throw new ArgumentNullException(nameof(manager), "Command manager cannot be null");
         this.ContextData = contextData ?? throw new ArgumentNullException(nameof(contextData), "Context data cannot be null");
         this.Shortcut = shortcut;
         this.SourceContextMenu = sourceContextMenu;
         this.IsUserInitiated = isUserInitiated;
-        this.ShortcutFocusArea = ShortcutManager.Instance.CurrentFocusPath;
+        this.ShortcutFocusArea = KeyMapManager.Instance.CurrentFocusPath;
     }
 }

@@ -24,6 +24,7 @@ using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees;
 
@@ -35,13 +36,13 @@ public partial class ShotcutTreeViewItemToolTip : UserControl, IToolTipControl {
     public void OnOpened(Control owner, IContextData data) {
         bool insertSpacing = false;
 
-        if (!IKeyMapEntry.DataKey.TryGetContext(data, out IKeyMapEntry? entry)) {
+        if (!IBaseKeyMapEntry.DataKey.TryGetContext(data, out IBaseKeyMapEntry? entry)) {
             this.PART_TextBlock.Inlines?.Clear();
             return;
         }
 
         InlineCollection inlines = this.PART_TextBlock.Inlines ??= new InlineCollection();
-        if (entry is ShortcutEntry shortcut && !string.IsNullOrWhiteSpace(shortcut.CommandId)) {
+        if (entry is KeyMapEntry shortcut && !string.IsNullOrWhiteSpace(shortcut.CommandId)) {
             inlines.Add(new Run("Target Command ID") { FontSize = 16, FontWeight = FontWeight.Bold, BaselineAlignment = BaselineAlignment.Center });
             inlines.Add(new LineBreak());
 

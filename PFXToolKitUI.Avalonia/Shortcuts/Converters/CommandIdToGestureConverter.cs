@@ -17,10 +17,8 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Avalonia.Data.Converters;
-using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Shortcuts;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
@@ -32,7 +30,7 @@ public class CommandIdToGestureConverter : IValueConverter {
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is string id) {
-            return CommandIdToGesture(id, out string? gesture) ? gesture : this.NoSuchActionText;
+            return KeymapUtils.TryGetStringForCommandId(id, out string? gesture) ? gesture : this.NoSuchActionText;
         }
 
         throw new Exception("Value is not a string");
@@ -40,17 +38,5 @@ public class CommandIdToGestureConverter : IValueConverter {
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) {
         throw new NotImplementedException();
-    }
-
-    public static bool CommandIdToGesture(string? id, [NotNullWhen(true)] out string? gesture) {
-        if (id != null && CommandManager.Instance.GetCommandById(id) != null) {
-            IReadOnlyCollection<ShortcutEntry> shortcuts = ShortcutManager.Instance.GetShortcutsByCommandId(id);
-            if (shortcuts.Count > 0) {
-                return (gesture = ShortcutIdToGestureConverter.ShortcutsToGesture(shortcuts, null)) != null;
-            }
-        }
-
-        gesture = null;
-        return false;
     }
 }

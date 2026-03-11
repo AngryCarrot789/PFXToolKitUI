@@ -20,8 +20,8 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Avalonia.Utils;
+using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees.InputStrokeControls;
@@ -54,12 +54,8 @@ public class KeyStrokeControl : TemplatedControl {
     }
 
     private void UpdateText() {
-        if (this.PART_TextBlock == null)
-            return;
-
-        if (!(this.KeyStroke is KeyStroke stroke))
-            return;
-
-        this.PART_TextBlock.Text = KeyStrokeStringConverter.ToStringFunction(stroke.KeyCode, stroke.Modifiers, stroke.IsRelease, false, true);
+        if (this.PART_TextBlock != null && this.KeyStroke is KeyStroke stroke) {
+            this.PART_TextBlock.Text = KeymapUtils.GetStringForKeyStroke(stroke, false, true);
+        }
     }
 }

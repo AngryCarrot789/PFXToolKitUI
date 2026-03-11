@@ -9,10 +9,10 @@ using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
-public class AvaloniaShortcutInputProcessor : ShortcutInputProcessor {
+public class AvaloniaKeyMapInputProcessor : KeyMapInputProcessor {
     internal bool isProcessingKey;
 
-    public new AvaloniaShortcutManager Manager => (AvaloniaShortcutManager) base.Manager;
+    public new AvaloniaKeyMapManager Manager => (AvaloniaKeyMapManager) base.Manager;
 
     /// <summary>
     /// The dependency object that was involved during the input event. This is usually the focused element
@@ -22,7 +22,7 @@ public class AvaloniaShortcutInputProcessor : ShortcutInputProcessor {
 
     private IContextData? lazyCurrentContextData;
 
-    public AvaloniaShortcutInputProcessor(AvaloniaShortcutManager manager) : base(manager) {
+    public AvaloniaKeyMapInputProcessor(AvaloniaKeyMapManager manager) : base(manager) {
     }
 
     public void BeginInputProcessing(AvaloniaObject target) {
@@ -34,7 +34,7 @@ public class AvaloniaShortcutInputProcessor : ShortcutInputProcessor {
         this.CurrentTargetObject = null;
     }
 
-    internal void OnInputSourceKeyEvent(AvaloniaShortcutInputProcessor processor, InputElement focused, KeyEventArgs e, Key key, bool isRelease, bool isRepeat) {
+    internal void OnInputSourceKeyEvent(AvaloniaKeyMapInputProcessor processor, InputElement focused, KeyEventArgs e, Key key, bool isRelease, bool isRepeat) {
         if (this.isProcessingKey)
             throw new InvalidOperationException("Already processing input");
         

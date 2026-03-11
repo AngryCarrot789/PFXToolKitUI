@@ -6,7 +6,11 @@
              x:Class="PFXToolKitUI.Avalonia.Shortcuts.Dialogs.MouseStrokeUserInputControl">
     <Grid>
         <TextBlock Margin="10,10,10,0" VerticalAlignment="Top" Padding="2" Text="Click any mouse button in here:"/>
-        <Border PointerPressed="InputElement_OnPointerPressed" PointerWheelChanged="InputElement_OnPointerWheelChanged" Margin="10,35,10,39" Background="{DynamicResource AREghZyBrush.Deep.2.Background.Static}" BorderBrush="{DynamicResource AREghZyBrush.Deep.3.Border.Static}" BorderThickness="1">
+        <Border x:Name="PART_Border" 
+                Margin="10,35,10,10" 
+                Background="{DynamicResource ABrush.Tone1.Background.Static}" 
+                BorderBrush="{DynamicResource ABrush.Tone3.Border.Static}" 
+                BorderThickness="1">
             <TextBlock x:Name="InputBox" HorizontalAlignment="Center" VerticalAlignment="Center"/>
         </Border>
     </Grid>

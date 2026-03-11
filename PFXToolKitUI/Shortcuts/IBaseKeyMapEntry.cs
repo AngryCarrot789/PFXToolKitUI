@@ -18,29 +18,30 @@
 // 
 
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Shortcuts;
 
 /// <summary>
-/// An interface implemented by <see cref="ShortcutGroupEntry"/>, <see cref="ShortcutEntry"/> and <see cref="InputStateEntry"/>
+/// An interface implemented by <see cref="KeyMapGroupEntry"/>, <see cref="KeyMapEntry"/> and <see cref="InputStateEntry"/>
 /// </summary>
-public interface IKeyMapEntry {
-    public static readonly DataKey<IKeyMapEntry> DataKey = DataKeys.Create<IKeyMapEntry>(nameof(IKeyMapEntry));
+public interface IBaseKeyMapEntry {
+    public static readonly DataKey<IBaseKeyMapEntry> DataKey = DataKeys.Create<IBaseKeyMapEntry>(nameof(IBaseKeyMapEntry));
     
     /// <summary>
-    /// Gets the manager that this object belongs to. This typically is equal to <see cref="ShortcutManager.Instance"/>
+    /// Gets the manager that this object belongs to. This typically is equal to <see crefKeyMapManagerer.Instance"/>
     /// </summary>
-    ShortcutManager? Manager { get; }
+    KeyMapManager? Manager { get; }
 
     /// <summary>
     /// Gets the group that contains this object. Null means that this object is the
-    /// root <see cref="ShortcutGroupEntry"/> for a <see cref="ShortcutManager"/>
+    /// root <see cref="KeyMapGroupEntry"/> for a <see cref="KeyMapManager"/>
     /// </summary>
-    ShortcutGroupEntry? Parent { get; }
+    KeyMapGroupEntry? Parent { get; }
 
     /// <summary>
-    /// Gets the name of this entry. If this instance is a <see cref="ShortcutGroupEntry"/> and is the root
-    /// for a <see cref="ShortcutManager"/>, then this value will be null. Otherwise, This will not be null,
+    /// Gets the name of this entry. If this instance is a <see cref="KeyMapGroupEntry"/> and is the root
+    /// for a <see cref="KeyMapManager"/>, then this value will be null. Otherwise, This will not be null,
     /// empty or consist of only whitespaces; it will always be a valid string (even if only 1 character)
     /// </summary>
     string? Name { get; }

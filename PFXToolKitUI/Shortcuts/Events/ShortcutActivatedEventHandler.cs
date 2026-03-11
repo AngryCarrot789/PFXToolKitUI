@@ -18,7 +18,8 @@
 // 
 
 using PFXToolKitUI.Interactivity.Contexts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Shortcuts.Events;
 
-public delegate bool ShortcutActivatedEventHandler(ShortcutInputProcessor inputProcessor, ShortcutEntry shortcutEntry, IContextData context);
+public delegate bool ShortcutActivatedEventHandler(KeyMapInputProcessor inputProcessor, KeyMapEntry keyMapEntry, IContextData context);

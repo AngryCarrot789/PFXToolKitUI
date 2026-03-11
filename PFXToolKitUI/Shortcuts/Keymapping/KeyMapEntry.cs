@@ -20,16 +20,16 @@
 using System.Text;
 using PFXToolKitUI.Utils.Events;
 
-namespace PFXToolKitUI.Shortcuts;
+namespace PFXToolKitUI.Shortcuts.Keymapping;
 
 /// <summary>
 /// A class used to store a reference to a <see cref="Shortcut"/> and its
-/// owning <see cref="ShortcutGroupEntry"/>, and also other shortcut data
+/// owning <see cref="KeyMapGroupEntry"/>, and also other shortcut data
 /// </summary>
-public sealed class ShortcutEntry : IKeyMapEntry {
-    public ShortcutManager? Manager => this.Parent?.Manager;
+public sealed class KeyMapEntry : IBaseKeyMapEntry {
+    public KeyMapManager? Manager => this.Parent?.Manager;
 
-    public ShortcutGroupEntry? Parent { get; }
+    public KeyMapGroupEntry? Parent { get; }
 
     /// <summary>
     /// The name of the shortcut. This will not be null or empty and will not consist of only whitespaces;
@@ -91,7 +91,7 @@ public sealed class ShortcutEntry : IKeyMapEntry {
 
     public event EventHandler<ValueChangedEventArgs<IShortcut>>? ShortcutChanged;
 
-    public ShortcutEntry(ShortcutGroupEntry groupEntry, string name, IShortcut shortcut, bool isGlobal = false) {
+    public KeyMapEntry(KeyMapGroupEntry groupEntry, string name, IShortcut shortcut, bool isGlobal = false) {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name cannot be null, empty, or consist of only whitespaces");
         this.Parent = groupEntry ?? throw new ArgumentNullException(nameof(groupEntry), "Collection cannot be null");
@@ -104,7 +104,7 @@ public sealed class ShortcutEntry : IKeyMapEntry {
 
     public override string ToString() {
         StringBuilder sb = new StringBuilder();
-        sb.Append(nameof(ShortcutEntry)).Append(" (").Append(this.Shortcut.IsEmpty ? "Empty/No Shortcut" : this.Shortcut.ToString()).Append(" -> ").Append(this.FullPath);
+        sb.Append(nameof(KeyMapEntry)).Append(" (").Append(this.Shortcut.IsEmpty ? "Empty/No Shortcut" : this.Shortcut.ToString()).Append(" -> ").Append(this.FullPath);
         if (!string.IsNullOrWhiteSpace(this.Description)) {
             sb.Append(" (").Append(this.Description).Append(")");
         }

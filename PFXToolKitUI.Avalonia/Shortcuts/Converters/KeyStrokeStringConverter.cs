@@ -18,35 +18,14 @@
 // 
 
 using System.Globalization;
-using System.Text;
 using Avalonia.Data.Converters;
-using Avalonia.Input;
-using PFXToolKitUI.Utils;
+using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 
 public class KeyStrokeStringConverter : IMultiValueConverter {
     public static KeyStrokeStringConverter Instance { get; } = new KeyStrokeStringConverter();
-
-    public static string ToStringFunction(int keyCode, int modifiers, bool release, bool appendKeyDown, bool appendKeyUp) {
-        StringBuilder sb = new StringBuilder();
-        string mods = ModsToString((KeyModifiers) modifiers);
-        if (mods.Length > 0) {
-            sb.Append(mods).Append('+');
-        }
-
-        sb.Append((Key) keyCode);
-        if (release) {
-            if (appendKeyUp) {
-                sb.Append(" (↑)");
-            }
-        }
-        else if (appendKeyDown) {
-            sb.Append(" (↓)");
-        }
-
-        return sb.ToString();
-    }
 
     public bool AppendKeyDown { get; set; } = true;
     public bool AppendKeyUp { get; set; } = true;
@@ -63,23 +42,10 @@ public class KeyStrokeStringConverter : IMultiValueConverter {
         if (!(values[2] is bool isRelease))
             throw new Exception("values[2] must be a bool: isRelease");
 
-        return ToStringFunction(keyCode, modifiers, isRelease, this.AppendKeyDown, this.AppendKeyUp);
+        return KeymapUtils.GetStringForKeyStroke(new KeyStroke(keyCode, modifiers, isRelease), this.AppendKeyDown, this.AppendKeyUp);
     }
 
     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture) {
         throw new NotImplementedException();
-    }
-
-    public static string ModsToString(KeyModifiers keys) {
-        StringJoiner joiner = new StringJoiner("+");
-        if ((keys & KeyModifiers.Control) != 0)
-            joiner.Append("Ctrl");
-        if ((keys & KeyModifiers.Alt) != 0)
-            joiner.Append("Alt");
-        if ((keys & KeyModifiers.Shift) != 0)
-            joiner.Append("Shift");
-        if ((keys & KeyModifiers.Meta) != 0)
-            joiner.Append("Win");
-        return joiner.ToString();
     }
 }

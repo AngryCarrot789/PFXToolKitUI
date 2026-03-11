@@ -19,16 +19,21 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Media;
 
 namespace PFXToolKitUI.Avalonia.Themes.Attached;
 
 public static class TabControlStripExtras {
     public static readonly AttachedProperty<object?> LeftContentProperty = AvaloniaProperty.RegisterAttached<Control, object?>("LeftContent", typeof(TabControlStripExtras));
     public static readonly AttachedProperty<object?> RightContentProperty = AvaloniaProperty.RegisterAttached<Control, object?>("RightContent", typeof(TabControlStripExtras));
+    public static readonly AttachedProperty<IBrush?> TabStripBackgroundProperty = AvaloniaProperty.RegisterAttached<Control, IBrush?>("RightContent", typeof(TabControlStripExtras), defaultValue: Brushes.Transparent);
 
     public static void SetLeftContent(Control obj, object? value) => obj.SetValue(LeftContentProperty, value);
     public static object? GetLeftContent(Control obj) => obj.GetValue(LeftContentProperty);
     
     public static void SetRightContent(Control obj, object? value) => obj.SetValue(RightContentProperty, value);
     public static object? GetRightContent(Control obj) => obj.GetValue(RightContentProperty);
+    
+    public static void SetTabStripBackground(Control obj, IBrush? value) => obj.SetValue(TabStripBackgroundProperty, value);
+    public static IBrush? GetTabStripBackground(Control obj) => obj.GetValue(TabStripBackgroundProperty);
 }

@@ -129,4 +129,8 @@
             </ControlTemplate>
         </Setter>
     </ControlTheme>
+
+    <ControlTheme x:Key="{x:Type local:IndeterminateSpinner}" TargetType="{x:Type local:IndeterminateSpinner}">
+        <Setter Property="SegmentFillColour" Value="{DynamicResource ABrush.Glyph.Static.Color}"/>
+    </ControlTheme>
 </ResourceDictionary>

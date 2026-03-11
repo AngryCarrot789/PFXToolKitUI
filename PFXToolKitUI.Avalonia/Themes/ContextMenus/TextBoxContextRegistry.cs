@@ -19,14 +19,23 @@
 
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Input;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils.Events;
+using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Inputs;
 
 namespace PFXToolKitUI.Avalonia.Themes.ContextMenus;
 
 public static class TextBoxContextRegistry {
-    public static readonly ContextRegistry Registry = new ContextRegistry("Text Box");
+    public static readonly ContextRegistry Registry = new ContextRegistry("");
+    
+    private static readonly IEnumerable<IShortcut> s_ShortcutsUndo = [new KeyboardShortcut(new KeyStroke((int) Key.Z, (int) KeyModifiers.Control))];
+    private static readonly IEnumerable<IShortcut> s_ShortcutsRedo = [new KeyboardShortcut(new KeyStroke((int) Key.Y, (int) KeyModifiers.Control)), new KeyboardShortcut(new KeyStroke((int) Key.Z, (int) (KeyModifiers.Control | KeyModifiers.Shift)))];
+    private static readonly IEnumerable<IShortcut> s_ShortcutsCut = [new KeyboardShortcut(new KeyStroke((int) Key.X, (int) KeyModifiers.Control))];
+    private static readonly IEnumerable<IShortcut> s_ShortcutsCopy = [new KeyboardShortcut(new KeyStroke((int) Key.C, (int) KeyModifiers.Control))];
+    private static readonly IEnumerable<IShortcut> s_ShortcutsPaste = [new KeyboardShortcut(new KeyStroke((int) Key.V, (int) KeyModifiers.Control))];
+    private static readonly IEnumerable<IShortcut> s_ShortcutsSelectAll = [new KeyboardShortcut(new KeyStroke((int) Key.A, (int) KeyModifiers.Control))];
 
     /// <summary>
     /// The data key used to identify the text box that uses <see cref="TextBoxContextRegistry"/> for its context menu
@@ -35,16 +44,16 @@ public static class TextBoxContextRegistry {
 
     static TextBoxContextRegistry() {
         FixedWeightedMenuEntryGroup group = Registry.GetFixedGroup("general");
-        group.AddEntry(new TextBoxMenuEntry("Undo", (t) => t.Undo(), TextBox.CanUndoProperty) { InputGestureText = "CTRL+Z" });
-        group.AddEntry(new TextBoxMenuEntry("Redo", (t) => t.Redo(), TextBox.CanRedoProperty) { InputGestureText = "CTRL+Y or CTRL+SHIFT+Z" });
+        group.AddEntry(new TextBoxMenuEntry("Undo", t => t.Undo(), TextBox.CanUndoProperty) { InputGestureText = KeymapUtils.GetStringForShortcuts(s_ShortcutsUndo)! });
+        group.AddEntry(new TextBoxMenuEntry("Redo", t => t.Redo(), TextBox.CanRedoProperty) { InputGestureText = KeymapUtils.GetStringForShortcuts(s_ShortcutsRedo)! });
         group.AddSeparator();
-        group.AddEntry(new TextBoxMenuEntry("Cut", (t) => t.Cut(), TextBox.CanCutProperty) { InputGestureText = "CTRL+X" });
-        group.AddEntry(new TextBoxMenuEntry("Copy", (t) => t.Copy(), TextBox.CanCopyProperty) { InputGestureText = "CTRL+C" });
-        group.AddEntry(new TextBoxMenuEntry("Paste", (t) => t.Paste(), TextBox.CanPasteProperty) { InputGestureText = "CTRL+V" });
+        group.AddEntry(new TextBoxMenuEntry("Cut", t => t.Cut(), TextBox.CanCutProperty) { InputGestureText = KeymapUtils.GetStringForShortcuts(s_ShortcutsCut)! });
+        group.AddEntry(new TextBoxMenuEntry("Copy", t => t.Copy(), TextBox.CanCopyProperty) { InputGestureText = KeymapUtils.GetStringForShortcuts(s_ShortcutsCopy)! });
+        group.AddEntry(new TextBoxMenuEntry("Paste", t => t.Paste(), TextBox.CanPasteProperty) { InputGestureText = KeymapUtils.GetStringForShortcuts(s_ShortcutsPaste)! });
         group.AddSeparator();
-        group.AddEntry(new TextBoxMenuEntry("Select All", (t) => t.SelectAll(), null) { InputGestureText = "CTRL+A" });
+        group.AddEntry(new TextBoxMenuEntry("Select All", t => t.SelectAll(), null) { InputGestureText = KeymapUtils.GetStringForShortcuts(s_ShortcutsSelectAll)! });
         group.AddSeparator();
-        group.AddEntry(new TextBoxMenuEntry("Clear Text", (t) => t.Clear(), null));
+        group.AddEntry(new TextBoxMenuEntry("Clear Text", t => t.Clear(), null));
     }
 }
 

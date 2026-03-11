@@ -17,13 +17,10 @@
 // License along with PFXToolKitUI. If not, see <https://www.gnu.org/licenses/>.
 // 
 
-using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using PFXToolKitUI.Shortcuts;
-using PFXToolKitUI.Shortcuts.Inputs;
-using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 
@@ -32,10 +29,10 @@ public class ShortcutIdToGestureConverter : IValueConverter {
 
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) {
         if (value is string path) {
-            return ShortcutIdToGesture(path, null, out string? gesture) ? gesture : AvaloniaProperty.UnsetValue;
+            return KeymapUtils.GetStringForShortcutPath(path) ?? AvaloniaProperty.UnsetValue;
         }
         else if (value is IEnumerable<string> paths) {
-            return ShortcutIdToGesture(paths, null, out string? gesture) ? gesture : AvaloniaProperty.UnsetValue;
+            return KeymapUtils.GetStringForShortcutPaths(paths) ?? AvaloniaProperty.UnsetValue;
         }
 
         throw new Exception("Value is not a shortcut string");
@@ -43,62 +40,5 @@ public class ShortcutIdToGestureConverter : IValueConverter {
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) {
         throw new NotImplementedException();
-    }
-
-    public static bool ShortcutIdToGesture(string path, string fallback, out string? gesture) {
-        ShortcutEntry? shortcutEntry = ShortcutManager.Instance?.FindShortcutByPath(path);
-        if (shortcutEntry == null) {
-            return (gesture = fallback) != null;
-        }
-
-        gesture = shortcutEntry.Shortcut.ToString();
-        return true;
-    }
-
-    public static bool ShortcutIdToGesture(IEnumerable<string> paths, string? fallback, [NotNullWhen(true)] out string? gesture) {
-        List<ShortcutEntry>? shortcut = ShortcutManager.Instance?.FindShortcutsByPaths(paths).ToList();
-        if (shortcut == null || shortcut.Count < 1) {
-            return (gesture = fallback) != null;
-        }
-
-        return (gesture = ShortcutsToGesture(shortcut, null)) != null;
-    }
-
-    public static string? ShortcutsToGesture(IEnumerable<ShortcutEntry> shortcuts, string? fallback, bool removeDupliateInputStrokes = true) {
-        if (removeDupliateInputStrokes) {
-            HashSet<string> strokes = new HashSet<string>();
-            List<string> newList = new List<string>();
-            foreach (ShortcutEntry sc in shortcuts) {
-                string text = ToString(sc);
-                if (strokes.Add(text)) {
-                    newList.Add(text);
-                }
-            }
-
-            return newList.JoinString(", ", " or ", fallback);
-        }
-        else {
-            return shortcuts.Select(ToString).JoinString(", ", " or ", fallback);
-        }
-    }
-
-    public static string ToString(ShortcutEntry shortcutEntry) {
-        return ToString(shortcutEntry.Shortcut.InputStrokes);
-    }
-    
-    public static string ToString(IEnumerable<IInputStroke> inputStrokes) {
-        return string.Join("+", inputStrokes.Select(ToString));
-    }
-
-    public static string ToString(IInputStroke stroke) {
-        if (stroke is MouseStroke ms) {
-            return MouseStrokeStringConverter.ToStringFunction(ms.MouseButton, ms.Modifiers, ms.ClickCount);
-        }
-        else if (stroke is KeyStroke ks) {
-            return KeyStrokeStringConverter.ToStringFunction(ks.KeyCode, ks.Modifiers, ks.IsRelease, false, true);
-        }
-        else {
-            return stroke?.ToString() ?? "";
-        }
     }
 }

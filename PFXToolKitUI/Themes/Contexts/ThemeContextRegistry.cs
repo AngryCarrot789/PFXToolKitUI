@@ -21,6 +21,7 @@ using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Themes.Configurations;
 
 namespace PFXToolKitUI.Themes.Contexts;
@@ -35,11 +36,11 @@ public static class ThemeContextRegistry {
     }
 
     private class DeleteInputStrokeEntry : CustomMenuEntry {
-        public ShortcutEntry Entry { get; }
+        public KeyMapEntry Entry { get; }
 
         public IInputStroke Stroke { get; }
 
-        public DeleteInputStrokeEntry(IInputStroke stroke, ShortcutEntry entry, string displayName, string? description) : base(displayName, description) {
+        public DeleteInputStrokeEntry(IInputStroke stroke, KeyMapEntry entry, string displayName, string? description) : base(displayName, description) {
             this.Stroke = stroke;
             this.Entry = entry;
         }

@@ -19,7 +19,6 @@
 
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
 
 namespace PFXToolKitUI.Utils;
 
@@ -146,91 +145,5 @@ public static class ArrayUtils {
         }
 
         return -1;
-    }
-
-    public static void ThrowIfOutOfBounds(Array array, int offset, int count) {
-        ArgumentNullException.ThrowIfNull(array);
-        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, count);
-    }
-    
-    public static void ThrowIfOutOfBounds<T>(T[] array, int offset, int count) {
-        ArgumentNullException.ThrowIfNull(array);
-        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, count);
-    }
-
-    public static void ThrowIfOutOfBounds<T>(Span<T> span, int offset, int count) {
-        ThrowIfOutOfBounds((uint) span.Length, offset, count);
-    }
-    
-    public static void ThrowIfOutOfBounds<T>(ReadOnlySpan<T> span, int offset, int count) {
-        ThrowIfOutOfBounds((uint) span.Length, offset, count);
-    }
-
-    public static void ThrowIfOutOfBounds(uint length, int offset, int count) {
-        ArgumentOutOfRangeException.ThrowIfNegative(offset);
-        ArgumentOutOfRangeException.ThrowIfNegative(count);
-        if ((uint) offset >= length || (uint) count > (length - (uint) offset)) {
-            ThrowOutOfBounds(length, offset, count);
-        }
-
-        return;
-
-        [DoesNotReturn]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void ThrowOutOfBounds(uint length, int offset, int count) {
-            throw (uint) offset >= length 
-                ? new ArgumentException($"Offset out of bounds of length: {offset} > {length}") 
-                : new ArgumentException($"Offset+Count exceeds bounds: ({offset} + {count}) > {length}");
-        }
-    }
-        
-    public static void ThrowIfOutOfBounds(Array array, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
-        ArgumentNullException.ThrowIfNull(array);
-        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, paramName);
-    }
-    
-    public static void ThrowIfOutOfBounds<T>(T[] array, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
-        ArgumentNullException.ThrowIfNull(array);
-        ThrowIfOutOfBounds((uint) (nuint) array.LongLength, offset, paramName);
-    }
-
-    public static void ThrowIfOutOfBounds<T>(Span<T> span, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
-        ThrowIfOutOfBounds((uint) span.Length, offset, paramName);
-    }
-    
-    public static void ThrowIfOutOfBounds<T>(ReadOnlySpan<T> span, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
-        ThrowIfOutOfBounds((uint) span.Length, offset, paramName);
-    }
-
-    public static void ThrowIfOutOfBounds(int length, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
-        ArgumentOutOfRangeException.ThrowIfNegative(length);
-        ThrowIfOutOfBounds((uint) length, offset, paramName);
-    }
-    
-    public static void ThrowIfOutOfBounds(uint length, int offset, [CallerArgumentExpression(nameof(offset))] string? paramName = null) {
-        ArgumentOutOfRangeException.ThrowIfNegative(offset);
-        if (IsOutOfBounds(length, offset)) {
-            ThrowTooLarge(length, offset, paramName);
-        }
-
-        return;
-
-        [DoesNotReturn]
-        [MethodImpl(MethodImplOptions.NoInlining)]
-        static void ThrowTooLarge(uint length, int offset, string? paramName) {
-            throw new ArgumentException($"'{paramName ?? "offset"}' out of bounds: {(offset < 0 ? $"{offset} < 0" : $"{offset} > {length}")}");
-        }
-    }
-
-    public static bool IsOutOfBounds(int length, int offset) {
-        return length < 0 || offset < 0 || IsOutOfBounds((uint) length, (uint) offset);
-    }
-
-    public static bool IsOutOfBounds(uint length, int offset) {
-        return offset < 0 || IsOutOfBounds(length, (uint) offset);
-    }
-    
-    public static bool IsOutOfBounds(uint length, uint offset) {
-        return offset >= length || 1 > (length - offset);
     }
 }

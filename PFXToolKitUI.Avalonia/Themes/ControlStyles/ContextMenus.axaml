@@ -36,8 +36,10 @@
                         BorderBrush="{TemplateBinding BorderBrush}"
                         BorderThickness="{TemplateBinding BorderThickness}"
                         CornerRadius="{TemplateBinding CornerRadius}">
-                    <Grid RowDefinitions="Auto,1,*">
-                        <Border Grid.Row="0" Background="{DynamicResource ABrush.Tone6.Background.Static}">
+                    <Grid RowDefinitions="Auto,1,*" x:Name="PART_Grid">
+                        <Border x:Name="PART_CaptionPanel" 
+                                Grid.Row="0" 
+                                Background="{DynamicResource ABrush.Tone6.Background.Static}">
                             <DockPanel LastChildFill="False">
                                 <TextBlock Text="{TemplateBinding ContextCaption}"
                                            FontSize="16"

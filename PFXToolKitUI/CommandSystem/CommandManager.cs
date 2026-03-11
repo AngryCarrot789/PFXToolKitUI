@@ -21,7 +21,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.CommandSystem;
 
@@ -99,7 +99,7 @@ public sealed class CommandManager {
     /// <exception cref="Exception">The command threw an exception</exception>
     /// <exception cref="ArgumentException">ID is null, empty or consists of only whitespaces</exception>
     /// <exception cref="ArgumentNullException">Context is null</exception>
-    public async Task Execute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
+    public async Task Execute(string commandId, IContextData context, KeyMapEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         ArgumentNullException.ThrowIfNull(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
@@ -115,7 +115,7 @@ public sealed class CommandManager {
     /// <param name="context">The context data to pass to the command</param>
     /// <param name="shortcut">
     /// The shortcut that caused the command to be executed, usually only
-    /// non-null when called by the <see cref="ShortcutManager"/>
+    /// non-null when called by the <see cref="KeyMapManager"/>
     /// </param>
     /// <param name="contextMenu">
     /// The context menu that owns the menu entry that caused the command to be executed
@@ -128,7 +128,7 @@ public sealed class CommandManager {
     /// A task that represents the command operation. When completed, <see cref="Command.IsExecuting"/>
     /// will return false if <see cref="Command.AllowMultipleExecutions"/> is also false
     /// </returns>
-    public async Task Execute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
+    public async Task Execute(Command command, IContextData context, KeyMapEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentNullException.ThrowIfNull(context);
         using IDisposable globalContextUsage = LocalContextManager.PushContext(context);
         await command.InternalExecuteImpl(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
@@ -142,7 +142,7 @@ public sealed class CommandManager {
     /// <param name="shortcut">The shortcut that caused the action to be run</param>
     /// <param name="contextMenu">The context menu that owns the menu entry that caused the action to be run</param>
     /// <param name="isUserInitiated">Whether a user effectively caused the command to execute</param>
-    public async Task RunActionAsync(Func<CommandEventArgs, Task> function, IContextData context, ShortcutEntry? shortcut = null, ContextRegistry? contextMenu = null, bool isUserInitiated = true) {
+    public async Task RunActionAsync(Func<CommandEventArgs, Task> function, IContextData context, KeyMapEntry? shortcut = null, ContextRegistry? contextMenu = null, bool isUserInitiated = true) {
         ApplicationPFX.Instance.Dispatcher.VerifyAccess();
 
         using IDisposable globalContextUsage = this.asyncContextManager.PushContext(context);
@@ -164,7 +164,7 @@ public sealed class CommandManager {
     /// <param name="contextMenu"></param>
     /// <param name="isUserInitiated"></param>
     /// <returns></returns>
-    public Executability CanExecute(string commandId, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
+    public Executability CanExecute(string commandId, IContextData context, KeyMapEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentException.ThrowIfNullOrWhiteSpace(commandId);
         ArgumentNullException.ThrowIfNull(context);
         if (this.commands.TryGetValue(commandId, out CommandEntry? command)) {
@@ -183,7 +183,7 @@ public sealed class CommandManager {
     /// <param name="contextMenu"></param>
     /// <param name="isUserInitiated"></param>
     /// <returns></returns>
-    public Executability CanExecute(Command command, IContextData context, ShortcutEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
+    public Executability CanExecute(Command command, IContextData context, KeyMapEntry? shortcut, ContextRegistry? contextMenu, bool isUserInitiated = true) {
         ArgumentNullException.ThrowIfNull(context);
         return command.CanExecute(new CommandEventArgs(this, context, shortcut, contextMenu, isUserInitiated));
     }

@@ -18,21 +18,22 @@
 // 
 
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Shortcuts;
 
 /// <summary>
 /// An input state has a property called <see cref="IsActive"/> which can be activated, deactivated or toggled by the user
 /// </summary>
-public class InputStateEntry : IKeyMapEntry {
+public class InputStateEntry : IBaseKeyMapEntry {
     private IInputStroke activationStroke;
     private IInputStroke deactivationStroke;
     private bool? isPressAndRelease;
     private bool? isToggleBehaviour;
 
-    public ShortcutManager Manager => this.Parent.Manager;
+    public KeyMapManager Manager => this.Parent.Manager;
 
-    public ShortcutGroupEntry Parent { get; }
+    public KeyMapGroupEntry Parent { get; }
 
     public string Name { get; }
 
@@ -107,7 +108,7 @@ public class InputStateEntry : IKeyMapEntry {
         }
     }
 
-    public InputStateEntry(ShortcutGroupEntry groupEntry, string name, IInputStroke activationStroke, IInputStroke deactivationStroke) {
+    public InputStateEntry(KeyMapGroupEntry groupEntry, string name, IInputStroke activationStroke, IInputStroke deactivationStroke) {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Name cannot be null, empty, or consist of only whitespaces");
         this.Parent = groupEntry ?? throw new ArgumentNullException(nameof(groupEntry), "Collection cannot be null");
@@ -122,7 +123,7 @@ public class InputStateEntry : IKeyMapEntry {
     /// </summary>
     /// <param name="shortcutProcessor"></param>
     /// <returns>A task to await for activation</returns>
-    public void OnActivated(ShortcutInputProcessor inputProcessor) {
+    public void OnActivated(KeyMapInputProcessor inputProcessor) {
         if (this.IsActive) {
             throw new Exception("Already active; cannot activate again");
         }
@@ -136,7 +137,7 @@ public class InputStateEntry : IKeyMapEntry {
     /// </summary>
     /// <param name="shortcutProcessor"></param>
     /// <returns>A task to await for activation</returns>
-    public void OnDeactivated(ShortcutInputProcessor inputProcessor) {
+    public void OnDeactivated(KeyMapInputProcessor inputProcessor) {
         if (!this.IsActive) {
             throw new Exception("Not active; cannot deactivate again");
         }

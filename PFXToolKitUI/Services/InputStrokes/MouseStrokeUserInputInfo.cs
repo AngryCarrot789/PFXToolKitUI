@@ -29,7 +29,7 @@ public class MouseStrokeUserInputInfo : UserInputInfo {
         DataParameter.Register(
             new DataParameter<MouseStroke?>(
                 typeof(MouseStrokeUserInputInfo),
-                nameof(MouseStroke), default(MouseStroke?),
+                nameof(MouseStroke), null,
                 ValueAccessors.Reflective<MouseStroke?>(typeof(MouseStrokeUserInputInfo), nameof(mouseStroke))));
 
     private MouseStroke? mouseStroke;
@@ -41,6 +41,10 @@ public class MouseStrokeUserInputInfo : UserInputInfo {
 
     public MouseStrokeUserInputInfo() {
         this.mouseStroke = MouseStrokeParameter.GetDefaultValue(this);
+    }
+
+    static MouseStrokeUserInputInfo() {
+        MouseStrokeParameter.ValueChanged += (sender, args) => ((MouseStrokeUserInputInfo) args.Owner).RaiseHasErrorsChanged();
     }
 
     public override bool HasErrors() {

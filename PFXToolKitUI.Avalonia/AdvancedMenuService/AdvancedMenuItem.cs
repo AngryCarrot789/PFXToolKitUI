@@ -28,7 +28,6 @@ using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Interactivity.Contexts;
-using PFXToolKitUI.Utils.Collections.Observable;
 using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;

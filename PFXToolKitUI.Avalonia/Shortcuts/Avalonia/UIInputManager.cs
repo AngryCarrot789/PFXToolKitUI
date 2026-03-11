@@ -54,7 +54,7 @@ public class UIInputManager {
     // /// </summary>
     // public static readonly AvaloniaProperty IsMouseProcessingBlockedProperty = AvaloniaProperty.RegisterAttached("IsMouseProcessingBlocked", typeof(bool), typeof(UIInputManager), new PropertyMetadata(default(bool)));
 
-    private static readonly AttachedProperty<AvaloniaShortcutInputProcessor?> ShortcutProcessorProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, AvaloniaShortcutInputProcessor?>("ShortcutProcessor");
+    private static readonly AttachedProperty<AvaloniaKeyMapInputProcessor?> ShortcutProcessorProperty = AvaloniaProperty.RegisterAttached<UIInputManager, TopLevel, AvaloniaKeyMapInputProcessor?>("ShortcutProcessor");
 
     /// <summary>
     /// A dependency property for a control's focus path. This is the full path, and
@@ -190,7 +190,7 @@ public class UIInputManager {
         if (key == Key.DeadCharProcessed || key == Key.System || key == Key.None)
             return;
 
-        AvaloniaShortcutInputProcessor processor = GetShortcutProcessor(sender);
+        AvaloniaKeyMapInputProcessor processor = GetShortcutProcessor(sender);
         if (processor.isProcessingKey)
             return;
 
@@ -231,10 +231,10 @@ public class UIInputManager {
         //     e.Handled = true;
     }
 
-    private static AvaloniaShortcutInputProcessor GetShortcutProcessor(TopLevel topLevel) {
-        AvaloniaShortcutInputProcessor? processor = topLevel.GetValue(ShortcutProcessorProperty);
+    private static AvaloniaKeyMapInputProcessor GetShortcutProcessor(TopLevel topLevel) {
+        AvaloniaKeyMapInputProcessor? processor = topLevel.GetValue(ShortcutProcessorProperty);
         if (processor == null)
-            topLevel.SetValue(ShortcutProcessorProperty, processor = new AvaloniaShortcutInputProcessor(AvaloniaShortcutManager.AvaloniaInstance));
+            topLevel.SetValue(ShortcutProcessorProperty, processor = new AvaloniaKeyMapInputProcessor(AvaloniaKeyMapManager.AvaloniaInstance));
         return processor;
     }
 

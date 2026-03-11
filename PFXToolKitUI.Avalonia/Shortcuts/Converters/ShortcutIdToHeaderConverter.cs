@@ -21,6 +21,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 
@@ -40,13 +41,13 @@ public class ShortcutIdToHeaderConverter : IValueConverter {
     }
 
     public static bool ShortcutIdToHeader(string path, string fallback, out string header) {
-        ShortcutEntry shortcutEntry = ShortcutManager.Instance.FindShortcutByPath(path);
+        KeyMapEntry? shortcutEntry = KeyMapManager.Instance.FindShortcutByPath(path);
         if (shortcutEntry == null) {
             return (header = fallback) != null;
         }
 
         // This could probably go in the guinness world records
-        header = shortcutEntry.DisplayName ?? shortcutEntry.Name ?? shortcutEntry.FullPath ?? shortcutEntry.CommandId ?? fallback ?? shortcutEntry.Shortcut.ToString();
+        header = shortcutEntry.DisplayName ?? shortcutEntry.Name;
         return true;
     }
 }

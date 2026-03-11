@@ -127,7 +127,7 @@ public readonly struct MouseStroke : IInputStroke, IEquatable<MouseStroke> {
 
     public string ToString(bool appendClickCount, bool appendDelta, bool useModSpacers) {
         StringBuilder sb = new StringBuilder();
-        string mod = KeyStroke.ModifierToStringProvider(this.Modifiers, useModSpacers);
+        string mod = KeyStroke.ModifierToStringProvider(this.Modifiers, useModSpacers ? " + " : "+");
         if (mod.Length > 0) {
             sb.Append(mod).Append(useModSpacers ? " + " : "+");
         }

@@ -20,23 +20,22 @@
 namespace PFXToolKitUI.CommandSystem;
 
 /// <summary>
-/// An enum that represents the state of the context information relative to a command.
+/// An enum that represents the executable state of a command based on available context.
 /// <para>
-/// For example, given a "DeleteSelectedClipsCommand" that can delete either a contextual clip,
-/// or selected clips from a contextual track or timeline:
+/// For example, given a command <c>DeleteSelectedObjectsCommand</c> that can delete selected objects of some controller object, e.g., <c>ObjectManager</c>
 /// </para>
 /// <para>
-/// If the context does not contain a clip nor a track or timeline, then <see cref="Invalid"/> will be used.
+/// If the context does not contain the <c>ObjectManager</c> then the executability is <see cref="Invalid"/>.
 /// </para>
 /// <para>
-/// If there IS a track or timeline, but there are no clips selected, then <see cref="ValidButCannotExecute"/>
-/// will be used. If there's a clip then this value would never be useful, due to the nature of the command
+/// If there IS an <c>ObjectManager</c>, but nothing is selected or some operation is going on that has
+/// disabled selection, then <see cref="ValidButCannotExecute"/> can be used.
 /// </para>
 /// <para>
-/// If there's just a clip, or, there's a track or timeline and there are selected clips, then
-/// <see cref="Valid"/> will be used, meaning <see cref="Command.Execute"/> will most likely result in
-/// work being done (unless there's an issue in the command implementation, or there's no overridden implementation,
-/// or the state of the contextual data changes since <see cref="Command.CanExecuteCore"/> was called)
+/// If there is an <c>ObjectManager</c> and selection is modifiable, then <see cref="Valid"/> is used, meaning
+/// <see cref="Command.ExecuteCommandAsync"/> will most likely result in work being done (unless there's an issue
+/// in the command implementation, or there's no overridden implementation, or the state of the contextual
+/// data changes since <see cref="Command.CanExecuteCore"/> was invoked)
 /// </para>
 /// </summary>
 public enum Executability {
@@ -47,27 +46,14 @@ public enum Executability {
     Invalid,
 
     /// <summary>
-    /// The context contains the correct information but the state of the context
-    /// data is not appropriate for the command execution
+    /// The context contains the correct information but the state of the context data is
+    /// not "appropriate" (e.g. deleted an already deleted object), therefore the command cannot run
     /// </summary>
     ValidButCannotExecute,
 
     /// <summary>
     /// The context contains the correct information and the command is fully executable.
-    /// This is the default value returned by <see cref="Command.CanExecuteCore"/>, just in case
-    /// I was too lazy to override the method
+    /// This is the default value returned by <see cref="Command.CanExecuteCore"/>.
     /// </summary>
     Valid
-}
-
-public static class ExecutabilityExtensions {
-    /// <summary>
-    /// Returns <see cref="second"/> when <see cref="first"/> is <see cref="Executability.Valid"/>
-    /// </summary>
-    /// <param name="first">The source</param>
-    /// <param name="second">The other, when source is valid</param>
-    /// <returns>First if not valid, otherwise second</returns>
-    public static Executability MergeValid(this Executability first, Executability second) {
-        return first != Executability.Valid ? first : second;
-    }
 }

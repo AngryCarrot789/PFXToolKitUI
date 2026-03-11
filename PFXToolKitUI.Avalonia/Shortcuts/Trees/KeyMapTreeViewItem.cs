@@ -21,6 +21,8 @@ using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
+using Avalonia.Layout;
+using Avalonia.Media;
 using PFXToolKitUI.Avalonia.AdvancedMenuService;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity;
@@ -31,16 +33,33 @@ using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Utils.Events;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees;
 
-public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
-    private readonly ManualBinderEx<ShortcutEntryHeaderControl, IKeyMapEntry> headerKeyMapBinder = new ManualBinderEx<ShortcutEntryHeaderControl, IKeyMapEntry>((c, m) => c.KeyMapEntry = m, (c, m) => c.KeyMapEntry = null);
+public class KeyMapTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
+    private readonly ManualBinderEx<ShortcutEntryHeaderControl, IBaseKeyMapEntry> headerKeyMapBinder = new ManualBinderEx<ShortcutEntryHeaderControl, IBaseKeyMapEntry>((c, m) => c.KeyMapEntry = m, (c, m) => c.KeyMapEntry = null);
 
     private readonly ManualBinderEx<StackPanel, IShortcut> shortcutStrokesBinder = new ManualBinderEx<StackPanel, IShortcut>((c, m) => {
         c.Children.Clear();
-        foreach (IInputStroke stroke in m.InputStrokes) {
+        using IEnumerator<IInputStroke> enumerator = m.InputStrokes.GetEnumerator();
+        if (enumerator.MoveNext()) {
+            AddEntry(enumerator.Current);
+            while (enumerator.MoveNext()) {
+                c.Children.Add(new TextBlock() {
+                    Text = " then ",
+                    TextAlignment = TextAlignment.Center,
+                    VerticalAlignment = VerticalAlignment.Center
+                });
+
+                AddEntry(enumerator.Current);
+            }
+        }
+
+        return;
+
+        void AddEntry(IInputStroke stroke) {
             if (stroke is KeyStroke keyStroke) {
                 c.Children.Add(new KeyStrokeControl() { KeyStroke = keyStroke });
             }
@@ -50,11 +69,11 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         }
     }, (c, m) => c.Children.Clear());
 
-    public ShortcutTreeView? ShortcutTree { get; private set; }
+    public KeyMapTreeView? ShortcutTree { get; private set; }
 
-    public ShortcutTreeViewItem? ParentNode { get; private set; }
+    public KeyMapTreeViewItem? ParentNode { get; private set; }
 
-    public IKeyMapEntry? Entry { get; private set; }
+    public IBaseKeyMapEntry? Entry { get; private set; }
 
     public int GroupCounter { get; private set; }
 
@@ -63,7 +82,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
     private ShortcutEntryHeaderControl? PART_HeaderControl;
     private StackPanel? PART_InputStrokeList;
 
-    public ShortcutTreeViewItem() {
+    public KeyMapTreeViewItem() {
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
@@ -86,21 +105,21 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
 
     #region Model Connection
 
-    public virtual void OnAdding(ShortcutTreeView tree, ShortcutTreeViewItem? parentNode, IKeyMapEntry resource) {
+    public virtual void OnAdding(KeyMapTreeView tree, KeyMapTreeViewItem? parentNode, IBaseKeyMapEntry resource) {
         this.ShortcutTree = tree;
         this.ParentNode = parentNode;
         this.Entry = resource;
 
         using IMutableContextData.BatchToken change = DataManager.GetContextData(this).BeginChange();
-        if (resource is ShortcutEntry entry)
+        if (resource is KeyMapEntry entry)
             change.Context.Set(ShortcutContextRegistry.ShortcutEntryKey, entry);
-        change.Context.Set(IKeyMapEntry.DataKey, resource);
+        change.Context.Set(IBaseKeyMapEntry.DataKey, resource);
     }
 
     public virtual void OnAdded() {
-        if (this.Entry is ShortcutGroupEntry myGroup) {
+        if (this.Entry is KeyMapGroupEntry myGroup) {
             int i = 0;
-            foreach (ShortcutGroupEntry entry in myGroup.Groups) {
+            foreach (KeyMapGroupEntry entry in myGroup.Groups) {
                 this.InsertGroup(entry, i++);
             }
 
@@ -110,11 +129,11 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
             }
 
             i = 0;
-            foreach (ShortcutEntry entry in myGroup.Shortcuts) {
+            foreach (KeyMapEntry entry in myGroup.Shortcuts) {
                 this.InsertShortcut(entry, i++);
             }
         }
-        else if (this.Entry is ShortcutEntry shortcut) {
+        else if (this.Entry is KeyMapEntry shortcut) {
             shortcut.ShortcutChanged += this.OnEntryShortcutChanged;
             this.OnEntryShortcutChanged(shortcut, new ValueChangedEventArgs<IShortcut>(null!, shortcut.Shortcut));
         }
@@ -136,7 +155,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         }
 
         this.GroupCounter = this.InputStateCounter = 0;
-        if (this.Entry is ShortcutEntry shortcut) {
+        if (this.Entry is KeyMapEntry shortcut) {
             shortcut.ShortcutChanged -= this.OnEntryShortcutChanged;
         }
 
@@ -149,16 +168,16 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.ParentNode = null;
         this.Entry = null;
 
-        DataManager.GetContextData(this).Remove(ShortcutContextRegistry.ShortcutEntryKey, IKeyMapEntry.DataKey);
+        DataManager.GetContextData(this).Remove(ShortcutContextRegistry.ShortcutEntryKey, IBaseKeyMapEntry.DataKey);
     }
 
     #endregion
 
     #region Model to Control objects
 
-    public ShortcutTreeViewItem GetNodeAt(int index) => (ShortcutTreeViewItem) this.Items[index]!;
+    public KeyMapTreeViewItem GetNodeAt(int index) => (KeyMapTreeViewItem) this.Items[index]!;
 
-    public void InsertGroup(ShortcutGroupEntry entry, int index) {
+    public void InsertGroup(KeyMapGroupEntry entry, int index) {
         this.GroupCounter++;
         this.InsertNodeInternal(entry, index);
     }
@@ -168,7 +187,7 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.InsertNodeInternal(entry, index + this.GroupCounter);
     }
 
-    public void InsertShortcut(ShortcutEntry entry, int index) {
+    public void InsertShortcut(KeyMapEntry entry, int index) {
         this.InsertNodeInternal(entry, index + this.GroupCounter + this.InputStateCounter);
     }
 
@@ -186,12 +205,12 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
         this.RemoveNodeInternal(index + this.GroupCounter + this.InputStateCounter, canCache);
     }
 
-    public void InsertNodeInternal(IKeyMapEntry layer, int index) {
-        ShortcutTreeView? tree = this.ShortcutTree;
+    public void InsertNodeInternal(IBaseKeyMapEntry layer, int index) {
+        KeyMapTreeView? tree = this.ShortcutTree;
         if (tree == null)
             throw new InvalidOperationException("Cannot add children when we have no resource tree associated");
 
-        ShortcutTreeViewItem control = tree.GetCachedItemOrNew();
+        KeyMapTreeViewItem control = tree.GetCachedItemOrNew();
 
         control.OnAdding(tree, this, layer);
         this.Items.Insert(index, control);
@@ -200,12 +219,12 @@ public class ShortcutTreeViewItem : TreeViewItem, IShortcutTreeOrNode {
     }
 
     public void RemoveNodeInternal(int index, bool canCache = true) {
-        ShortcutTreeView? tree = this.ShortcutTree;
+        KeyMapTreeView? tree = this.ShortcutTree;
         if (tree == null)
             throw new InvalidOperationException("Cannot remove children when we have no resource tree associated");
 
-        ShortcutTreeViewItem control = (ShortcutTreeViewItem) this.Items[index]!;
-        IKeyMapEntry resource = control.Entry ?? throw new Exception("Invalid application state");
+        KeyMapTreeViewItem control = (KeyMapTreeViewItem) this.Items[index]!;
+        IBaseKeyMapEntry resource = control.Entry ?? throw new Exception("Invalid application state");
         control.OnRemoving();
         this.Items.RemoveAt(index);
         tree.RemoveResourceMapping(control, resource);

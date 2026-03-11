@@ -28,19 +28,20 @@ using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Configurations.UI;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Configurations;
 
 public class ShortcutEditorConfigurationPageControl : BaseConfigurationPageControl {
-    private readonly ManualBinder<ShortcutGroupEntry> rootEntryBinder = new ManualBinder<ShortcutGroupEntry>(b => ((ShortcutTreeView) b.Control).RootEntry = b.Model, b => ((ShortcutTreeView) b.Control).RootEntry = null);
-    private ShortcutTreeView? PART_ShortcutTree;
+    private readonly ManualBinder<KeyMapGroupEntry> rootEntryBinder = new ManualBinder<KeyMapGroupEntry>(b => ((KeyMapTreeView) b.Control).RootEntry = b.Model, b => ((KeyMapTreeView) b.Control).RootEntry = null);
+    private KeyMapTreeView? PART_ShortcutTree;
 
     public ShortcutEditorConfigurationPageControl() {
     }
 
     protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
         base.OnApplyTemplate(e);
-        this.PART_ShortcutTree = e.NameScope.GetTemplateChild<ShortcutTreeView>("PART_ShortcutTree");
+        this.PART_ShortcutTree = e.NameScope.GetTemplateChild<KeyMapTreeView>("PART_ShortcutTree");
         DataManager.GetContextData(this).Set(IShortcutTreeElement.TreeElementKey, this.PART_ShortcutTree);
 
         if (e.NameScope.TryGetTemplateChild("PART_DemoHyperlink", out HyperlinkButton? hyperlink)) {
@@ -52,7 +53,7 @@ public class ShortcutEditorConfigurationPageControl : BaseConfigurationPageContr
 
     private void OnHyperlinkClicked(object? sender, RoutedEventArgs e) {
         if (((HyperlinkButton) sender!).Content is string text) {
-            ShortcutGroupEntry? target = this.PART_ShortcutTree?.RootEntry?.GetGroupByPath(text);
+            KeyMapGroupEntry? target = this.PART_ShortcutTree?.RootEntry?.GetGroupByPath(text);
             if (target != null) {
                 this.PART_ShortcutTree!.ExpandTo(target);
             }

@@ -18,16 +18,17 @@
 // 
 
 using System.Text.RegularExpressions;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Shortcuts;
 
 /// <summary>
-/// Manages multiple input states and only allows one to be active at a time. Instances of this class are managed by a <see cref="ShortcutManager"/>
+/// Manages multiple input states and only allows one to be active at a time. Instances of this class are managed by a <see cref="KeyMapManager"/>
 /// </summary>
 public class InputStateManager {
     private readonly List<InputStateEntry> inputStates;
 
-    public ShortcutManager Manager { get; }
+    public KeyMapManager Manager { get; }
 
     /// <summary>
     /// This state manager's unique ID, relative to the manager
@@ -35,11 +36,11 @@ public class InputStateManager {
     public string Id { get; }
 
     /// <summary>
-    /// All of the input states that are managed. Any <see cref="InputStateEntry"/> instances in this list will also be in the <see cref="Group"/>'s <see cref="ShortcutGroupEntry.InputStates"/> collection
+    /// All of the input states that are managed. Any <see cref="InputStateEntry"/> instances in this list will also be in the <see cref="Group"/>'s <see cref="KeyMapGroupEntry.InputStates"/> collection
     /// </summary>
     public IReadOnlyList<InputStateEntry> InputStates => this.inputStates;
 
-    public InputStateManager(ShortcutManager manager, string id) {
+    public InputStateManager(KeyMapManager manager, string id) {
         this.Manager = manager ?? throw new ArgumentNullException(nameof(manager));
         this.inputStates = new List<InputStateEntry>();
         this.Id = id;
@@ -49,21 +50,21 @@ public class InputStateManager {
     private InputStateEntry lastActiveInput;
 
     // e.g. clicking a toggle button
-    public Task OnInputStateTriggeredExternal(ShortcutInputProcessor inputProcessor, InputStateEntry stateEntry, bool activate) {
+    public Task OnInputStateTriggeredExternal(KeyMapInputProcessor inputProcessor, InputStateEntry stateEntry, bool activate) {
         return Task.CompletedTask;
     }
 
     // CBA to get it to work :'(
 
     /// <summary>
-    /// Called by a <see cref="ShortcutInputProcessor"/> when an input state is triggered. The given group's <see cref="InputStateEntry.IsActive"/>
+    /// Called by a <see cref="KeyMapInputProcessor"/> when an input state is triggered. The given group's <see cref="InputStateEntry.IsActive"/>
     /// will be the opposite of the given <see cref="isActive"/> parameter (e.g. when
     /// <see cref="isActive"/> is false, <see cref="InputStateEntry.IsActive"/> will be true)
     /// </summary>
     /// <param name="inputProcessor">The processor that caused this input state to be triggered</param>
     /// <param name="stateEntry">The input state to modify</param>
     /// <param name="activate">Whether to activate or deactivate the state</param>
-    public void OnInputStateTriggered(ShortcutInputProcessor inputProcessor, InputStateEntry stateEntry, bool activate) {
+    public void OnInputStateTriggered(KeyMapInputProcessor inputProcessor, InputStateEntry stateEntry, bool activate) {
         if (activate) {
             if (!stateEntry.IsActive) {
                 foreach (InputStateEntry inputState in this.inputStates) {

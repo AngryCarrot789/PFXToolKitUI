@@ -21,6 +21,7 @@ using System.Globalization;
 using Avalonia;
 using Avalonia.Data.Converters;
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Converters;
 
@@ -40,11 +41,11 @@ public class ShortcutIdToToolTipConverter : IValueConverter {
     }
 
     public static bool ShortcutIdToTooltip(string path, string fallback, out string tooltip) {
-        ShortcutEntry shortcutEntry = ShortcutManager.Instance?.FindShortcutByPath(path);
-        if (shortcutEntry == null) {
+        KeyMapEntry keyMapEntry = KeyMapManager.Instance?.FindShortcutByPath(path);
+        if (keyMapEntry == null) {
             return (tooltip = fallback) != null;
         }
 
-        return (tooltip = shortcutEntry.Description) != null;
+        return (tooltip = keyMapEntry.Description) != null;
     }
 }

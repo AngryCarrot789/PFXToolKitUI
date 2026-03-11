@@ -21,6 +21,10 @@ using System.Text;
 
 namespace PFXToolKitUI.Shortcuts.Inputs;
 
+public delegate string KeyCodeToStringProvider(int keyCode);
+
+public delegate string KeyModifierToStringProvider(int modifiers, string delimiter = "+");
+
 /// <summary>
 /// Represents a key stroke, as in, a key press or release which may have modifier keys present
 /// <para>
@@ -32,12 +36,12 @@ public readonly struct KeyStroke : IInputStroke, IEquatable<KeyStroke> {
     /// <summary>
     /// A non-null function for converting a key code into a string representation
     /// </summary>
-    public static Func<int, string> KeyCodeToStringProvider { get; set; } = (x) => new StringBuilder(16).Append("KEY(").Append(x).Append(')').ToString();
+    public static KeyCodeToStringProvider KeyCodeToStringProvider { get; set; } = (x) => new StringBuilder(16).Append("KEY(").Append(x).Append(')').ToString();
 
     /// <summary>
     /// A non-null function for converting a keyboard modifier flag set into a string representation
     /// </summary>
-    public static Func<int, bool, string> ModifierToStringProvider { get; set; } = (x, s) => new StringBuilder(16).Append("MOD(").Append(x).Append(')').ToString();
+    public static KeyModifierToStringProvider ModifierToStringProvider { get; set; } = (x, s) => new StringBuilder(16).Append("MOD(").Append(x).Append(')').ToString();
 
     /// <summary>
     /// The key code involved. This key code is relative to whatever key system the platform is running on
@@ -63,7 +67,7 @@ public readonly struct KeyStroke : IInputStroke, IEquatable<KeyStroke> {
 
     public bool IsMouse => false;
 
-    public KeyStroke(int keyCode, int modifiers, bool isRelease) {
+    public KeyStroke(int keyCode, int modifiers, bool isRelease = false) {
         this.KeyCode = keyCode;
         this.Modifiers = modifiers;
         this.IsRelease = isRelease;
@@ -101,7 +105,7 @@ public readonly struct KeyStroke : IInputStroke, IEquatable<KeyStroke> {
 
     public string ToString(bool appendIsReleaseOnly, bool useSpacers) {
         StringBuilder sb = new StringBuilder();
-        string mod = ModifierToStringProvider(this.Modifiers, useSpacers);
+        string mod = ModifierToStringProvider(this.Modifiers, useSpacers ? " + " : "+");
         if (mod.Length > 0) {
             sb.Append(mod).Append(useSpacers ? " + " : "+");
         }

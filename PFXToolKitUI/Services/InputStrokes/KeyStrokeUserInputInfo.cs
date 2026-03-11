@@ -42,6 +42,10 @@ public class KeyStrokeUserInputInfo : UserInputInfo {
     public KeyStrokeUserInputInfo() {
         this.keyStroke = KeyStrokeParameter.GetDefaultValue(this);
     }
+    
+    static KeyStrokeUserInputInfo() {
+        KeyStrokeParameter.ValueChanged += (sender, args) => ((KeyStrokeUserInputInfo) args.Owner).RaiseHasErrorsChanged();
+    }
 
     public override bool HasErrors() {
         return !this.keyStroke.HasValue || this.keyStroke.Value == default;

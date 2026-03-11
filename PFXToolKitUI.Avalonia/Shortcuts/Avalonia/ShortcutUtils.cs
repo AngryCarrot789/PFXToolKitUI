@@ -19,51 +19,20 @@
 
 using Avalonia.Input;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
 public static class ShortcutUtils {
-    public static void SplitValue(string input, out string shortcutId, out string usageId) {
-        if (string.IsNullOrWhiteSpace(input)) {
-            shortcutId = null;
-            usageId = AvaloniaShortcutManager.DEFAULT_USAGE_ID;
-            return;
-        }
-
-        int split = input.LastIndexOf(':');
-        if (split == -1) {
-            shortcutId = input;
-            usageId = AvaloniaShortcutManager.DEFAULT_USAGE_ID;
-        }
-        else {
-            shortcutId = input.Substring(0, split);
-            if (string.IsNullOrWhiteSpace(shortcutId)) {
-                shortcutId = null;
-            }
-
-            usageId = input.Substring(split + 1);
-            if (string.IsNullOrWhiteSpace(usageId)) {
-                usageId = AvaloniaShortcutManager.DEFAULT_USAGE_ID;
-            }
-        }
-    }
-
     public static bool GetKeyStrokeForEvent(KeyEventArgs e, out KeyStroke stroke, bool isRelease) {
         // Key key = e.Key == Key.System ? (Key) e.PhysicalKey : e.Key;
-        Key key = e.Key;
-        if (IsModifierKey(key) || key == Key.DeadCharProcessed) {
+        if (IsModifierKey(e.Key) || e.Key == Key.DeadCharProcessed) {
             stroke = default;
             return false;
         }
 
-        stroke = new KeyStroke((int) key, (int) e.KeyModifiers, isRelease);
+        stroke = new KeyStroke((int) e.Key, (int) e.KeyModifiers, isRelease);
         return true;
-    }
-
-    public static void EnforceIdFormat(string id, string paramName) {
-        if (string.IsNullOrWhiteSpace(id)) {
-            throw new Exception($"{paramName} cannot be null/empty or consist of whitespaces only");
-        }
     }
 
     public static bool IsModifierKey(Key key) {
@@ -85,13 +54,35 @@ public static class ShortcutUtils {
     }
 
     public static MouseStroke GetMouseStrokeForEvent(PointerPressedEventArgs e) {
-        // TODO
-        return new MouseStroke(0, 0, false);
+        int modifiers = (int) e.KeyModifiers;
+        int button;
+        if (e.Properties.IsLeftButtonPressed)
+            button = (int) MouseButton.Left;
+        else if (e.Properties.IsMiddleButtonPressed)
+            button = (int) MouseButton.Middle;
+        else if (e.Properties.IsRightButtonPressed)
+            button = (int) MouseButton.Right;
+        else if (e.Properties.IsXButton1Pressed)
+            button = (int) MouseButton.XButton1;
+        else if (e.Properties.IsXButton2Pressed)
+            button = (int) MouseButton.XButton2;
+        else
+            button = 0;
+
+        return new MouseStroke(button, modifiers, false);
     }
 
     public static bool GetMouseStrokeForEvent(PointerWheelEventArgs e, out MouseStroke stroke) {
         // TODO
-        stroke = default;
-        return false;
+        double delta = e.Delta.X;
+        if (DoubleUtils.AreClose(delta, 0.0) && DoubleUtils.AreClose(delta = e.Delta.Y, 0.0)) {
+            stroke = default;
+            return false;
+        }
+
+        stroke = new MouseStroke(
+            delta > 0 ? AvaloniaKeyMapManager.BUTTON_WHEEL_UP : AvaloniaKeyMapManager.BUTTON_WHEEL_DOWN,
+            (int) e.KeyModifiers, false, wheelDelta: (int) delta);
+        return true;
     }
 }

@@ -28,11 +28,11 @@ using PFXToolKitUI.Utils.Destroying;
 namespace PFXToolKitUI.Avalonia.Shortcuts.Trees;
 
 public class ShortcutEntryHeaderControl : TextBlock {
-    public static readonly StyledProperty<IKeyMapEntry?> KeyMapEntryProperty = AvaloniaProperty.Register<ShortcutEntryHeaderControl, IKeyMapEntry?>(nameof(KeyMapEntry));
+    public static readonly StyledProperty<IBaseKeyMapEntry?> KeyMapEntryProperty = AvaloniaProperty.Register<ShortcutEntryHeaderControl, IBaseKeyMapEntry?>(nameof(KeyMapEntry));
     public static readonly StyledProperty<IBrush?> DisplayNameForegroundProperty = AvaloniaProperty.Register<ShortcutEntryHeaderControl, IBrush?>(nameof(DisplayNameForeground));
     public static readonly StyledProperty<IBrush?> RawNameForegroundProperty = AvaloniaProperty.Register<ShortcutEntryHeaderControl, IBrush?>(nameof(RawNameForeground));
 
-    public IKeyMapEntry? KeyMapEntry {
+    public IBaseKeyMapEntry? KeyMapEntry {
         get => this.GetValue(KeyMapEntryProperty);
         set => this.SetValue(KeyMapEntryProperty, value);
     }
@@ -57,10 +57,10 @@ public class ShortcutEntryHeaderControl : TextBlock {
     }
 
     static ShortcutEntryHeaderControl() {
-        KeyMapEntryProperty.Changed.AddClassHandler<ShortcutEntryHeaderControl, IKeyMapEntry?>((d, e) => d.OnKeyMapEntryChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+        KeyMapEntryProperty.Changed.AddClassHandler<ShortcutEntryHeaderControl, IBaseKeyMapEntry?>((d, e) => d.OnKeyMapEntryChanged(e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
     }
 
-    private void OnKeyMapEntryChanged(IKeyMapEntry? oldEntry, IKeyMapEntry? newEntry) {
+    private void OnKeyMapEntryChanged(IBaseKeyMapEntry? oldEntry, IBaseKeyMapEntry? newEntry) {
         DisposableUtils.DisposeMany(null, this.bindings);
         if (newEntry == null) {
             this.Inlines?.Clear();

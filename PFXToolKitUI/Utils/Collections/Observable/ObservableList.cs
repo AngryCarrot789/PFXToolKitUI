@@ -20,6 +20,7 @@
 using System.Collections;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
+using System.Diagnostics;
 using PFXToolKitUI.Utils.Events;
 using PFXToolKitUI.Utils.Ranges;
 
@@ -45,6 +46,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     public const ResetBehavior DefaultClearBehavior = ResetBehavior.Reset;
 
     private readonly List<T> myItems;
+    private readonly SingleItemListImpl cachedList;
+    private SingleItemListImpl? activeCachedList;
     private SimpleMonitor? _monitor;
     private readonly bool isDerivedType;
     protected int blockReentrancyCount;
@@ -94,6 +97,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
     private ObservableList(List<T> list, ResetBehavior clearBehavior) : base(list) {
         this.myItems = (List<T>?) base.Items!;
+        this.cachedList = new SingleItemListImpl();
+        this.activeCachedList = this.cachedList;
 
         // Optimisation
         // MethodInfo info = this.GetType().GetMethod(nameof(this.OnItemsRemoved), BindingFlags.Instance | BindingFlags.NonPublic | BindingFlags.FlattenHierarchy)!;
@@ -105,30 +110,51 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         this.ClearBehavior = clearBehavior;
     }
 
+    private SingleItemListImpl GetOrCreateList(T item, ref SingleItemListImpl? reference) {
+        if (reference == null) {
+            if ((reference = this.activeCachedList) != null) {
+                this.activeCachedList = null;
+            }
+            else {
+                reference = new SingleItemListImpl();
+            }
+            
+            reference.value = item;
+        }
+        
+        return reference;
+    }
+
+    private void TryReturnCachedList(SingleItemListImpl? list) {
+        if (list != null && list == this.cachedList) {
+            Debug.Assert(this.activeCachedList == null);
+            this.activeCachedList = this.cachedList;
+        }
+    }
+
     protected override void InsertItem(int index, T item) {
+        CollectionUtils.ThrowIfInsertOutOfBounds(this, index);
         this.CheckReentrancy();
-        if (index < 0)
-            throw new IndexOutOfRangeException("Negative index: " + index);
-        if ((uint) index > (uint) this.myItems.Count)
-            throw new IndexOutOfRangeException($"Index beyond length of this list: {index} > {this.myItems.Count}");
 
-        SingletonList<T>? itemList = null;
-        this.ValidateAdd?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, itemList = new SingletonList<T>(item)));
-        this.myItems.Insert(index, item);
+        SingleItemListImpl? tmpList = null;
+        try {
+            this.ValidateAdd?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, this.GetOrCreateList(item, ref tmpList)));
+            this.myItems.Insert(index, item);
 
-        // Invoke base method when derived or if we have an ItemsAdded or CC handler
-        if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null)
-            this.OnItemsAdded(index, itemList ?? new SingletonList<T>(item));
+            // Invoke base method when derived or if we have an ItemsAdded or CC handler
+            if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null)
+                this.OnItemsAdded(index, this.GetOrCreateList(item, ref tmpList));
+        }
+        finally {
+            this.TryReturnCachedList(tmpList);
+        }
     }
 
     public void AddRange(IEnumerable<T> items) => this.InsertRange(this.Count, items);
 
     public void InsertRange(int index, IEnumerable<T> items) {
+        CollectionUtils.ThrowIfInsertOutOfBounds(this, index);
         this.CheckReentrancy();
-        if (index < 0)
-            throw new IndexOutOfRangeException("Negative index: " + index);
-        if ((uint) index > (uint) this.myItems.Count)
-            throw new IndexOutOfRangeException($"Index beyond length of this list: {index} > {this.myItems.Count}");
 
         // Slight risk in passing list to the ItemsAdded event in case items mutates asynchronously... meh
         if (!(items is IList<T> list)) {
@@ -140,10 +166,9 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             this.ValidateAdd?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, list));
             this.myItems.InsertRange(index, list);
 
-            if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null) // Stops the event handler modifying the list
-                list = list.AsReadOnly();
-
-            this.OnItemsAdded(index, list);
+            if (this.isDerivedType || this.ItemsAdded != null || this.CollectionChanged != null) {
+                this.OnItemsAdded(index, list.AsReadOnly());
+            }
         }
     }
 
@@ -151,25 +176,22 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
         this.CheckReentrancy();
         T removedItem = this[index];
 
-        SingletonList<T>? list = null;
-        this.ValidateRemove?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, list = new SingletonList<T>(removedItem)));
-        this.myItems.RemoveAt(index);
+        SingleItemListImpl? tmpList = null;
+        try {
+            this.ValidateRemove?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(index, this.GetOrCreateList(removedItem, ref tmpList)));
+            this.myItems.RemoveAt(index);
 
-        // Invoke base method when derived or we have an ItemsRemoved handler
-        if (this.isDerivedType || this.ItemsRemoved != null || this.CollectionChanged != null)
-            this.OnItemsRemoved(index, list ??= new SingletonList<T>(removedItem));
+            // Invoke base method when derived or we have an ItemsRemoved handler
+            if (this.isDerivedType || this.ItemsRemoved != null || this.CollectionChanged != null)
+                this.OnItemsRemoved(index, this.GetOrCreateList(removedItem, ref tmpList));
+        }
+        finally {
+            this.TryReturnCachedList(tmpList);
+        }
     }
 
     public void RemoveRange(int index, int count) {
-        if (index < 0)
-            throw new IndexOutOfRangeException("Negative index: " + index);
-        if (count < 0)
-            throw new ArgumentOutOfRangeException(nameof(count), count, "Count is negative");
-        if (this.myItems.Count - index < count)
-            throw new IndexOutOfRangeException("The index and count exceed the range of this list");
-        if (count == 0)
-            return;
-
+        CollectionUtils.ThrowIfOutOfBounds(this, index, count);
         this.CheckReentrancy();
 
         ReadOnlyCollection<T> items = this.myItems.Slice(index, count).AsReadOnly();
@@ -223,11 +245,8 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
     public void Move(int oldIndex, int newIndex) => this.MoveItem(oldIndex, newIndex);
 
     protected virtual void MoveItem(int oldIndex, int newIndex) {
+        CollectionUtils.ThrowIfMoveOutOfBounds(this, oldIndex, newIndex);
         this.CheckReentrancy();
-        if (newIndex < 0)
-            throw new IndexOutOfRangeException("Negative newIndex: " + newIndex);
-        if ((uint) newIndex >= (uint) this.myItems.Count)
-            throw new IndexOutOfRangeException($"newIndex beyond length of this list: {newIndex} >= {this.myItems.Count}");
 
         T item = this[oldIndex];
         this.ValidateMove?.Invoke(this, new ItemMoveEventArgs<T>(oldIndex, newIndex, item));
@@ -243,17 +262,17 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
             return;
         }
 
-        EventHandler<ItemsAddOrRemoveEventArgs<T>>? validate = this.ValidateRemove;
-        if (validate == null && !this.isDerivedType && this.ItemsRemoved == null && this.CollectionChanged == null) {
+        if (this.isDerivedType || this.ValidateRemove != null || this.ItemsRemoved != null || this.CollectionChanged != null) {
+            ReadOnlyCollection<T> items = this.myItems.ToList().AsReadOnly();
+            this.ValidateRemove?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(0, items));
+
+            this.myItems.Clear();
+            this.OnItemsRemoved(0, items);
+        }
+        else {
             // We are not a derived type, and we have no ItemsRemoved or CC handler,
             // so we don't need to create any pointless sub-lists
             this.myItems.Clear();
-        }
-        else {
-            ReadOnlyCollection<T> items = this.myItems.ToList().AsReadOnly();
-            this.myItems.Clear();
-            this.OnItemsRemoved(0, items);
-            validate?.Invoke(this, new ItemsAddOrRemoveEventArgs<T>(0, items));
         }
     }
 
@@ -334,5 +353,61 @@ public class ObservableList<T> : CollectionEx<T>, IObservableList<T> {
 
     private sealed class SimpleMonitor(ObservableList<T> collection) : IDisposable {
         public void Dispose() => collection.blockReentrancyCount--;
+    }
+
+    private class SingleItemListImpl : IList<T>, IList {
+        public T value;
+
+        public int Count => 1;
+
+        public bool IsReadOnly => true;
+
+        public T this[int index] {
+            get {
+                ArgumentOutOfRangeException.ThrowIfNotEqual(index, 0);
+                return this.value;
+            }
+            set => throw new NotSupportedException("Read-only list");
+        }
+
+        object? IList.this[int index] {
+            get => index == 0 ? this.value : throw new IndexOutOfRangeException("Index was out of range: " + index);
+            set => throw new NotSupportedException("Read-only list");
+        }
+
+        public bool IsSynchronized => false;
+        public object SyncRoot => this;
+        public bool IsFixedSize => true;
+
+        public void CopyTo(T[] array, int arrayIndex) {
+            array[arrayIndex] = this.value;
+        }
+        
+        public bool Contains(T item) => EqualityComparer<T>.Default.Equals(item, this.value);
+
+        public int IndexOf(T item) => this.Contains(item) ? 0 : -1;
+        
+        public bool Contains(object? val) => EqualityComparer<object>.Default.Equals(val, this.value);
+        
+        public int IndexOf(object? val) => this.Contains(val) ? 0 : -1;
+        
+        public IEnumerator<T> GetEnumerator() {
+            yield return this.value;
+        }
+
+        IEnumerator IEnumerable.GetEnumerator() {
+            yield return this.value;
+        }
+
+        public void CopyTo(Array array, int index) => array.SetValue(this.value, index);
+
+        public void Add(T item) => throw new NotSupportedException("Read-only list");
+        public void Clear() => throw new NotSupportedException("Read-only list");
+        public bool Remove(T item) => throw new NotSupportedException("Read-only list");
+        public void Insert(int index, T item) => throw new NotSupportedException("Read-only list");
+        public void RemoveAt(int index) => throw new NotSupportedException("Read-only list");
+        public int Add(object? val) => throw new NotSupportedException("Read-only list");
+        public void Insert(int index, object? value) => throw new NotSupportedException("Read-only list");
+        public void Remove(object? value) => throw new NotSupportedException("Read-only list");
     }
 }

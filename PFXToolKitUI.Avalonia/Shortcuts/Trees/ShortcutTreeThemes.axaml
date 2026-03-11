@@ -9,7 +9,7 @@
         <Setter Property="RawNameForeground" Value="{DynamicResource ABrush.Foreground.Deeper}"/>
     </ControlTheme>
 
-    <ControlTheme x:Key="{x:Type trees:ShortcutTreeView}" TargetType="{x:Type trees:ShortcutTreeView}" BasedOn="{StaticResource {x:Type TreeView}}">
+    <ControlTheme x:Key="{x:Type trees:KeyMapTreeView}" TargetType="{x:Type trees:KeyMapTreeView}" BasedOn="{StaticResource {x:Type TreeView}}">
         <Setter Property="SelectionMode" Value="Single"/>
         <Setter Property="Background" Value="{DynamicResource ABrush.Tone2.Background.Static}"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone2.Border.Static}"/>
@@ -41,7 +41,7 @@
         </Setter>
     </ControlTheme>
 
-    <ControlTheme x:Key="{x:Type trees:ShortcutTreeViewItem}" TargetType="{x:Type trees:ShortcutTreeViewItem}">
+    <ControlTheme x:Key="{x:Type trees:KeyMapTreeViewItem}" TargetType="{x:Type trees:KeyMapTreeViewItem}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="{DynamicResource ABrush.Tone4.Border.Static}"/>
         <Setter Property="Foreground" Value="{DynamicResource ABrush.Foreground.Static}"/>

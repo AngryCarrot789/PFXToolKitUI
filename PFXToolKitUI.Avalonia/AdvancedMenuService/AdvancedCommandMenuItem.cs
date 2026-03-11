@@ -21,12 +21,12 @@ using System.Diagnostics;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using PFXToolKitUI.Avalonia.Shortcuts.Converters;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.AdvancedMenuService;
 using PFXToolKitUI.CommandSystem;
 using PFXToolKitUI.Interactivity.Contexts;
 using PFXToolKitUI.Services.Messaging;
+using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -74,10 +74,11 @@ public class AdvancedCommandMenuItem : AdvancedMenuItem {
         }
 
         CommandMenuEntry? entry = this.Entry;
-        if (entry != null && CommandManager.Instance.GetCommandById(entry.CommandId) != null) {
-            if (CommandIdToGestureConverter.CommandIdToGesture(entry.CommandId, out string? value)) {
-                this.InputGestureTextBlock.Text = value;
-            }
+        if (entry != null && KeymapUtils.TryGetStringForCommandId(entry.CommandId, out string? value)) {
+            this.InputGestureTextBlock.Text = value;
+        }
+        else {
+            this.InputGestureTextBlock.Text = null;
         }
     }
 

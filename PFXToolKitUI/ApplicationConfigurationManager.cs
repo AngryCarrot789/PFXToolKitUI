@@ -20,7 +20,7 @@
 using PFXToolKitUI.Configurations;
 using PFXToolKitUI.Configurations.Dialogs;
 using PFXToolKitUI.Configurations.Shortcuts;
-using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Themes;
 
 namespace PFXToolKitUI;
@@ -36,7 +36,7 @@ public class ApplicationConfigurationManager : ConfigurationManager {
             throw new InvalidOperationException("Singleton");
         
         this.RootEntry.AddEntry(new ConfigurationEntry() {
-            DisplayName = "Keymap", Id = "config.keymap", Page = new ShortcutEditorConfigurationPage(ShortcutManager.Instance)
+            DisplayName = "Keymap", Id = "config.keymap", Page = new ShortcutEditorConfigurationPage(KeyMapManager.Instance)
         });
 
         this.RootEntry.AddEntry(new ConfigurationEntry() {

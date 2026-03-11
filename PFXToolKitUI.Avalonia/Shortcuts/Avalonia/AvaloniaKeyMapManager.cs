@@ -22,22 +22,23 @@ using Avalonia.Input;
 using PFXToolKitUI.Avalonia.Shortcuts.Keymapping;
 using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Inputs;
+using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Shortcuts.Usage;
 using PFXToolKitUI.Utils;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Avalonia;
 
-public sealed class AvaloniaShortcutManager : ShortcutManager {
+public sealed class AvaloniaKeyMapManager : KeyMapManager {
     public const int BUTTON_WHEEL_UP = 143; // Away from the user
     public const int BUTTON_WHEEL_DOWN = 142; // Towards the user
     public const string DEFAULT_USAGE_ID = "DEF";
 
-    public static AvaloniaShortcutManager AvaloniaInstance => (AvaloniaShortcutManager) Instance ?? throw new Exception("No WPF shortcut manager available");
+    public static AvaloniaKeyMapManager AvaloniaInstance => (AvaloniaKeyMapManager) Instance ?? throw new Exception("No WPF shortcut manager available");
 
-    static AvaloniaShortcutManager() {
+    static AvaloniaKeyMapManager() {
         KeyStroke.KeyCodeToStringProvider = (x) => ((Key) x).ToString();
         KeyStroke.ModifierToStringProvider = (x, s) => {
-            StringJoiner joiner = new StringJoiner(s ? " + " : "+");
+            StringJoiner joiner = new StringJoiner(s);
             KeyModifiers keys = (KeyModifiers) x;
             if ((keys & KeyModifiers.Control) != 0)
                 joiner.Append("Ctrl");
@@ -46,7 +47,7 @@ public sealed class AvaloniaShortcutManager : ShortcutManager {
             if ((keys & KeyModifiers.Shift) != 0)
                 joiner.Append("Shift");
             if ((keys & KeyModifiers.Meta) != 0)
-                joiner.Append("Win");
+                joiner.Append(OperatingSystem.IsMacOS() ? "Cmd" : "Win");
             return joiner.ToString();
         };
 
@@ -57,89 +58,89 @@ public sealed class AvaloniaShortcutManager : ShortcutManager {
                 case (int) MouseButton.Right:    return "RMB";
                 case (int) MouseButton.XButton1: return "X1";
                 case (int) MouseButton.XButton2: return "X2";
-                case BUTTON_WHEEL_UP:            return "WHEEL_UP";
-                case BUTTON_WHEEL_DOWN:          return "WHEEL_DOWN";
-                default:                         return $"Unknown Button ({x})";
+                case BUTTON_WHEEL_UP:            return "MWU";
+                case BUTTON_WHEEL_DOWN:          return "MWD";
+                default:                         return $"?{x}?";
             }
         };
     }
 
-    public AvaloniaShortcutManager() { }
+    public AvaloniaKeyMapManager() { }
 
-    public override ShortcutInputProcessor NewProcessor() => new AvaloniaShortcutInputProcessor(this);
+    public override KeyMapInputProcessor NewProcessor() => new AvaloniaKeyMapInputProcessor(this);
 
     public override string? CurrentFocusPath => UIInputManager.Instance.FocusedPath;
 
     public override void ReloadFromStream(Stream stream) {
         this.InvalidateShortcutCache();
-        Keymap map = KeyMapSerialiser.Instance.Deserialise(this, stream);
+        Keymap map = KeyMapSerializer.Instance.Deserialise(this, stream);
         this.Root = map.Root; // invalidates cache automatically
         try {
             this.EnsureCacheBuilt(); // do keymap check; crash on errors (e.g. duplicate shortcut path)
         }
         catch (Exception e) {
             this.InvalidateShortcutCache();
-            this.Root = ShortcutGroupEntry.CreateRoot(this);
+            this.Root = KeyMapGroupEntry.CreateRoot(this);
             throw new Exception("Failed to process keymap and built caches", e);
         }
     }
 
-    protected override void OnSecondShortcutUsagesProgressed(ShortcutInputProcessor inputProcessor) {
+    protected override void OnSecondShortcutUsagesProgressed(KeyMapInputProcessor inputProcessor) {
         base.OnSecondShortcutUsagesProgressed(inputProcessor);
         StringJoiner joiner = new StringJoiner(", ");
-        foreach (KeyValuePair<IShortcutUsage, ShortcutEntry> pair in inputProcessor.ActiveUsages) {
+        foreach (KeyValuePair<IShortcutUsage, KeyMapEntry> pair in inputProcessor.ActiveUsages) {
             joiner.Append(pair.Key.CurrentStroke.ToString());
         }
 
         BroadcastShortcutActivity("Waiting for next input: " + joiner);
     }
 
-    protected override void OnShortcutUsagesCreated(ShortcutInputProcessor inputProcessor) {
+    protected override void OnShortcutUsagesCreated(KeyMapInputProcessor inputProcessor) {
         base.OnShortcutUsagesCreated(inputProcessor);
         StringJoiner joiner = new StringJoiner(", ");
-        foreach (KeyValuePair<IShortcutUsage, ShortcutEntry> pair in inputProcessor.ActiveUsages) {
+        foreach (KeyValuePair<IShortcutUsage, KeyMapEntry> pair in inputProcessor.ActiveUsages) {
             joiner.Append(pair.Key.CurrentStroke.ToString());
         }
 
         BroadcastShortcutActivity("Waiting for next input: " + joiner);
     }
 
-    protected override void OnCancelUsageForNoSuchNextMouseStroke(ShortcutInputProcessor inputProcessor, IShortcutUsage usage, ShortcutEntry shortcutEntry, MouseStroke stroke) {
-        base.OnCancelUsageForNoSuchNextMouseStroke(inputProcessor, usage, shortcutEntry, stroke);
+    protected override void OnCancelUsageForNoSuchNextMouseStroke(KeyMapInputProcessor inputProcessor, IShortcutUsage usage, KeyMapEntry keyMapEntry, MouseStroke stroke) {
+        base.OnCancelUsageForNoSuchNextMouseStroke(inputProcessor, usage, keyMapEntry, stroke);
         BroadcastShortcutActivity("No such shortcut for next mouse stroke: " + stroke);
     }
 
-    protected override void OnCancelUsageForNoSuchNextKeyStroke(ShortcutInputProcessor inputProcessor, IShortcutUsage usage, ShortcutEntry shortcutEntry, KeyStroke stroke) {
-        base.OnCancelUsageForNoSuchNextKeyStroke(inputProcessor, usage, shortcutEntry, stroke);
+    protected override void OnCancelUsageForNoSuchNextKeyStroke(KeyMapInputProcessor inputProcessor, IShortcutUsage usage, KeyMapEntry keyMapEntry, KeyStroke stroke) {
+        base.OnCancelUsageForNoSuchNextKeyStroke(inputProcessor, usage, keyMapEntry, stroke);
         BroadcastShortcutActivity("No such shortcut for next key stroke: " + stroke);
     }
 
-    protected override void OnNoSuchShortcutForMouseStroke(ShortcutInputProcessor inputProcessor, string? group, MouseStroke stroke) {
+    protected override void OnNoSuchShortcutForMouseStroke(KeyMapInputProcessor inputProcessor, string? group, MouseStroke stroke) {
         base.OnNoSuchShortcutForMouseStroke(inputProcessor, group, stroke);
         if (Debugger.IsAttached) {
             BroadcastShortcutActivity("No such shortcut for mouse stroke: " + stroke + " in group: " + group);
         }
     }
 
-    protected override void OnNoSuchShortcutForKeyStroke(ShortcutInputProcessor inputProcessor, string? group, KeyStroke stroke) {
+    protected override void OnNoSuchShortcutForKeyStroke(KeyMapInputProcessor inputProcessor, string? group, KeyStroke stroke) {
         base.OnNoSuchShortcutForKeyStroke(inputProcessor, group, stroke);
         if (stroke.IsKeyDown && Debugger.IsAttached) {
             BroadcastShortcutActivity("No such shortcut for key stroke: " + stroke + " in group: " + group);
         }
     }
 
-    protected override bool OnShortcutActivatedOverride(ShortcutInputProcessor inputProcessor, ShortcutEntry shortcutEntry) {
+    protected override bool OnShortcutActivatedOverride(KeyMapInputProcessor inputProcessor, KeyMapEntry keyMapEntry) {
         string str;
 
         if (Debugger.IsAttached) {
-            str = $"shortcut command: {shortcutEntry} -> {(string.IsNullOrWhiteSpace(shortcutEntry.CommandId) ? "<none>" : shortcutEntry.CommandId)}";
+            str = $"shortcut command: {keyMapEntry} -> {(string.IsNullOrWhiteSpace(keyMapEntry.CommandId) ? "<none>" : keyMapEntry.CommandId)}";
         }
         else {
-            str = $"shortcut command: {(string.IsNullOrWhiteSpace(shortcutEntry.CommandId) ? "<none>" : shortcutEntry.CommandId)}";
+            str = $"shortcut command: {(string.IsNullOrWhiteSpace(keyMapEntry.CommandId) ? "<none>" : keyMapEntry.CommandId)}";
         }
 
         BroadcastShortcutActivity($"Activating {str}...");
-        bool result = base.OnShortcutActivatedOverride(inputProcessor, shortcutEntry);
+        bool result = base.OnShortcutActivatedOverride(inputProcessor, keyMapEntry);
         BroadcastShortcutActivity($"Activated {str}!");
         return result;
     }

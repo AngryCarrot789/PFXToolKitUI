@@ -18,6 +18,7 @@
 // 
 
 using PFXToolKitUI.Shortcuts;
+using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Keymapping;
 
@@ -33,7 +34,7 @@ public class Keymap {
     /// <summary>
     /// The root shortcut group
     /// </summary>
-    public ShortcutGroupEntry Root { get; set; }
+    public KeyMapGroupEntry Root { get; set; }
 
     public Keymap() { }
 }

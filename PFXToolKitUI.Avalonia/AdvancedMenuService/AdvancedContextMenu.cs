@@ -18,13 +18,17 @@
 // 
 
 using System.ComponentModel;
+using System.IO.MemoryMappedFiles;
+using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Bindings;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.AdvancedMenuService;
+using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Interactivity.Contexts;
 
 namespace PFXToolKitUI.Avalonia.AdvancedMenuService;
@@ -42,6 +46,8 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
     private readonly Dictionary<Type, Stack<Control>> itemCache;
     private InputElement? currentTarget;
     private readonly EventHandler<ContextRequestedEventArgs> requestContextHandler;
+    private Grid? PART_Grid;
+    private Border? PART_CaptionPanel;
 
     public Dictionary<int, DynamicGroupPlaceholderMenuEntry>? DynamicInsertion { get; set; }
 
@@ -74,13 +80,36 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         };
     }
 
-    private void ContextRegistryOnRequestClose(object? sender, EventArgs e) {
-        this.Close();
-    }
-
     static AdvancedContextMenu() {
         contextMenus = new Dictionary<ContextRegistry, AdvancedContextMenu>();
         ContextRegistryProperty.Changed.AddClassHandler<Control, ContextRegistry?>((d, e) => OnContextRegistryChanged(d, e.OldValue.GetValueOrDefault(), e.NewValue.GetValueOrDefault()));
+    }
+
+    protected override void OnApplyTemplate(TemplateAppliedEventArgs e) {
+        base.OnApplyTemplate(e);
+
+        this.PART_Grid = e.NameScope.GetTemplateChild<Grid>("PART_Grid");
+        
+        this.PART_CaptionPanel = e.NameScope.GetTemplateChild<Border>("PART_CaptionPanel");
+        this.UpdateIsCaptionPanelVisible();
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change) {
+        base.OnPropertyChanged(change);
+        if (this.PART_CaptionPanel != null && (change.Property == ContextCaptionProperty || change.Property == ObjectNameProperty)) {
+            this.UpdateIsCaptionPanelVisible();
+        }
+    }
+
+    private void UpdateIsCaptionPanelVisible() {
+        if (this.PART_CaptionPanel != null) {
+            this.PART_CaptionPanel.IsVisible = !string.IsNullOrEmpty(this.ContextCaption) && !string.IsNullOrEmpty(this.ObjectName);
+            this.PART_Grid!.RowDefinitions[1].Height = new GridLength(this.PART_CaptionPanel.IsVisible ? 1.0 : 0.0);
+        }
+    }
+
+    private void ContextRegistryOnRequestClose(object? sender, EventArgs e) {
+        this.Close();
     }
 
     #region Opening and Closing
@@ -139,9 +168,13 @@ public sealed class AdvancedContextMenu : ContextMenu, IAdvancedMenu {
         target.ContextRequested -= this.requestContextHandler;
     }
 
-    public bool PushCachedItem(Type entryType, Control item) => AdvancedMenuHelper.PushCachedItem(this.itemCache, entryType, item);
+    public bool PushCachedItem(Type entryType, Control item) {
+        return AdvancedMenuHelper.PushCachedItem(this.itemCache, entryType, item);
+    }
 
-    public Control? PopCachedItem(Type entryType) => AdvancedMenuHelper.PopCachedItem(this.itemCache, entryType);
+    public Control? PopCachedItem(Type entryType) {
+        return AdvancedMenuHelper.PopCachedItem(this.itemCache, entryType);
+    }
 
     protected override Control CreateContainerForItemOverride(object? item, int index, object? recycleKey) {
         return new AdvancedMenuItem();
