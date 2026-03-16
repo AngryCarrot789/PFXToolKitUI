@@ -8,8 +8,8 @@
     <StackPanel>
         <StackPanel Orientation="Horizontal" Spacing="3">
             <avc:IconControl x:Name="PART_IconControl" Width="16" Height="16"/>
-            <TextBlock x:Name="PART_Caption" Text="Not Connected" FontSize="14" TextDecorations="Underline" Padding="2,1"/>
+            <TextBlock x:Name="PART_Caption" Text="HEADER" FontSize="14" TextDecorations="Underline" Padding="2,1"/>
         </StackPanel>
-        <TextBlock x:Name="PART_MainText" Text="Not connected to a console" Padding="2,1"/>
+        <TextBlock x:Name="PART_MainText" Text="MAIN TEXT" Padding="2,1"/>
     </StackPanel>
 </UserControl>

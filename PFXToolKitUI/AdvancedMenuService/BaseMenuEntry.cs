@@ -106,7 +106,7 @@ public abstract class BaseMenuEntry : IMenuEntry, IUserLocalContext, IDisabledHi
     }
 
     /// <summary>
-    /// Gets or sets the disabled hint info provider for this group
+    /// Gets or sets the disabled hint info provider for this menu entry
     /// </summary>
     public BaseContextEntryProvideDisabledHint? ProvideDisabledHint { get; set; }
 

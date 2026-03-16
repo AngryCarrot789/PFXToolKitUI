@@ -54,11 +54,12 @@ namespace PFXToolKitUI.Avalonia.Interactivity;
 /// </para>
 /// </summary>
 public class DataManager {
-    private static uint totalSuspensionCount; // used for performance reasons
+    private static uint s_TotalSuspensionCount; // used for performance reasons
+    private static readonly EventHandler s_OnDataContextChanged = OnDataContextChanged;
 
     // TODO: count how many even handlers exist for the a control's subtree.
     // This will let us ignore invoking the event recursively down a tree that has no handlers
-    
+
     /// <summary>
     /// The context data property, used to store contextual information relative to a specific avalonia object.
     /// <para>
@@ -107,6 +108,7 @@ public class DataManager {
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     private static void OnVisualParentChanged(Visual sender, AvaloniaPropertyChangedEventArgs<Visual?> e) {
+        // Invalidate if a control becomes attached to the VT.
         if (sender.IsAttachedToVisualTree()) {
             InvalidateInheritedContext(sender);
         }
@@ -119,9 +121,9 @@ public class DataManager {
     private static void OnDataContextDataKeyPropertyChanged(AvaloniaObject sender, AvaloniaPropertyChangedEventArgs<DataKey?> e) {
         if (sender is StyledElement element) {
             if (!e.NewValue.HasValue)
-                element.DataContextChanged -= DataContextChangedHandler;
+                element.DataContextChanged -= s_OnDataContextChanged;
             else if (!e.OldValue.HasValue)
-                element.DataContextChanged += DataContextChangedHandler;
+                element.DataContextChanged += s_OnDataContextChanged;
         }
 
         if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
@@ -129,12 +131,10 @@ public class DataManager {
         }
     }
 
-    private static readonly EventHandler DataContextChangedHandler = OnDataContextChanged;
-
     private static void OnDataContextChanged(object? sender, EventArgs e) {
         Debug.Assert(((AvaloniaObject) sender!).GetValue(DataContextDataKeyProperty) != null);
         if (!(sender is Visual visual) || visual.IsAttachedToVisualTree()) {
-            InvalidateInheritedContext((StyledElement) sender!);
+            InvalidateInheritedContext((StyledElement) sender);
         }
     }
 
@@ -180,7 +180,7 @@ public class DataManager {
     /// <param name="element">The element to invalidate the inherited context data of, along with its visual tree</param>
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static void InvalidateInheritedContext(AvaloniaObject element) {
-        if (totalSuspensionCount != 0 && GetSuspendedInvalidationCount(element) > 0) {
+        if (s_TotalSuspensionCount != 0 && GetSuspendedInvalidationCount(element) > 0) {
             return;
         }
 
@@ -234,10 +234,10 @@ public class DataManager {
     /// <param name="inherited">The inherited context data</param>
     public static void SetDelegateContextData(AvaloniaObject element, IContextData inherited) {
         IControlContextData? oldData = element.GetValue(ContextDataProperty);
-        element.SetValue(ContextDataProperty, oldData == null 
-            ? new InheritingControlContextData(element, inherited) 
+        element.SetValue(ContextDataProperty, oldData == null
+            ? new InheritingControlContextData(element, inherited)
             : new InheritingControlContextData(oldData, inherited));
-        
+
         InvalidateInheritedContext(element);
     }
 
@@ -311,42 +311,69 @@ public class DataManager {
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
     public static IContextData EvaluateContextDataRaw(AvaloniaObject source) {
         ProviderContextData ctx = new ProviderContextData();
-
-        // EvaluateContextDataRaw with about 26 elements takes about 20 microseconds
-        List<AvaloniaObject> hierarchy = new List<AvaloniaObject>(32) { source };
-        for (StyledElement? parent = (source as StyledElement)?.Parent; parent != null; parent = parent.Parent) {
-            hierarchy.Add(parent);
+        if (source is StyledElement sourceElement) {
+            EvaluateStyledImpl(sourceElement, ctx);
         }
-
-        // Scan top-down in order to allow deeper objects' entries to override higher up entries
-        for (int i = hierarchy.Count - 1; i >= 0; i--) {
-            AvaloniaObject control = hierarchy[i];
-            IControlContextData? data = control.GetBaseValue(ContextDataProperty).GetValueOrDefault();
-            if (data != null && data.Count > 0) {
-                ctx.AddAll(data);
-            }
-
-            DataKey? key;
-            if (control is StyledElement element && (key = GetDataContextDataKey(control)) != null) {
-                object? dc = element.DataContext;
-                if (dc == null || key.DataType.IsInstanceOfType(dc)) {
-                    ctx.SetValueRaw(key.Id, dc);
-                }
-                else {
-                    AppLogger.Instance.WriteLine($"{nameof(DataContextDataKeyProperty)} on '{control.GetType().Name}' was invalid for its actual data context.");
-                    AppLogger.Instance.WriteLine($"  DataContext = {dc.GetType()}");
-                    AppLogger.Instance.WriteLine($"  DataKey ID = {key.Id}, Data Type = {key.DataType}");
-                }
-            }
-
-            if ((key = GetSelfDataKey(control)) != null) {
-                // We don't need to do runtime type-checking here, since
-                // we do it in the coerce function of the SelfDataKey property 
-                ctx.SetValueRaw(key.Id, control);
-            }
+        else {
+            EvaluateNonStyledImpl(source, ctx);
         }
 
         return ctx;
+
+        static void EvaluateStyledImpl(StyledElement source, ProviderContextData ctx) {
+            // EvaluateContextDataRaw with about 26 elements takes about 20 microseconds
+            List<StyledElement> hierarchy = new List<StyledElement>(32);
+            for (StyledElement? element = source; element != null; element = element.Parent) {
+                hierarchy.Add(element);
+            }
+
+            // Scan top-down in order to allow deeper objects' entries to override higher up entries
+            for (int i = hierarchy.Count - 1; i >= 0; i--) {
+                StyledElement control = hierarchy[i];
+                TryAcceptContextData(control, ctx);
+                TryAcceptDataContextKey(control, ctx);
+                TryAcceptSelfKey(control, ctx);
+            }
+        }
+
+        static void EvaluateNonStyledImpl(AvaloniaObject control, ProviderContextData ctx) {
+            TryAcceptContextData(control, ctx);
+            TryAcceptSelfKey(control, ctx);
+        }
+    }
+
+    private static void TryAcceptContextData(AvaloniaObject control, ProviderContextData ctx) {
+        IControlContextData? data = control.GetBaseValue(ContextDataProperty).GetValueOrDefault();
+        if (data != null && data.Count > 0) {
+            ctx.AddAll(data);
+        }
+    }
+
+    private static void TryAcceptDataContextKey(StyledElement control, ProviderContextData ctx) {
+        DataKey? key = GetDataContextDataKey(control);
+        if (key == null) {
+            return;
+        }
+
+        object? dc = control.DataContext;
+        if (dc == null || key.DataType.IsInstanceOfType(dc)) {
+            ctx.SetValueRaw(key.Id, dc);
+        }
+        else {
+            AppLogger.Instance.WriteLine($"{nameof(DataContextDataKeyProperty)} on '{control.GetType().Name}' was invalid for its actual data context.");
+            AppLogger.Instance.WriteLine($"  DataContext = {dc.GetType()}");
+            AppLogger.Instance.WriteLine($"  DataKey ID = {key.Id}, Data Type = {key.DataType}");
+            Debugger.Break();
+        }
+    }
+
+    private static void TryAcceptSelfKey(AvaloniaObject control, ProviderContextData ctx) {
+        DataKey? key = GetSelfDataKey(control);
+        if (key != null) {
+            // We don't need to do runtime type-checking here, since
+            // we do it in the coerce function of the SelfDataKey property 
+            ctx.SetValueRaw(key.Id, control);
+        }
     }
 
     [MethodImpl(MethodImplOptions.AggressiveOptimization)]
@@ -411,7 +438,7 @@ public class DataManager {
             throw new InvalidOperationException("Suspended invalidation too many times");
         obj.SetValue(SuspendedInvalidationCountProperty, value + 1);
 
-        totalSuspensionCount++;
+        s_TotalSuspensionCount++;
         return new SuspendInvalidation(obj, autoInvalidateOnUnsuspended);
     }
 
@@ -451,7 +478,7 @@ public class DataManager {
             }
 
             this.target = null;
-            totalSuspensionCount--;
+            s_TotalSuspensionCount--;
             uint count = GetSuspendedInvalidationCount(t);
             Debug.Assert(count != 0);
             t.SetValue(SuspendedInvalidationCountProperty, --count);

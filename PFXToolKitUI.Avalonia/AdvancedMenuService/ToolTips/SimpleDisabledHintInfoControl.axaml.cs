@@ -40,5 +40,7 @@ public partial class SimpleDisabledHintInfoControl : UserControl, IDisabledHintI
 
     public void OnDisconnected(DisabledHintInfo _info) {
         this.PART_IconControl.Icon = null;
+        this.PART_Caption.Text = null;
+        this.PART_MainText.Text = null;
     }
 }
