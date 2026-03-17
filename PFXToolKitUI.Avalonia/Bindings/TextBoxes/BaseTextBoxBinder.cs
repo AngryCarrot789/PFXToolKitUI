@@ -18,6 +18,7 @@
 // 
 
 using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Input;
@@ -33,7 +34,8 @@ namespace PFXToolKitUI.Avalonia.Bindings.TextBoxes;
 /// <typeparam name="TModel">The type of model</typeparam>
 public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TModel : class {
     private readonly Func<IBinder<TModel>, string, Task<bool>> parseAndUpdate;
-    private bool isChangingModel, isResettingTextToModel;
+    private bool isUpdatingModelAsync; // true when the async update function is or is about to be invoked
+    private bool isResettingTextFromModel; // true when setting the TB's text back to the model's value (as text)
     private EventHandler<RoutedEventArgs>? onLostFocus;
     private EventHandler<KeyEventArgs>? onKeyDown;
     private EventHandler<TextChangedEventArgs>? onTextChanged;
@@ -61,8 +63,9 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         get => field;
         set {
             field = value;
-            if (this.myControl != null)
+            if (this.myControl != null) {
                 AttachedTextBoxBinding.SetIsValueDifferent((TextBox) this.myControl, value);
+            }
         }
     }
 
@@ -104,7 +107,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         if (this.IsFullyAttached) {
             string newValue = this.GetTextCore();
 
-            this.isResettingTextToModel = true;
+            this.isResettingTextFromModel = true;
             tb.Text = newValue;
             BugFix.TextBox_UpdateSelection(tb);
             if (hasJustAttached && tb.IsUndoEnabled) {
@@ -114,7 +117,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 tb.IsUndoEnabled = true;
             }
 
-            this.isResettingTextToModel = false;
+            this.isResettingTextFromModel = false;
         }
 
         this.HasUserModifiedValueSinceUpdate = false;
@@ -133,16 +136,19 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         tb.LostFocus += this.onLostFocus ??= this.OnLostFocus;
         tb.KeyDown += this.onKeyDown ??= this.OnKeyDown;
         tb.TextChanged += this.onTextChanged ??= this.OnTextChanged;
+
         this.HasUserModifiedValueSinceUpdate = false;
         TextBoxBinderUtils.SetIsAttachedToBTTB(tb, true);
     }
 
     protected override void OnDetached() {
         Debug.Assert(this.onLostFocus != null && this.onKeyDown != null && this.onTextChanged != null);
+
         TextBox tb = (TextBox) this.Control;
         tb.LostFocus -= this.onLostFocus;
         tb.KeyDown -= this.onKeyDown;
         tb.TextChanged -= this.onTextChanged;
+
         this.HasUserModifiedValueSinceUpdate = false;
         TextBoxBinderUtils.SetIsAttachedToBTTB(tb, false);
     }
@@ -160,7 +166,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         //   message box to close it, causing loss of focus and showing another message box.
         bool hasValueChangedSinceUpdate = this.HasUserModifiedValueSinceUpdate;
         if (this.CanApplyValueOnLostFocus && hasValueChangedSinceUpdate) {
-            if (!this.isChangingModel) {
+            if (!this.isUpdatingModelAsync) {
                 ApplicationPFX.Instance.Dispatcher.Post(this.HandleUpdateModelFromText, DispatchPriority.Input);
             }
         }
@@ -179,7 +185,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
         TextBox textBox = (TextBox) sender!;
         switch (e.Key) {
             case Key.Escape: {
-                if (this.isChangingModel || this.isResettingTextToModel) {
+                if (this.isUpdatingModelAsync || this.isResettingTextFromModel) {
                     return;
                 }
 
@@ -194,8 +200,8 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
                 this.UpdateControl(); // sets IsValueDifferent to false
 
-                Debug.Assert(!this.isResettingTextToModel);
-                this.isResettingTextToModel = true;
+                Debug.Assert(!this.isResettingTextFromModel);
+                this.isResettingTextFromModel = true;
 
                 if (canMoveFocus) {
                     VisualTreeUtils.TryMoveFocusUpwards(textBox);
@@ -206,7 +212,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
                 // since we're still technically in the process of resetting text
                 Dispatcher.UIThread.Invoke(() => textBox.LostFocus += this.OnLostFocus, DispatcherPriority.Loaded);
 
-                this.isResettingTextToModel = false;
+                this.isResettingTextFromModel = false;
 
                 // invoke callback to allow user code to maybe reverse some changes
                 this.ValueCancelled?.Invoke(this, new ValueCancelledEventArgs(text));
@@ -216,7 +222,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
             }
             case Key.Enter: {
                 if (!this.IsMultiLineTextBox) {
-                    if (!this.isChangingModel) {
+                    if (!this.isUpdatingModelAsync) {
                         this.HandleUpdateModelFromText();
                     }
 
@@ -230,7 +236,7 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
 
     private void OnTextChanged(object? sender, TextChangedEventArgs e) {
         TextBox textBox = (TextBox) sender!;
-        if (!this.isChangingModel && !this.isResettingTextToModel && textBox.IsKeyboardFocusWithin) {
+        if (!this.isUpdatingModelAsync && !this.isResettingTextFromModel && textBox.IsKeyboardFocusWithin) {
             // Only mark as user-modified when there's focus within. It's very unlikely that
             // the user can make the text change without keyboard focus; undo/redo requires focus,
             // which will therefore count as a user modification. External changes are not supported.
@@ -241,15 +247,18 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
     /// <summary>
     /// Updates our model based on what's present in the text block
     /// </summary>
+    [SuppressMessage("ReSharper", "AsyncVoidMethod", Justification = "Exceptions here should crash the application")]
     private async void HandleUpdateModelFromText() {
+        if (this.isUpdatingModelAsync || !base.IsFullyAttached) {
+            return;
+        }
+        
+        TextBox textBox = (TextBox) this.Control;
+        
+        this.isUpdatingModelAsync = true;
+        AttachedTextBoxBinding.SetIsUpdatingModel(textBox, true);
+        
         try {
-            if (this.isChangingModel || !base.IsFullyAttached) {
-                return;
-            }
-
-            TextBox textBox = (TextBox) this.Control;
-            this.isChangingModel = true;
-
             // Read text before setting IsEnabled to false, because LostFocus will reset text to underlying value
             string text = textBox.Text ?? "";
 
@@ -267,7 +276,8 @@ public abstract class BaseTextBoxBinder<TModel> : BaseBinder<TModel> where TMode
             this.ValueConfirmed?.Invoke(this, new ValueConfirmedEventArgs(text, success));
         }
         finally {
-            this.isChangingModel = false;
+            this.isUpdatingModelAsync = false;
+            AttachedTextBoxBinding.SetIsUpdatingModel(textBox, false);
         }
     }
 }

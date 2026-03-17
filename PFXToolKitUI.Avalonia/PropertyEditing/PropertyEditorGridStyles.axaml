@@ -148,7 +148,7 @@
                                         </TextBlock>
                                     </Button>
                                     <Button x:Name="PART_ExpandHierarchyButton" HorizontalAlignment="Right" Margin="0,0,23,0" Width="23" BorderThickness="0" Background="Transparent">
-                                        <TextBlock Text="&lt;-&gt;" FontFamily="Consolas" FontSize="10">
+                                        <TextBlock Text="&lt;-&gt;" FontFamily="{StaticResource FontJetBrainsMono}" FontSize="10">
                                             <TextBlock.RenderTransform>
                                                 <TransformGroup>
                                                     <RotateTransform Angle="90"/>

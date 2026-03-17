@@ -39,6 +39,16 @@ public static class AttachedTextBoxBinding {
     /// </para>
     /// </summary>
     public static readonly AttachedProperty<bool> IsValueDifferentProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, bool>("IsValueDifferent",  typeof(AttachedTextBoxBinding));
+    
+    /// <summary>
+    /// A property used to tell when the async parseAndUpdate callback of a text box binder is being run.
+    /// Note, if a callback shows a dialog, this property will still be true, since showing dialogs is asynchronous.
+    /// <para>
+    /// This can be use to, for example, show a spinner if the update function uploads data to, for example, a database
+    /// </para>
+    /// </summary>
+    public static readonly AttachedProperty<bool> IsUpdatingModelProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, bool>("IsUpdatingModel",  typeof(AttachedTextBoxBinding));
+    
     public static readonly AttachedProperty<IBrush?> OverlayBorderBrushProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, IBrush?>("OverlayBrush",  typeof(AttachedTextBoxBinding));
     public static readonly AttachedProperty<Thickness> OverlayBorderThicknessProperty = AvaloniaProperty.RegisterAttached<AvaloniaObject, Thickness>("OverlayBorderThickness",  typeof(AttachedTextBoxBinding), new Thickness(1));
     private static readonly AttachedProperty<BrushFlipFlopTimer?> FlipFlopProperty = AvaloniaProperty.RegisterAttached<TextBox, BrushFlipFlopTimer?>("FlipFlop", typeof(AttachedTextBoxBinding));
@@ -99,8 +109,13 @@ public static class AttachedTextBoxBinding {
     
     public static void SetIsValueDifferent(AvaloniaObject obj, bool value) => obj.SetValue(IsValueDifferentProperty, value);
     public static bool GetIsValueDifferent(AvaloniaObject obj) => obj.GetValue(IsValueDifferentProperty);
+    
+    public static void SetIsUpdatingModel(AvaloniaObject obj, bool value) => obj.SetValue(IsUpdatingModelProperty, value);
+    public static bool GetIsUpdatingModel(AvaloniaObject obj) => obj.GetValue(IsUpdatingModelProperty);
+    
     public static void SetOverlayBorderBrush(AvaloniaObject obj, IBrush? value) => obj.SetValue(OverlayBorderBrushProperty, value);
     public static IBrush? GetOverlayBorderBrush(AvaloniaObject obj) => obj.GetValue(OverlayBorderBrushProperty);
+    
     public static void SetOverlayBorderThickness(AvaloniaObject obj, Thickness value) => obj.SetValue(OverlayBorderThicknessProperty, value);
     public static Thickness GetOverlayBorderThickness(AvaloniaObject obj) => obj.GetValue(OverlayBorderThicknessProperty);
 }
