@@ -28,12 +28,12 @@ namespace PFXToolKitUI.Interactivity.Windowing;
 /// </summary>
 public interface ITopLevel : IComponentManager {
     /// <summary>
-    /// Gets the data key for a top level
+    /// The data key for the contextual top level
     /// </summary>
     public static readonly DataKey<ITopLevel> TopLevelDataKey = DataKeys.Create<ITopLevel>("WindowingTopLevel");
 
     /// <summary>
-    /// Gets the local context data of this top level (not the fully inherited context). This
+    /// Gets the local context data of this top level (not the fully inherited context).
     /// </summary>
     IMutableContextData LocalContextData { get; }
 

@@ -26,6 +26,11 @@ public class StringJoiner {
     private readonly string delimiter;
     private bool hasFirst;
 
+    /// <summary>
+    /// Gets the length of the string that will be returned by <see cref="ToString"/>
+    /// </summary>
+    public int Length => this.sb.Length;
+
     public StringJoiner(string delimiter) {
         this.sb = new StringBuilder();
         this.delimiter = delimiter;

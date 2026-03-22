@@ -22,6 +22,7 @@ namespace PFXToolKitUI.Utils.Reactive;
 /// <summary>
 /// Represents an observable object
 /// </summary>
+/// <typeparam name="T">The type of event owner</typeparam>
 public interface IEventObservable<T> {
     /// <summary>
     /// Adds a subscriber to the event
