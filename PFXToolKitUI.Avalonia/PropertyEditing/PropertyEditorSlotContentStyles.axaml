@@ -1,12 +1,12 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:d="clr-namespace:PFXToolKitUI.Avalonia.AvControls.Dragger;assembly=PFXToolKitUI.Avalonia"
                     xmlns:c="clr-namespace:PFXToolKitUI.Avalonia.Converters"
                     xmlns:l="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing"
                     xmlns:dt="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer"
                     xmlns:enums="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer.Enums"
                     xmlns:dta="clr-namespace:PFXToolKitUI.Avalonia.PropertyEditing.DataTransfer.Automatic"
-                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips">
+                    xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
+                    xmlns:dragger="clr-namespace:PFXToolKitUI.Avalonia.Controls.Dragger">
     <ControlTheme x:Key="NonToggleableCheckBox" TargetType="{x:Type CheckBox}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -52,7 +52,7 @@
                                     tt:ToolTipEx.Tip="Reset value" DockPanel.Dock="Right" Focusable="False">
                                 <Path Width="12" Height="14" Stretch="Fill" Fill="{DynamicResource ABrush.Glyph.Static}" Data="{StaticResource ResetGeometry}"/>
                             </Button>
-                            <d:NumberDragger x:Name="PART_Dragger" BorderBrush="Black" Padding="4,2"/>
+                            <dragger:NumberDragger x:Name="PART_Dragger" BorderBrush="Black" Padding="4,2"/>
                         </DockPanel>
                     </Grid>
                 </ControlTemplate>
@@ -81,8 +81,8 @@
                                 <ColumnDefinition Width="2"/>
                                 <ColumnDefinition Width="20"/>
                             </Grid.ColumnDefinitions>
-                            <d:NumberDragger x:Name="PART_DraggerX" Height="20" Grid.Column="0" BorderBrush="Black" Padding="4,2"/>
-                            <d:NumberDragger x:Name="PART_DraggerY" Height="20" Grid.Column="2" BorderBrush="Black" Padding="4,2"/>
+                            <dragger:NumberDragger x:Name="PART_DraggerX" Height="20" Grid.Column="0" BorderBrush="Black" Padding="4,2"/>
+                            <dragger:NumberDragger x:Name="PART_DraggerY" Height="20" Grid.Column="2" BorderBrush="Black" Padding="4,2"/>
                             <Button x:Name="PART_ResetButton" Margin="0"
                                     Background="{DynamicResource ABrush.Tone4.Border.Static}"
                                     BorderBrush="Black"
@@ -225,8 +225,8 @@
                                 <ColumnDefinition Width="2"/>
                                 <ColumnDefinition Width="20"/>
                             </Grid.ColumnDefinitions>
-                            <d:NumberDragger x:Name="PART_DraggerX" Height="20" Grid.Column="0" BorderBrush="Black" Padding="4,2"/>
-                            <d:NumberDragger x:Name="PART_DraggerY" Height="20" Grid.Column="2" BorderBrush="Black" Padding="4,2"/>
+                            <dragger:NumberDragger x:Name="PART_DraggerX" Height="20" Grid.Column="0" BorderBrush="Black" Padding="4,2"/>
+                            <dragger:NumberDragger x:Name="PART_DraggerY" Height="20" Grid.Column="2" BorderBrush="Black" Padding="4,2"/>
                             <!--
                             <Button x:Name="PART_SetAutomaticButton" Margin="0"
                                     Background="{DynamicResource ABrush.Tone4.Border.Static}"

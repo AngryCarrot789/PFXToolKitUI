@@ -5,14 +5,14 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
              xmlns:tt="clr-namespace:PFXToolKitUI.Avalonia.ToolTips"
              xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
-             xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
              xmlns:attached="clr-namespace:PFXToolKitUI.Avalonia.Themes.Attached"
              xmlns:local="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages.Controls"
+             xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Controls"
              mc:Ignorable="d">
     <DockPanel x:Name="PART_DockPanelRoot" Background="{DynamicResource ABrush.Tone2.Background.Static}">
         <StackPanel x:Name="PART_HeaderPanel" DockPanel.Dock="Top" Margin="10,10,10,0">
             <StackPanel Orientation="Horizontal" Spacing="5">
-                <avc:IconControl x:Name="PART_IconControlInHeader"
+                <controls:IconControl x:Name="PART_IconControlInHeader"
                                  Width="24" Height="24" Margin="0,0,0,3"
                                  IsVisible="False" VerticalAlignment="Center"/>
                 <TextBlock x:Name="PART_Header" Padding="0,0,0,2"
@@ -113,7 +113,7 @@
         </Border>
         <DockPanel HorizontalSpacing="5" Margin="8,0,0,0">
             <Panel DockPanel.Dock="Left">
-                <avc:IconControl x:Name="PART_IconControlInMessage"
+                <controls:IconControl x:Name="PART_IconControlInMessage"
                                  Width="24" Height="24" Margin="0,11,2,0"
                                  IsVisible="False"
                                  VerticalAlignment="Top" HorizontalAlignment="Center"/>

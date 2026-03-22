@@ -18,8 +18,6 @@
 // 
 
 using System.ComponentModel;
-using System.IO.MemoryMappedFiles;
-using System.Runtime.InteropServices;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;

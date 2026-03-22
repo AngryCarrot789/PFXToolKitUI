@@ -164,7 +164,7 @@ public static class Maths {
     /// Subtracts <see cref="b"/> to <see cref="a"/>, clamping to the minimum or maximum values if overflow occurs
     /// </summary>
     /// <returns>clamp(a + b, T.MinValue, T.MaxValue)</returns>
-    public static T AddAndClampOverflow<T>(T a, T b) where T : IBinaryInteger<T>, IMinMaxValue<T> {
+    public static T AddClamped<T>(T a, T b) where T : IBinaryInteger<T>, IMinMaxValue<T> {
         if (b > T.Zero && a > unchecked(T.MaxValue - b))
             return T.MaxValue;
         if (b < T.Zero && a < unchecked(T.MinValue - b))
@@ -172,12 +172,12 @@ public static class Maths {
         
         return unchecked(a + b);
     }
-
+    
     /// <summary>
     /// Subtracts <see cref="b"/> from <see cref="a"/>, clamping to the minimum or maximum values if overflow occurs
     /// </summary>
     /// <returns>clamp(a - b, T.MinValue, T.MaxValue)</returns>
-    public static T SubAndClampOverflow<T>(T a, T b) where T : IBinaryInteger<T>, IMinMaxValue<T> {
+    public static T SubClamped<T>(T a, T b) where T : IBinaryInteger<T>, IMinMaxValue<T> {
         if (b > T.Zero && a < unchecked(T.MinValue + b))
             return T.MinValue;
         if (b < T.Zero && a > unchecked(T.MaxValue + b))
@@ -193,7 +193,7 @@ public static class Maths {
     /// <param name="a">The left operand</param>
     /// <param name="b">The right operand</param>
     /// <returns>The summation result, clamped between the minimum and maximum values for the uint type</returns>
-    public static uint SumAndClampOverflow(uint a, int b) {
+    public static uint AddClamped(uint a, int b) {
         if (b >= 0)
             return (uint) b > (uint.MaxValue - a) ? uint.MaxValue /* clamp overflow */ : (a + (uint) b);
         uint s = (uint) -b;
@@ -206,7 +206,7 @@ public static class Maths {
     /// <param name="a">The left operand</param>
     /// <param name="b">The right operand</param>
     /// <returns>The summation result, or <see cref="uint.MaxValue"/></returns>
-    public static ulong SumAndClampOverflow(uint a, uint b) {
+    public static ulong AddClamped(uint a, uint b) {
         return b > (uint.MaxValue - a) ? uint.MaxValue : (a + b);
     }
 
@@ -217,7 +217,7 @@ public static class Maths {
     /// <param name="a">The left operand</param>
     /// <param name="b">The right operand</param>
     /// <returns>The summation result, clamped between the minimum and maximum values for the ulong type</returns>
-    public static ulong SumAndClampOverflow(ulong a, long b) {
+    public static ulong AddClamped(ulong a, long b) {
         if (b >= 0)
             return (ulong) b > (ulong.MaxValue - a) ? ulong.MaxValue /* clamp overflow */ : (a + (ulong) b);
         ulong s = (ulong) -b;
@@ -230,7 +230,7 @@ public static class Maths {
     /// <param name="a">The left operand</param>
     /// <param name="b">The right operand</param>
     /// <returns>The summation result, or <see cref="ulong.MaxValue"/></returns>
-    public static ulong SumAndClampOverflow(ulong a, ulong b) {
+    public static ulong AddClamped(ulong a, ulong b) {
         return b > (ulong.MaxValue - a) ? ulong.MaxValue : (a + b);
     }
 
@@ -274,54 +274,6 @@ public static class Maths {
         if (v < 1000000000000000000L)
             return 18;
         return v < 10000000000000000000L ? 19 : 20;
-    }
-
-    public static void Swap(ref float a, ref float b) {
-        float tmp = a;
-        a = b;
-        b = tmp;
-    }
-
-    public static void Swap(ref double a, ref double b) {
-        double tmp = a;
-        a = b;
-        b = tmp;
-    }
-
-    public static void Swap(ref long a, ref long b) {
-        long tmp = a;
-        a = b;
-        b = tmp;
-    }
-
-    public static void Swap(ref int a, ref int b) {
-        int tmp = a;
-        a = b;
-        b = tmp;
-    }
-
-    public static float Swap(ref float a, float b) {
-        float oA = a;
-        a = b;
-        return oA;
-    }
-
-    public static double Swap(ref double a, double b) {
-        double oA = a;
-        a = b;
-        return oA;
-    }
-
-    public static long Swap(ref long a, long b) {
-        long oA = a;
-        a = b;
-        return oA;
-    }
-
-    public static int Swap(ref int a, int b) {
-        int oA = a;
-        a = b;
-        return oA;
     }
 
     public static double GetRange(float min, float max) {
@@ -385,6 +337,7 @@ public static class Maths {
     }
 
     public static int Floor(double d) => (int) Math.Floor(d);
+    
     public static int Ceil(double d) => (int) Math.Ceiling(d);
 
     public static SKSize? Max2F<T>(IEnumerable<T> sources, Func<T, SKSize> func) {

@@ -27,7 +27,6 @@ using PFXToolKitUI.Avalonia.Shortcuts.Trees;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Configurations.Shortcuts;
 using PFXToolKitUI.Configurations.UI;
-using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Keymapping;
 
 namespace PFXToolKitUI.Avalonia.Shortcuts.Configurations;

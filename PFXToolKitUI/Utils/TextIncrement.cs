@@ -126,7 +126,7 @@ public static class TextIncrement {
         }
 
         ulong num = (ulong) textNumber;
-        ulong max = Maths.SumAndClampOverflow(num, maxNumber);
+        ulong max = Maths.AddClamped(num, maxNumber);
 
         int index = content.Length;
         Span<char> charSpan = stackalloc char[index + 3 /* ' ' + '(' + ')' */ + 20 /* max chars for ulong representation */];

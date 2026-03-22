@@ -20,7 +20,7 @@
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
-using PFXToolKitUI.Avalonia.AvControls;
+using PFXToolKitUI.Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Utils;
 
 namespace PFXToolKitUI.Avalonia.Interactivity;

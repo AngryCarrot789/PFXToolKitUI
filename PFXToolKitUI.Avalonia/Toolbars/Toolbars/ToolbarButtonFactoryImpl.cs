@@ -21,7 +21,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
 using Avalonia.Interactivity;
-using PFXToolKitUI.Avalonia.AvControls;
+using PFXToolKitUI.Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.ToolTips;
 using PFXToolKitUI.Icons;

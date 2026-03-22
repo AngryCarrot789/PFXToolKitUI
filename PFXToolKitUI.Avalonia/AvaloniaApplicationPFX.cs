@@ -44,7 +44,6 @@ using PFXToolKitUI.Services.FilePicking;
 using PFXToolKitUI.Services.InputStrokes;
 using PFXToolKitUI.Services.Messaging;
 using PFXToolKitUI.Services.UserInputs;
-using PFXToolKitUI.Shortcuts;
 using PFXToolKitUI.Shortcuts.Keymapping;
 using PFXToolKitUI.Themes;
 using PFXToolKitUI.Toolbars;

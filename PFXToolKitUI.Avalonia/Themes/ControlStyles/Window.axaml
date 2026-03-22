@@ -1,8 +1,8 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:converters="clr-namespace:PFXToolKitUI.Avalonia.Themes.Converters"
-                    xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
-                    xmlns:di="clr-namespace:PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl">
+                    xmlns:di="clr-namespace:PFXToolKitUI.Avalonia.Interactivity.Windowing.Desktop.Impl"
+                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Controls">
     <ControlTheme x:Key="{x:Type Window}" TargetType="{x:Type Window}">
         <Setter Property="Background" Value="{DynamicResource Window.Static.Background}"/>
         <Setter Property="TransparencyBackgroundFallback" Value="White"/>
@@ -105,7 +105,7 @@
                                                    VerticalAlignment="Center"
                                                    Stretch="UniformToFill"
                                                    RenderOptions.BitmapInterpolationMode="None"/>
-                                            <avc:IconControl x:Name="PART_IconControl"
+                                            <controls:IconControl x:Name="PART_IconControl"
                                                              Margin="5,0,0,0" Height="16" Width="16"
                                                              IsVisible="False"
                                                              VerticalAlignment="Center"/>

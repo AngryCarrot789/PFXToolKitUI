@@ -27,7 +27,7 @@ using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Media.Immutable;
 using PFXToolKitUI.Avalonia.AdvancedMenuService;
-using PFXToolKitUI.Avalonia.AvControls;
+using PFXToolKitUI.Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Interactivity;
 using PFXToolKitUI.Avalonia.Themes.BrushFactories;
 using PFXToolKitUI.Avalonia.ToolTips;

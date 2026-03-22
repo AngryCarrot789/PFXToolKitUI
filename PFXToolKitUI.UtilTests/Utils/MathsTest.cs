@@ -27,43 +27,43 @@ namespace PFXToolKitUI.UtilTests.Utils;
 public class MathsTest {
     [Fact]
     public void int_NoOverflow_PositiveNumbers() {
-        Assert.Equal(30, Maths.AddAndClampOverflow(10, 20));
+        Assert.Equal(30, Maths.AddClamped(10, 20));
     }
 
     [Fact]
     public void int_NoOverflow_NegativeNumbers() {
-        Assert.Equal(-75, Maths.AddAndClampOverflow(-50, -25));
-        Assert.Equal(-75, Maths.SubAndClampOverflow(-50, 25));
+        Assert.Equal(-75, Maths.AddClamped(-50, -25));
+        Assert.Equal(-75, Maths.SubClamped(-50, 25));
     }
 
     [Fact]
     public void int_PositiveOverflow_ClampToMax() {
-        Assert.Equal(int.MaxValue, Maths.AddAndClampOverflow(int.MaxValue - 1, 10));
+        Assert.Equal(int.MaxValue, Maths.AddClamped(int.MaxValue - 1, 10));
     }
 
     [Fact]
     public void int_NegativeOverflow_ClampToMin() {
-        Assert.Equal(int.MinValue, Maths.AddAndClampOverflow(int.MinValue + 5, -100));
-        Assert.Equal(int.MinValue, Maths.SubAndClampOverflow(int.MinValue + 5, 100));
+        Assert.Equal(int.MinValue, Maths.AddClamped(int.MinValue + 5, -100));
+        Assert.Equal(int.MinValue, Maths.SubClamped(int.MinValue + 5, 100));
     }
 
     [Fact]
     public void int_Same() {
-        Assert.Equal(123, Maths.AddAndClampOverflow(123, 0));
-        Assert.Equal(-999, Maths.AddAndClampOverflow(-999, 0));
+        Assert.Equal(123, Maths.AddClamped(123, 0));
+        Assert.Equal(-999, Maths.AddClamped(-999, 0));
     }
 
     [Fact]
     public void int_NoOverflow() {
-        Assert.Equal(0, Maths.AddAndClampOverflow(10, -10));
-        Assert.Equal(5, Maths.AddAndClampOverflow(10, -5));
+        Assert.Equal(0, Maths.AddClamped(10, -10));
+        Assert.Equal(5, Maths.AddClamped(10, -5));
     }
     
     [Fact]
     public void uint_PositiveOverflow() =>
-        Assert.Equal(uint.MaxValue, Maths.AddAndClampOverflow(uint.MaxValue - 3, (uint) 100));
+        Assert.Equal(uint.MaxValue, Maths.AddClamped(uint.MaxValue - 3, (uint) 100));
 
     [Fact]
     public void uint_NoOverflow() =>
-        Assert.Equal(150u, Maths.AddAndClampOverflow(100u, 50u));
+        Assert.Equal(150u, Maths.AddClamped(100u, 50u));
 }

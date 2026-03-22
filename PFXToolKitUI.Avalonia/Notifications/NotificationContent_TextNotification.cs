@@ -20,7 +20,7 @@
 using System.Diagnostics;
 using Avalonia.Controls.Primitives;
 using AvaloniaEdit;
-using PFXToolKitUI.Avalonia.AvControls;
+using PFXToolKitUI.Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;
 using PFXToolKitUI.Notifications;

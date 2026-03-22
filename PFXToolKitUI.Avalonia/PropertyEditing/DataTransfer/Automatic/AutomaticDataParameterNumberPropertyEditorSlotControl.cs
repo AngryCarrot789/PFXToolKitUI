@@ -18,7 +18,7 @@
 // 
 
 using System.Numerics;
-using PFXToolKitUI.Avalonia.AvControls.Dragger;
+using PFXToolKitUI.Avalonia.Controls.Dragger;
 using PFXToolKitUI.DataTransfer;
 using PFXToolKitUI.PropertyEditing.DataTransfer;
 using PFXToolKitUI.PropertyEditing.DataTransfer.Automatic;

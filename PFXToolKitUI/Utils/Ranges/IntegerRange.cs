@@ -67,13 +67,13 @@ public readonly struct IntegerRange<T> : IEquatable<IntegerRange<T>> where T : u
     public IntegerRange<T> ExpandClamped(T value) => this.ExpandClamped(value, value);
 
     public IntegerRange<T> ExpandClamped(T left, T right) {
-        return new IntegerRange<T>(Maths.SubAndClampOverflow(this.Start, left), Maths.AddAndClampOverflow(this.End, right));
+        return new IntegerRange<T>(Maths.SubClamped(this.Start, left), Maths.AddClamped(this.End, right));
     }
 
     public IntegerRange<T> CollapseClamped(T value) => this.CollapseClamped(value, value);
 
     public IntegerRange<T> CollapseClamped(T left, T right) {
-        return new IntegerRange<T>(Maths.AddAndClampOverflow(this.Start, left), Maths.SubAndClampOverflow(this.End, right));
+        return new IntegerRange<T>(Maths.AddClamped(this.Start, left), Maths.SubClamped(this.End, right));
     }
 
     public IntegerRange<T> WithStart(T start) => IntegerRange.FromStartAndEnd(start, this.End);

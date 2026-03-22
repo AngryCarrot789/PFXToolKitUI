@@ -18,7 +18,7 @@
 // 
 
 using Avalonia.Controls;
-using PFXToolKitUI.Avalonia.AvControls.ListBoxes;
+using PFXToolKitUI.Avalonia.Controls.ListBoxes;
 using PFXToolKitUI.Logging;
 
 namespace PFXToolKitUI.Avalonia.Services;

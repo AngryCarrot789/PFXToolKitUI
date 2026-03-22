@@ -6,7 +6,6 @@
                     xmlns:cu="clr-namespace:PFXToolKitUI.Avalonia.CommandUsages"
                     xmlns:configurations="clr-namespace:PFXToolKitUI.Avalonia.Shortcuts.Configurations"
                     xmlns:themes="clr-namespace:PFXToolKitUI.Avalonia.Themes.Configurations"
-                    xmlns:av="clr-namespace:PFXToolKitUI.Avalonia.AvControls"
                     xmlns:cb="clr-namespace:PFXToolKitUI.Avalonia.Configurations"
                     xmlns:messages="clr-namespace:PFXToolKitUI.Avalonia.Services.Messages"
                     xmlns:dd="clr-namespace:PFXToolKitUI.Configurations.Dialogs;assembly=PFXToolKitUI"
@@ -176,7 +175,7 @@
                                             tt:ToolTipEx.Tip="Navigate to the theme key"/>
                                 </Grid>
 
-                                <av:IconButton x:Name="PART_ResetButton"
+                                <controls:IconButton x:Name="PART_ResetButton"
                                                Grid.Row="0" Grid.Column="4"
                                                Icon="{x:Static cb:ConfigurationButtons.ResetIcon}"
                                                tt:ToolTipEx.Tip="Reset this brush to the value before you changed it"/>

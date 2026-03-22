@@ -26,7 +26,7 @@ using Avalonia.Interactivity;
 using Avalonia.Layout;
 using Avalonia.Media;
 using Avalonia.Platform;
-using PFXToolKitUI.Avalonia.AvControls;
+using PFXToolKitUI.Avalonia.Controls;
 using PFXToolKitUI.Avalonia.Themes.Converters;
 using PFXToolKitUI.Avalonia.Utils;
 using PFXToolKitUI.Icons;

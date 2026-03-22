@@ -1,11 +1,11 @@
 ﻿<ResourceDictionary xmlns="https://github.com/avaloniaui"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:avc="clr-namespace:PFXToolKitUI.Avalonia.AvControls;assembly=PFXToolKitUI.Avalonia"
                     xmlns:aa="clr-namespace:PFXToolKitUI.Avalonia.Activities;assembly=PFXToolKitUI.Avalonia"
                     xmlns:n="clr-namespace:PFXToolKitUI.Avalonia.Notifications"
                     xmlns:pfxToolKitUi="clr-namespace:PFXToolKitUI;assembly=PFXToolKitUI"
                     xmlns:ae="https://github.com/avaloniaui/avaloniaedit"
-                    xmlns:messaging="clr-namespace:PFXToolKitUI.Services.Messaging;assembly=PFXToolKitUI">
+                    xmlns:messaging="clr-namespace:PFXToolKitUI.Services.Messaging;assembly=PFXToolKitUI"
+                    xmlns:controls="clr-namespace:PFXToolKitUI.Avalonia.Controls">
     <ControlTheme x:Key="{x:Type n:NotificationListBox}" TargetType="{x:Type n:NotificationListBox}" BasedOn="{StaticResource {x:Type ListBox}}">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>
@@ -38,7 +38,7 @@
                                 DockPanel.Dock="Top" Height="23"
                                 CornerRadius="0">
                             <DockPanel>
-                                <avc:IconButton x:Name="PART_Close" DockPanel.Dock="Right"
+                                <controls:IconButton x:Name="PART_Close" DockPanel.Dock="Right"
                                                 Icon="{x:Static pfxToolKitUi:StandardIcons.CancelActivityIcon}"
                                                 Background="Transparent" BorderThickness="0" Width="22"/>
 
@@ -71,7 +71,7 @@
             <ControlTemplate TargetType="{x:Type n:NotificationContent_TextNotification}">
                 <DockPanel Margin="0,0,0,0">
                     <Panel DockPanel.Dock="Left">
-                        <avc:IconControl x:Name="PART_IconControl"
+                        <controls:IconControl x:Name="PART_IconControl"
                                          Width="24" Height="24" Margin="0,3,6,0"
                                          IsVisible="False"
                                          VerticalAlignment="Top" HorizontalAlignment="Center"
@@ -92,7 +92,7 @@
     <Design.PreviewWith>
         <DockPanel HorizontalSpacing="5" Margin="0,0,0,0">
             <Panel DockPanel.Dock="Left">
-                <avc:IconControl x:Name="PART_IconControl"
+                <controls:IconControl x:Name="PART_IconControl"
                                  Width="24" Height="24" Margin="0,3,2,0"
                                  IsVisible="True"
                                  VerticalAlignment="Top" HorizontalAlignment="Center"
